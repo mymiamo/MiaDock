@@ -1,0 +1,9 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="using:System">
+
+  <system:Double x:Key="IslandFastTransitionMilliseconds">140</system:Double>
+  <system:Double x:Key="IslandNormalTransitionMilliseconds">240</system:Double>
+  <system:Double x:Key="IslandNotificationDurationMilliseconds">5000</system:Double>
+</ResourceDictionary>

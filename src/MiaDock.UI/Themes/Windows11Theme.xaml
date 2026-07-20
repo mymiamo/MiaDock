@@ -1,0 +1,11 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <AcrylicBrush x:Key="IslandStyleSurfaceBrush"
+                FallbackColor="#F21F2024"
+                TintColor="#FF24262B"
+                TintOpacity="0.82" />
+  <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#28FFFFFF" />
+  <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="{ThemeResource SystemAccentColor}" />
+</ResourceDictionary>

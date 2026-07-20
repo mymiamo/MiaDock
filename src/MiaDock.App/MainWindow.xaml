@@ -1,0 +1,90 @@
+<Window
+    x:Class="MiaDock.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="using:MiaDock.App.Controls"
+    Title="MiaDock Preview">
+
+  <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <Grid Padding="28,20" ColumnSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <StackPanel>
+        <TextBlock Text="MiaDock" FontFamily="Segoe UI Variable Display" FontSize="28" FontWeight="SemiBold" />
+        <TextBlock Text="Phase 1 interface preview" Opacity="0.68" />
+      </StackPanel>
+      <Border Grid.Column="1" Padding="10,5" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <TextBlock Text="Local mock data" VerticalAlignment="Center" />
+      </Border>
+    </Grid>
+
+    <Grid Grid.Row="1" Margin="28,0,28,28" ColumnSpacing="24">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="280" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+
+      <Border Padding="20"
+              Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+              BorderThickness="1"
+              CornerRadius="16">
+        <StackPanel Spacing="20">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Theme" Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <ComboBox ItemsSource="{Binding Themes}"
+                      SelectedItem="{Binding SelectedTheme, Mode=TwoWay}"
+                      AutomationProperties.Name="Theme style" />
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="Island state" Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <Button Content="Collapsed" Command="{Binding Island.ShowCollapsedCommand}" HorizontalAlignment="Stretch" />
+            <Button Content="Hover" Command="{Binding Island.ShowHoverCommand}" HorizontalAlignment="Stretch" />
+            <Button Content="Expanded music" Command="{Binding Island.ShowExpandedCommand}" HorizontalAlignment="Stretch" />
+            <Button Content="Track notification" Command="{Binding Island.ShowNotificationCommand}" HorizontalAlignment="Stretch" />
+          </StackPanel>
+
+          <StackPanel Spacing="8">
+            <TextBlock Text="Media scenario" Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <ComboBox ItemsSource="{Binding Island.Music.Scenarios}"
+                      SelectedItem="{Binding Island.Music.SelectedScenario, Mode=TwoWay}"
+                      DisplayMemberPath="DisplayName"
+                      AutomationProperties.Name="Media scenario" />
+          </StackPanel>
+
+          <TextBlock Text="This window is a development preview. Overlay, media sessions, persistence, and animations are added in later phases."
+                     TextWrapping="Wrap"
+                     Opacity="0.66" />
+        </StackPanel>
+      </Border>
+
+      <Border Grid.Column="1"
+              Background="{ThemeResource LayerFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+              BorderThickness="1"
+              CornerRadius="20">
+        <Grid>
+          <Grid.Background>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+              <GradientStop Offset="0" Color="#101E293B" />
+              <GradientStop Offset="1" Color="#102E1065" />
+            </LinearGradientBrush>
+          </Grid.Background>
+          <ui:IslandShell HorizontalAlignment="Center"
+                          VerticalAlignment="Center"
+                          MediaContext="{Binding Island.Music}"
+                          State="{Binding Island.CurrentStateName}"
+                          Theme="{Binding SelectedThemeName}" />
+        </Grid>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

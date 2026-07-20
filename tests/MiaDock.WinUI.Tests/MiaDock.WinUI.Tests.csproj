@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MSTest" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\MiaDock.Core\MiaDock.Core.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.Modules.Media\MiaDock.Modules.Media.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="..\..\src\MiaDock.UI\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Controls\*.xaml" Link="Controls\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.TrackNotificationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls">
+
+  <Grid Padding="14" ColumnSpacing="14">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="64" />
+      <ColumnDefinition Width="*" />
+    </Grid.ColumnDefinitions>
+    <controls:AlbumArtwork Width="64" Height="64" />
+    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+      <TextBlock Text="Now playing" Style="{StaticResource IslandCaptionTextStyle}" />
+      <TextBlock MaxLines="1" Style="{StaticResource IslandTitleTextStyle}" Text="{Binding Current.Track.Title}" />
+      <TextBlock MaxLines="1" Style="{StaticResource IslandBodyTextStyle}" Text="{Binding Current.Track.Artist}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

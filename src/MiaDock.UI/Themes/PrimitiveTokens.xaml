@@ -1,0 +1,22 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="using:System">
+
+  <system:Double x:Key="IslandCollapsedWidth">184</system:Double>
+  <system:Double x:Key="IslandCollapsedHeight">40</system:Double>
+  <system:Double x:Key="IslandHoverWidth">300</system:Double>
+  <system:Double x:Key="IslandHoverHeight">72</system:Double>
+  <system:Double x:Key="IslandExpandedWidth">440</system:Double>
+  <system:Double x:Key="IslandExpandedHeight">210</system:Double>
+  <system:Double x:Key="IslandNotificationWidth">360</system:Double>
+  <system:Double x:Key="IslandNotificationHeight">92</system:Double>
+  <system:Double x:Key="IslandArtworkSmallSize">48</system:Double>
+  <system:Double x:Key="IslandArtworkLargeSize">112</system:Double>
+  <system:Double x:Key="IslandCornerRadiusValue">22</system:Double>
+  <system:Double x:Key="IslandShadowOpacity">0.42</system:Double>
+  <CornerRadius x:Key="IslandCornerRadius">22</CornerRadius>
+  <CornerRadius x:Key="IslandArtworkCornerRadius">14</CornerRadius>
+  <Thickness x:Key="IslandCompactPadding">12,8</Thickness>
+  <Thickness x:Key="IslandExpandedPadding">18</Thickness>
+</ResourceDictionary>

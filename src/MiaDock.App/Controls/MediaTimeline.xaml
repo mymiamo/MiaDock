@@ -1,0 +1,27 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.MediaTimeline"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Grid ColumnSpacing="10">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <TextBlock VerticalAlignment="Center"
+               Style="{StaticResource IslandCaptionTextStyle}"
+               Text="{Binding PositionText}" />
+    <Slider Grid.Column="1"
+            MinWidth="140"
+            Minimum="0"
+            Maximum="100"
+            Value="{Binding ProgressPercent, Mode=TwoWay}"
+            IsEnabled="{Binding Current.Capabilities.CanSeek}"
+            AutomationProperties.Name="Track position" />
+    <TextBlock Grid.Column="2"
+               VerticalAlignment="Center"
+               Style="{StaticResource IslandCaptionTextStyle}"
+               Text="{Binding RemainingText}" />
+  </Grid>
+</UserControl>

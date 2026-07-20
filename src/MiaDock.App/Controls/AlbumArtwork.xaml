@@ -1,0 +1,18 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.AlbumArtwork"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <Border Background="{ThemeResource IslandSurfaceSecondaryBrush}"
+          CornerRadius="{StaticResource IslandArtworkCornerRadius}">
+    <Grid>
+      <FontIcon Glyph="&#xE8D6;"
+                FontSize="24"
+                Foreground="{ThemeResource IslandTextSecondaryBrush}"
+                AutomationProperties.AccessibilityView="Raw" />
+      <Image Source="{Binding Current.Track.ArtworkUri}"
+             Stretch="UniformToFill"
+             AutomationProperties.Name="Album artwork" />
+    </Grid>
+  </Border>
+</UserControl>

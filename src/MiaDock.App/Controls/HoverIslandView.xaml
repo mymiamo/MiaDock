@@ -1,0 +1,24 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.HoverIslandView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls">
+
+  <Grid Padding="12" ColumnSpacing="12">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="48" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <controls:AlbumArtwork Width="48" Height="48" />
+    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
+      <TextBlock MaxLines="1" Style="{StaticResource IslandTitleTextStyle}" Text="{Binding Current.Track.Title}" />
+      <TextBlock MaxLines="1" Style="{StaticResource IslandBodyTextStyle}" Text="{Binding Current.Track.Artist}" />
+    </StackPanel>
+    <FontIcon Grid.Column="2"
+              Glyph="{Binding PlaybackGlyph}"
+              FontSize="17"
+              Foreground="{ThemeResource IslandTextPrimaryBrush}"
+              AutomationProperties.AccessibilityView="Raw" />
+  </Grid>
+</UserControl>
