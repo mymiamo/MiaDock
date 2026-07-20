@@ -30,20 +30,38 @@ public sealed partial class IslandShell : UserControl
 
     public IslandShell()
     {
-        InitializeComponent();
+        try
+        {
+            InitializeComponent();
+            WriteProbe("shell xaml");
 
-        _collapsedView = new CollapsedIslandView();
-        _hoverView = new HoverIslandView();
-        _expandedView = new ExpandedMusicView();
-        _notificationView = new TrackNotificationView();
+            _collapsedView = new CollapsedIslandView();
+            WriteProbe("collapsed");
+            _hoverView = new HoverIslandView();
+            WriteProbe("hover");
+            _expandedView = new ExpandedMusicView();
+            WriteProbe("expanded");
+            _notificationView = new TrackNotificationView();
+            WriteProbe("notification");
 
-        ContentHost.Children.Add(_collapsedView);
-        ContentHost.Children.Add(_hoverView);
-        ContentHost.Children.Add(_expandedView);
-        ContentHost.Children.Add(_notificationView);
+            ContentHost.Children.Add(_collapsedView);
+            ContentHost.Children.Add(_hoverView);
+            ContentHost.Children.Add(_expandedView);
+            ContentHost.Children.Add(_notificationView);
 
-        ApplyState(State);
+            ApplyState(State);
+            WriteProbe("state");
+        }
+        catch (Exception exception)
+        {
+            WriteProbe(exception.ToString());
+            throw;
+        }
     }
+
+    private static void WriteProbe(string message) => File.AppendAllText(
+        Path.Combine(Path.GetTempPath(), "miadock-island-error.log"),
+        $"{message}{Environment.NewLine}");
 
     public string State
     {

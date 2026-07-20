@@ -27,5 +27,7 @@
     <Content Include="..\MiaDock.UI\Assets\Mock\*.svg"
              Link="Assets\Mock\%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest" />
+    <Page Include="..\MiaDock.UI\Themes\*.xaml"
+          Link="Themes\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

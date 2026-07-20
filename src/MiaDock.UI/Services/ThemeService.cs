@@ -20,7 +20,7 @@ public sealed class ThemeService : IThemeService
 
         _styleDictionary = new ResourceDictionary
         {
-            Source = new Uri($"ms-appx:///MiaDock.UI/Themes/{GetFileName(style)}")
+            Source = new Uri($"ms-appx:///Themes/{GetFileName(style)}")
         };
 
         resources.Add(_styleDictionary);
