@@ -8,12 +8,18 @@
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="64" />
       <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
     <controls:AlbumArtwork Width="64" Height="64" />
     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
-      <TextBlock Text="Now playing" Style="{StaticResource IslandCaptionTextStyle}" />
+      <TextBlock Text="Şimdi çalıyor" Style="{StaticResource IslandCaptionTextStyle}" />
       <TextBlock MaxLines="1" Style="{StaticResource IslandTitleTextStyle}" Text="{Binding Current.Track.Title}" />
       <TextBlock MaxLines="1" Style="{StaticResource IslandBodyTextStyle}" Text="{Binding Current.Track.Artist}" />
     </StackPanel>
+    <controls:MediaTransportControls x:Name="TransportControls"
+                                     Grid.Column="2"
+                                     Margin="8,0,0,0"
+                                     VerticalAlignment="Center"
+                                     Visibility="Collapsed" />
   </Grid>
 </UserControl>

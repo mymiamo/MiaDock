@@ -1,0 +1,13 @@
+<UserControl x:Class="MiaDock.App.Views.Onboarding.WelcomeStepView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel Spacing="18" MaxWidth="620" HorizontalAlignment="Left">
+    <TextBlock Text="MiaDock'a hoş geldiniz" Style="{ThemeResource TitleTextBlockStyle}" />
+    <TextBlock Text="Windows 11 ile doğal biçimde çalışan, modüler ve etkileşimli dock'unuzu birkaç adımda hazırlayalım."
+               TextWrapping="Wrap" FontSize="18" />
+    <InfoBar IsOpen="True" Severity="Informational" Title="Gizlilik"
+             Message="MiaDock çevrimdışı çalışır; hesap, sunucu bağlantısı, telemetri veya otomatik hata gönderimi kullanmaz." />
+    <TextBlock Text="İlk sürümde medya modülü kullanılabilir. Pil, mikrofon, zamanlayıcı ve diğer modüller daha sonra aynı altyapıya eklenebilir."
+               TextWrapping="Wrap" Opacity="0.72" />
+  </StackPanel>
+</UserControl>

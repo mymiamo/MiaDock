@@ -1,0 +1,74 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.GenericCompactModuleView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    DataContextChanged="OnDataContextChanged">
+  <Grid>
+    <Grid x:Name="ContentRow"
+          Padding="12,0"
+          ColumnSpacing="9"
+          Visibility="Collapsed"
+          AutomationProperties.Name="{Binding PrimaryText}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="22" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Border Width="22"
+              Height="22"
+              CornerRadius="11"
+              Background="{ThemeResource IslandStyleControlBrush}"
+              AutomationProperties.AccessibilityView="Raw">
+        <FontIcon Glyph="{Binding LeadingGlyph}"
+                  FontSize="13"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Foreground="{ThemeResource IslandStyleAccentBrush}" />
+      </Border>
+      <TextBlock Grid.Column="1"
+                 Text="{Binding PrimaryText}"
+                 VerticalAlignment="Center"
+                 MaxLines="1"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource IslandBodyTextStyle}"
+                 Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                 ToolTipService.ToolTip="{Binding PrimaryText}" />
+      <TextBlock Grid.Column="2"
+                 MaxWidth="86"
+                 Text="{Binding ValueText}"
+                 VerticalAlignment="Center"
+                 MaxLines="1"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource IslandBodyTextStyle}"
+                 ToolTipService.ToolTip="{Binding ValueText}" />
+    </Grid>
+
+    <Grid x:Name="EmptyState"
+          Padding="12,0"
+          ColumnSpacing="9"
+          AutomationProperties.Name="Etkin olay yok">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="22" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Border Width="22"
+              Height="22"
+              CornerRadius="11"
+              Background="{ThemeResource IslandStyleControlBrush}"
+              AutomationProperties.AccessibilityView="Raw">
+        <FontIcon Glyph="&#xE946;"
+                  FontSize="12"
+                  HorizontalAlignment="Center"
+                  VerticalAlignment="Center"
+                  Foreground="{ThemeResource IslandStyleAccentBrush}" />
+      </Border>
+      <TextBlock x:Name="EmptyStateText"
+                 Grid.Column="1"
+                 Text="Etkin olay yok"
+                 VerticalAlignment="Center"
+                 MaxLines="1"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource IslandBodyTextStyle}" />
+    </Grid>
+  </Grid>
+</UserControl>

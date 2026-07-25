@@ -45,7 +45,41 @@ public sealed class IslandStateMachineTests
 
         machine.Dispatch(IslandTrigger.PrimaryInvoked);
 
-        Assert.AreEqual(IslandVisualState.ExpandedMusic, machine.CurrentState);
+        Assert.AreEqual(IslandVisualState.ExpandedModule, machine.CurrentState);
+    }
+
+    [TestMethod]
+    public void PrimaryInvoked_WhileExpanded_ReturnsToPointerAwareRestingState()
+    {
+        var machine = new IslandStateMachine();
+        machine.Dispatch(IslandTrigger.PointerEntered);
+        machine.Dispatch(IslandTrigger.PrimaryInvoked);
+
+        var transition = machine.Dispatch(IslandTrigger.PrimaryInvoked);
+
+        Assert.AreEqual(IslandVisualState.Hover, transition.CurrentState);
+    }
+
+    [TestMethod]
+    public void InactivityElapsed_WhileExpanded_ReturnsToCollapsed()
+    {
+        var machine = new IslandStateMachine();
+        machine.Dispatch(IslandTrigger.PrimaryInvoked);
+
+        var transition = machine.Dispatch(IslandTrigger.InactivityElapsed);
+
+        Assert.AreEqual(IslandVisualState.Collapsed, transition.CurrentState);
+    }
+
+    [TestMethod]
+    public void InactivityElapsed_OutsideExpandedState_IsIgnored()
+    {
+        var machine = new IslandStateMachine();
+
+        var transition = machine.Dispatch(IslandTrigger.InactivityElapsed);
+
+        Assert.AreEqual(IslandVisualState.Collapsed, transition.CurrentState);
+        Assert.IsFalse(transition.Changed);
     }
 
     [TestMethod]
@@ -53,9 +87,9 @@ public sealed class IslandStateMachineTests
     {
         var machine = new IslandStateMachine();
 
-        machine.Dispatch(IslandTrigger.TrackChanged);
+        machine.Dispatch(IslandTrigger.ModuleEventReceived);
 
-        Assert.AreEqual(IslandVisualState.TrackNotification, machine.CurrentState);
+        Assert.AreEqual(IslandVisualState.ModuleNotification, machine.CurrentState);
     }
 
     [TestMethod]
@@ -64,9 +98,9 @@ public sealed class IslandStateMachineTests
         var machine = new IslandStateMachine();
         machine.Dispatch(IslandTrigger.PrimaryInvoked);
 
-        var transition = machine.Dispatch(IslandTrigger.TrackChanged);
+        var transition = machine.Dispatch(IslandTrigger.ModuleEventReceived);
 
-        Assert.AreEqual(IslandVisualState.ExpandedMusic, transition.CurrentState);
+        Assert.AreEqual(IslandVisualState.ExpandedModule, transition.CurrentState);
         Assert.IsFalse(transition.Changed);
     }
 
@@ -75,7 +109,7 @@ public sealed class IslandStateMachineTests
     {
         var machine = new IslandStateMachine();
         machine.Dispatch(IslandTrigger.PointerEntered);
-        machine.Dispatch(IslandTrigger.TrackChanged);
+        machine.Dispatch(IslandTrigger.ModuleEventReceived);
 
         machine.Dispatch(IslandTrigger.NotificationElapsed);
 
@@ -87,7 +121,7 @@ public sealed class IslandStateMachineTests
     {
         var machine = new IslandStateMachine();
         machine.Dispatch(IslandTrigger.PointerEntered);
-        machine.Dispatch(IslandTrigger.TrackChanged);
+        machine.Dispatch(IslandTrigger.ModuleEventReceived);
         machine.Dispatch(IslandTrigger.PointerExited);
 
         machine.Dispatch(IslandTrigger.NotificationElapsed);

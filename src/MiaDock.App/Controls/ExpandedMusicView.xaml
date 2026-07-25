@@ -4,9 +4,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:MiaDock.App.Controls">
 
-  <Grid Padding="{StaticResource IslandExpandedPadding}" ColumnSpacing="16" RowSpacing="12">
+  <Grid Padding="16,8,16,12" ColumnSpacing="14" RowSpacing="7">
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="112" />
+      <ColumnDefinition Width="96" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
     <Grid.RowDefinitions>
@@ -15,7 +15,7 @@
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <controls:AlbumArtwork Grid.RowSpan="3" Width="112" Height="112" VerticalAlignment="Top" />
+    <controls:AlbumArtwork Grid.RowSpan="3" Width="96" Height="96" VerticalAlignment="Top" />
 
     <Grid Grid.Column="1" ColumnSpacing="8">
       <Grid.ColumnDefinitions>
@@ -38,7 +38,7 @@
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <controls:MediaTransportControls />
+      <controls:MediaTransportControls x:Name="TransportControls" HorizontalAlignment="Left" />
       <controls:VolumeControl Grid.Column="2" VerticalAlignment="Center" />
     </Grid>
   </Grid>

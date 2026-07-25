@@ -4,13 +4,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
   <Grid x:Name="LayoutRoot"
-        Width="{ThemeResource IslandCollapsedWidth}"
-        Height="{ThemeResource IslandCollapsedHeight}">
+        Width="292"
+        Height="46">
     <Border x:Name="Surface"
-            Background="{ThemeResource IslandStyleSurfaceBrush}"
-            BorderBrush="{ThemeResource IslandStrokeBrush}"
+            Background="#FF000000"
+            BorderBrush="#FF252525"
             BorderThickness="1"
-            CornerRadius="{ThemeResource IslandCornerRadius}">
+            CornerRadius="23">
       <Grid x:Name="ContentHost" />
     </Border>
   </Grid>

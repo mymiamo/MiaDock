@@ -1,0 +1,122 @@
+<UserControl x:Class="MiaDock.App.Controls.TimerExpandedView"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <TabView x:Name="TimeToolTabs"
+           IsAddTabButtonVisible="False"
+           TabWidthMode="Equal"
+           SelectedIndex="{Binding SelectedToolIndex, Mode=TwoWay}"
+           Margin="14,0,14,8"
+           AutomationProperties.Name="Zaman araçları">
+    <TabViewItem Header="Zamanlayıcı" IsClosable="False">
+      <Grid RowSpacing="7" Padding="4,2,4,0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel HorizontalAlignment="Center" Spacing="2">
+          <TextBlock Text="{Binding TimerText}" FontSize="30" FontWeight="SemiBold" HorizontalAlignment="Center"
+                     Foreground="{ThemeResource IslandTextPrimaryBrush}" />
+          <TextBlock Text="{Binding TimerStatusText}" HorizontalAlignment="Center" Style="{StaticResource IslandCaptionTextStyle}" />
+        </StackPanel>
+
+        <ProgressBar Grid.Row="1" Minimum="0" Maximum="100" Value="{Binding TimerProgressPercent}" Height="4"
+                     AutomationProperties.Name="Zamanlayıcı ilerlemesi" />
+
+        <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="6" HorizontalAlignment="Center">
+          <Button Content="1 dk" Command="{Binding StartPresetCommand}" CommandParameter="1"
+                  ToolTipService.ToolTip="1 dakikalık zamanlayıcıyı başlat" />
+          <Button Content="5 dk" Command="{Binding StartPresetCommand}" CommandParameter="5"
+                  ToolTipService.ToolTip="5 dakikalık zamanlayıcıyı başlat" />
+          <Button Content="10 dk" Command="{Binding StartPresetCommand}" CommandParameter="10"
+                  ToolTipService.ToolTip="10 dakikalık zamanlayıcıyı başlat" />
+          <Button Content="25 dk" Command="{Binding StartPresetCommand}" CommandParameter="25"
+                  ToolTipService.ToolTip="25 dakikalık zamanlayıcıyı başlat" />
+          <Button Content="45 dk" Command="{Binding StartPresetCommand}" CommandParameter="45"
+                  ToolTipService.ToolTip="45 dakikalık zamanlayıcıyı başlat" />
+        </StackPanel>
+
+        <Grid Grid.Row="3" ColumnSpacing="7">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="62" />
+            <ColumnDefinition Width="62" />
+            <ColumnDefinition Width="62" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel Spacing="2">
+            <TextBlock Text="Saat" Style="{StaticResource IslandCaptionTextStyle}" />
+            <NumberBox Minimum="0" Maximum="99" Value="{Binding CustomHours, Mode=TwoWay}"
+                       SpinButtonPlacementMode="Compact" AutomationProperties.Name="Saat" />
+          </StackPanel>
+          <StackPanel Grid.Column="1" Spacing="2">
+            <TextBlock Text="Dakika" Style="{StaticResource IslandCaptionTextStyle}" />
+            <NumberBox Minimum="0" Maximum="59" Value="{Binding CustomMinutes, Mode=TwoWay}"
+                       SpinButtonPlacementMode="Compact" AutomationProperties.Name="Dakika" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Spacing="2">
+            <TextBlock Text="Saniye" Style="{StaticResource IslandCaptionTextStyle}" />
+            <NumberBox Minimum="0" Maximum="59" Value="{Binding CustomSeconds, Mode=TwoWay}"
+                       SpinButtonPlacementMode="Compact" AutomationProperties.Name="Saniye" />
+          </StackPanel>
+          <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="6" VerticalAlignment="Bottom">
+            <Button MinWidth="76"
+                    Content="{Binding TimerPrimaryText}"
+                    Command="{Binding TimerPrimaryCommand}"
+                    Style="{StaticResource AccentButtonStyle}" />
+            <Button MinWidth="54" Content="İptal" Command="{Binding CancelTimerCommand}" />
+          </StackPanel>
+        </Grid>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
+          <FontIcon Glyph="&#xE7E7;" FontSize="11" Foreground="{ThemeResource IslandTextSecondaryBrush}" />
+          <TextBlock Text="Süre dolduğunda alarm sesi çalar."
+                     Style="{StaticResource IslandCaptionTextStyle}" />
+        </StackPanel>
+      </Grid>
+    </TabViewItem>
+
+    <TabViewItem Header="Kronometre" IsClosable="False">
+      <Grid RowSpacing="8" Padding="8,4,8,0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <StackPanel HorizontalAlignment="Center" Spacing="1">
+          <TextBlock Text="{Binding StopwatchText}" FontSize="34" FontWeight="SemiBold" HorizontalAlignment="Center"
+                     Foreground="{ThemeResource IslandTextPrimaryBrush}" />
+          <TextBlock Text="Saat : dakika : saniye"
+                     HorizontalAlignment="Center"
+                     Style="{StaticResource IslandCaptionTextStyle}" />
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
+          <Button MinWidth="92"
+                  Content="{Binding StopwatchPrimaryText}"
+                  Command="{Binding StopwatchPrimaryCommand}"
+                  Style="{StaticResource AccentButtonStyle}" />
+          <Button MinWidth="64" Content="Tur" Command="{Binding AddLapCommand}" />
+          <Button MinWidth="64" Content="Sıfırla" Command="{Binding ResetStopwatchCommand}" />
+        </StackPanel>
+
+        <Grid Grid.Row="2">
+          <TextBlock Text="Turlar" FontWeight="SemiBold" VerticalAlignment="Center"
+                     Foreground="{ThemeResource IslandTextPrimaryBrush}" />
+          <TextBlock Text="En yeni tur üstte" HorizontalAlignment="Right"
+                     Style="{StaticResource IslandCaptionTextStyle}" />
+        </Grid>
+
+        <ListView Grid.Row="3"
+                  ItemsSource="{Binding LapTexts}"
+                  MaxHeight="94"
+                  AutomationProperties.Name="Kronometre turları" />
+      </Grid>
+    </TabViewItem>
+  </TabView>
+</UserControl>

@@ -1,0 +1,23 @@
+<UserControl x:Class="MiaDock.App.Views.Settings.AboutSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer Padding="32,24,32,40">
+    <StackPanel MaxWidth="760" HorizontalAlignment="Left" Spacing="18">
+      <TextBlock Text="Hakkında" Style="{ThemeResource TitleTextBlockStyle}" />
+      <StackPanel Orientation="Horizontal" Spacing="14">
+        <Image Width="52" Height="52" Source="ms-appx:///Assets/AppLogo.png"
+               Stretch="Uniform" AutomationProperties.Name="MiaDock logosu" />
+        <TextBlock Text="MiaDock" FontSize="28" FontWeight="SemiBold"
+                   VerticalAlignment="Center" />
+      </StackPanel>
+      <TextBlock Text="Windows 11 ile doğal şekilde bütünleşen modüler medya adası." TextWrapping="Wrap" Opacity="0.68" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <TextBlock Text="Sürüm" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding VersionText}" />
+      </StackPanel>
+      <TextBlock Text="Ayar dosyası" Style="{ThemeResource SubtitleTextBlockStyle}" />
+      <TextBox Text="{Binding SettingsFilePath}" IsReadOnly="True" TextWrapping="Wrap" />
+      <TextBlock Text="Temel özellikler çevrimdışı çalışır. İlk sürüm telemetri, kullanıcı hesabı veya harici sunucu bağlantısı kullanmaz." TextWrapping="Wrap" />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

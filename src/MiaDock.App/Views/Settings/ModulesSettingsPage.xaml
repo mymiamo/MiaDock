@@ -1,0 +1,65 @@
+<UserControl x:Class="MiaDock.App.Views.Settings.ModulesSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls">
+  <ScrollViewer Padding="28,20,28,40"
+                HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled"
+                HorizontalContentAlignment="Stretch">
+    <StackPanel Width="820" MaxWidth="820" HorizontalAlignment="Center" Spacing="14">
+      <StackPanel Spacing="5" Margin="0,0,0,8">
+        <TextBlock Text="Modüller" FontSize="25" FontWeight="SemiBold" />
+        <TextBlock Text="Dock'ta çalışacak özellikleri, olay sürelerini ve tam ekran davranışını yönetin."
+                   TextWrapping="Wrap" Opacity="0.72" />
+      </StackPanel>
+
+      <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
+               Title="İzinler isteğe bağlıdır"
+               Message="MiaDock başlangıçta toplu izin istemez. İzin yalnız ilgili modülü açtığınızda istenir." />
+
+      <ItemsControl ItemsSource="{Binding ModuleItems}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <controls:ModuleSettingsCard Margin="0,0,0,10"
+                                         ToggleRequested="OnModuleToggleRequested"
+                                         DetailsRequested="OnModuleDetailsRequested" />
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+
+      <TextBlock Text="Hassas içerik" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TextBlock Text="Bildirim ve aktarım gibi hassas içerikler için iki koruma da varsayılan olarak kapalıdır."
+                 TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
+
+      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="38" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <FontIcon Glyph="&#xE740;" FontSize="19" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="Hassas içeriği tam ekranda göster" FontWeight="SemiBold" />
+            <TextBlock Text="Oyun veya tam ekran uygulama üzerinde bildirim içeriğine izin verir."
+                       TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="2" MinHeight="36"
+                        IsOn="{Binding ShowSensitiveContentInFullscreen, Mode=TwoWay}"
+                        AutomationProperties.Name="Hassas içeriği tam ekranda göster" />
+        </Grid>
+      </Border>
+
+      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="38" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <FontIcon Glyph="&#xE72E;" FontSize="19" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="Hassas içeriği Windows kilitliyken göster" FontWeight="SemiBold" />
+            <TextBlock Text="Windows oturumu kilitliyken hassas modül içeriğine izin verir."
+                       TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="2" MinHeight="36"
+                        IsOn="{Binding ShowSensitiveContentWhenLocked, Mode=TwoWay}"
+                        AutomationProperties.Name="Hassas içeriği kilit ekranında göster" />
+        </Grid>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

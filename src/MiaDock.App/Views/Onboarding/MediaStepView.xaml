@@ -1,0 +1,14 @@
+<UserControl x:Class="MiaDock.App.Views.Onboarding.MediaStepView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel Spacing="18" MaxWidth="620" HorizontalAlignment="Left">
+    <TextBlock Text="Medya uygulaması" Style="{ThemeResource TitleTextBlockStyle}" />
+    <TextBlock Text="MiaDock'un takip edeceği varsayılan medya kaynağını seçin. Liste, Windows medya oturumları değiştikçe güncellenir."
+               TextWrapping="Wrap" />
+    <ComboBox ItemsSource="{Binding MediaSourceOptions}" ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+              SelectedIndex="{Binding MediaSourceIndex, Mode=TwoWay}" HorizontalAlignment="Stretch"
+              AutomationProperties.Name="Varsayılan medya uygulaması" />
+    <InfoBar IsOpen="True" Severity="Informational" Title="Kaynak görünmüyor mu?"
+             Message="Spotify, Apple Music veya tarayıcıda bir medya başlatabilirsiniz. Kaynak seçmeden de kuruluma devam edebilirsiniz." />
+  </StackPanel>
+</UserControl>

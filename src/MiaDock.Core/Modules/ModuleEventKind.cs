@@ -4,5 +4,13 @@ public enum ModuleEventKind
 {
     TrackChanged,
     PlaybackChanged,
-    TimelineChanged
+    TimelineChanged,
+    StatusChanged,
+    ValueChanged,
+    Started,
+    ProgressChanged,
+    Completed,
+    Warning,
+    Critical,
+    Notification
 }

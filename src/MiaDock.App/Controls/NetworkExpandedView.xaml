@@ -1,0 +1,23 @@
+<UserControl x:Class="MiaDock.App.Controls.NetworkExpandedView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
+  <Grid Padding="22,10,22,14" RowSpacing="12">
+    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+    <Grid ColumnSpacing="12">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+      <FontIcon x:Name="NetworkIcon" Glyph="{Binding NetworkGlyph}" FontSize="26"
+                VerticalAlignment="Center"
+                AutomationProperties.Name="{Binding ConnectivityText}" />
+      <StackPanel Grid.Column="1" Spacing="2"><TextBlock Text="{Binding ConnectivityText}" Style="{StaticResource IslandTitleTextStyle}" /><TextBlock Text="{Binding ConnectionText}" Style="{StaticResource IslandBodyTextStyle}" /></StackPanel>
+      <TextBlock Grid.Column="2" Text="{Binding CostText}" Style="{StaticResource IslandCaptionTextStyle}" VerticalAlignment="Center" />
+    </Grid>
+    <Grid Grid.Row="1" ColumnSpacing="12">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+      <Border Background="{ThemeResource IslandStyleControlBrush}" CornerRadius="12" Padding="12,8"><StackPanel><TextBlock Text="İndirme" Style="{StaticResource IslandCaptionTextStyle}" /><TextBlock Text="{Binding DownloadText}" FontWeight="SemiBold" AutomationProperties.Name="İndirme hızı" /></StackPanel></Border>
+      <Border Grid.Column="1" Background="{ThemeResource IslandStyleControlBrush}" CornerRadius="12" Padding="12,8"><StackPanel><TextBlock Text="Yükleme" Style="{StaticResource IslandCaptionTextStyle}" /><TextBlock Text="{Binding UploadText}" FontWeight="SemiBold" AutomationProperties.Name="Yükleme hızı" /></StackPanel></Border>
+    </Grid>
+    <TextBlock Grid.Row="2" Text="Hız, yalnızca bu görünüm açıkken ölçülür." Style="{StaticResource IslandCaptionTextStyle}" />
+  </Grid>
+</UserControl>

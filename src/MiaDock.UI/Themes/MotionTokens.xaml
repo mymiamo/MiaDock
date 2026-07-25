@@ -3,7 +3,13 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:system="using:System">
 
-  <system:Double x:Key="IslandFastTransitionMilliseconds">140</system:Double>
-  <system:Double x:Key="IslandNormalTransitionMilliseconds">240</system:Double>
+  <system:Double x:Key="IslandHoverTransitionMilliseconds">170</system:Double>
+  <system:Double x:Key="IslandExpandTransitionMilliseconds">240</system:Double>
+  <system:Double x:Key="IslandCollapseTransitionMilliseconds">180</system:Double>
+  <system:Double x:Key="IslandNotificationEnterMilliseconds">220</system:Double>
+  <system:Double x:Key="IslandNotificationExitMilliseconds">160</system:Double>
+  <system:Double x:Key="IslandContentRefreshMilliseconds">120</system:Double>
+  <system:Double x:Key="IslandPointerExitDelayMilliseconds">250</system:Double>
   <system:Double x:Key="IslandNotificationDurationMilliseconds">5000</system:Double>
+  <system:Double x:Key="IslandExpandedInactivityMilliseconds">8000</system:Double>
 </ResourceDictionary>

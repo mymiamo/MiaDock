@@ -8,6 +8,11 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiaDock.Core\MiaDock.Core.csproj" />
     <ProjectReference Include="..\..\src\MiaDock.Modules.Media\MiaDock.Modules.Media.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.Modules.SystemStatus\MiaDock.Modules.SystemStatus.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.Modules.DeviceStatus\MiaDock.Modules.DeviceStatus.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.Modules.Time\MiaDock.Modules.Time.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.Modules.Notifications\MiaDock.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.Modules.Transfers\MiaDock.Modules.Transfers.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

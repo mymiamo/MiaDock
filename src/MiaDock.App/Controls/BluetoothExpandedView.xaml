@@ -1,0 +1,11 @@
+<UserControl x:Class="MiaDock.App.Controls.BluetoothExpandedView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="22,8,22,12" RowSpacing="8">
+    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+    <StackPanel Orientation="Horizontal" Spacing="10"><FontIcon Glyph="&#xE702;" FontSize="22" /><StackPanel><TextBlock Text="Bluetooth" Style="{StaticResource IslandTitleTextStyle}" /><TextBlock Text="{Binding StatusText}" Style="{StaticResource IslandCaptionTextStyle}" /></StackPanel></StackPanel>
+    <ListView Grid.Row="1" ItemsSource="{Binding ConnectedDevices}" SelectionMode="None" MaxHeight="92" AutomationProperties.Name="Bağlı Bluetooth cihazları">
+      <ListView.ItemTemplate><DataTemplate><Grid Padding="4" ColumnSpacing="8"><Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions><Ellipse Width="7" Height="7" Fill="{ThemeResource IslandAccentBrush}" VerticalAlignment="Center" /><TextBlock Grid.Column="1" Text="{Binding DisplayName}" MaxLines="1" TextTrimming="CharacterEllipsis" /></Grid></DataTemplate></ListView.ItemTemplate>
+    </ListView>
+  </Grid>
+</UserControl>

@@ -1,0 +1,21 @@
+<ContentDialog
+    x:Class="MiaDock.App.Dialogs.CloseBehaviorDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="MiaDock kapatılsın mı?"
+    PrimaryButtonText="Uygula"
+    CloseButtonText="İptal"
+    DefaultButton="Primary">
+  <StackPanel Spacing="14">
+    <TextBlock Text="Kapat düğmesine bastığınızda ne yapılacağını seçin."
+               TextWrapping="Wrap" />
+    <RadioButton x:Name="MinimizeOption"
+                 Content="Sistem tepsisine küçült"
+                 IsChecked="True"
+                 GroupName="CloseBehavior" />
+    <RadioButton x:Name="ExitOption"
+                 Content="Uygulamadan tamamen çık"
+                 GroupName="CloseBehavior" />
+    <CheckBox x:Name="RememberOption" Content="Seçimimi hatırla" />
+  </StackPanel>
+</ContentDialog>

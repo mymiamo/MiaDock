@@ -1,0 +1,12 @@
+<UserControl x:Class="MiaDock.App.Controls.TimerCompactView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="14,0" ColumnSpacing="10">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+    <FontIcon Glyph="&#xE823;" FontSize="15" Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <TextBlock Grid.Column="1" Text="{Binding CompactStatusText}" VerticalAlignment="Center"
+               MaxLines="1" TextTrimming="CharacterEllipsis" Style="{StaticResource IslandBodyTextStyle}" />
+    <TextBlock Grid.Column="2" Text="{Binding CompactTimeText}" VerticalAlignment="Center" FontWeight="SemiBold"
+               Foreground="{ThemeResource IslandTextPrimaryBrush}" />
+  </Grid>
+</UserControl>

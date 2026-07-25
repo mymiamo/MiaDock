@@ -1,0 +1,16 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.HotKeyRecorderControl"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel Orientation="Horizontal" Spacing="8">
+    <Button x:Name="RecorderButton"
+            MinWidth="190"
+            Click="OnRecorderClicked"
+            KeyDown="OnRecorderKeyDown"
+            LostFocus="OnRecorderLostFocus"
+            AutomationProperties.Name="Global kısayolu kaydet" />
+    <Button Content="Temizle"
+            Click="OnClearClicked"
+            AutomationProperties.Name="Kısayol atamasını temizle" />
+  </StackPanel>
+</UserControl>

@@ -1,0 +1,12 @@
+<UserControl x:Class="MiaDock.App.Controls.TimerNotificationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="18,0" ColumnSpacing="12">
+    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+    <FontIcon Glyph="&#xE823;" FontSize="22" Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <StackPanel Grid.Column="1" VerticalAlignment="Center">
+      <TextBlock Text="Süre doldu" FontWeight="SemiBold" Foreground="{ThemeResource IslandTextPrimaryBrush}" />
+      <TextBlock Text="Zamanlayıcı tamamlandı" Style="{StaticResource IslandCaptionTextStyle}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

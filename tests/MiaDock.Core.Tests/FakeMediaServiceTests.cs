@@ -14,7 +14,7 @@ public sealed class FakeMediaServiceTests
         service.SelectScenario("missing-artwork");
 
         Assert.AreEqual("Quiet Geometry", service.Current.Track.Title);
-        Assert.IsNull(service.Current.Track.ArtworkUri);
+        Assert.IsNull(service.Current.Track.Artwork);
     }
 
     [TestMethod]

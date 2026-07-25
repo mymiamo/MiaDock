@@ -1,0 +1,22 @@
+<UserControl x:Class="MiaDock.App.Views.Settings.MonitorSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer Padding="32,24,32,40">
+    <StackPanel MaxWidth="760" HorizontalAlignment="Left" Spacing="18">
+      <TextBlock Text="Monitör" Style="{ThemeResource TitleTextBlockStyle}" />
+      <TextBlock Text="Adanın hangi ekranda gösterileceğini seçin." TextWrapping="Wrap" Opacity="0.68" />
+      <TextBlock Text="Monitör davranışı" Style="{ThemeResource SubtitleTextBlockStyle}" />
+      <ComboBox ItemsSource="{Binding MonitorModes}" DisplayMemberPath="Label"
+                SelectedIndex="{Binding MonitorModeIndex, Mode=TwoWay}" HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Monitör davranışı" />
+      <TextBlock Text="Sabit monitör" Style="{ThemeResource SubtitleTextBlockStyle}" />
+      <ComboBox ItemsSource="{Binding Displays}"
+                DisplayMemberPath="DisplayName"
+                SelectedIndex="{Binding FixedMonitorIndex, Mode=TwoWay}"
+                PlaceholderText="Bir monitör seçin"
+                HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Sabit monitör" />
+      <InfoBar IsOpen="True" Severity="Informational" Title="Güvenli geçiş" Message="Seçilen monitör bağlantısı kesilirse dock otomatik olarak ana monitöre taşınır." />
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

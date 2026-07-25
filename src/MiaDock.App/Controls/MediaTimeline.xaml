@@ -12,13 +12,14 @@
     <TextBlock VerticalAlignment="Center"
                Style="{StaticResource IslandCaptionTextStyle}"
                Text="{Binding PositionText}" />
-    <Slider Grid.Column="1"
+    <Slider x:Name="TimelineSlider"
+            Grid.Column="1"
             MinWidth="140"
             Minimum="0"
             Maximum="100"
-            Value="{Binding ProgressPercent, Mode=TwoWay}"
+            Value="{Binding ProgressPercent, Mode=OneWay}"
             IsEnabled="{Binding Current.Capabilities.CanSeek}"
-            AutomationProperties.Name="Track position" />
+            AutomationProperties.Name="Parça konumu" />
     <TextBlock Grid.Column="2"
                VerticalAlignment="Center"
                Style="{StaticResource IslandCaptionTextStyle}"

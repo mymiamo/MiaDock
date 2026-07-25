@@ -1,15 +1,27 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using MiaDock.App.Animations;
+using MiaDock.App.Services;
+using MiaDock.Core.Overlay;
 using MiaDock.Core.Presentation;
+using MiaDock.Core.Theming;
+using Windows.UI;
+using MiaDock.Core.Settings;
+using MiaDock.Core.Modules;
+using System.Numerics;
 
 namespace MiaDock.App.Controls;
 
 public sealed partial class IslandShell : UserControl
 {
-    private readonly CollapsedIslandView _collapsedView;
-    private readonly HoverIslandView _hoverView;
-    private readonly ExpandedMusicView _expandedView;
-    private readonly TrackNotificationView _notificationView;
+    private readonly CompactModuleHost _collapsedView;
+    private readonly CompactModuleHost _hoverView;
+    private readonly ExpandedModuleHost _expandedView;
+    private readonly ModuleNotificationHost _notificationView;
+    private readonly IReadOnlyDictionary<IslandVisualState, FrameworkElement> _views;
+    private IIslandAnimationCoordinator? _animationCoordinator;
+    private IslandLayoutOptions _layoutOptions = IslandLayoutOptions.Default;
     public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
         nameof(State),
         typeof(string),
@@ -22,46 +34,51 @@ public sealed partial class IslandShell : UserControl
         typeof(IslandShell),
         new PropertyMetadata(string.Empty, OnThemeChanged));
 
-    public static readonly DependencyProperty MediaContextProperty = DependencyProperty.Register(
-        nameof(MediaContext),
-        typeof(object),
+    public static readonly DependencyProperty ModuleDisplayProperty = DependencyProperty.Register(
+        nameof(ModuleDisplay),
+        typeof(ModuleDisplayState),
         typeof(IslandShell),
-        new PropertyMetadata(null, OnMediaContextChanged));
+        new PropertyMetadata(null, OnModuleDisplayChanged));
+
+    public static readonly DependencyProperty AvailableModulesProperty = DependencyProperty.Register(
+        nameof(AvailableModules),
+        typeof(IReadOnlyList<ModuleDisplayState>),
+        typeof(IslandShell),
+        new PropertyMetadata(null, OnAvailableModulesChanged));
+
+    public static readonly DependencyProperty ShowNotificationControlsProperty = DependencyProperty.Register(
+        nameof(ShowNotificationControls), typeof(bool), typeof(IslandShell),
+        new PropertyMetadata(false, OnShowNotificationControlsChanged));
 
     public IslandShell()
     {
-        try
+        InitializeComponent();
+
+        _collapsedView = new CompactModuleHost();
+        _hoverView = new CompactModuleHost { UseHoverView = true };
+        _expandedView = new ExpandedModuleHost();
+        _notificationView = new ModuleNotificationHost();
+
+        _views = new Dictionary<IslandVisualState, FrameworkElement>
         {
-            InitializeComponent();
-            WriteProbe("shell xaml");
+            [IslandVisualState.Collapsed] = _collapsedView,
+            [IslandVisualState.Hover] = _hoverView,
+            [IslandVisualState.ExpandedModule] = _expandedView,
+            [IslandVisualState.ModuleNotification] = _notificationView
+        };
 
-            _collapsedView = new CollapsedIslandView();
-            WriteProbe("collapsed");
-            _hoverView = new HoverIslandView();
-            WriteProbe("hover");
-            _expandedView = new ExpandedMusicView();
-            WriteProbe("expanded");
-            _notificationView = new TrackNotificationView();
-            WriteProbe("notification");
+        ContentHost.Children.Add(_collapsedView);
+        ContentHost.Children.Add(_hoverView);
+        ContentHost.Children.Add(_expandedView);
+        ContentHost.Children.Add(_notificationView);
 
-            ContentHost.Children.Add(_collapsedView);
-            ContentHost.Children.Add(_hoverView);
-            ContentHost.Children.Add(_expandedView);
-            ContentHost.Children.Add(_notificationView);
+        _expandedView.PreviousRequested += OnPreviousModuleRequested;
+        _expandedView.NextRequested += OnNextModuleRequested;
+        _expandedView.ModuleSelected += OnModuleSelected;
 
-            ApplyState(State);
-            WriteProbe("state");
-        }
-        catch (Exception exception)
-        {
-            WriteProbe(exception.ToString());
-            throw;
-        }
+        ApplyTheme(Theme);
+        ApplyState(State);
     }
-
-    private static void WriteProbe(string message) => File.AppendAllText(
-        Path.Combine(Path.GetTempPath(), "miadock-island-error.log"),
-        $"{message}{Environment.NewLine}");
 
     public string State
     {
@@ -75,10 +92,97 @@ public sealed partial class IslandShell : UserControl
         set => SetValue(ThemeProperty, value);
     }
 
-    public object? MediaContext
+    public OverlaySize VisualSize => new(LayoutRoot.Width, LayoutRoot.Height);
+
+    public double VisualCornerRadius => Surface.CornerRadius.TopLeft;
+
+    public event EventHandler? VisualSizeChanged;
+
+    public void ConfigureAnimations(
+        IAnimationPreferenceService animationPreferences,
+        IslandMotionOptions options,
+        IslandLayoutOptions layoutOptions,
+        IslandVisualState initialState)
     {
-        get => GetValue(MediaContextProperty);
-        set => SetValue(MediaContextProperty, value);
+        _animationCoordinator?.Dispose();
+        _layoutOptions = layoutOptions;
+        _animationCoordinator = new IslandAnimationCoordinator(
+            LayoutRoot,
+            Surface,
+            _views,
+            ApplyMetrics,
+            animationPreferences,
+            options,
+            layoutOptions);
+        _animationCoordinator.ApplyInitialState(initialState);
+    }
+
+    public ModuleDisplayState? ModuleDisplay
+    {
+        get => (ModuleDisplayState?)GetValue(ModuleDisplayProperty);
+        set => SetValue(ModuleDisplayProperty, value);
+    }
+
+    public IReadOnlyList<ModuleDisplayState>? AvailableModules
+    {
+        get => (IReadOnlyList<ModuleDisplayState>?)GetValue(AvailableModulesProperty);
+        set => SetValue(AvailableModulesProperty, value);
+    }
+
+    public bool ShowNotificationControls
+    {
+        get => (bool)GetValue(ShowNotificationControlsProperty);
+        set => SetValue(ShowNotificationControlsProperty, value);
+    }
+
+    public event EventHandler? PreviousModuleRequested;
+
+    public event EventHandler? NextModuleRequested;
+
+    public event EventHandler<ModuleSelectedEventArgs>? ModuleSelected;
+
+    public void ConfigureModuleViews(IModuleViewRegistry viewRegistry)
+    {
+        ArgumentNullException.ThrowIfNull(viewRegistry);
+        _collapsedView.Configure(viewRegistry);
+        _hoverView.Configure(viewRegistry);
+        _expandedView.Configure(viewRegistry);
+        _notificationView.Configure(viewRegistry);
+    }
+
+    public void ApplyTransition(IslandTransition transition) =>
+        _animationCoordinator?.RequestTransition(transition);
+
+    public void DisposeAnimations()
+    {
+        _animationCoordinator?.Dispose();
+        _animationCoordinator = null;
+    }
+
+    public void ApplyAppearance(AppearanceSettings appearance)
+    {
+        ArgumentNullException.ThrowIfNull(appearance);
+        var background = ColorParser.ParseRgb(appearance.BackgroundColor);
+        var accent = ColorParser.ParseRgb(appearance.AccentColor);
+        Surface.Background = CreateSurfaceBrush(appearance.Theme, background, appearance.Opacity);
+        Surface.BorderBrush = appearance.Theme == ThemeStyle.BlurredGlass
+            ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
+            : appearance.Theme.IsWindows11Style()
+            ? new SolidColorBrush(Color.FromArgb(
+                checked((byte)Math.Round(48 + appearance.ShadowIntensity * 96)),
+                accent.R,
+                accent.G,
+                accent.B))
+            : new SolidColorBrush(Color.FromArgb(
+                checked((byte)Math.Round(255 - appearance.ShadowIntensity * 80)),
+                37,
+                37,
+                37));
+        Surface.BorderThickness = new Thickness(1 + appearance.ShadowIntensity);
+        Surface.Shadow = appearance.ShadowIntensity > 0.01 ? new ThemeShadow() : null;
+        Surface.Translation = appearance.ShadowIntensity > 0.01
+            ? new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24))
+            : Vector3.Zero;
     }
 
     private static void OnStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -93,17 +197,61 @@ public sealed partial class IslandShell : UserControl
     {
         if (dependencyObject is IslandShell shell)
         {
-            // Theme resources on the visual tree update automatically.
+            shell.ApplyTheme(args.NewValue as string);
         }
     }
 
-    private static void OnMediaContextChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    private void ApplyTheme(string? themeName)
     {
-        if (dependencyObject is IslandShell shell)
-        {
-            shell.ContentHost.DataContext = args.NewValue;
-        }
+        var theme = Enum.TryParse<ThemeStyle>(themeName, out var parsed)
+            ? parsed
+            : ThemeStyle.AppleLike;
+        var fallback = theme == ThemeStyle.BlurredGlass
+            ? Color.FromArgb(0xFF, 0x14, 0x14, 0x14)
+            : theme.IsWindows11Style()
+            ? Color.FromArgb(0xFF, 0x20, 0x21, 0x24)
+            : Color.FromArgb(0xFF, 0x05, 0x05, 0x06);
+        Surface.Background = CreateSurfaceBrush(theme, fallback, 1);
+
+        Surface.BorderBrush = theme == ThemeStyle.BlurredGlass
+            ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
+            : new SolidColorBrush(Color.FromArgb(255, 37, 37, 37));
+        Surface.BorderThickness = new Thickness(1);
     }
+
+    private static Brush CreateSurfaceBrush(ThemeStyle theme, Color color, double opacity)
+    {
+        var normalizedOpacity = Math.Clamp(opacity, 0.35, 1);
+        return theme switch
+        {
+            ThemeStyle.Windows11Mica => new SolidColorBrush(WithOpacity(color, 0.91 * normalizedOpacity)),
+            ThemeStyle.Windows11MicaAlt => new SolidColorBrush(WithOpacity(color, 0.86 * normalizedOpacity)),
+            ThemeStyle.Windows11Acrylic => CreateAcrylic(color, 0.72, normalizedOpacity),
+            ThemeStyle.Windows11AcrylicThin => CreateAcrylic(color, 0.46, normalizedOpacity),
+            ThemeStyle.BlurredGlass => CreateGlassOverlay(normalizedOpacity),
+            _ => new SolidColorBrush(WithOpacity(color, normalizedOpacity))
+        };
+    }
+
+    private static SolidColorBrush CreateGlassOverlay(double opacity) => new(Color.FromArgb(
+        checked((byte)Math.Round(0.08 * opacity * byte.MaxValue)),
+        0x14,
+        0x14,
+        0x14));
+
+    private static AcrylicBrush CreateAcrylic(Color color, double tintOpacity, double opacity) => new()
+    {
+        FallbackColor = color,
+        TintColor = color,
+        TintOpacity = tintOpacity,
+        Opacity = opacity
+    };
+
+    private static Color WithOpacity(Color color, double opacity) => Color.FromArgb(
+        checked((byte)Math.Round(Math.Clamp(opacity, 0, 1) * byte.MaxValue)),
+        color.R,
+        color.G,
+        color.B);
 
     private void ApplyState(string stateName)
     {
@@ -112,18 +260,50 @@ public sealed partial class IslandShell : UserControl
             state = IslandVisualState.Collapsed;
         }
 
-        (LayoutRoot.Width, LayoutRoot.Height) = state switch
-        {
-            IslandVisualState.Collapsed => (184, 40),
-            IslandVisualState.Hover => (300, 72),
-            IslandVisualState.ExpandedMusic => (440, 210),
-            IslandVisualState.TrackNotification => (360, 92),
-            _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
-        };
+        ApplyMetrics(IslandAnimationProfile.ForState(state, _layoutOptions));
+
         _collapsedView.Visibility = state == IslandVisualState.Collapsed ? Visibility.Visible : Visibility.Collapsed;
         _hoverView.Visibility = state == IslandVisualState.Hover ? Visibility.Visible : Visibility.Collapsed;
-        _expandedView.Visibility = state == IslandVisualState.ExpandedMusic ? Visibility.Visible : Visibility.Collapsed;
-        _notificationView.Visibility = state == IslandVisualState.TrackNotification ? Visibility.Visible : Visibility.Collapsed;
+        _expandedView.Visibility = state == IslandVisualState.ExpandedModule ? Visibility.Visible : Visibility.Collapsed;
+        _notificationView.Visibility = state == IslandVisualState.ModuleNotification ? Visibility.Visible : Visibility.Collapsed;
+        _expandedView.SetHostActive(state == IslandVisualState.ExpandedModule);
     }
 
+    private static void OnModuleDisplayChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        if (dependencyObject is not IslandShell shell)
+        {
+            return;
+        }
+
+        var display = args.NewValue as ModuleDisplayState;
+        shell._collapsedView.DisplayState = display;
+        shell._hoverView.DisplayState = display;
+        shell._expandedView.DisplayState = display;
+        shell._notificationView.DisplayState = display;
+    }
+
+    private static void OnAvailableModulesChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args) =>
+        ((IslandShell)dependencyObject)._expandedView.AvailableModules =
+            args.NewValue as IReadOnlyList<ModuleDisplayState>;
+
+    private static void OnShowNotificationControlsChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args) =>
+        ((IslandShell)dependencyObject)._notificationView.ShowControls = (bool)args.NewValue;
+
+    private void OnPreviousModuleRequested(object? sender, EventArgs args) =>
+        PreviousModuleRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnNextModuleRequested(object? sender, EventArgs args) =>
+        NextModuleRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnModuleSelected(object? sender, ModuleSelectedEventArgs args) =>
+        ModuleSelected?.Invoke(this, args);
+
+    private void ApplyMetrics(IslandVisualMetrics metrics)
+    {
+        LayoutRoot.Width = metrics.Width;
+        LayoutRoot.Height = metrics.Height;
+        Surface.CornerRadius = new CornerRadius(metrics.CornerRadius);
+        VisualSizeChanged?.Invoke(this, EventArgs.Empty);
+    }
 }

@@ -83,9 +83,9 @@ Requirements
 ## 🗺 Roadmap
 
 - [x] Project planning
-- [ ] Core window
-- [ ] Island animations
-- [ ] Music integration
+- [x] Core overlay window
+- [x] Island animations
+- [x] Music integration
 - [ ] Notification system
 - [ ] Settings page
 - [ ] Widget system
@@ -119,6 +119,35 @@ Please create an Issue with:
 
 ---
 
+## 🦺 Build and test
+
+```powershell
+dotnet restore MiaDock.sln
+dotnet build MiaDock.sln -c Debug -p:Platform=x64
+dotnet test tests\MiaDock.Core.Tests\MiaDock.Core.Tests.csproj -c Debug
+dotnet test tests\MiaDock.WinUI.Tests\MiaDock.WinUI.Tests.csproj -c Debug
+dotnet test tests\MiaDock.Platform.Windows.Tests\MiaDock.Platform.Windows.Tests.csproj -c Debug -p:Platform=x64
+```
+
+Run the current Debug build from the configuration folder (not the stale `win-x64` publish subfolder):
+
+```powershell
+& .\src\MiaDock.App\bin\x64\Debug\net10.0-windows10.0.26100.0\MiaDock.App.exe
+& .\src\MiaDock.App\bin\x64\Debug\net10.0-windows10.0.26100.0\MiaDock.App.exe --settings
+```
+
+Optional endurance profiles are disabled during normal test runs. Run the 30-minute event profile or the 8-hour idle profile explicitly:
+
+```powershell
+$env:MIADOCK_SOAK_PROFILE = "events" # events, idle, or all
+dotnet test tests\MiaDock.Core.Tests\MiaDock.Core.Tests.csproj -c Release --filter TestCategory=Soak
+Remove-Item Env:MIADOCK_SOAK_PROFILE
+```
+
+For a shortened validation of the same code paths, set `MIADOCK_SOAK_SCALE` to a value between `0` and `1`.
+
+---
+
 ## ⭐ Support
 
 If you like the project, consider giving it a ⭐ on GitHub.
@@ -143,4 +172,4 @@ https://mymiamo.net
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is licensed under the GNU Affero General Public License.

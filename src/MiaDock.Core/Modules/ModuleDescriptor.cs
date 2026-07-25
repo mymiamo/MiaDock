@@ -9,7 +9,13 @@ public sealed record ModuleDescriptor
         string compactViewKey,
         string expandedViewKey,
         IReadOnlySet<ModuleEventKind> supportedEvents,
-        TimeSpan defaultDisplayDuration)
+        TimeSpan defaultDisplayDuration,
+        IReadOnlyList<ModuleCommandDescriptor>? interactionCommands = null,
+        string? notificationViewKey = null,
+        int? persistentPriority = null,
+        bool isPersistent = true,
+        string? hoverViewKey = null,
+        string? iconGlyph = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -34,6 +40,14 @@ public sealed record ModuleDescriptor
         ExpandedViewKey = expandedViewKey;
         SupportedEvents = supportedEvents;
         DefaultDisplayDuration = defaultDisplayDuration;
+        InteractionCommands = interactionCommands ?? Array.Empty<ModuleCommandDescriptor>();
+        NotificationViewKey = string.IsNullOrWhiteSpace(notificationViewKey)
+            ? compactViewKey
+            : notificationViewKey;
+        PersistentPriority = persistentPriority ?? priority;
+        IsPersistent = isPersistent;
+        HoverViewKey = string.IsNullOrWhiteSpace(hoverViewKey) ? compactViewKey : hoverViewKey;
+        IconGlyph = string.IsNullOrWhiteSpace(iconGlyph) ? "\uE10C" : iconGlyph;
     }
 
     public string Id { get; }
@@ -49,4 +63,16 @@ public sealed record ModuleDescriptor
     public IReadOnlySet<ModuleEventKind> SupportedEvents { get; }
 
     public TimeSpan DefaultDisplayDuration { get; }
+
+    public IReadOnlyList<ModuleCommandDescriptor> InteractionCommands { get; }
+
+    public string NotificationViewKey { get; }
+
+    public int PersistentPriority { get; }
+
+    public bool IsPersistent { get; }
+
+    public string HoverViewKey { get; }
+
+    public string IconGlyph { get; }
 }

@@ -11,8 +11,8 @@
     <Slider Width="90"
             Minimum="0"
             Maximum="100"
-            Value="{Binding VolumePercent, Mode=TwoWay}"
+            Value="{Binding VolumePercent, Mode=OneWay}"
             IsEnabled="{Binding Current.Capabilities.CanChangeVolume}"
-            AutomationProperties.Name="Volume" />
+            AutomationProperties.Name="Ses seviyesi" />
   </StackPanel>
 </UserControl>

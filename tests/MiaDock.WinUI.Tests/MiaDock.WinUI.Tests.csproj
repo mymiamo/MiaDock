@@ -4,6 +4,8 @@
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <AppxGeneratePriEnabled>false</AppxGeneratePriEnabled>
+    <AppxGeneratePrisForPortableLibrariesEnabled>false</AppxGeneratePrisForPortableLibrariesEnabled>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MSTest" />
@@ -11,10 +13,18 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiaDock.Core\MiaDock.Core.csproj" />
     <ProjectReference Include="..\..\src\MiaDock.Modules.Media\MiaDock.Modules.Media.csproj" />
+    <ProjectReference Include="..\..\src\MiaDock.UI\MiaDock.UI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\src\MiaDock.UI\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\*.xaml" Link="Controls\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\OverlayWindow.xaml" Link="Windows\OverlayWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\SettingsWindow.xaml" Link="Windows\SettingsWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\OnboardingWindow.xaml" Link="Windows\OnboardingWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Package.appxmanifest" Link="Package.appxmanifest" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Views\Settings\*.xaml" Link="Settings\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Dialogs\*.xaml" Link="Dialogs\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Views\Onboarding\*.xaml" Link="Onboarding\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

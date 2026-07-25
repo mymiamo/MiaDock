@@ -4,11 +4,17 @@
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
     <UseWinUI>true</UseWinUI>
-    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsPackageType Condition="'$(BuildMsix)' != 'true'">None</WindowsPackageType>
+    <EnableMsixTooling Condition="'$(BuildMsix)' == 'true'">true</EnableMsixTooling>
+    <GenerateAppxPackageOnBuild Condition="'$(BuildMsix)' == 'true'">true</GenerateAppxPackageOnBuild>
+    <AppxPackageSigningEnabled Condition="'$(BuildMsix)' == 'true'">false</AppxPackageSigningEnabled>
+    <AppxBundle Condition="'$(BuildMsix)' == 'true'">Never</AppxBundle>
+    <AppxSymbolPackageEnabled Condition="'$(BuildMsix)' == 'true'">false</AppxSymbolPackageEnabled>
     <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <Platforms>x64</Platforms>
     <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <ApplicationIcon>..\..\logo.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
@@ -18,16 +24,21 @@
   <ItemGroup>
     <ProjectReference Include="..\MiaDock.Core\MiaDock.Core.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.Media\MiaDock.Modules.Media.csproj" />
+    <ProjectReference Include="..\MiaDock.Modules.SystemStatus\MiaDock.Modules.SystemStatus.csproj" />
+    <ProjectReference Include="..\MiaDock.Modules.DeviceStatus\MiaDock.Modules.DeviceStatus.csproj" />
+    <ProjectReference Include="..\MiaDock.Modules.Time\MiaDock.Modules.Time.csproj" />
+    <ProjectReference Include="..\MiaDock.Modules.Notifications\MiaDock.Modules.Notifications.csproj" />
+    <ProjectReference Include="..\MiaDock.Modules.Transfers\MiaDock.Modules.Transfers.csproj" />
+    <ProjectReference Include="..\MiaDock.Platform.Windows\MiaDock.Platform.Windows.csproj" />
     <ProjectReference Include="..\MiaDock.UI\MiaDock.UI.csproj" />
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="$(ApplicationManifest)" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="..\MiaDock.UI\Assets\Mock\*.svg"
-             Link="Assets\Mock\%(Filename)%(Extension)"
-             CopyToOutputDirectory="PreserveNewest" />
-    <Page Include="..\MiaDock.UI\Themes\*.xaml"
-          Link="Themes\%(Filename)%(Extension)" />
+    <Content Include="..\..\logo.ico" Link="Assets\logo.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\*.png" />
+    <Content Include="..\MiaDock.UI\Assets\Mock\*.svg" Link="Assets\Mock\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Page Include="..\MiaDock.UI\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,43 @@
+<UserControl
+    x:Class="MiaDock.App.Views.Settings.TimeAndHotKeysSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls">
+  <ScrollViewer>
+    <StackPanel MaxWidth="760" Padding="32" Spacing="20" HorizontalAlignment="Left">
+      <StackPanel Spacing="6">
+        <TextBlock Text="Zaman ve kısayollar" Style="{ThemeResource TitleTextBlockStyle}" />
+        <TextBlock Text="Zamanlayıcı ve kronometreyi genişletilmiş adadaki Zaman modülünden yönetin. Fare tekeriyle varsayılan görünüm ve modüller arasında geçebilirsiniz."
+                   TextWrapping="Wrap" Opacity="0.72" />
+      </StackPanel>
+
+      <Border Padding="18" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Global kısayollar" Style="{ThemeResource SubtitleTextBlockStyle}" />
+          <TextBlock Text="Kısayol kaydetmek için düğmeye tıklayın ve Ctrl, Alt veya Shift içeren kombinasyona basın. Windows tuşu ve F12 kullanılamaz."
+                     TextWrapping="Wrap" Opacity="0.72" />
+          <ToggleSwitch Header="Global kısayolları etkinleştir" IsOn="{Binding HotKeysEnabled, Mode=TwoWay}" />
+          <TextBlock Text="{Binding HotKeyStatusMessage}" TextWrapping="Wrap" Opacity="0.72" />
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnSpacing="20" RowSpacing="14">
+        <Grid.ColumnDefinitions><ColumnDefinition Width="220" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <TextBlock Grid.Row="0" Text="Adayı göster / gizle" VerticalAlignment="Center" />
+        <controls:HotKeyRecorderControl Grid.Row="0" Grid.Column="1" Gesture="{Binding ToggleDockHotKey, Mode=TwoWay}" />
+        <TextBlock Grid.Row="1" Text="Adayı genişlet / küçült" VerticalAlignment="Center" />
+        <controls:HotKeyRecorderControl Grid.Row="1" Grid.Column="1" Gesture="{Binding ToggleExpandedHotKey, Mode=TwoWay}" />
+        <TextBlock Grid.Row="2" Text="Sonraki modül" VerticalAlignment="Center" />
+        <controls:HotKeyRecorderControl Grid.Row="2" Grid.Column="1" Gesture="{Binding NextModuleHotKey, Mode=TwoWay}" />
+        <TextBlock Grid.Row="3" Text="Medyayı oynat / duraklat" VerticalAlignment="Center" />
+        <controls:HotKeyRecorderControl Grid.Row="3" Grid.Column="1" Gesture="{Binding MediaPlayPauseHotKey, Mode=TwoWay}" />
+        <TextBlock Grid.Row="4" Text="Zamanlayıcıyı duraklat / sürdür" VerticalAlignment="Center" />
+        <controls:HotKeyRecorderControl Grid.Row="4" Grid.Column="1" Gesture="{Binding TimerPauseResumeHotKey, Mode=TwoWay}" />
+      </Grid>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

@@ -6,6 +6,7 @@ public enum IslandTrigger
     PointerExited,
     PrimaryInvoked,
     CollapseRequested,
-    TrackChanged,
+    InactivityElapsed,
+    ModuleEventReceived,
     NotificationElapsed
 }

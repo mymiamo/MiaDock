@@ -1,0 +1,79 @@
+<UserControl x:Class="MiaDock.App.Controls.SystemActivityExpandedView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="22,16,22,18" RowSpacing="10">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+    </Grid.RowDefinitions>
+
+    <Grid ColumnSpacing="10">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Button Width="34" Height="34"
+              Style="{StaticResource IslandCompactIconButtonStyle}"
+              Command="{Binding ToggleMasterMuteCommand}"
+              ToolTipService.ToolTip="Ana sesi aç veya kapat" AutomationProperties.Name="Ana sesi aç veya kapat">
+        <FontIcon Glyph="{Binding MasterVolumeGlyph}" FontSize="15" />
+      </Button>
+      <Slider Grid.Column="1" Minimum="0" Maximum="100"
+              Value="{Binding Snapshot.MasterVolumePercent, Mode=OneWay}"
+              IsEnabled="{Binding Snapshot.IsMasterVolumeAvailable}"
+              ValueChanged="OnMasterVolumeChanged"
+              AutomationProperties.Name="Windows ana ses seviyesi" />
+      <TextBlock Grid.Column="2" Text="{Binding MasterVolumeText}" Width="42"
+                 VerticalAlignment="Center" TextAlignment="Right" />
+    </Grid>
+
+    <Grid Grid.Row="1" ColumnSpacing="10">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Button Width="34" Height="34"
+              Style="{StaticResource IslandCompactIconButtonStyle}"
+              Command="{Binding ToggleApplicationMuteCommand}"
+              IsEnabled="{Binding IsApplicationVolumeAvailable}"
+              ToolTipService.ToolTip="Seçili uygulamanın sesini aç veya kapat"
+              AutomationProperties.Name="Seçili uygulamanın sesini aç veya kapat">
+        <FontIcon Glyph="&#xE74F;" FontSize="15" />
+      </Button>
+      <Slider Grid.Column="1" Minimum="0" Maximum="100"
+              Value="{Binding Snapshot.ApplicationVolumePercent, Mode=OneWay}"
+              IsEnabled="{Binding IsApplicationVolumeAvailable}"
+              ValueChanged="OnApplicationVolumeChanged"
+              AutomationProperties.Name="Seçili medya uygulamasının ses seviyesi" />
+      <TextBlock Grid.Column="2" Text="{Binding ApplicationVolumeText}" MinWidth="42" MaxWidth="130"
+                 VerticalAlignment="Center" TextAlignment="Right" TextTrimming="CharacterEllipsis" />
+    </Grid>
+
+    <Grid Grid.Row="2" ColumnSpacing="16">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <StackPanel Orientation="Horizontal" Spacing="7">
+        <FontIcon Glyph="&#xE720;" FontSize="14" />
+        <TextBlock Text="{Binding MicrophoneText}" VerticalAlignment="Center"
+                   Style="{StaticResource IslandBodyTextStyle}" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="7">
+        <FontIcon Glyph="&#xE714;" FontSize="14" />
+        <TextBlock Text="{Binding CameraText}" VerticalAlignment="Center" MaxLines="1"
+                   TextTrimming="CharacterEllipsis" Style="{StaticResource IslandBodyTextStyle}" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="7">
+      <FontIcon Glyph="&#xE717;" FontSize="14" />
+      <TextBlock Text="{Binding CallText}" VerticalAlignment="Center"
+                 Style="{StaticResource IslandBodyTextStyle}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

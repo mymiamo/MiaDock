@@ -1,0 +1,147 @@
+using MiaDock.Core.Modules;
+using MiaDock.Core.Settings;
+using MiaDock.Modules.DeviceStatus;
+using MiaDock.Modules.DeviceStatus.Models;
+using MiaDock.Modules.DeviceStatus.Services;
+using MiaDock.Modules.DeviceStatus.Settings;
+using MiaDock.Modules.DeviceStatus.ViewModels;
+
+namespace MiaDock.Core.Tests;
+
+[TestClass]
+public sealed class DeviceStatusModuleTests
+{
+    [TestMethod]
+    public void BatteryOptions_NormalizeInvalidOrderingWithoutAffectingEnvelope()
+    {
+        var envelope = BatteryModuleOptions.ApplyThresholds(ModuleSettingsEnvelope.BatteryDefault, 4, 40, 18);
+        var options = BatteryModuleOptions.FromEnvelope(envelope);
+
+        Assert.IsGreaterThan(options.EmergencyThresholdPercent, options.CriticalThresholdPercent);
+        Assert.IsGreaterThan(options.CriticalThresholdPercent, options.LowThresholdPercent);
+        Assert.IsLessThanOrEqualTo(50, options.LowThresholdPercent);
+    }
+
+    [TestMethod]
+    public async Task BatteryModule_CrossingThresholdRaisesOneCoalescedEventAndChargingRearms()
+    {
+        var service = new FakePowerService(Battery(25));
+        var settings = new FakeBatterySettings();
+        var module = new BatteryModule(service, new BatteryModuleViewModel(service), settings);
+        await module.ActivateAsync();
+        var events = new List<ModuleEvent>();
+        module.EventOccurred += (_, value) => events.Add(value);
+
+        service.Publish(Battery(20));
+        service.Publish(Battery(19));
+        service.Publish(Battery(25) with { IsCharging = true });
+        service.Publish(Battery(20));
+
+        Assert.HasCount(2, events);
+        Assert.IsTrue(events.All(value => value.CoalescingKey == "battery:low"));
+        Assert.IsTrue(events.All(value => value.Priority == ModuleEventPriority.Normal));
+    }
+
+    [TestMethod]
+    public async Task BatteryModule_DesktopWithoutBatteryDoesNotOccupyModuleStrip()
+    {
+        var service = new FakePowerService(Battery(0) with { IsBatteryPresent = false });
+        var module = new BatteryModule(service, new BatteryModuleViewModel(service), new FakeBatterySettings());
+
+        await module.ActivateAsync();
+
+        Assert.IsNull(module.CurrentPresentation);
+        Assert.IsFalse(module.Descriptor.IsPersistent);
+    }
+
+    [TestMethod]
+    public async Task NetworkModule_ThroughputChangeDoesNotCreateNotification()
+    {
+        var service = new FakeNetworkService(Network(NetworkConnectivityKind.Internet));
+        var module = new NetworkModule(service, new NetworkModuleViewModel(service));
+        await module.ActivateAsync();
+        ModuleEvent? raised = null;
+        module.EventOccurred += (_, value) => raised = value;
+
+        service.Publish(service.Current with { DownloadBytesPerSecond = 42_000, UploadBytesPerSecond = 2_000 });
+
+        Assert.IsNull(raised);
+    }
+
+    [TestMethod]
+    public void NetworkThroughputSampling_RunsOnlyWhileExpandedAndStopsOnDispose()
+    {
+        var service = new FakeNetworkService(Network(NetworkConnectivityKind.Internet));
+        var viewModel = new NetworkModuleViewModel(service);
+
+        viewModel.SetExpandedActive(true);
+        viewModel.SetExpandedActive(false);
+        viewModel.SetExpandedActive(true);
+        viewModel.Dispose();
+
+        CollectionAssert.AreEqual(new[] { true, false, true, false }, service.SamplingStates);
+    }
+
+    [TestMethod]
+    public async Task BluetoothModule_SuppressesInitialEnumerationAndMarksDeviceNameSensitive()
+    {
+        var initial = new BluetoothStatusSnapshot(DeviceServiceState.Starting, false, Array.Empty<BluetoothDeviceState>());
+        var service = new FakeBluetoothService(initial);
+        var module = new BluetoothModule(service, new BluetoothModuleViewModel(service));
+        await module.ActivateAsync();
+        var events = new List<ModuleEvent>();
+        module.EventOccurred += (_, value) => events.Add(value);
+        var device = new BluetoothDeviceState("one", "Kulaklık", false, true);
+
+        service.Publish(new BluetoothStatusSnapshot(DeviceServiceState.Ready, true, new[] { device }));
+        service.Publish(new BluetoothStatusSnapshot(DeviceServiceState.Ready, true, new[] { device with { IsConnected = true } }));
+
+        Assert.HasCount(1, events);
+        Assert.IsTrue(events[0].Presentation.IsSensitive);
+        Assert.IsFalse(events[0].IsFullscreenEligible);
+    }
+
+    private static BatteryStatusSnapshot Battery(int percent) => new(
+        DeviceServiceState.Ready, true, percent, false, false, "Pil gücü");
+
+    private static NetworkStatusSnapshot Network(NetworkConnectivityKind connectivity) => new(
+        DeviceServiceState.Ready, connectivity, NetworkConnectionKind.WiFi, false, Guid.NewGuid(), null, null);
+
+    private sealed class FakeBatterySettings : IBatteryModuleSettings
+    {
+        public BatteryModuleOptions Current { get; } = BatteryModuleOptions.Default;
+        public event EventHandler<BatteryModuleOptions>? Changed { add { } remove { } }
+    }
+
+    private sealed class FakePowerService(BatteryStatusSnapshot current) : IPowerStatusService
+    {
+        public BatteryStatusSnapshot Current { get; private set; } = current;
+        public event EventHandler<BatteryStatusSnapshot>? SnapshotChanged;
+        public ValueTask StartAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public ValueTask StopAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public void Publish(BatteryStatusSnapshot value) { Current = value; SnapshotChanged?.Invoke(this, value); }
+        public void Dispose() { }
+    }
+
+    private sealed class FakeNetworkService(NetworkStatusSnapshot current) : INetworkStatusService
+    {
+        public NetworkStatusSnapshot Current { get; private set; } = current;
+        public List<bool> SamplingStates { get; } = [];
+        public event EventHandler<NetworkStatusSnapshot>? SnapshotChanged;
+        public ValueTask StartAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public ValueTask StopAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public void SetThroughputSamplingEnabled(bool enabled) => SamplingStates.Add(enabled);
+        public void Publish(NetworkStatusSnapshot value) { Current = value; SnapshotChanged?.Invoke(this, value); }
+        public void Dispose() { }
+    }
+
+    private sealed class FakeBluetoothService(BluetoothStatusSnapshot current) : IBluetoothStatusService
+    {
+        public BluetoothStatusSnapshot Current { get; private set; } = current;
+        public event EventHandler<BluetoothStatusSnapshot>? SnapshotChanged;
+        public ValueTask StartAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public ValueTask StopAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public void Publish(BluetoothStatusSnapshot value) { Current = value; SnapshotChanged?.Invoke(this, value); }
+        public void Dispose() { }
+    }
+}

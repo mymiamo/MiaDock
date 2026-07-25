@@ -1,0 +1,34 @@
+<UserControl x:Class="MiaDock.App.Controls.ModuleSwitcher"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsTabStop="True"
+             AutomationProperties.Name="Modüller arasında geçiş"
+             KeyDown="OnKeyDown"
+             PointerWheelChanged="OnPointerWheelChanged"
+             ManipulationMode="TranslateX"
+             ManipulationCompleted="OnManipulationCompleted">
+  <Border x:Name="SwitcherRoot" Background="#CC101114" CornerRadius="18" Padding="2">
+    <ScrollViewer MaxWidth="420"
+                  HorizontalScrollMode="Enabled"
+                  HorizontalScrollBarVisibility="Hidden"
+                  VerticalScrollMode="Disabled"
+                  VerticalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Center">
+    <StackPanel Orientation="Horizontal" Spacing="2">
+      <Button Width="36" Height="36"
+              Style="{StaticResource IslandCompactIconButtonStyle}"
+              Click="OnPreviousClick"
+              ToolTipService.ToolTip="Önceki modül" AutomationProperties.Name="Önceki modül">
+        <FontIcon Glyph="&#xE76B;" FontSize="10" />
+      </Button>
+      <StackPanel x:Name="ModuleButtons" Orientation="Horizontal" Spacing="2" />
+      <Button Width="36" Height="36"
+              Style="{StaticResource IslandCompactIconButtonStyle}"
+              Click="OnNextClick"
+              ToolTipService.ToolTip="Sonraki modül" AutomationProperties.Name="Sonraki modül">
+        <FontIcon Glyph="&#xE76C;" FontSize="10" />
+      </Button>
+    </StackPanel>
+    </ScrollViewer>
+  </Border>
+</UserControl>

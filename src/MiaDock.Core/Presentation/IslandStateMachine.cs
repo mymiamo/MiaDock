@@ -30,10 +30,12 @@ public sealed class IslandStateMachine : IIslandStateMachine
 
     private IslandVisualState ResolveState(IslandVisualState state, IslandTrigger trigger) => trigger switch
     {
-        IslandTrigger.TrackChanged when state != IslandVisualState.ExpandedMusic => IslandVisualState.TrackNotification,
-        IslandTrigger.PrimaryInvoked => IslandVisualState.ExpandedMusic,
+        IslandTrigger.ModuleEventReceived when state != IslandVisualState.ExpandedModule => IslandVisualState.ModuleNotification,
+        IslandTrigger.PrimaryInvoked when state == IslandVisualState.ExpandedModule => RestingState,
+        IslandTrigger.PrimaryInvoked => IslandVisualState.ExpandedModule,
         IslandTrigger.CollapseRequested => RestingState,
-        IslandTrigger.NotificationElapsed when state == IslandVisualState.TrackNotification => RestingState,
+        IslandTrigger.InactivityElapsed when state == IslandVisualState.ExpandedModule => RestingState,
+        IslandTrigger.NotificationElapsed when state == IslandVisualState.ModuleNotification => RestingState,
         IslandTrigger.PointerEntered when state == IslandVisualState.Collapsed => IslandVisualState.Hover,
         IslandTrigger.PointerExited when state == IslandVisualState.Hover => IslandVisualState.Collapsed,
         _ => state

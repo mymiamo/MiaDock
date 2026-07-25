@@ -5,4 +5,9 @@
   <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#FA050506" />
   <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#FF1B1B1D" />
   <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
+  <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#28FFFFFF" />
+  <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#42FFFFFF" />
+  <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FFFFFFFF" />
+  <CornerRadius x:Key="IslandIconButtonCornerRadius">999</CornerRadius>
 </ResourceDictionary>

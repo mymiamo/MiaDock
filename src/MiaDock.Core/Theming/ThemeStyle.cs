@@ -2,6 +2,11 @@ namespace MiaDock.Core.Theming;
 
 public enum ThemeStyle
 {
-    AppleLike,
-    Windows11
+    AppleLike = 0,
+    Windows11Mica = 1,
+    Windows11MicaAlt = 2,
+    Windows11Acrylic = 3,
+    Windows11AcrylicThin = 4,
+    CustomSolidColor = 5,
+    BlurredGlass = 6
 }

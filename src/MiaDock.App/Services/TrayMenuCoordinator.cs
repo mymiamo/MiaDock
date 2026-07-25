@@ -1,0 +1,352 @@
+using MiaDock.Core.Modules;
+using MiaDock.Core.Settings;
+using MiaDock.Modules.Media.Models;
+using MiaDock.Modules.Media.Services;
+using MiaDock.Platform.Windows.Display;
+using MiaDock.Platform.Windows.Startup;
+using MiaDock.Platform.Windows.Tray;
+using MiaDock.Core.Logging;
+
+namespace MiaDock.App.Services;
+
+public sealed class TrayMenuCoordinator : IDisposable
+{
+    private const string MediaModuleId = "media";
+    private const int ToggleDockCommand = 100;
+    private const int PreviousCommand = 110;
+    private const int PlayPauseCommand = 111;
+    private const int NextCommand = 112;
+    private const int SettingsCommand = 200;
+    private const int StartupCommand = 300;
+    private const int FullscreenEnabledCommand = 400;
+    private const int FullscreenMinimalCommand = 401;
+    private const int FullscreenControlledCommand = 402;
+    private const int PrimaryMonitorCommand = 500;
+    private const int ActiveMonitorCommand = 501;
+    private const int NotificationsCommand = 600;
+    private const int ExitCommand = 900;
+    private const int SourceCommandBase = 2000;
+    private const int DisplayCommandBase = 3000;
+
+    private readonly ITrayIconService _tray;
+    private readonly OverlayWindow _overlay;
+    private readonly ISettingsWindowService _settingsWindow;
+    private readonly ISettingsService _settings;
+    private readonly IIslandModuleRegistry _modules;
+    private readonly IMediaSessionService _media;
+    private readonly IDisplayTopologyService _displays;
+    private readonly IStartupTaskService _startup;
+    private readonly IApplicationLifetimeService _lifetime;
+    private readonly ILogService _log;
+    private readonly Dictionary<int, string> _sourceCommands = new();
+    private readonly Dictionary<int, string> _displayCommands = new();
+    private StartupTaskStatus _startupStatus = StartupTaskStatus.Unavailable;
+    private bool _started;
+    private bool _disposed;
+
+    public TrayMenuCoordinator(
+        ITrayIconService tray,
+        OverlayWindow overlay,
+        ISettingsWindowService settingsWindow,
+        ISettingsService settings,
+        IIslandModuleRegistry modules,
+        IMediaSessionService media,
+        IDisplayTopologyService displays,
+        IStartupTaskService startup,
+        IApplicationLifetimeService lifetime,
+        ILogService log)
+    {
+        _tray = tray;
+        _overlay = overlay;
+        _settingsWindow = settingsWindow;
+        _settings = settings;
+        _modules = modules;
+        _media = media;
+        _displays = displays;
+        _startup = startup;
+        _lifetime = lifetime;
+        _log = log;
+    }
+
+    public async Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_started)
+        {
+            return;
+        }
+
+        _tray.Initialize("MiaDock");
+        _tray.CommandInvoked += OnCommandInvoked;
+        _tray.PrimaryInvoked += OnPrimaryInvoked;
+        _settings.SettingsChanged += OnSettingsChanged;
+        _modules.ActivePresentationChanged += OnModulePresentationChanged;
+        _media.SnapshotChanged += OnMediaSnapshotChanged;
+        _media.SourcesChanged += OnMediaSourcesChanged;
+        _displays.DisplaysChanged += OnDisplaysChanged;
+        _startupStatus = await _startup.GetStatusAsync(cancellationToken);
+        _tray.SetMenu(BuildMenu());
+        _tray.SetVisible(_settings.Current.Tray.ShowIcon);
+        _started = true;
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _tray.CommandInvoked -= OnCommandInvoked;
+        _tray.PrimaryInvoked -= OnPrimaryInvoked;
+        _settings.SettingsChanged -= OnSettingsChanged;
+        _modules.ActivePresentationChanged -= OnModulePresentationChanged;
+        _media.SnapshotChanged -= OnMediaSnapshotChanged;
+        _media.SourcesChanged -= OnMediaSourcesChanged;
+        _displays.DisplaysChanged -= OnDisplaysChanged;
+        _tray.Dispose();
+        _disposed = true;
+    }
+
+    private IReadOnlyList<TrayMenuItem> BuildMenu()
+    {
+        var settings = _settings.Current;
+        var mediaControls = new List<TrayMenuItem>();
+        if (settings.Tray.ShowMediaControls)
+        {
+            mediaControls.AddRange(
+            [
+                new(PreviousCommand, "Önceki", _modules.CanExecuteCommand(MediaModuleId, "previous")),
+                new(PlayPauseCommand, PlaybackLabel(), _modules.CanExecuteCommand(MediaModuleId, "play-pause")),
+                new(NextCommand, "Sonraki", _modules.CanExecuteCommand(MediaModuleId, "next")),
+                TrayMenuItem.Separator
+            ]);
+        }
+
+        _sourceCommands.Clear();
+        var sourceItems = new List<TrayMenuItem>();
+        for (var index = 0; index < _media.Sources.Count; index++)
+        {
+            var source = _media.Sources[index];
+            var command = SourceCommandBase + index;
+            _sourceCommands[command] = source.Id;
+            sourceItems.Add(new TrayMenuItem(
+                command,
+                source.DisplayName,
+                IsChecked: source.Id == settings.Media.SelectedSourceId));
+        }
+
+        if (sourceItems.Count == 0)
+        {
+            sourceItems.Add(new TrayMenuItem(0, "Medya uygulaması bulunamadı", IsEnabled: false));
+        }
+
+        _displayCommands.Clear();
+        var monitorItems = new List<TrayMenuItem>
+        {
+            new(PrimaryMonitorCommand, "Ana monitör", IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Primary),
+            new(ActiveMonitorCommand, "Aktif pencerenin monitörü", IsChecked: settings.Monitor.Mode == MonitorSelectionMode.ActiveWindow),
+            TrayMenuItem.Separator
+        };
+        for (var index = 0; index < _displays.Displays.Count; index++)
+        {
+            var display = _displays.Displays[index];
+            var command = DisplayCommandBase + index;
+            _displayCommands[command] = display.Id;
+            monitorItems.Add(new TrayMenuItem(
+                command,
+                display.DisplayName,
+                IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Fixed &&
+                           settings.Monitor.FixedMonitorId == display.Id));
+        }
+
+        var items = new List<TrayMenuItem>
+        {
+            new(ToggleDockCommand, _overlay.IsDockVisible ? "Adayı gizle" : "Adayı göster")
+        };
+        items.AddRange(mediaControls);
+        items.Add(new TrayMenuItem(SettingsCommand, "Ayarlar"));
+        items.Add(new TrayMenuItem(0, "Varsayılan medya uygulaması", Children: sourceItems));
+        items.Add(new TrayMenuItem(
+            StartupCommand,
+            "Windows başlangıcında çalıştır",
+            IsEnabled: _startupStatus != StartupTaskStatus.Unavailable,
+            IsChecked: _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy));
+        items.Add(new TrayMenuItem(0, "Tam ekran davranışı", Children:
+        [
+            new(FullscreenEnabledCommand, "Tam ekranda bildirimleri göster", IsChecked: settings.Fullscreen.Enabled),
+            TrayMenuItem.Separator,
+            new(FullscreenMinimalCommand, "Sade görünüm", IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal),
+            new(FullscreenControlledCommand, "Kontrollü görünüm", IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls)
+        ]));
+        items.Add(new TrayMenuItem(0, "Monitör seç", Children: monitorItems));
+        items.Add(new TrayMenuItem(
+            NotificationsCommand,
+            "Geçici bildirimleri göster",
+            IsChecked: settings.Tray.EnableTemporaryNotifications));
+        items.Add(TrayMenuItem.Separator);
+        items.Add(new TrayMenuItem(ExitCommand, "Uygulamadan tamamen çık"));
+        return items;
+    }
+
+    private string PlaybackLabel() => _media.Current.PlaybackStatus == PlaybackStatus.Playing
+        ? "Duraklat"
+        : "Oynat";
+
+    private void RefreshMenu()
+    {
+        if (!_disposed)
+        {
+            _tray.SetMenu(BuildMenu());
+        }
+    }
+
+    private void OnPrimaryInvoked(object? sender, EventArgs args)
+    {
+        _overlay.ShowDock();
+        RefreshMenu();
+    }
+
+    private void OnCommandInvoked(object? sender, int command) => _ = ExecuteCommandSafelyAsync(command);
+
+    private async Task ExecuteCommandSafelyAsync(int command)
+    {
+        try
+        {
+            await ExecuteCommandAsync(command);
+        }
+        catch (Exception exception)
+        {
+            _log.Write(
+                TechnicalLogLevel.Error,
+                TechnicalEventIds.TrayCommandFailed,
+                "Tray",
+                "A tray command failed.",
+                exception,
+                new Dictionary<string, object?> { ["operation"] = "command" });
+        }
+    }
+
+    private async Task ExecuteCommandAsync(int command)
+    {
+        if (_lifetime.IsShuttingDown)
+        {
+            return;
+        }
+
+        if (_sourceCommands.TryGetValue(command, out var sourceId))
+        {
+            _settings.Update(settings => settings with
+            {
+                Media = settings.Media with { SelectedSourceId = sourceId }
+            });
+            return;
+        }
+
+        if (_displayCommands.TryGetValue(command, out var displayId))
+        {
+            _settings.Update(settings => settings with
+            {
+                Monitor = new MonitorSettings(MonitorSelectionMode.Fixed, displayId)
+            });
+            return;
+        }
+
+        switch (command)
+        {
+            case ToggleDockCommand:
+                _overlay.ToggleDock();
+                break;
+            case PreviousCommand:
+                await ExecuteModuleCommandAsync("previous");
+                break;
+            case PlayPauseCommand:
+                await ExecuteModuleCommandAsync("play-pause");
+                break;
+            case NextCommand:
+                await ExecuteModuleCommandAsync("next");
+                break;
+            case SettingsCommand:
+                _settingsWindow.Show();
+                break;
+            case StartupCommand:
+                var enabled = _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy;
+                _startupStatus = await _startup.SetEnabledAsync(!enabled);
+                _settings.Update(settings => settings with
+                {
+                    StartupShutdown = settings.StartupShutdown with
+                    {
+                        StartWithWindows = _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy
+                    }
+                });
+                break;
+            case FullscreenEnabledCommand:
+                _settings.Update(settings => settings with
+                {
+                    Fullscreen = settings.Fullscreen with { Enabled = !settings.Fullscreen.Enabled }
+                });
+                break;
+            case FullscreenMinimalCommand:
+                SetFullscreenStyle(FullscreenNotificationStyle.Minimal);
+                break;
+            case FullscreenControlledCommand:
+                SetFullscreenStyle(FullscreenNotificationStyle.WithControls);
+                break;
+            case PrimaryMonitorCommand:
+                SetMonitorMode(MonitorSelectionMode.Primary);
+                break;
+            case ActiveMonitorCommand:
+                SetMonitorMode(MonitorSelectionMode.ActiveWindow);
+                break;
+            case NotificationsCommand:
+                _settings.Update(settings => settings with
+                {
+                    Tray = settings.Tray with
+                    {
+                        EnableTemporaryNotifications = !settings.Tray.EnableTemporaryNotifications
+                    }
+                });
+                break;
+            case ExitCommand:
+                _lifetime.RequestExit();
+                return;
+        }
+
+        RefreshMenu();
+    }
+
+    private async Task ExecuteModuleCommandAsync(string commandId)
+    {
+        await _modules.ExecuteCommandAsync(MediaModuleId, commandId);
+    }
+
+    private void SetFullscreenStyle(FullscreenNotificationStyle style) =>
+        _settings.Update(settings => settings with
+        {
+            Fullscreen = settings.Fullscreen with { Style = style }
+        });
+
+    private void SetMonitorMode(MonitorSelectionMode mode) =>
+        _settings.Update(settings => settings with
+        {
+            Monitor = settings.Monitor with { Mode = mode }
+        });
+
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
+    {
+        if (_tray.IsVisible != args.Current.Tray.ShowIcon)
+        {
+            _tray.SetVisible(args.Current.Tray.ShowIcon);
+        }
+
+        RefreshMenu();
+    }
+
+    private void OnModulePresentationChanged(object? sender, ModulePresentation? presentation) => RefreshMenu();
+
+    private void OnMediaSnapshotChanged(object? sender, MediaSnapshot snapshot) => RefreshMenu();
+
+    private void OnMediaSourcesChanged(object? sender, IReadOnlyList<MediaSourceInfo> sources) => RefreshMenu();
+
+    private void OnDisplaysChanged(object? sender, IReadOnlyList<DisplayDescriptor> displays) => RefreshMenu();
+}

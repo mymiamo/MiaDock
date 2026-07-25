@@ -1,7 +1,41 @@
 <UserControl
     x:Class="MiaDock.App.Controls.CollapsedIslandView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded">
+
+  <UserControl.Resources>
+    <Storyboard x:Name="VisualizerStoryboard" RepeatBehavior="Forever">
+      <DoubleAnimationUsingKeyFrames Storyboard.TargetName="LeftBarScale"
+                                     Storyboard.TargetProperty="ScaleY"
+                                     Duration="0:0:0.72">
+        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0.45" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.18" Value="1" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.39" Value="0.6" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.58" Value="0.85" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.72" Value="0.45" />
+      </DoubleAnimationUsingKeyFrames>
+      <DoubleAnimationUsingKeyFrames Storyboard.TargetName="CenterBarScale"
+                                     Storyboard.TargetProperty="ScaleY"
+                                     Duration="0:0:0.72">
+        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0.9" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.14" Value="0.55" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.34" Value="1" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.55" Value="0.4" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.72" Value="0.9" />
+      </DoubleAnimationUsingKeyFrames>
+      <DoubleAnimationUsingKeyFrames Storyboard.TargetName="RightBarScale"
+                                     Storyboard.TargetProperty="ScaleY"
+                                     Duration="0:0:0.72">
+        <EasingDoubleKeyFrame KeyTime="0:0:0" Value="0.65" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.2" Value="0.4" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.42" Value="0.9" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.61" Value="0.55" />
+        <EasingDoubleKeyFrame KeyTime="0:0:0.72" Value="0.65" />
+      </DoubleAnimationUsingKeyFrames>
+    </Storyboard>
+  </UserControl.Resources>
 
   <Grid Padding="{StaticResource IslandCompactPadding}" ColumnSpacing="9">
     <Grid.ColumnDefinitions>
@@ -18,10 +52,41 @@
                MaxLines="1"
                Style="{StaticResource IslandBodyTextStyle}"
                Text="{Binding Current.Track.Title}" />
-    <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="2" VerticalAlignment="Center">
-      <Rectangle Width="3" Height="8" RadiusX="1.5" RadiusY="1.5" Fill="{ThemeResource IslandStyleAccentBrush}" />
-      <Rectangle Width="3" Height="14" RadiusX="1.5" RadiusY="1.5" Fill="{ThemeResource IslandStyleAccentBrush}" />
-      <Rectangle Width="3" Height="10" RadiusX="1.5" RadiusY="1.5" Fill="{ThemeResource IslandStyleAccentBrush}" />
+    <StackPanel Grid.Column="2"
+                Orientation="Horizontal"
+                Spacing="2"
+                VerticalAlignment="Center"
+                AutomationProperties.Name="Oynatma göstergesi">
+      <Rectangle Width="3"
+                 Height="14"
+                 RadiusX="1.5"
+                 RadiusY="1.5"
+                 Fill="{ThemeResource IslandStyleAccentBrush}"
+                 RenderTransformOrigin="0.5,0.5">
+        <Rectangle.RenderTransform>
+          <ScaleTransform x:Name="LeftBarScale" ScaleY="0.45" />
+        </Rectangle.RenderTransform>
+      </Rectangle>
+      <Rectangle Width="3"
+                 Height="14"
+                 RadiusX="1.5"
+                 RadiusY="1.5"
+                 Fill="{ThemeResource IslandStyleAccentBrush}"
+                 RenderTransformOrigin="0.5,0.5">
+        <Rectangle.RenderTransform>
+          <ScaleTransform x:Name="CenterBarScale" ScaleY="0.9" />
+        </Rectangle.RenderTransform>
+      </Rectangle>
+      <Rectangle Width="3"
+                 Height="14"
+                 RadiusX="1.5"
+                 RadiusY="1.5"
+                 Fill="{ThemeResource IslandStyleAccentBrush}"
+                 RenderTransformOrigin="0.5,0.5">
+        <Rectangle.RenderTransform>
+          <ScaleTransform x:Name="RightBarScale" ScaleY="0.65" />
+        </Rectangle.RenderTransform>
+      </Rectangle>
     </StackPanel>
   </Grid>
 </UserControl>

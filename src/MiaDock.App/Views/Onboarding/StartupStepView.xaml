@@ -1,0 +1,14 @@
+<UserControl x:Class="MiaDock.App.Views.Onboarding.StartupStepView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel Spacing="18" MaxWidth="620" HorizontalAlignment="Left">
+    <TextBlock Text="Windows başlangıcı" Style="{ThemeResource TitleTextBlockStyle}" />
+    <TextBlock Text="MiaDock'un Windows oturumu açıldığında otomatik başlamasını seçebilirsiniz."
+               TextWrapping="Wrap" />
+    <ToggleSwitch Header="Windows açılışında MiaDock'u başlat"
+                  IsOn="{Binding StartWithWindows, Mode=TwoWay}"
+                  IsEnabled="{Binding IsStartupTaskAvailable}"
+                  AutomationProperties.Name="Windows başlangıcında çalıştır" />
+    <InfoBar IsOpen="True" Severity="Informational" Message="{Binding StartupStatusMessage}" />
+  </StackPanel>
+</UserControl>
