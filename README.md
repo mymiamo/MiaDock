@@ -7,6 +7,7 @@
 Lightweight • Native • Customizable • Open Source
 
 [![Windows](https://img.shields.io/badge/Windows-11-0078D4?logo=windows11&logoColor=white)](#)
+[![Windows](https://img.shields.io/badge/Windows-10-0078D4?logo=windows10&logoColor=white)](#)
 [![WinUI 3](https://img.shields.io/badge/WinUI-3-512BD4?logo=.net&logoColor=white)](#)
 [![License](https://img.shields.io/github/license/mymiamo/MiaDock)](LICENSE)
 [![Stars](https://img.shields.io/github/stars/mymiamo/MiaDock)](https://github.com/mymiamo/MiaDock/stargazers)
