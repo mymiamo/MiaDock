@@ -75,7 +75,6 @@ src/
   MiaDock.Modules.*/           Media, device, time, notification, and transfer modules
   MiaDock.UI/                  Shared presentation and theme resources
 tests/                         Core, Windows platform, and WinUI resource tests
-samples/MiaDock.TransferPublisher/
 ```
 
 ## Microsoft Store package
