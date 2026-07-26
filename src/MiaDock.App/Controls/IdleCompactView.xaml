@@ -128,7 +128,7 @@
       <local:AudioActivityIndicator x:Name="MusicActivity"
                                     Width="10"
                                     Height="14"
-                                    Foreground="White"
+                                    Foreground="{ThemeResource IslandTextPrimaryBrush}"
                                     Visibility="Collapsed" />
     </StackPanel>
   </Grid>

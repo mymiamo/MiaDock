@@ -105,12 +105,6 @@ public sealed partial class IslandViewModel : ObservableObject, IDisposable
 
     public void HandlePrimaryInvoked()
     {
-        var wasExpanded = CurrentState == IslandVisualState.ExpandedModule;
-        if (!wasExpanded && ActiveModuleDisplay is null && AvailableModules.Count > 0)
-        {
-            _orchestrator.SelectModule(AvailableModules[0].Descriptor.Id);
-        }
-
         Dispatch(IslandTrigger.PrimaryInvoked);
     }
 

@@ -7,7 +7,12 @@
              PointerWheelChanged="OnPointerWheelChanged"
              ManipulationMode="TranslateX"
              ManipulationCompleted="OnManipulationCompleted">
-  <Border x:Name="SwitcherRoot" Background="#CC101114" CornerRadius="18" Padding="2">
+  <Border x:Name="SwitcherRoot"
+          Background="{ThemeResource IslandStyleControlBrush}"
+          BorderBrush="{ThemeResource IslandStrokeBrush}"
+          BorderThickness="1"
+          CornerRadius="18"
+          Padding="2">
     <ScrollViewer MaxWidth="420"
                   HorizontalScrollMode="Enabled"
                   HorizontalScrollBarVisibility="Hidden"
@@ -20,6 +25,14 @@
               Click="OnPreviousClick"
               ToolTipService.ToolTip="Önceki modül" AutomationProperties.Name="Önceki modül">
         <FontIcon Glyph="&#xE76B;" FontSize="10" />
+      </Button>
+      <Button x:Name="DefaultButton"
+              Width="36" Height="36"
+              Style="{StaticResource IslandCompactIconButtonStyle}"
+              Click="OnDefaultClick"
+              ToolTipService.ToolTip="Ana dock"
+              AutomationProperties.Name="Ana dock">
+        <FontIcon Glyph="&#xE80F;" FontSize="12" />
       </Button>
       <StackPanel x:Name="ModuleButtons" Orientation="Horizontal" Spacing="2" />
       <Button Width="36" Height="36"

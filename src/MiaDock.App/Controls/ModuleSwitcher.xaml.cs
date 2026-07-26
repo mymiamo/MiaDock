@@ -24,6 +24,7 @@ public sealed partial class ModuleSwitcher : UserControl
 
     public event EventHandler? PreviousRequested;
     public event EventHandler? NextRequested;
+    public event EventHandler? DefaultRequested;
     public event EventHandler<ModuleSelectedEventArgs>? ModuleSelected;
 
     public IReadOnlyList<ModuleDisplayState>? Modules
@@ -43,7 +44,11 @@ public sealed partial class ModuleSwitcher : UserControl
 
     private void UpdateVisualState()
     {
-        Visibility = Modules is { Count: > 1 } ? Visibility.Visible : Visibility.Collapsed;
+        Visibility = Modules is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
+        var defaultSelected = SelectedModuleId is null;
+        DefaultButton.Opacity = defaultSelected ? 1 : 0.66;
+        DefaultButton.BorderThickness = defaultSelected ? new Thickness(1.5) : new Thickness(0);
+        DefaultButton.BorderBrush = defaultSelected ? ResourceBrush("IslandStyleAccentBrush") : null;
         ModuleButtons.Children.Clear();
         foreach (var module in Modules ?? Array.Empty<ModuleDisplayState>())
         {
@@ -69,6 +74,8 @@ public sealed partial class ModuleSwitcher : UserControl
 
     private void OnPreviousClick(object sender, RoutedEventArgs args) => RaisePrevious();
     private void OnNextClick(object sender, RoutedEventArgs args) => RaiseNext();
+    private void OnDefaultClick(object sender, RoutedEventArgs args) =>
+        DefaultRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnModuleClick(object sender, RoutedEventArgs args)
     {

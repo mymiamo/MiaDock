@@ -7,6 +7,8 @@ namespace MiaDock.App.Controls;
 
 public sealed partial class ExpandedModuleHost : UserControl
 {
+    private const string IdleExpandedViewKey = "IdleExpandedView";
+
     public static readonly DependencyProperty DisplayStateProperty = DependencyProperty.Register(
         nameof(DisplayState), typeof(ModuleDisplayState), typeof(ExpandedModuleHost),
         new PropertyMetadata(null, OnDisplayStateChanged));
@@ -22,6 +24,7 @@ public sealed partial class ExpandedModuleHost : UserControl
 
     public event EventHandler? PreviousRequested;
     public event EventHandler? NextRequested;
+    public event EventHandler? DefaultRequested;
     public event EventHandler<ModuleSelectedEventArgs>? ModuleSelected;
 
     public ModuleDisplayState? DisplayState
@@ -62,9 +65,14 @@ public sealed partial class ExpandedModuleHost : UserControl
     {
         if (DisplayState is not { } state)
         {
-            DeactivateCurrentContent();
-            ViewHost.Content = null;
-            _activeViewKey = null;
+            if (_activeViewKey != IdleExpandedViewKey || ViewHost.Content is null)
+            {
+                DeactivateCurrentContent();
+                ViewHost.Content = _viewRegistry?.Create(IdleExpandedViewKey) ?? new IdleExpandedView();
+                _activeViewKey = IdleExpandedViewKey;
+            }
+
+            UpdateContentActivation();
             return;
         }
 
@@ -86,6 +94,7 @@ public sealed partial class ExpandedModuleHost : UserControl
 
     private void OnPreviousRequested(object? sender, EventArgs args) => PreviousRequested?.Invoke(this, EventArgs.Empty);
     private void OnNextRequested(object? sender, EventArgs args) => NextRequested?.Invoke(this, EventArgs.Empty);
+    private void OnDefaultRequested(object? sender, EventArgs args) => DefaultRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnModuleSelected(object? sender, ModuleSelectedEventArgs args) => ModuleSelected?.Invoke(this, args);
 

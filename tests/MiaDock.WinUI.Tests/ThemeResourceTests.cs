@@ -78,6 +78,56 @@ public sealed class ThemeResourceTests
     }
 
     [TestMethod]
+    public void ApplePalette_DefaultBlackSurface_MeetsTextAndIconContrast()
+    {
+        var background = Windows.UI.Color.FromArgb(255, 0, 0, 0);
+        var palette = MiaDock.UI.Services.SolidThemeContrastPaletteFactory.Create(
+            background,
+            Windows.UI.Color.FromArgb(255, 255, 255, 255));
+
+        Assert.IsGreaterThanOrEqualTo(
+            7,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Primary,
+                background));
+        Assert.IsGreaterThanOrEqualTo(
+            4.5,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Secondary,
+                background));
+        Assert.IsGreaterThanOrEqualTo(
+            3,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Accent,
+                palette.Control));
+        Assert.AreEqual(palette.Control.R, palette.Control.G);
+        Assert.AreEqual(palette.Control.G, palette.Control.B);
+        Assert.IsGreaterThan((byte)0, palette.Control.R);
+        Assert.IsLessThan((byte)64, palette.Control.R);
+    }
+
+    [TestMethod]
+    public void ApplePalette_LightCustomSurface_SwitchesToDarkForeground()
+    {
+        var background = Windows.UI.Color.FromArgb(255, 245, 245, 245);
+        var palette = MiaDock.UI.Services.SolidThemeContrastPaletteFactory.Create(
+            background,
+            Windows.UI.Color.FromArgb(255, 255, 255, 255));
+
+        Assert.IsLessThan((byte)32, palette.Primary.R);
+        Assert.IsGreaterThanOrEqualTo(
+            7,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Primary,
+                background));
+        Assert.IsGreaterThanOrEqualTo(
+            3,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Accent,
+                palette.Control));
+    }
+
+    [TestMethod]
     public void BlurredGlassTheme_UsesTransparentNeutralOverlayAndCircularButtons()
     {
         var document = LoadTheme("BlurredGlassTheme.xaml");

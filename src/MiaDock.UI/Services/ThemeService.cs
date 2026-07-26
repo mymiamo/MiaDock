@@ -48,13 +48,14 @@ public sealed class ThemeService : IThemeService
             appearance.Theme,
             surfaceColor,
             appearance.Opacity);
+        if (appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.CustomSolidColor)
+        {
+            ApplyAdaptiveSolidPalette(surfaceColor, accentColor);
+            return;
+        }
+
         _customDictionary["IslandStyleControlBrush"] = new SolidColorBrush(Color.FromArgb(
-            appearance.Theme switch
-            {
-                ThemeStyle.BlurredGlass => (byte)0x20,
-                _ when appearance.Theme.IsWindows11Style() => (byte)0x38,
-                _ => (byte)0xFF
-            },
+            appearance.Theme == ThemeStyle.BlurredGlass ? (byte)0x20 : (byte)0x38,
             accentColor.R,
             accentColor.G,
             accentColor.B));
@@ -106,6 +107,37 @@ public sealed class ThemeService : IThemeService
         color.R,
         color.G,
         color.B);
+
+    private void ApplyAdaptiveSolidPalette(Color surfaceColor, Color requestedAccent)
+    {
+        var palette = SolidThemeContrastPaletteFactory.Create(surfaceColor, requestedAccent);
+        _customDictionary!["IslandSurfaceBrush"] = new SolidColorBrush(surfaceColor);
+        _customDictionary["IslandSurfaceSecondaryBrush"] = new SolidColorBrush(palette.Control);
+        _customDictionary["IslandTextPrimaryBrush"] = new SolidColorBrush(palette.Primary);
+        _customDictionary["IslandTextSecondaryBrush"] = new SolidColorBrush(palette.Secondary);
+        _customDictionary["IslandAccentBrush"] = new SolidColorBrush(palette.Accent);
+        _customDictionary["IslandStrokeBrush"] = new SolidColorBrush(palette.Stroke);
+        _customDictionary["IslandControlFillBrush"] = new SolidColorBrush(Color.FromArgb(
+            38,
+            palette.Primary.R,
+            palette.Primary.G,
+            palette.Primary.B));
+        _customDictionary["IslandStyleControlBrush"] = new SolidColorBrush(palette.Control);
+        _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(palette.Accent);
+        _customDictionary["IslandIconButtonRestBrush"] = new SolidColorBrush(
+            Color.FromArgb(0, 0, 0, 0));
+        _customDictionary["IslandIconButtonPointerOverBrush"] = new SolidColorBrush(Color.FromArgb(
+            40,
+            palette.Primary.R,
+            palette.Primary.G,
+            palette.Primary.B));
+        _customDictionary["IslandIconButtonPressedBrush"] = new SolidColorBrush(Color.FromArgb(
+            66,
+            palette.Primary.R,
+            palette.Primary.G,
+            palette.Primary.B));
+        _customDictionary["IslandIconButtonForegroundBrush"] = new SolidColorBrush(palette.Primary);
+    }
 
     private static Color ParseColor(string value)
     {

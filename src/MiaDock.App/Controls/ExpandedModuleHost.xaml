@@ -12,6 +12,7 @@
                              VerticalAlignment="Center"
                              PreviousRequested="OnPreviousRequested"
                              NextRequested="OnNextRequested"
+                             DefaultRequested="OnDefaultRequested"
                              ModuleSelected="OnModuleSelected" />
     <ContentControl x:Name="ViewHost" Grid.Row="1"
                     HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />

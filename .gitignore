@@ -1,18 +1,64 @@
+# IDE and user-specific files
 .vs/
 .idea/
+.vscode/
+*.user
+*.suo
+*.rsuser
+*.userosscache
+
+# Build, test, coverage, and publish output
 bin/
 obj/
+artifacts/
+publish/
 AppPackages/
 BundleArtifacts/
 TestResults/
-*.user
-*.suo
-*.pfx
-*.cer
-*.appx
-*.appxbundle
-*.msix
-*.msixbundle
-*.appinstaller
 coverage/
 coverage.*
+*.trx
+
+# MSIX and Microsoft Store output
+*.appx
+*.appxbundle
+*.appinstaller
+*.appxsym
+*.appxupload
+*.msix
+*.msixbundle
+*.msixupload
+
+# Signing material and local secrets
+*.pfx
+*.p12
+*.cer
+*.pvk
+*.snk
+*.key
+*.publishsettings
+.env
+.env.*
+!.env.example
+secrets.json
+
+# Runtime diagnostics and local state
+Logs/
+logs/
+*.log
+*.ndjson
+*.dmp
+*.dump
+settings.json
+timer-state.json
+*.tmp
+
+# Generated archives and packages
+*.zip
+*.nupkg
+*.snupkg
+
+# Operating-system metadata
+.DS_Store
+Thumbs.db
+Desktop.ini

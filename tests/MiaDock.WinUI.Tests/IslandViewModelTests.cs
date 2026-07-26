@@ -85,7 +85,7 @@ public sealed class IslandViewModelTests
     }
 
     [TestMethod]
-    public void PrimaryInvocation_FromNeutralCapsule_SelectsFirstAvailableModule()
+    public void PrimaryInvocation_FromNeutralCapsule_ExpandsDefaultDockWithoutSelectingModule()
     {
         using var music = new MusicModuleViewModel(new FakeMediaService());
         var orchestrator = new NeutralOrchestrator();
@@ -93,7 +93,8 @@ public sealed class IslandViewModelTests
 
         viewModel.HandlePrimaryInvoked();
 
-        Assert.AreEqual("system", orchestrator.SelectedModuleId);
+        Assert.IsNull(orchestrator.SelectedModuleId);
+        Assert.IsNull(viewModel.ActiveModuleDisplay);
         Assert.AreEqual(IslandVisualState.ExpandedModule, viewModel.CurrentState);
     }
 

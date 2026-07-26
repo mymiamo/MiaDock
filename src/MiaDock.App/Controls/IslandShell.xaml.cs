@@ -74,6 +74,7 @@ public sealed partial class IslandShell : UserControl
 
         _expandedView.PreviousRequested += OnPreviousModuleRequested;
         _expandedView.NextRequested += OnNextModuleRequested;
+        _expandedView.DefaultRequested += OnDefaultModuleRequested;
         _expandedView.ModuleSelected += OnModuleSelected;
 
         ApplyTheme(Theme);
@@ -138,6 +139,8 @@ public sealed partial class IslandShell : UserControl
     public event EventHandler? PreviousModuleRequested;
 
     public event EventHandler? NextModuleRequested;
+
+    public event EventHandler? DefaultModuleRequested;
 
     public event EventHandler<ModuleSelectedEventArgs>? ModuleSelected;
 
@@ -295,6 +298,9 @@ public sealed partial class IslandShell : UserControl
 
     private void OnNextModuleRequested(object? sender, EventArgs args) =>
         NextModuleRequested?.Invoke(this, EventArgs.Empty);
+
+    private void OnDefaultModuleRequested(object? sender, EventArgs args) =>
+        DefaultModuleRequested?.Invoke(this, EventArgs.Empty);
 
     private void OnModuleSelected(object? sender, ModuleSelectedEventArgs args) =>
         ModuleSelected?.Invoke(this, args);

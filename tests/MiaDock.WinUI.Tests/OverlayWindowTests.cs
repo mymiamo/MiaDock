@@ -23,6 +23,7 @@ public sealed class OverlayWindowTests
         Assert.IsNotNull(island.Attribute("PointerWheelChanged"));
         Assert.IsNotNull(island.Attribute("Tapped"));
         Assert.IsNotNull(island.Attribute("KeyDown"));
+        Assert.AreEqual("OnDefaultModuleRequested", island.Attribute("DefaultModuleRequested")?.Value);
         Assert.IsTrue(document.Descendants().Any(element =>
             element.Name.LocalName == "MenuFlyoutItem" &&
             element.Attribute("Text")?.Value == "Ayarlar"));

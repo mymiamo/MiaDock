@@ -103,6 +103,8 @@ public static class ServiceRegistration
                 new Controls.IdleCompactView(music, system) { DataContext = idleDashboard });
             registry.Register("IdleHoverView", () =>
                 new Controls.IdleHoverView(music, idleDashboard));
+            registry.Register("IdleExpandedView", () =>
+                new Controls.IdleExpandedView(music, system, idleDashboard));
             registry.Register("MusicCompactView", () => new Controls.MusicCompactView { DataContext = music });
             registry.Register("MusicHoverView", () => new Controls.MusicHoverView { DataContext = music });
             registry.Register("MusicExpandedView", () => new Controls.ExpandedMusicView { DataContext = music });

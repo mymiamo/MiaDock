@@ -1,6 +1,9 @@
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Controls.Primitives;
+using Microsoft.UI.Xaml.Media;
 using Microsoft.UI.Dispatching;
 using MiaDock.App.Services;
 using MiaDock.App.ViewModels;
@@ -9,7 +12,6 @@ using MiaDock.Core.Settings;
 using MiaDock.Modules.Media.Services;
 using MiaDock.Platform.Windows.Overlay;
 using MiaDock.UI.Services;
-using Microsoft.UI.Xaml.Media;
 using MiaDock.Core.Modules;
 using MiaDock.Platform.Windows.Display;
 using MiaDock.Platform.Windows.Fullscreen;
@@ -19,7 +21,9 @@ using MiaDock.Platform.Windows.Lifecycle;
 using MiaDock.Core.Theming;
 using MiaDock.Modules.Time.Services;
 using Microsoft.UI.Composition.SystemBackdrops;
+using Microsoft.UI.Composition;
 using Windows.UI;
+using WinRT;
 
 namespace MiaDock.App;
 
@@ -41,7 +45,12 @@ public sealed partial class OverlayWindow : Window
     private readonly ISystemResumeService _systemResume;
     private readonly PresentationPrivacyPolicy _privacyPolicy;
     private readonly ILogService _log;
+    private DesktopAcrylicController? _acrylicController;
+    private SystemBackdropConfiguration? _backdropConfiguration;
     private CancellationTokenSource? _mediaSelectionCancellation;
+    private AppearanceSettings? _appliedAppearance;
+    private IslandLayoutOptions? _appliedLayoutOptions;
+    private IslandMotionOptions? _appliedMotionOptions;
     private FullscreenSnapshot _fullscreenState = FullscreenSnapshot.None;
     private bool _temporaryNotificationVisible;
     private bool _manuallyHidden = true;
@@ -200,6 +209,15 @@ public sealed partial class OverlayWindow : Window
 
     private void OnIslandTapped(object sender, TappedRoutedEventArgs args)
     {
+        if (IsInteractiveTapSource(args.OriginalSource as DependencyObject))
+        {
+            // Controls inside compact/hover/expanded content own the gesture.
+            // Do not reinterpret their click as a request to expand the island.
+            args.Handled = true;
+            RegisterDockActivity();
+            return;
+        }
+
         if (_viewModel.Island.CurrentState != IslandVisualState.ExpandedModule &&
             _settings.Current.General.InteractionMode is IslandInteractionMode.Click or IslandInteractionMode.HoverAndClick)
         {
@@ -207,6 +225,22 @@ public sealed partial class OverlayWindow : Window
         }
 
         RegisterDockActivity();
+    }
+
+    private bool IsInteractiveTapSource(DependencyObject? source)
+    {
+        for (var current = source; current is not null && !ReferenceEquals(current, Island);)
+        {
+            if (current is ButtonBase or RangeBase or ToggleSwitch or
+                ComboBox or TextBox or RichEditBox or ListViewBase or ScrollViewer)
+            {
+                return true;
+            }
+
+            current = VisualTreeHelper.GetParent(current);
+        }
+
+        return false;
     }
 
     private void OnOutsidePointerPressed(object? sender, EventArgs args)
@@ -236,6 +270,12 @@ public sealed partial class OverlayWindow : Window
     private void OnNextModuleRequested(object? sender, EventArgs args)
     {
         _viewModel.Island.SelectNextModule();
+        RegisterDockActivity();
+    }
+
+    private void OnDefaultModuleRequested(object? sender, EventArgs args)
+    {
+        _viewModel.Island.SelectDefault();
         RegisterDockActivity();
     }
 
@@ -356,6 +396,7 @@ public sealed partial class OverlayWindow : Window
         _fullscreen.Dispose();
         _mediaSelectionCancellation?.Cancel();
         _mediaSelectionCancellation?.Dispose();
+        ClearCompositionBackdrop();
         Closed -= OnClosed;
         _windowController.Dispose();
     }
@@ -397,31 +438,71 @@ public sealed partial class OverlayWindow : Window
 
     private void ApplyAppearance(MiaDockSettings settings)
     {
-        _themeService.Apply(settings.Appearance);
-        Island.Theme = settings.Appearance.Theme.ToString();
-        Island.ApplyAppearance(settings.Appearance);
-
-        ApplySystemBackdrop(settings.Appearance.Theme);
-        Root.RequestedTheme = settings.Appearance.Theme == ThemeStyle.BlurredGlass
-            ? ElementTheme.Dark
-            : ElementTheme.Default;
-        Root.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
-        _windowController.UpdateOpacity(settings.Appearance.Opacity);
-
+        var appearance = settings.Appearance;
         var motionOptions = SettingsMapper.ToMotionOptions(settings);
-        var layoutOptions = SettingsMapper.ToLayoutOptions(settings.Appearance);
-        _autoCollapse?.UpdateOptions(motionOptions);
-        Island.ConfigureAnimations(
-            _animationPreferences,
-            motionOptions,
-            layoutOptions,
-            _viewModel.Island.CurrentState);
-        _windowController.UpdateLayout(Island.VisualSize, Island.VisualCornerRadius);
+        var layoutOptions = SettingsMapper.ToLayoutOptions(appearance);
+        var isFirstApplication = _appliedAppearance is null;
+        var themeChanged = isFirstApplication || _appliedAppearance!.Theme != appearance.Theme;
+        var paletteChanged = themeChanged ||
+                             _appliedAppearance!.BackgroundColor != appearance.BackgroundColor ||
+                             _appliedAppearance.AccentColor != appearance.AccentColor;
+        var layoutChanged = _appliedLayoutOptions != layoutOptions;
+        var motionChanged = _appliedMotionOptions != motionOptions;
+
+        // Reloading merged dictionaries, Acrylic and the animation coordinator on
+        // every slider tick can block the UI thread. Apply only the layer affected
+        // by the changed setting.
+        if (paletteChanged)
+        {
+            _themeService.Apply(appearance);
+        }
+
+        if (themeChanged)
+        {
+            Island.Theme = appearance.Theme.ToString();
+            ApplySystemBackdrop(appearance.Theme);
+            Root.RequestedTheme = appearance.Theme == ThemeStyle.BlurredGlass
+                ? ElementTheme.Dark
+                : ElementTheme.Default;
+            Root.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        }
+
+        Island.ApplyAppearance(appearance);
+        _windowController.UpdateOpacity(appearance.Opacity);
+
+        if (motionChanged)
+        {
+            _autoCollapse.UpdateOptions(motionOptions);
+        }
+
+        if (layoutChanged || motionChanged)
+        {
+            Island.ConfigureAnimations(
+                _animationPreferences,
+                motionOptions,
+                layoutOptions,
+                _viewModel.Island.CurrentState);
+        }
+
+        if (layoutChanged)
+        {
+            _windowController.UpdateLayout(Island.VisualSize, Island.VisualCornerRadius);
+        }
+
         Island.ShowNotificationControls = settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls;
+        _appliedAppearance = appearance;
+        _appliedLayoutOptions = layoutOptions;
+        _appliedMotionOptions = motionOptions;
     }
 
     private void ApplySystemBackdrop(ThemeStyle theme)
     {
+        ClearCompositionBackdrop();
+        if (theme.UsesAcrylicBackdrop() && TryApplyCompositionAcrylic(theme))
+        {
+            return;
+        }
+
         SystemBackdrop = theme switch
         {
             ThemeStyle.Windows11Mica => new MicaBackdrop { Kind = MicaKind.Base },
@@ -432,6 +513,74 @@ public sealed partial class OverlayWindow : Window
                 new DesktopAcrylicBackdrop(),
             _ => null
         };
+    }
+
+    private bool TryApplyCompositionAcrylic(ThemeStyle theme)
+    {
+        if (!DesktopAcrylicController.IsSupported())
+        {
+            return false;
+        }
+
+        DesktopAcrylicController? controller = null;
+        try
+        {
+            DispatcherQueue.EnsureSystemDispatcherQueue();
+            SystemBackdrop = null;
+
+            var isColorlessGlass = theme == ThemeStyle.BlurredGlass;
+            var isThin = isColorlessGlass || theme == ThemeStyle.Windows11AcrylicThin;
+            var configuration = new SystemBackdropConfiguration
+            {
+                // The overlay intentionally uses WS_EX_NOACTIVATE. Keeping the
+                // backdrop input-active prevents Acrylic from switching to its
+                // opaque inactive-window fallback.
+                IsInputActive = true,
+                Theme = SystemBackdropTheme.Dark
+            };
+
+            controller = new DesktopAcrylicController
+            {
+                Kind = isThin ? DesktopAcrylicKind.Thin : DesktopAcrylicKind.Base,
+                FallbackColor = Color.FromArgb(255, 18, 18, 18),
+                TintColor = isColorlessGlass
+                    ? Color.FromArgb(255, 22, 22, 22)
+                    : Color.FromArgb(255, 32, 33, 36),
+                TintOpacity = isColorlessGlass ? 0.06f : isThin ? 0.24f : 0.42f,
+                LuminosityOpacity = isColorlessGlass ? 0.16f : isThin ? 0.34f : 0.56f
+            };
+            controller.AddSystemBackdropTarget(
+                this.As<ICompositionSupportsSystemBackdrop>());
+            controller.SetSystemBackdropConfiguration(configuration);
+
+            _backdropConfiguration = configuration;
+            _acrylicController = controller;
+            return true;
+        }
+        catch (Exception exception)
+        {
+            controller?.Dispose();
+            _log.Write(
+                TechnicalLogLevel.Warning,
+                "overlay-acrylic-unavailable",
+                "Overlay",
+                "Composition Acrylic could not be applied; using the system fallback.",
+                exception);
+            return false;
+        }
+    }
+
+    private void ClearCompositionBackdrop()
+    {
+        if (_acrylicController is not null)
+        {
+            _acrylicController.RemoveAllSystemBackdropTargets();
+            _acrylicController.Dispose();
+            _acrylicController = null;
+        }
+
+        _backdropConfiguration = null;
+        SystemBackdrop = null;
     }
 
     private async Task ApplyMediaSelectionAsync(MediaSettings settings, CancellationToken cancellationToken)

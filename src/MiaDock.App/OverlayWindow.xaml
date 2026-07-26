@@ -20,6 +20,7 @@
                     KeyDown="OnIslandKeyDown"
                     PreviousModuleRequested="OnPreviousModuleRequested"
                     NextModuleRequested="OnNextModuleRequested"
+                    DefaultModuleRequested="OnDefaultModuleRequested"
                     ModuleSelected="OnModuleSelected">
       <ui:IslandShell.ContextFlyout>
         <MenuFlyout>

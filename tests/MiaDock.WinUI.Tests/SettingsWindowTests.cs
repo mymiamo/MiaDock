@@ -90,9 +90,18 @@ public sealed class SettingsWindowTests
 
         CollectionAssert.Contains(capabilityNames, "userNotificationListener");
         CollectionAssert.Contains(capabilityNames, "runFullTrust");
+        var packageNamespace = document.Root!.GetDefaultNamespace();
+        var identity = document.Root.Element(packageNamespace + "Identity");
+        var properties = document.Root.Element(packageNamespace + "Properties");
+
+        Assert.AreEqual("mymiamo.net.MiaDock", identity?.Attribute("Name")?.Value);
         Assert.AreEqual(
-            "MiaDock.Development",
-            document.Root?.Element(document.Root.GetDefaultNamespace() + "Identity")?.Attribute("Name")?.Value);
+            "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
+            identity?.Attribute("Publisher")?.Value);
+        Assert.AreEqual("1.0.0.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual(
+            "Eray Durupınar (mymiamo.net)",
+            properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
         var manifestText = document.ToString();
         StringAssert.Contains(manifestText, @"Assets\StoreLogo.png");
         StringAssert.Contains(manifestText, @"Assets\Square44x44Logo.png");
@@ -205,6 +214,38 @@ public sealed class SettingsWindowTests
         Assert.IsTrue(comboBoxes.All(comboBox => comboBox.Attribute("SelectedValuePath") is null));
         Assert.IsTrue(comboBoxes.All(comboBox => comboBox.Attributes().Any(attribute =>
             attribute.Name.LocalName == "AutomationProperties.Name")));
+    }
+
+    [TestMethod]
+    public void PrimarySettingsPages_StretchWithoutAForcedDesktopWidth()
+    {
+        var pages = new[]
+        {
+            "GeneralSettingsPage.xaml",
+            "MediaSettingsPage.xaml",
+            "ModulesSettingsPage.xaml",
+            "NotificationSettingsPage.xaml"
+        };
+
+        foreach (var page in pages)
+        {
+            var document = XDocument.Load(Path.Combine(
+                AppContext.BaseDirectory,
+                "Settings",
+                page));
+            var scrollViewer = document.Descendants().Single(element =>
+                element.Name.LocalName == "ScrollViewer");
+            var rootStack = scrollViewer.Elements().Single(element =>
+                element.Name.LocalName == "StackPanel");
+
+            Assert.IsNull(rootStack.Attribute("Width"), page);
+            Assert.AreEqual("820", rootStack.Attribute("MaxWidth")?.Value, page);
+            Assert.AreEqual("Stretch", rootStack.Attribute("HorizontalAlignment")?.Value, page);
+            Assert.AreEqual(
+                "Stretch",
+                scrollViewer.Attribute("HorizontalContentAlignment")?.Value,
+                page);
+        }
     }
 
     [TestMethod]

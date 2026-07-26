@@ -20,6 +20,27 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
+    public void ExpandedContent_RemainsInsideTheMainDockSurface()
+    {
+        var document = LoadControl("IslandShell.xaml");
+        var surface = document.Descendants().Single(element =>
+            element.Attribute(XName.Get(
+                "Name",
+                "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "Surface");
+        var contentHost = surface.Descendants().Single(element =>
+            element.Attribute(XName.Get(
+                "Name",
+                "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "ContentHost");
+
+        Assert.AreEqual("Grid", contentHost.Name.LocalName);
+        Assert.AreEqual(1, document.Descendants().Count(element =>
+            element.Name.LocalName == "Border" &&
+            element.Attribute(XName.Get(
+                "Name",
+                "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "Surface"));
+    }
+
+    [TestMethod]
     public void EveryControlXaml_IsWellFormed()
     {
         var controlDirectory = Path.Combine(AppContext.BaseDirectory, "Controls");
@@ -98,7 +119,9 @@ public sealed class IslandShellTests
             statusItems[1].Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value);
         Assert.AreEqual("AudioActivityIndicator", musicActivity.Name.LocalName);
         Assert.AreEqual("14", musicActivity.Attribute("Height")?.Value);
-        Assert.AreEqual("White", musicActivity.Attribute("Foreground")?.Value);
+        Assert.AreEqual(
+            "{ThemeResource IslandTextPrimaryBrush}",
+            musicActivity.Attribute("Foreground")?.Value);
     }
 
     [TestMethod]
@@ -117,6 +140,35 @@ public sealed class IslandShellTests
         Assert.IsTrue(names.Contains("TimeText"));
         Assert.IsTrue(names.Contains("DateText"));
         Assert.IsTrue(names.Contains("MusicRow"));
+        CollectionAssert.Contains(commands, "{Binding PreviousCommand}");
+        CollectionAssert.Contains(commands, "{Binding PlayPauseCommand}");
+        CollectionAssert.Contains(commands, "{Binding NextCommand}");
+        Assert.IsTrue(document.Descendants().Any(element =>
+            element.Attribute("Text")?.Value == "{Binding Current.Track.Title}"));
+    }
+
+    [TestMethod]
+    public void IdleExpandedView_ShowsDashboardStatusAndMediaControls()
+    {
+        var document = LoadControl("IdleExpandedView.xaml");
+        var names = document.Descendants()
+            .Attributes(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))
+            .Select(attribute => attribute.Value)
+            .ToHashSet(StringComparer.Ordinal);
+        var commands = document.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => element.Attribute("Command")?.Value)
+            .ToArray();
+
+        foreach (var name in new[]
+                 {
+                     "TimeText", "DateText", "NetworkCard", "BatteryCard",
+                     "BluetoothCard", "SystemCard", "MusicPanel", "IdlePanel"
+                 })
+        {
+            Assert.IsTrue(names.Contains(name), $"{name} bulunamadı.");
+        }
+
         CollectionAssert.Contains(commands, "{Binding PreviousCommand}");
         CollectionAssert.Contains(commands, "{Binding PlayPauseCommand}");
         CollectionAssert.Contains(commands, "{Binding NextCommand}");
@@ -238,6 +290,8 @@ public sealed class IslandShellTests
     public void ModuleSwitcher_ContainsDirectIconButtonHost()
     {
         var document = LoadControl("ModuleSwitcher.xaml");
+        Assert.IsTrue(document.Descendants().Any(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "DefaultButton"));
         Assert.IsTrue(document.Descendants().Any(element =>
             element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "ModuleButtons"));
     }
