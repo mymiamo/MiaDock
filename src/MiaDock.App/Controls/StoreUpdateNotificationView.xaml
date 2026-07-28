@@ -1,0 +1,36 @@
+<UserControl
+    x:Class="MiaDock.App.Controls.StoreUpdateNotificationView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <Grid Padding="18,11" ColumnSpacing="12"
+        AutomationProperties.LiveSetting="Polite"
+        AutomationProperties.Name="{Binding PrimaryText}">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="34" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <FontIcon Glyph="&#xE895;"
+              FontSize="20"
+              VerticalAlignment="Center"
+              Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <StackPanel Grid.Column="1"
+                MinWidth="0"
+                VerticalAlignment="Center"
+                Spacing="2">
+      <TextBlock Text="{Binding PrimaryText}"
+                 MaxLines="1"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource IslandTitleTextStyle}" />
+      <TextBlock Text="{Binding SecondaryText}"
+                 MaxLines="1"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource IslandCaptionTextStyle}" />
+    </StackPanel>
+    <Button Grid.Column="2"
+            Content="Microsoft Store'da aç"
+            Click="OnOpenStoreClick"
+            VerticalAlignment="Center"
+            AutomationProperties.Name="Microsoft Store'da aç" />
+  </Grid>
+</UserControl>

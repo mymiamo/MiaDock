@@ -7,11 +7,11 @@
     <StackPanel MaxWidth="760" Padding="32" Spacing="20" HorizontalAlignment="Left">
       <StackPanel Spacing="6">
         <TextBlock Text="Zaman ve kısayollar" Style="{ThemeResource TitleTextBlockStyle}" />
-        <TextBlock Text="Zamanlayıcı ve kronometreyi genişletilmiş adadaki Zaman modülünden yönetin. Fare tekeriyle varsayılan görünüm ve modüller arasında geçebilirsiniz."
+        <TextBlock Text="Zamanlayıcı ve kronometreyi genişletilmiş dock içindeki Zaman modülünden yönetin. Fare tekeriyle varsayılan görünüm ve modüller arasında geçebilirsiniz."
                    TextWrapping="Wrap" Opacity="0.72" />
       </StackPanel>
 
-      <Border Padding="18" CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}">
+      <Border Padding="18" Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="8">
           <TextBlock Text="Global kısayollar" Style="{ThemeResource SubtitleTextBlockStyle}" />
           <TextBlock Text="Kısayol kaydetmek için düğmeye tıklayın ve Ctrl, Alt veya Shift içeren kombinasyona basın. Windows tuşu ve F12 kullanılamaz."
@@ -27,9 +27,9 @@
           <RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <TextBlock Grid.Row="0" Text="Adayı göster / gizle" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="0" Text="Dock'u göster / gizle" VerticalAlignment="Center" />
         <controls:HotKeyRecorderControl Grid.Row="0" Grid.Column="1" Gesture="{Binding ToggleDockHotKey, Mode=TwoWay}" />
-        <TextBlock Grid.Row="1" Text="Adayı genişlet / küçült" VerticalAlignment="Center" />
+        <TextBlock Grid.Row="1" Text="Dock'u genişlet / küçült" VerticalAlignment="Center" />
         <controls:HotKeyRecorderControl Grid.Row="1" Grid.Column="1" Gesture="{Binding ToggleExpandedHotKey, Mode=TwoWay}" />
         <TextBlock Grid.Row="2" Text="Sonraki modül" VerticalAlignment="Center" />
         <controls:HotKeyRecorderControl Grid.Row="2" Grid.Column="1" Gesture="{Binding NextModuleHotKey, Mode=TwoWay}" />

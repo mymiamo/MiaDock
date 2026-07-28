@@ -134,7 +134,28 @@ public sealed class DockExperienceViewTests
         StringAssert.Contains(compact, "CompactStatusText");
         StringAssert.Contains(hover, "CompactPrimaryCommand");
         StringAssert.Contains(hover, "CompactSecondaryCommand");
+        StringAssert.Contains(hover, "SilenceAlarmButton");
+        StringAssert.Contains(hover, "CompactSecondaryText");
         Assert.DoesNotContain("Command=\"{Binding TimerPrimaryCommand}\"", hover, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void TimerCompletionNotification_ProvidesAccessibleSilenceAction()
+    {
+        var notification = LoadControl("TimerNotificationView.xaml");
+        var silenceButton = FindNamedElement(notification, "SilenceAlarmButton");
+
+        Assert.AreEqual("{Binding CompactSecondaryCommand}", AttributeValue(silenceButton, "Command"));
+        Assert.AreEqual("True", silenceButton.Attribute("IsTabStop")?.Value);
+        Assert.AreEqual(
+            "{Binding CompactSecondaryText}",
+            AttributeValue(silenceButton, "AutomationProperties.Name"));
+        Assert.AreEqual(
+            "{Binding CompactSecondaryText}",
+            AttributeValue(silenceButton, "AutomationProperties.HelpText"));
+        Assert.AreEqual(
+            "{Binding CompactSecondaryText}",
+            AttributeValue(silenceButton, "ToolTipService.ToolTip"));
     }
 
     [TestMethod]

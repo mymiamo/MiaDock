@@ -3,12 +3,14 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using Windows.System;
 
 namespace MiaDock.App.Controls;
 
 public sealed partial class ModuleSwitcher : UserControl
 {
+    private ILocalizationService? _localization;
     public static readonly DependencyProperty ModulesProperty = DependencyProperty.Register(
         nameof(Modules), typeof(IReadOnlyList<ModuleDisplayState>), typeof(ModuleSwitcher),
         new PropertyMetadata(null, OnDataChanged));
@@ -39,6 +41,14 @@ public sealed partial class ModuleSwitcher : UserControl
         set => SetValue(SelectedModuleIdProperty, value);
     }
 
+    public void ConfigureLocalization(ILocalizationService localization)
+    {
+        _localization = localization ?? throw new ArgumentNullException(nameof(localization));
+        UpdateVisualState();
+    }
+
+    public void RefreshLocalizedContent() => UpdateVisualState();
+
     private static void OnDataChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
         ((ModuleSwitcher)sender).UpdateVisualState();
 
@@ -65,8 +75,9 @@ public sealed partial class ModuleSwitcher : UserControl
                 UseSystemFocusVisuals = true,
                 Content = new FontIcon { Glyph = module.Descriptor.IconGlyph, FontSize = 11 }
             };
-            ToolTipService.SetToolTip(button, module.Descriptor.DisplayName);
-            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, module.Descriptor.DisplayName);
+            var displayName = LocalizedModuleName(module.Descriptor);
+            ToolTipService.SetToolTip(button, displayName);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, displayName);
             button.Click += OnModuleClick;
             ModuleButtons.Children.Add(button);
         }
@@ -138,6 +149,14 @@ public sealed partial class ModuleSwitcher : UserControl
         Application.Current?.Resources.TryGetValue(key, out var value) == true
             ? value as Style
             : null;
+
+    private string LocalizedModuleName(ModuleDescriptor descriptor)
+    {
+        var value = _localization?.Get(descriptor.DisplayNameKey);
+        return value is not null && value != descriptor.DisplayNameKey
+            ? value
+            : descriptor.DisplayName;
+    }
 }
 
 public sealed class ModuleSelectedEventArgs(string moduleId) : EventArgs

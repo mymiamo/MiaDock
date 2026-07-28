@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Services;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 
 namespace MiaDock.App.Controls;
 
@@ -19,6 +20,7 @@ public sealed partial class ExpandedModuleHost : UserControl
     private IModuleViewRegistry? _viewRegistry;
     private string? _activeViewKey;
     private bool _isHostActive;
+    private ILocalizationService? _localization;
 
     public ExpandedModuleHost() => InitializeComponent();
 
@@ -45,11 +47,23 @@ public sealed partial class ExpandedModuleHost : UserControl
         Render();
     }
 
+    public void ConfigureLocalization(ILocalizationService localization)
+    {
+        _localization = localization;
+        Switcher.ConfigureLocalization(localization);
+        if (ViewHost.Content is GenericExpandedModuleView generic)
+        {
+            generic.ConfigureLocalization(localization);
+        }
+    }
+
     public void SetHostActive(bool isActive)
     {
         _isHostActive = isActive;
         UpdateContentActivation();
     }
+
+    public void RefreshLocalizedContent() => Switcher.RefreshLocalizedContent();
 
     private static void OnDisplayStateChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
     {
@@ -80,7 +94,7 @@ public sealed partial class ExpandedModuleHost : UserControl
         if (_activeViewKey != key || ViewHost.Content is null)
         {
             DeactivateCurrentContent();
-            ViewHost.Content = _viewRegistry?.Create(key) ?? new GenericExpandedModuleView();
+            ViewHost.Content = _viewRegistry?.Create(key) ?? new GenericExpandedModuleView(_localization);
             _activeViewKey = key;
         }
 

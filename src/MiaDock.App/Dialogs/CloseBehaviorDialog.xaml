@@ -7,7 +7,8 @@
     CloseButtonText="İptal"
     DefaultButton="Primary">
   <StackPanel Spacing="14">
-    <TextBlock Text="Kapat düğmesine bastığınızda ne yapılacağını seçin."
+    <TextBlock x:Name="DescriptionText"
+               Text="Kapat düğmesine bastığınızda ne yapılacağını seçin."
                TextWrapping="Wrap" />
     <RadioButton x:Name="MinimizeOption"
                  Content="Sistem tepsisine küçült"

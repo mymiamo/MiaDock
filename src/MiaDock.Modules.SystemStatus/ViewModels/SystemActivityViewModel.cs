@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.SystemStatus.Models;
 using MiaDock.Modules.SystemStatus.Services;
 
@@ -8,12 +9,20 @@ namespace MiaDock.Modules.SystemStatus.ViewModels;
 public sealed partial class SystemActivityViewModel : ObservableObject, IDisposable
 {
     private readonly ISystemActivityService _service;
+    private readonly ILocalizationService? _localization;
 
-    public SystemActivityViewModel(ISystemActivityService service)
+    public SystemActivityViewModel(
+        ISystemActivityService service,
+        ILocalizationService? localization = null)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
+        _localization = localization;
         Snapshot = service.Current;
         service.SnapshotChanged += OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     [ObservableProperty]
@@ -28,14 +37,14 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
 
     public string MasterVolumeText => Snapshot.IsMasterVolumeAvailable
         ? $"%{Snapshot.MasterVolumePercent}"
-        : "Kullanılamıyor";
+        : Text("System.Unavailable", "Kullanılamıyor");
 
     public string ApplicationVolumeText => Snapshot.ApplicationVolumeAvailability switch
     {
         ApplicationVolumeAvailability.Available => $"%{Snapshot.ApplicationVolumePercent}",
-        ApplicationVolumeAvailability.NoSelectedApplication => "Uygulama seçilmedi",
-        ApplicationVolumeAvailability.SessionNotFound => "Ses oturumu bulunamadı",
-        _ => "Kullanılamıyor"
+        ApplicationVolumeAvailability.NoSelectedApplication => Text("System.NoApplication", "Uygulama seçilmedi"),
+        ApplicationVolumeAvailability.SessionNotFound => Text("System.SessionNotFound", "Ses oturumu bulunamadı"),
+        _ => Text("System.Unavailable", "Kullanılamıyor")
     };
 
     public bool IsApplicationVolumeAvailable =>
@@ -43,29 +52,29 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
 
     public string MicrophoneText => Snapshot.MicrophoneUsage switch
     {
-        MicrophoneUsageState.Active => "Mikrofon etkin",
-        MicrophoneUsageState.Idle => "Mikrofon boşta",
-        _ => "Mikrofon kullanılamıyor"
+        MicrophoneUsageState.Active => Text("System.Microphone.Active", "Mikrofon etkin"),
+        MicrophoneUsageState.Idle => Text("System.Microphone.Idle", "Mikrofon boşta"),
+        _ => Text("System.Microphone.Unavailable", "Mikrofon kullanılamıyor")
     };
 
     public string CameraText => Snapshot.CameraDeviceAvailability switch
     {
-        CameraDeviceAvailability.Unavailable => "Kamera cihaz durumu kullanılamıyor",
-        CameraDeviceAvailability.NotFound => "Kamera bulunamadı",
+        CameraDeviceAvailability.Unavailable => Text("System.Camera.Unavailable", "Kamera cihaz durumu kullanılamıyor"),
+        CameraDeviceAvailability.NotFound => Text("System.Camera.NotFound", "Kamera bulunamadı"),
         _ => Snapshot.CameraAccess switch
         {
-            CameraAccessState.Allowed => "Kamera mevcut · erişim izinli",
-            CameraAccessState.DeniedByUser => "Kamera mevcut · kullanıcı engelledi",
-            CameraAccessState.DeniedBySystem => "Kamera mevcut · sistem engelledi",
-            CameraAccessState.PromptRequired => "Kamera mevcut · izin istenmedi",
-            CameraAccessState.NotDeclared => "Kamera mevcut · yetenek tanımlı değil",
-            _ => "Kamera mevcut · erişim bilinmiyor"
+            CameraAccessState.Allowed => Text("System.Camera.Allowed", "Kamera mevcut · erişim izinli"),
+            CameraAccessState.DeniedByUser => Text("System.Camera.DeniedUser", "Kamera mevcut · kullanıcı engelledi"),
+            CameraAccessState.DeniedBySystem => Text("System.Camera.DeniedSystem", "Kamera mevcut · sistem engelledi"),
+            CameraAccessState.PromptRequired => Text("System.Camera.Prompt", "Kamera mevcut · izin istenmedi"),
+            CameraAccessState.NotDeclared => Text("System.Camera.NotDeclared", "Kamera mevcut · yetenek tanımlı değil"),
+            _ => Text("System.Camera.Unknown", "Kamera mevcut · erişim bilinmiyor")
         }
     };
 
     public string CallText => Snapshot.CallActivity == CallActivityState.Possible
-        ? "Olası arama etkinliği"
-        : "Arama algılanmadı";
+        ? Text("Dock.CallPossible", "Olası arama etkinliği")
+        : Text("System.Call.None", "Arama algılanmadı");
 
     public string MasterVolumeGlyph => Snapshot.IsMasterMuted || Snapshot.MasterVolume <= 0
         ? "\uE74F"
@@ -93,5 +102,24 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
 
     private void OnSnapshotChanged(object? sender, SystemActivitySnapshot snapshot) => Snapshot = snapshot;
 
-    public void Dispose() => _service.SnapshotChanged -= OnSnapshotChanged;
+    private void OnLanguageChanged(object? sender, EventArgs args)
+    {
+        OnPropertyChanged(nameof(MasterVolumeText));
+        OnPropertyChanged(nameof(ApplicationVolumeText));
+        OnPropertyChanged(nameof(MicrophoneText));
+        OnPropertyChanged(nameof(CameraText));
+        OnPropertyChanged(nameof(CallText));
+    }
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    public void Dispose()
+    {
+        _service.SnapshotChanged -= OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+    }
 }

@@ -6,14 +6,14 @@
                 HorizontalScrollMode="Disabled"
                 HorizontalScrollBarVisibility="Disabled"
                 HorizontalContentAlignment="Stretch">
-    <StackPanel MaxWidth="820" HorizontalAlignment="Stretch" Spacing="14">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
       <StackPanel Spacing="5" Margin="0,0,0,8">
-        <TextBlock Text="Bildirimler" FontSize="25" FontWeight="SemiBold" />
+        <TextBlock Text="Bildirimler" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Windows bildirimlerini izin verdiğiniz kapsamda MiaDock üzerinde gösterin."
-                   TextWrapping="Wrap" Opacity="0.72" />
+                   Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
       </StackPanel>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xEA8F;" FontSize="20" VerticalAlignment="Center" />
@@ -28,17 +28,17 @@
         </Grid>
       </Border>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="160" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE823;" FontSize="20" VerticalAlignment="Center" />
-          <StackPanel Grid.Column="1"><TextBlock Text="Görünme süresi" FontWeight="SemiBold" /><TextBlock Text="Bildirim adada kaç saniye kalır" FontSize="12" Opacity="0.66" /></StackPanel>
+          <StackPanel Grid.Column="1"><TextBlock Text="Görünme süresi" FontWeight="SemiBold" /><TextBlock Text="Bildirimin dock üzerinde kaç saniye kalacağını belirler" FontSize="12" Opacity="0.66" /></StackPanel>
           <NumberBox Grid.Column="2" Minimum="1" Maximum="60" Value="{Binding NotificationEventSeconds, Mode=TwoWay}" SpinButtonPlacementMode="Compact"
                      AutomationProperties.Name="Görünme süresi" />
         </Grid>
       </Border>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE740;" FontSize="20" VerticalAlignment="Center" />
@@ -47,7 +47,7 @@
         </Grid>
       </Border>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE72E;" FontSize="20" VerticalAlignment="Center" />
@@ -62,7 +62,8 @@
       <ItemsControl ItemsSource="{Binding NotificationApplications}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
-            <Border Padding="14" Margin="0,0,0,8" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+            <Border Padding="14" Margin="0,0,0,8"
+                    Style="{StaticResource SettingsCardBorderStyle}">
               <Grid ColumnSpacing="14">
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="120" /><ColumnDefinition Width="120" /></Grid.ColumnDefinitions>
                 <StackPanel><TextBlock Text="{Binding DisplayName}" FontWeight="SemiBold" /><TextBlock Text="{Binding Id}" FontSize="11" Opacity="0.55" TextTrimming="CharacterEllipsis" /></StackPanel>

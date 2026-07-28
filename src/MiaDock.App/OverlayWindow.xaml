@@ -24,7 +24,7 @@
                     ModuleSelected="OnModuleSelected">
       <ui:IslandShell.ContextFlyout>
         <MenuFlyout>
-          <MenuFlyoutItem Text="Ayarlar" Click="OnSettingsClick" />
+          <MenuFlyoutItem x:Name="SettingsMenuItem" Text="Ayarlar" Click="OnSettingsClick" />
         </MenuFlyout>
       </ui:IslandShell.ContextFlyout>
     </ui:IslandShell>

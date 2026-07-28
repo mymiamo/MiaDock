@@ -137,14 +137,31 @@ internal static class NativeMethods
     internal static extern uint GetDpiForWindow(nint windowHandle);
 
     [DllImport("user32.dll", SetLastError = true)]
-    internal static extern int SetWindowRgn(nint windowHandle, nint region, [MarshalAs(UnmanagedType.Bool)] bool redraw);
+    internal static extern int SetWindowRgn(
+        nint windowHandle,
+        nint region,
+        [MarshalAs(UnmanagedType.Bool)] bool redraw);
 
     [DllImport("gdi32.dll", SetLastError = true)]
-    internal static extern nint CreateRoundRectRgn(int left, int top, int right, int bottom, int ellipseWidth, int ellipseHeight);
+    internal static extern nint CreateRectRgn(int left, int top, int right, int bottom);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    internal static extern nint CreateRoundRectRgn(
+        int left,
+        int top,
+        int right,
+        int bottom,
+        int ellipseWidth,
+        int ellipseHeight);
 
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     internal static extern bool DeleteObject(nint graphicsObject);
+
+    [DllImport("dwmapi.dll")]
+    internal static extern int DwmEnableBlurBehindWindow(
+        nint windowHandle,
+        ref NativeDwmBlurBehind blurBehind);
 
     [DllImport("dwmapi.dll")]
     internal static extern int DwmSetWindowAttribute(

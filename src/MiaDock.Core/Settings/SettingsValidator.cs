@@ -17,6 +17,7 @@ public static class SettingsValidator
             VisibilityMode = EnumValue(general.VisibilityMode, GeneralSettings.Default.VisibilityMode),
             InteractionMode = EnumValue(general.InteractionMode, GeneralSettings.Default.InteractionMode),
             Position = EnumValue(general.Position, GeneralSettings.Default.Position),
+            Clock = NormalizeClock(general.Clock),
             PassiveModuleReturnSeconds = ClampFinite(
                 general.PassiveModuleReturnSeconds,
                 3,
@@ -80,8 +81,47 @@ public static class SettingsValidator
             Onboarding = NormalizeOnboarding(settings.Onboarding),
             HotKeys = NormalizeHotKeys(settings.HotKeys),
             Privacy = settings.Privacy ?? PresentationPrivacySettings.Default,
+            StoreUpdates = NormalizeStoreUpdates(settings.StoreUpdates),
             Modules = NormalizeModules(settings.Modules)
         };
+    }
+
+    private static ClockDisplaySettings NormalizeClock(ClockDisplaySettings? value)
+    {
+        var settings = value ?? ClockDisplaySettings.Default;
+        return settings with
+        {
+            HourFormat = EnumValue(
+                settings.HourFormat,
+                ClockDisplaySettings.Default.HourFormat),
+            DateFormat = EnumValue(
+                settings.DateFormat,
+                ClockDisplaySettings.Default.DateFormat)
+        };
+    }
+
+    private static StoreUpdateSettings NormalizeStoreUpdates(StoreUpdateSettings? value)
+    {
+        var settings = value ?? StoreUpdateSettings.Default;
+        return settings with
+        {
+            LastCheckUtc = settings.LastCheckUtc?.ToUniversalTime(),
+            LastNotifiedVersion = NormalizeVersion(settings.LastNotifiedVersion)
+        };
+    }
+
+    private static string? NormalizeVersion(string? value)
+    {
+        if (!Version.TryParse(value, out var version))
+        {
+            return null;
+        }
+
+        return new Version(
+            version.Major,
+            version.Minor,
+            Math.Max(0, version.Build),
+            Math.Max(0, version.Revision)).ToString(4);
     }
 
     private static GlobalHotKeySettings NormalizeHotKeys(GlobalHotKeySettings? value)
@@ -227,6 +267,10 @@ public static class SettingsValidator
             {
                 PassiveModuleReturnSeconds = GeneralSettings.Default.PassiveModuleReturnSeconds
             };
+        }
+        if (settings.SchemaVersion < 14)
+        {
+            general = general with { Clock = ClockDisplaySettings.Default };
         }
 
         var appearance = settings.Appearance ?? AppearanceSettings.Default;

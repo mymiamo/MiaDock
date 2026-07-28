@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Services;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 
 namespace MiaDock.App.Controls;
 
@@ -13,6 +14,7 @@ public sealed partial class CompactModuleHost : UserControl
 
     private IModuleViewRegistry? _viewRegistry;
     private string? _activeViewKey;
+    private ILocalizationService? _localization;
     private const string IdleCompactViewKey = "IdleCompactView";
     private const string IdleHoverViewKey = "IdleHoverView";
 
@@ -30,6 +32,15 @@ public sealed partial class CompactModuleHost : UserControl
     {
         _viewRegistry = viewRegistry ?? throw new ArgumentNullException(nameof(viewRegistry));
         Render();
+    }
+
+    public void ConfigureLocalization(ILocalizationService localization)
+    {
+        _localization = localization;
+        if (ViewHost.Content is GenericCompactModuleView generic)
+        {
+            generic.ConfigureLocalization(localization);
+        }
     }
 
     private static void OnDisplayStateChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
@@ -52,7 +63,7 @@ public sealed partial class CompactModuleHost : UserControl
         var key = UseHoverView ? state.Descriptor.HoverViewKey : state.Descriptor.CompactViewKey;
         if (_activeViewKey != key || ViewHost.Content is null)
         {
-            ViewHost.Content = _viewRegistry?.Create(key) ?? new GenericCompactModuleView();
+            ViewHost.Content = _viewRegistry?.Create(key) ?? new GenericCompactModuleView(_localization);
             _activeViewKey = key;
         }
 

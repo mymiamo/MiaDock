@@ -49,14 +49,14 @@
           </StackPanel>
 
           <StackPanel Spacing="8">
-            <TextBlock Text="Ada durumu" Style="{ThemeResource SubtitleTextBlockStyle}" />
+            <TextBlock Text="Dock durumu" Style="{ThemeResource SubtitleTextBlockStyle}" />
             <Button Content="Collapsed" Command="{Binding Island.ShowCollapsedCommand}" HorizontalAlignment="Stretch" />
             <Button Content="Hover" Command="{Binding Island.ShowHoverCommand}" HorizontalAlignment="Stretch" />
             <Button Content="Genişletilmiş müzik" Command="{Binding Island.ShowExpandedCommand}" HorizontalAlignment="Stretch" />
             <Button Content="Parça bildirimi" Command="{Binding Island.ShowNotificationCommand}" HorizontalAlignment="Stretch" />
           </StackPanel>
 
-          <TextBlock Text="Bu pencere geliştirme önizlemesidir. Ada canlı Windows medya oturumlarını kullanır; kalıcılık ve animasyonlar sonraki fazlarda eklenir."
+          <TextBlock Text="Bu pencere geliştirme önizlemesidir. Dock canlı Windows medya oturumlarını kullanır; kalıcılık ve animasyonlar sonraki fazlarda eklenir."
                      TextWrapping="Wrap"
                      Opacity="0.66" />
         </StackPanel>

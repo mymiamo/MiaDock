@@ -20,6 +20,8 @@ MiaDock is a lightweight, always-on-top Windows 11 overlay built with C#, .NET, 
 
 The application works locally without an account, server connection, telemetry, or a custom updater. Updates will be distributed through Microsoft Store after the public release.
 
+Planned focus profiles, the Windows-style volume view, and the per-application audio mixer are tracked in the [product roadmap](ROADMAP.md).
+
 ## Features
 
 - Windows media session discovery, artwork, timeline, seek, playback controls, and source selection

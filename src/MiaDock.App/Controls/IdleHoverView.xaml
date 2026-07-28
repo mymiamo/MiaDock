@@ -29,7 +29,8 @@
       <TextBlock x:Name="TimeText" Grid.Column="1" VerticalAlignment="Center"
                  FontFamily="Segoe UI Variable Display" FontSize="13" FontWeight="SemiBold"
                  Foreground="{ThemeResource IslandTextPrimaryBrush}" />
-      <Border Grid.Column="2" Width="1" Height="12" VerticalAlignment="Center"
+      <Border x:Name="DateSeparator"
+              Grid.Column="2" Width="1" Height="12" VerticalAlignment="Center"
               Background="{ThemeResource IslandTextSecondaryBrush}" Opacity="0.3" />
       <TextBlock x:Name="DateText" Grid.Column="3" VerticalAlignment="Center"
                  MaxLines="1" TextTrimming="CharacterEllipsis"

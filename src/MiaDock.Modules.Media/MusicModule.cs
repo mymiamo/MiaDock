@@ -1,4 +1,5 @@
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.Media.ViewModels;
 using System.ComponentModel;
 
@@ -7,14 +8,22 @@ namespace MiaDock.Modules.Media;
 public sealed class MusicModule : IIslandModule, IDisposable
 {
     private readonly MusicModuleViewModel? _viewModel;
+    private readonly ILocalizationService? _localization;
     private bool _isEnabled = true;
 
-    public MusicModule(MusicModuleViewModel? viewModel = null)
+    public MusicModule(
+        MusicModuleViewModel? viewModel = null,
+        ILocalizationService? localization = null)
     {
         _viewModel = viewModel;
+        _localization = localization;
         if (_viewModel is not null)
         {
             _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
         }
     }
 
@@ -65,11 +74,12 @@ public sealed class MusicModule : IIslandModule, IDisposable
             "\uE8D6",
             ModuleIndicatorKind.ActivityBars,
             presentationKind: ModulePresentationKind.Media,
-            commands: Descriptor.InteractionCommands.Select(command => new ModuleCommandState(
-                command.Id,
-                command.DisplayName,
-                command.Glyph,
-                CanExecuteCommand(command.Id))).ToArray())
+            commands:
+            [
+                new ModuleCommandState("previous", Text("Dock.PreviousTrack", "Önceki parça"), "\uE892", CanExecuteCommand("previous")),
+                new ModuleCommandState("play-pause", Text("Dock.PlayPause", "Oynat veya duraklat"), "\uE768", CanExecuteCommand("play-pause")),
+                new ModuleCommandState("next", Text("Dock.NextTrack", "Sonraki parça"), "\uE893", CanExecuteCommand("next"))
+            ])
         : null;
 
     public event EventHandler<ModulePresentation?>? PresentationChanged;
@@ -134,10 +144,18 @@ public sealed class MusicModule : IIslandModule, IDisposable
     {
         if (_viewModel is null)
         {
+            if (_localization is not null)
+            {
+                _localization.LanguageChanged -= OnLanguageChanged;
+            }
             return;
         }
 
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -147,5 +165,11 @@ public sealed class MusicModule : IIslandModule, IDisposable
             PresentationChanged?.Invoke(this, CurrentPresentation);
         }
     }
+
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
 
 }

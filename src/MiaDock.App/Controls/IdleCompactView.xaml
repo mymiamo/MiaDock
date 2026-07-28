@@ -53,7 +53,8 @@
                Foreground="{ThemeResource IslandTextPrimaryBrush}"
                AutomationProperties.AccessibilityView="Raw" />
 
-    <Border Grid.Column="2"
+    <Border x:Name="DateContainer"
+            Grid.Column="2"
             MinWidth="0"
             Padding="8,0,0,0"
             VerticalAlignment="Center"

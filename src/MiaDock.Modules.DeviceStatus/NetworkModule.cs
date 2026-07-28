@@ -1,4 +1,5 @@
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.DeviceStatus.Models;
 using MiaDock.Modules.DeviceStatus.Services;
 using MiaDock.Modules.DeviceStatus.ViewModels;
@@ -10,14 +11,23 @@ public sealed class NetworkModule : IIslandModule, IDisposable
     public const string ModuleId = "network";
     private readonly INetworkStatusService _service;
     private readonly NetworkModuleViewModel _viewModel;
+    private readonly ILocalizationService? _localization;
     private NetworkStatusSnapshot? _previous;
     private bool _isEnabled = true;
 
-    public NetworkModule(INetworkStatusService service, NetworkModuleViewModel viewModel)
+    public NetworkModule(
+        INetworkStatusService service,
+        NetworkModuleViewModel viewModel,
+        ILocalizationService? localization = null)
     {
         _service = service;
         _viewModel = viewModel;
+        _localization = localization;
         _service.SnapshotChanged += OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     public ModuleDescriptor Descriptor { get; } = new(
@@ -80,11 +90,24 @@ public sealed class NetworkModule : IIslandModule, IDisposable
         ModuleId,
         _viewModel.ConnectivityText,
         snapshot.Connectivity == NetworkConnectivityKind.Offline
-            ? "Bağlantı yok"
+            ? Text("Network.None", "Bağlantı yok")
             : $"{_viewModel.ConnectionText} · {_viewModel.CostText}",
         _viewModel.NetworkGlyph,
         snapshot.Connectivity == NetworkConnectivityKind.Internet ? ModuleIndicatorKind.StatusDot : ModuleIndicatorKind.None,
         presentationKind: snapshot.Connectivity == NetworkConnectivityKind.Offline ? ModulePresentationKind.Alert : ModulePresentationKind.Status);
 
-    public void Dispose() => _service.SnapshotChanged -= OnSnapshotChanged;
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    public void Dispose()
+    {
+        _service.SnapshotChanged -= OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+    }
 }

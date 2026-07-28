@@ -19,7 +19,7 @@ public sealed class WindowsSystemNotificationService : ISystemNotificationServic
     private readonly HashSet<uint> _knownNotificationIds = [];
     private readonly Dictionary<string, NotificationSourceInfo> _sources = new(StringComparer.Ordinal);
     private UserNotificationListener? _listener;
-    private bool _subscribed;
+    private UiThreadEventSubscription? _notificationChangedSubscription;
     private bool _initialized;
     private bool _disposed;
     private int _pendingNotificationDispatches;
@@ -112,11 +112,14 @@ public sealed class WindowsSystemNotificationService : ISystemNotificationServic
 
     private async Task BeginListeningAsync(CancellationToken cancellationToken)
     {
-        if (_listener is null) return;
-        if (!_subscribed)
+        if (_listener is null || _disposed) return;
+        if (_notificationChangedSubscription is null)
         {
-            _listener.NotificationChanged += OnNotificationChanged;
-            _subscribed = true;
+            var listener = _listener;
+            listener.NotificationChanged += OnNotificationChanged;
+            _notificationChangedSubscription = new UiThreadEventSubscription(
+                _dispatcher,
+                () => listener.NotificationChanged -= OnNotificationChanged);
         }
 
         var notifications = await _listener.GetNotificationsAsync(NotificationKinds.Toast);
@@ -312,17 +315,18 @@ public sealed class WindowsSystemNotificationService : ISystemNotificationServic
         return GetCurrentPackageFullName(ref length, builder) == 0;
     }
 
-    public ValueTask DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        if (_disposed) return ValueTask.CompletedTask;
+        if (_disposed) return;
         _disposed = true;
-        if (_listener is not null && _subscribed)
-        {
-            _listener.NotificationChanged -= OnNotificationChanged;
-        }
-        _subscribed = false;
+        var subscription = Interlocked.Exchange(
+            ref _notificationChangedSubscription,
+            null);
         _listener = null;
-        return ValueTask.CompletedTask;
+        if (subscription is not null)
+        {
+            await subscription.DisposeAsync();
+        }
     }
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]

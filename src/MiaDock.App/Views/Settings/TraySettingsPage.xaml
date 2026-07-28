@@ -1,14 +1,33 @@
-<UserControl x:Class="MiaDock.App.Views.Settings.TraySettingsPage"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <ScrollViewer Padding="32,24,32,40">
-    <StackPanel MaxWidth="760" HorizontalAlignment="Left" Spacing="18">
-      <TextBlock Text="Sistem tepsisi" Style="{ThemeResource TitleTextBlockStyle}" />
-      <TextBlock Text="Sistem tepsisi simgesinde sunulacak davranışları seçin." TextWrapping="Wrap" Opacity="0.68" />
-      <ToggleSwitch Header="Sistem tepsisi simgesini göster" IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" />
-      <ToggleSwitch Header="Medya kontrollerini menüde göster" IsOn="{Binding ShowTrayMediaControls, Mode=TwoWay}" />
-      <ToggleSwitch Header="Geçici bildirimleri etkinleştir" IsOn="{Binding TemporaryNotifications, Mode=TwoWay}" />
-      <InfoBar IsOpen="True" Severity="Informational" Title="Erişim" Message="Simgeyi kapatırsanız Ayarlara dock üzerindeki sağ tık menüsünden ulaşabilirsiniz." />
+<UserControl
+    x:Class="MiaDock.App.Views.Settings.TraySettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer Padding="28,24,28,48"
+                HorizontalScrollMode="Disabled"
+                HorizontalContentAlignment="Stretch">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
+      <StackPanel Spacing="5" Margin="0,0,0,8">
+        <TextBlock Text="Sistem tepsisi"
+                   Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
+        <TextBlock Text="Sistem tepsisi simgesinde sunulacak davranışları seçin."
+                   Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
+      </StackPanel>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="4">
+          <ToggleSwitch Header="Sistem tepsisi simgesini göster"
+                        IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" />
+          <ToggleSwitch Header="Medya kontrollerini menüde göster"
+                        IsOn="{Binding ShowTrayMediaControls, Mode=TwoWay}" />
+          <ToggleSwitch Header="Geçici bildirimleri etkinleştir"
+                        IsOn="{Binding TemporaryNotifications, Mode=TwoWay}" />
+        </StackPanel>
+      </Border>
+
+      <InfoBar IsOpen="True"
+               Severity="Informational"
+               Title="Erişim"
+               Message="Simgeyi kapatırsanız Ayarlara dock üzerindeki sağ tık menüsünden ulaşabilirsiniz." />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

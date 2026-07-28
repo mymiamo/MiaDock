@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using MiaDock.Core.Localization;
 using MiaDock.Core.Modules;
 using MiaDock.Modules.Time.Models;
 using MiaDock.Modules.Time.Services;
@@ -10,15 +11,24 @@ public sealed class TimerModule : IIslandModule, IDisposable
 {
     private readonly TimeToolsViewModel _viewModel;
     private readonly ITimeToolsService _service;
+    private readonly ILocalizationService? _localization;
     private TimerRunState _previousState;
     private bool _isEnabled = true;
 
-    public TimerModule(TimeToolsViewModel viewModel, ITimeToolsService service)
+    public TimerModule(
+        TimeToolsViewModel viewModel,
+        ITimeToolsService service,
+        ILocalizationService? localization = null)
     {
         _viewModel = viewModel;
         _service = service;
+        _localization = localization;
         _previousState = viewModel.Current.TimerState;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     public ModuleDescriptor Descriptor { get; } = new(
@@ -53,21 +63,33 @@ public sealed class TimerModule : IIslandModule, IDisposable
         {
             var current = _viewModel.Current;
             var timerActive = current.TimerState is TimerRunState.Running or TimerRunState.Paused;
+            var timerAwaitingDismissal = current.TimerState == TimerRunState.Completed;
             var stopwatchActive = current.IsStopwatchRunning ||
                                   current.StopwatchElapsed > TimeSpan.Zero ||
                                   current.Laps.Count > 0;
-            var hasActiveWork = timerActive || stopwatchActive;
+            var hasActiveWork = timerActive || timerAwaitingDismissal || stopwatchActive;
             return new ModulePresentation(
                 Descriptor.Id,
-                hasActiveWork ? _viewModel.CompactTimeText : "Zaman araçları",
-                hasActiveWork ? _viewModel.CompactStatusText : "Zamanlayıcı ve kronometre",
+                hasActiveWork ? _viewModel.CompactTimeText : Text("Timer.Tools", "Zaman araçları"),
+                hasActiveWork ? _viewModel.CompactStatusText : Text("Timer.TimerAndStopwatch", "Zamanlayıcı ve kronometre"),
                 "\uE823",
                 hasActiveWork ? ModuleIndicatorKind.Value : ModuleIndicatorKind.None,
                 valueText: hasActiveWork ? _viewModel.CompactTimeText : null,
                 progress: timerActive ? current.TimerProgress : null,
                 presentationKind: hasActiveWork ? ModulePresentationKind.Progress : ModulePresentationKind.Standard,
-                commands: Descriptor.InteractionCommands.Select(command => new ModuleCommandState(
-                    command.Id, command.DisplayName, command.Glyph, CanExecuteCommand(command.Id))).ToArray(),
+                commands:
+                [
+                    new ModuleCommandState(
+                        "pause-resume",
+                        Text("Timer.PauseResume", "Duraklat veya devam et"),
+                        "\uE768",
+                        CanExecuteCommand("pause-resume")),
+                    new ModuleCommandState(
+                        "cancel",
+                        _viewModel.CompactSecondaryText,
+                        "\uE711",
+                        CanExecuteCommand("cancel"))
+                ],
                 isPersistentOverride: hasActiveWork,
                 persistentPriorityOverride: hasActiveWork ? 500 : null);
         }
@@ -138,8 +160,8 @@ public sealed class TimerModule : IIslandModule, IDisposable
     {
         var presentation = new ModulePresentation(
             Descriptor.Id,
-            "Süre doldu",
-            "Zamanlayıcı tamamlandı",
+            Text("Timer.Completed", "Süre doldu"),
+            Text("Timer.Completed.Description", "Zamanlayıcı tamamlandı"),
             "\uE823",
             ModuleIndicatorKind.StatusDot,
             presentationKind: ModulePresentationKind.Alert);
@@ -154,5 +176,18 @@ public sealed class TimerModule : IIslandModule, IDisposable
             isFullscreenEligible: true));
     }
 
-    public void Dispose() => _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    public void Dispose()
+    {
+        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+    }
 }

@@ -1,4 +1,5 @@
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.SystemStatus.Models;
 using MiaDock.Modules.SystemStatus.Services;
 using MiaDock.Modules.SystemStatus.ViewModels;
@@ -11,16 +12,23 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     private readonly ISystemActivityService _service;
     private readonly SystemActivityViewModel _viewModel;
+    private readonly ILocalizationService? _localization;
     private SystemActivitySnapshot? _previousSnapshot;
     private bool _isEnabled = true;
 
     public SystemActivityModule(
         ISystemActivityService service,
-        SystemActivityViewModel viewModel)
+        SystemActivityViewModel viewModel,
+        ILocalizationService? localization = null)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _viewModel = viewModel ?? throw new ArgumentNullException(nameof(viewModel));
+        _localization = localization;
         _service.SnapshotChanged += OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     public ModuleDescriptor Descriptor { get; } = new(
@@ -145,9 +153,11 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
         {
             return CreateStatusEvent(
                 current.CallActivity == CallActivityState.Possible
-                    ? "Olası arama etkinliği"
-                    : "Arama etkinliği sona erdi",
-                current.CallActivity == CallActivityState.Possible ? "Mikrofon ve iletişim sesi etkin" : string.Empty,
+                    ? Text("Dock.CallPossible", "Olası arama etkinliği")
+                    : Text("System.Call.Ended", "Arama etkinliği sona erdi"),
+                current.CallActivity == CallActivityState.Possible
+                    ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
+                    : string.Empty,
                 "\uE717",
                 ModuleEventPriority.High,
                 "system:call",
@@ -158,9 +168,9 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
         {
             return CreateStatusEvent(
                 current.MicrophoneUsage == MicrophoneUsageState.Active
-                    ? "Mikrofon etkin"
-                    : "Mikrofon boşta",
-                "Windows ses oturumu durumu",
+                    ? Text("System.Microphone.Active", "Mikrofon etkin")
+                    : Text("System.Microphone.Idle", "Mikrofon boşta"),
+                Text("System.AudioSession.State", "Windows ses oturumu durumu"),
                 "\uE720",
                 ModuleEventPriority.High,
                 "system:microphone",
@@ -190,8 +200,10 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
                 ModuleEventKind.ValueChanged,
                 new ModulePresentation(
                     ModuleId,
-                    current.IsApplicationMuted ? "Uygulama sesi kapalı" : "Uygulama sesi",
-                    "Seçili medya uygulaması",
+                    current.IsApplicationMuted
+                        ? Text("System.Audio.Application.Muted", "Uygulama sesi kapalı")
+                        : Text("System.Audio.Application", "Uygulama sesi"),
+                    Text("System.Audio.SelectedMedia", "Seçili medya uygulaması"),
                     "\uE74F",
                     ModuleIndicatorKind.None,
                     valueText: $"%{current.ApplicationVolumePercent}",
@@ -208,7 +220,7 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
         {
             return CreateStatusEvent(
                 current.CameraDeviceAvailability == CameraDeviceAvailability.Available
-                    ? "Kamera kullanılabilirliği değişti"
+                    ? Text("System.Camera.Changed", "Kamera kullanılabilirliği değişti")
                     : _viewModel.CameraText,
                 _viewModel.CameraText,
                 "\uE714",
@@ -248,9 +260,11 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
             snapshot.MicrophoneUsage == MicrophoneUsageState.Active;
         return new ModulePresentation(
             ModuleId,
-            snapshot.IsMasterMuted ? "Ses kapalı" : "Sistem sesi",
+            snapshot.IsMasterMuted
+                ? Text("System.Audio.Muted", "Ses kapalı")
+                : Text("System.Audio.Master", "Sistem sesi"),
             snapshot.CallActivity == CallActivityState.Possible
-                ? "Olası arama etkinliği"
+                ? Text("Dock.CallPossible", "Olası arama etkinliği")
                 : _viewModel.MicrophoneText,
             _viewModel.MasterVolumeGlyph,
             snapshot.MicrophoneUsage == MicrophoneUsageState.Active
@@ -259,14 +273,45 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
             valueText: snapshot.IsMasterVolumeAvailable ? $"%{snapshot.MasterVolumePercent}" : "—",
             progress: snapshot.IsMasterVolumeAvailable ? snapshot.MasterVolume : null,
             presentationKind: ModulePresentationKind.Status,
-            commands: Descriptor.InteractionCommands.Select(command => new ModuleCommandState(
-                command.Id,
-                command.DisplayName,
-                command.Glyph,
-                CanExecuteCommand(command.Id))).ToArray(),
+            commands:
+            [
+                new ModuleCommandState(
+                    "master-volume-down",
+                    Text("System.Audio.Master.Down", "Ana sesi azalt"),
+                    "\uE993",
+                    CanExecuteCommand("master-volume-down")),
+                new ModuleCommandState(
+                    "master-mute",
+                    Text("System.Audio.Master.Toggle", "Ana sesi aç veya kapat"),
+                    "\uE74F",
+                    CanExecuteCommand("master-mute")),
+                new ModuleCommandState(
+                    "master-volume-up",
+                    Text("System.Audio.Master.Up", "Ana sesi artır"),
+                    "\uE995",
+                    CanExecuteCommand("master-volume-up")),
+                new ModuleCommandState(
+                    "app-mute",
+                    Text("System.Audio.Application.Toggle", "Uygulama sesini aç veya kapat"),
+                    "\uE74F",
+                    CanExecuteCommand("app-mute"))
+            ],
             isPersistentOverride: hasOngoingActivity,
             persistentPriorityOverride: hasOngoingActivity ? 450 : null);
     }
 
-    public void Dispose() => _service.SnapshotChanged -= OnSnapshotChanged;
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    public void Dispose()
+    {
+        _service.SnapshotChanged -= OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+    }
 }

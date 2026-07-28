@@ -66,6 +66,31 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
+    public void IslandSurface_UsesRoundedSystemBackdropBehindContent()
+    {
+        var document = LoadControl("IslandShell.xaml");
+        var layoutChildren = document.Descendants().Single(element =>
+                element.Attribute(XName.Get(
+                    "Name",
+                    "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "LayoutRoot")
+            .Elements()
+            .ToArray();
+        var backdrop = layoutChildren.Single(element =>
+            element.Attribute(XName.Get(
+                "Name",
+                "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "BackdropSurface");
+        var surface = layoutChildren.Single(element =>
+            element.Attribute(XName.Get(
+                "Name",
+                "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "Surface");
+
+        Assert.AreEqual("SystemBackdropElement", backdrop.Name.LocalName);
+        Assert.AreEqual("23", backdrop.Attribute("CornerRadius")?.Value);
+        Assert.AreEqual(0, Array.IndexOf(layoutChildren, backdrop));
+        Assert.AreEqual(1, Array.IndexOf(layoutChildren, surface));
+    }
+
+    [TestMethod]
     public void MusicCompactView_UsesReusableAudioActivityIndicator()
     {
         var document = LoadControl("MusicCompactView.xaml");

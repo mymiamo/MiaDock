@@ -5,6 +5,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.ViewModels;
+using MiaDock.App.Services;
+using MiaDock.Core.Localization;
+using MiaDock.Core.Presentation;
+using MiaDock.Core.Settings;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.ViewModels;
 
@@ -14,16 +18,24 @@ public sealed partial class IdleHoverView : UserControl
 {
     private readonly MusicModuleViewModel? _music;
     private readonly IdleDashboardViewModel? _dashboard;
-    private DispatcherQueueTimer? _minuteTimer;
+    private readonly ILocalizationService? _localization;
+    private readonly ISettingsService? _settings;
+    private DispatcherQueueTimer? _clockTimer;
 
-    public IdleHoverView() : this(null, null)
+    public IdleHoverView() : this(null, null, null, null)
     {
     }
 
-    public IdleHoverView(MusicModuleViewModel? music, IdleDashboardViewModel? idleDashboard)
+    public IdleHoverView(
+        MusicModuleViewModel? music,
+        IdleDashboardViewModel? idleDashboard,
+        ILocalizationService? localization = null,
+        ISettingsService? settings = null)
     {
         _music = music;
         _dashboard = idleDashboard;
+        _localization = localization;
+        _settings = settings;
         InitializeComponent();
         LayoutRoot.DataContext = idleDashboard;
         MusicRow.DataContext = music;
@@ -34,6 +46,14 @@ public sealed partial class IdleHoverView : UserControl
         if (_music is not null)
         {
             _music.PropertyChanged += OnMusicPropertyChanged;
+        }
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
+        if (_settings is not null)
+        {
+            _settings.SettingsChanged += OnSettingsChanged;
         }
 
         UpdateClock();
@@ -46,6 +66,14 @@ public sealed partial class IdleHoverView : UserControl
         if (_music is not null)
         {
             _music.PropertyChanged -= OnMusicPropertyChanged;
+        }
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+        if (_settings is not null)
+        {
+            _settings.SettingsChanged -= OnSettingsChanged;
         }
 
         StopTimer();
@@ -70,21 +98,30 @@ public sealed partial class IdleHoverView : UserControl
 
     private void UpdateClock()
     {
-        var now = DateTimeOffset.Now;
-        var culture = CultureInfo.CurrentCulture;
-        TimeText.Text = now.ToString("HH:mm", culture);
-        DateText.Text = now.ToString("ddd, d MMM", culture);
+        var display = ClockDisplayFormatter.Format(
+            DateTimeOffset.Now,
+            CultureInfo.CurrentCulture,
+            ClockSettings);
+        TimeText.Text = display.Time;
+        DateText.Text = display.Date;
+        DateText.Visibility = ClockSettings.ShowDate ? Visibility.Visible : Visibility.Collapsed;
+        DateSeparator.Visibility = DateText.Visibility;
     }
 
     private void UpdateAutomationName(bool showTrack)
     {
         var culture = CultureInfo.CurrentCulture;
-        var clock = DateTimeOffset.Now.ToString("HH:mm", culture);
+        var display = ClockDisplayFormatter.Format(
+            DateTimeOffset.Now,
+            culture,
+            ClockSettings);
         var detail = showTrack
             ? $"{_music!.Current.Track.Title}, {_music.Current.Track.Artist}"
             : _dashboard?.StatusSummary;
         AutomationProperties.SetName(LayoutRoot,
-            string.IsNullOrWhiteSpace(detail) ? $"Saat {clock}" : $"Saat {clock}, {detail}");
+            string.IsNullOrWhiteSpace(detail)
+                ? Text("Dock.Clock.Short", "Saat {0}", display.Time)
+                : $"{Text("Dock.Clock.Short", "Saat {0}", display.Time)}, {detail}");
     }
 
     private void OnMinuteElapsed(DispatcherQueueTimer sender, object args)
@@ -99,25 +136,51 @@ public sealed partial class IdleHoverView : UserControl
     {
         StopTimer();
         var now = DateTimeOffset.Now;
-        var nextMinute = new DateTimeOffset(
-            now.Year, now.Month, now.Day, now.Hour, now.Minute, 0, now.Offset).AddMinutes(1);
-
-        _minuteTimer = DispatcherQueue.CreateTimer();
-        _minuteTimer.IsRepeating = false;
-        _minuteTimer.Interval = nextMinute - now;
-        _minuteTimer.Tick += OnMinuteElapsed;
-        _minuteTimer.Start();
+        _clockTimer = DispatcherQueue.CreateTimer();
+        _clockTimer.IsRepeating = false;
+        _clockTimer.Interval = ClockDisplayFormatter.DelayUntilNextRefresh(now, ClockSettings);
+        _clockTimer.Tick += OnMinuteElapsed;
+        _clockTimer.Start();
     }
 
     private void StopTimer()
     {
-        if (_minuteTimer is null)
+        if (_clockTimer is null)
         {
             return;
         }
 
-        _minuteTimer.Stop();
-        _minuteTimer.Tick -= OnMinuteElapsed;
-        _minuteTimer = null;
+        _clockTimer.Stop();
+        _clockTimer.Tick -= OnMinuteElapsed;
+        _clockTimer = null;
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs args)
+    {
+        UpdateClock();
+        UpdateContent();
+    }
+
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
+    {
+        if (args.Previous.General.Clock == args.Current.General.Clock)
+        {
+            return;
+        }
+
+        UpdateClock();
+        UpdateContent();
+        ScheduleNextMinute();
+    }
+
+    private ClockDisplaySettings ClockSettings =>
+        _settings?.Current.General.Clock ?? ClockDisplaySettings.Default;
+
+    private string Text(string key, string fallback, params object?[] arguments)
+    {
+        var value = _localization?.Get(key, arguments);
+        return value is not null && value != key
+            ? value
+            : string.Format(CultureInfo.CurrentCulture, fallback, arguments);
     }
 }

@@ -5,14 +5,14 @@
                 HorizontalScrollMode="Disabled"
                 HorizontalScrollBarVisibility="Disabled"
                 HorizontalContentAlignment="Stretch">
-    <StackPanel MaxWidth="820" HorizontalAlignment="Stretch" Spacing="14">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
       <StackPanel Spacing="5" Margin="0,0,0,10">
-        <TextBlock Text="Medya" FontSize="25" FontWeight="SemiBold" />
+        <TextBlock Text="Medya" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Windows medya oturumlarından kullanılacak kaynağı ve kontrol davranışını seçin."
-                   TextWrapping="Wrap" Opacity="0.72" />
+                   Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
       </StackPanel>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="280" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE8D6;" FontSize="20" VerticalAlignment="Center" />
@@ -23,7 +23,7 @@
         </Grid>
       </Border>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="280" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE72C;" FontSize="20" VerticalAlignment="Center" />
@@ -34,7 +34,7 @@
         </Grid>
       </Border>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="34" /><ColumnDefinition Width="*" /><ColumnDefinition Width="280" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE767;" FontSize="20" VerticalAlignment="Center" />

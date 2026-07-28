@@ -10,17 +10,35 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
 {
     private readonly IUiDispatcher _dispatcher;
     private readonly ILogService? _log;
+    private readonly INetworkInterfaceCounterReader _counterReader;
+    private readonly TimeSpan _samplingInterval;
     private readonly object _gate = new();
     private readonly NetworkRateCalculator _rateCalculator = new();
     private CancellationTokenSource? _samplingCancellation;
     private Task _samplingTask = Task.CompletedTask;
     private bool _started;
     private bool _samplingRequested;
+    private bool _counterFailureLogged;
     private bool _disposed;
 
     public WindowsNetworkStatusService(IUiDispatcher dispatcher, ILogService? log = null)
+        : this(
+            dispatcher,
+            new NetworkInterfaceCounterReader(),
+            TimeSpan.FromSeconds(1),
+            log)
+    {
+    }
+
+    internal WindowsNetworkStatusService(
+        IUiDispatcher dispatcher,
+        INetworkInterfaceCounterReader counterReader,
+        TimeSpan samplingInterval,
+        ILogService? log = null)
     {
         _dispatcher = dispatcher;
+        _counterReader = counterReader;
+        _samplingInterval = samplingInterval;
         _log = log;
     }
 
@@ -39,6 +57,7 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
         }
 
         RefreshFromSystem();
+        StartSamplingIfRequested();
         _log?.Write(TechnicalLogLevel.Information, TechnicalEventIds.NetworkStatusReady,
             "DeviceStatus", "Network status service initialized.", properties: new Dictionary<string, object?>
             {
@@ -74,6 +93,7 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
 
     public void SetThroughputSamplingEnabled(bool enabled)
     {
+        var clearPublishedRate = false;
         lock (_gate)
         {
             if (_samplingRequested == enabled) return;
@@ -86,17 +106,43 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
                 _samplingCancellation = null;
                 _samplingTask = Task.CompletedTask;
                 _rateCalculator.Reset();
+                _counterFailureLogged = false;
+                clearPublishedRate = Current.DownloadBytesPerSecond is not null ||
+                    Current.UploadBytesPerSecond is not null;
                 if (cancellation is not null)
                 {
                     _ = task.ContinueWith(_ => cancellation.Dispose(), TaskScheduler.Default);
                 }
-                return;
             }
-
-            if (!_started || _samplingCancellation is not null) return;
-            _samplingCancellation = new CancellationTokenSource();
-            _samplingTask = RunSamplingAsync(_samplingCancellation.Token);
+            else
+            {
+                StartSamplingUnderLock();
+            }
         }
+
+        if (clearPublishedRate)
+        {
+            Publish(Current with { DownloadBytesPerSecond = null, UploadBytesPerSecond = null });
+        }
+    }
+
+    private void StartSamplingIfRequested()
+    {
+        lock (_gate)
+        {
+            StartSamplingUnderLock();
+        }
+    }
+
+    private void StartSamplingUnderLock()
+    {
+        if (!_samplingRequested || !_started || _samplingCancellation is not null)
+        {
+            return;
+        }
+
+        _samplingCancellation = new CancellationTokenSource();
+        _samplingTask = RunSamplingAsync(_samplingCancellation.Token);
     }
 
     private void OnNetworkStatusChanged(object sender) => RefreshFromSystem();
@@ -124,7 +170,11 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
             var metered = cost is "Fixed" or "Variable";
             var adapterId = profile?.NetworkAdapter?.NetworkAdapterId;
             var previous = Current;
-            if (previous.AdapterId != adapterId) _rateCalculator.Reset();
+            if (previous.AdapterId != adapterId)
+            {
+                _rateCalculator.Reset();
+                _counterFailureLogged = false;
+            }
             Publish(new NetworkStatusSnapshot(
                 DeviceServiceState.Ready,
                 connectivity,
@@ -142,28 +192,51 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
 
     private async Task RunSamplingAsync(CancellationToken cancellationToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(1));
+        await Task.Yield();
+        using var timer = new PeriodicTimer(_samplingInterval);
         try
         {
+            SampleThroughput();
             while (await timer.WaitForNextTickAsync(cancellationToken).ConfigureAwait(false))
             {
-                var adapterId = Current.AdapterId;
-                if (adapterId is null || !NetworkInterfaceCounterReader.TryRead(adapterId.Value, out var received, out var sent))
-                {
-                    _rateCalculator.Reset();
-                    Publish(Current with { DownloadBytesPerSecond = null, UploadBytesPerSecond = null });
-                    continue;
-                }
-
-                var rate = _rateCalculator.Add(new NetworkCounterSnapshot(received, sent, DateTimeOffset.UtcNow));
-                if (rate is { } value)
-                {
-                    Publish(Current with { DownloadBytesPerSecond = value.Download, UploadBytesPerSecond = value.Upload });
-                }
+                SampleThroughput();
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+        }
+    }
+
+    private void SampleThroughput()
+    {
+        var adapterId = Current.AdapterId;
+        if (adapterId is null ||
+            !_counterReader.TryRead(adapterId.Value, out var received, out var sent))
+        {
+            _rateCalculator.Reset();
+            Publish(Current with { DownloadBytesPerSecond = null, UploadBytesPerSecond = null });
+            if (!_counterFailureLogged)
+            {
+                _counterFailureLogged = true;
+                _log?.Write(
+                    TechnicalLogLevel.Warning,
+                    TechnicalEventIds.NetworkCountersUnavailable,
+                    "DeviceStatus",
+                    "Network throughput counters are unavailable.");
+            }
+            return;
+        }
+
+        _counterFailureLogged = false;
+        var rate = _rateCalculator.Add(
+            new NetworkCounterSnapshot(received, sent, DateTimeOffset.UtcNow));
+        if (rate is { } value)
+        {
+            Publish(Current with
+            {
+                DownloadBytesPerSecond = value.Download,
+                UploadBytesPerSecond = value.Upload
+            });
         }
     }
 

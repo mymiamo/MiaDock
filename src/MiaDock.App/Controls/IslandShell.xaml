@@ -6,6 +6,8 @@
   <Grid x:Name="LayoutRoot"
         Width="292"
         Height="46">
+    <SystemBackdropElement x:Name="BackdropSurface"
+                           CornerRadius="23" />
     <Border x:Name="Surface"
             Background="#FF000000"
             BorderBrush="#FF252525"

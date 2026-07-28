@@ -1,7 +1,9 @@
 using MiaDock.Modules.Time;
+using MiaDock.Core.Modules;
 using MiaDock.Modules.Time.Models;
 using MiaDock.Modules.Time.Services;
 using MiaDock.Modules.Time.ViewModels;
+using MiaDock.Core.Settings;
 
 namespace MiaDock.Core.Tests;
 
@@ -63,6 +65,50 @@ public sealed class TimerModuleTests
         Assert.AreEqual("Kronometre çalışıyor", module.CurrentPresentation?.SecondaryText);
         Assert.IsTrue(module.CanExecuteCommand("pause-resume"));
         Assert.IsFalse(module.CanExecuteCommand("cancel"));
+    }
+
+    [TestMethod]
+    public async Task RunningStopwatch_LanguageChangeRefreshesActivePresentation()
+    {
+        var localization = new TestLocalizationService(
+            new Dictionary<string, (string Turkish, string English)>
+            {
+                ["Timer.StopwatchRunning"] = ("Kronometre çalışıyor", "Stopwatch running")
+            });
+        var service = new FakeTimeToolsService(TimeToolsSnapshot.Default with
+        {
+            IsStopwatchRunning = true,
+            StopwatchElapsed = TimeSpan.FromSeconds(5)
+        });
+        using var viewModel = new TimeToolsViewModel(service, localization: localization);
+        using var module = new TimerModule(viewModel, service, localization);
+        await module.ActivateAsync();
+        ModulePresentation? updated = null;
+        module.PresentationChanged += (_, presentation) => updated = presentation;
+
+        localization.SetLanguage(AppLanguage.English);
+
+        Assert.AreEqual("Stopwatch running", viewModel.CompactStatusText);
+        Assert.AreEqual("Stopwatch running", updated?.SecondaryText);
+    }
+
+    [TestMethod]
+    public async Task CompletedTimer_RemainsPersistentUntilAlarmIsDismissed()
+    {
+        var service = new FakeTimeToolsService(TimeToolsSnapshot.Default with
+        {
+            TimerState = TimerRunState.Completed,
+            TimerDuration = TimeSpan.FromMinutes(5)
+        });
+        using var viewModel = new TimeToolsViewModel(service);
+        using var module = new TimerModule(viewModel, service);
+
+        await module.ActivateAsync();
+
+        Assert.IsTrue(module.CurrentPresentation?.IsPersistentOverride);
+        Assert.AreEqual("Süre doldu", module.CurrentPresentation?.SecondaryText);
+        Assert.AreEqual("Alarmı sustur", module.CurrentPresentation?.Commands.Single(command => command.Id == "cancel").DisplayName);
+        Assert.IsTrue(module.CanExecuteCommand("cancel"));
     }
 
     private sealed class FakeTimeToolsService(TimeToolsSnapshot current) : ITimeToolsService

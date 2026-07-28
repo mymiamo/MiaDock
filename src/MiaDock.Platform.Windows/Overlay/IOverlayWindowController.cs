@@ -22,5 +22,7 @@ public interface IOverlayWindowController : IDisposable
 
     void UpdateOpacity(double opacity);
 
+    void UpdateSurfaceColor(uint argb);
+
     void SetOutsideClickMonitoring(bool enabled);
 }
