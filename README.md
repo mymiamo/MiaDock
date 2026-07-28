@@ -11,7 +11,7 @@
 [![CI](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml/badge.svg)](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/github/license/mymiamo/MiaDock)](LICENSE)
 
-[Version **1.1.1.0** · Pre-release](https://github.com/mymiamo/MiaDock/releases)
+[Version **1.1.1.0** · Release](https://github.com/mymiamo/MiaDock/releases)
 </div>
 
 ## Overview
