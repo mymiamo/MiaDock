@@ -20,11 +20,15 @@
     <Content Include="..\..\src\MiaDock.App\Controls\*.xaml" Link="Controls\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OverlayWindow.xaml" Link="Windows\OverlayWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\SettingsWindow.xaml" Link="Windows\SettingsWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\SettingsWindow.xaml.cs" Link="Windows\SettingsWindow.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OnboardingWindow.xaml" Link="Windows\OnboardingWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Package.appxmanifest" Link="Package.appxmanifest" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\MiaDock.App.csproj" Link="MiaDock.App.csproj" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\*.xaml" Link="Settings\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Dialogs\*.xaml" Link="Dialogs\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Onboarding\*.xaml" Link="Onboarding\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Services\AppLocalizationService.cs" Link="Localization\AppLocalizationService.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\ViewModels\OnboardingViewModel.cs" Link="ViewModels\OnboardingViewModel.cs" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

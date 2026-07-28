@@ -1,13 +1,75 @@
+using System.Net.NetworkInformation;
 using System.Runtime.InteropServices;
 
 namespace MiaDock.Platform.Windows.Connectivity;
 
-internal static class NetworkInterfaceCounterReader
+internal interface INetworkInterfaceCounterReader
+{
+    bool TryRead(Guid interfaceId, out ulong receivedBytes, out ulong sentBytes);
+}
+
+internal delegate bool NetworkCounterReadHandler(
+    Guid interfaceId,
+    out ulong receivedBytes,
+    out ulong sentBytes);
+
+internal sealed record ManagedNetworkCounter(
+    Guid InterfaceId,
+    ulong ReceivedBytes,
+    ulong SentBytes);
+
+internal sealed class NetworkInterfaceCounterReader : INetworkInterfaceCounterReader
 {
     private const int IfMaxStringSize = 256;
     private const int IfMaxPhysAddressLength = 32;
+    private readonly NetworkCounterReadHandler _nativeReader;
+    private readonly Func<IEnumerable<ManagedNetworkCounter>> _managedCounterSource;
 
-    public static bool TryRead(Guid interfaceId, out ulong receivedBytes, out ulong sentBytes)
+    public NetworkInterfaceCounterReader()
+        : this(TryReadNative, ReadManagedCounters)
+    {
+    }
+
+    internal NetworkInterfaceCounterReader(
+        NetworkCounterReadHandler nativeReader,
+        Func<IEnumerable<ManagedNetworkCounter>> managedCounterSource)
+    {
+        _nativeReader = nativeReader;
+        _managedCounterSource = managedCounterSource;
+    }
+
+    public bool TryRead(Guid interfaceId, out ulong receivedBytes, out ulong sentBytes)
+    {
+        if (_nativeReader(interfaceId, out receivedBytes, out sentBytes))
+        {
+            return true;
+        }
+
+        try
+        {
+            var counter = _managedCounterSource()
+                .FirstOrDefault(candidate => candidate.InterfaceId == interfaceId);
+            if (counter is null)
+            {
+                receivedBytes = 0;
+                sentBytes = 0;
+                return false;
+            }
+
+            receivedBytes = counter.ReceivedBytes;
+            sentBytes = counter.SentBytes;
+            return true;
+        }
+        catch (Exception) when (
+            OperatingSystem.IsWindows())
+        {
+            receivedBytes = 0;
+            sentBytes = 0;
+            return false;
+        }
+    }
+
+    private static bool TryReadNative(Guid interfaceId, out ulong receivedBytes, out ulong sentBytes)
     {
         receivedBytes = 0;
         sentBytes = 0;
@@ -18,6 +80,41 @@ internal static class NetworkInterfaceCounterReader
         receivedBytes = row.InOctets;
         sentBytes = row.OutOctets;
         return true;
+    }
+
+    private static IEnumerable<ManagedNetworkCounter> ReadManagedCounters()
+    {
+        foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (!Guid.TryParse(networkInterface.Id, out var interfaceId))
+            {
+                continue;
+            }
+
+            IPv4InterfaceStatistics statistics;
+            try
+            {
+                statistics = networkInterface.GetIPv4Statistics();
+            }
+            catch (NetworkInformationException)
+            {
+                continue;
+            }
+            catch (InvalidOperationException)
+            {
+                continue;
+            }
+
+            if (statistics.BytesReceived < 0 || statistics.BytesSent < 0)
+            {
+                continue;
+            }
+
+            yield return new ManagedNetworkCounter(
+                interfaceId,
+                (ulong)statistics.BytesReceived,
+                (ulong)statistics.BytesSent);
+        }
     }
 
     [DllImport("iphlpapi.dll")]

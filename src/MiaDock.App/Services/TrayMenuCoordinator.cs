@@ -1,4 +1,5 @@
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Core.Settings;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.Services;
@@ -38,6 +39,7 @@ public sealed class TrayMenuCoordinator : IDisposable
     private readonly IStartupTaskService _startup;
     private readonly IApplicationLifetimeService _lifetime;
     private readonly ILogService _log;
+    private readonly ILocalizationService _localization;
     private readonly Dictionary<int, string> _sourceCommands = new();
     private readonly Dictionary<int, string> _displayCommands = new();
     private StartupTaskStatus _startupStatus = StartupTaskStatus.Unavailable;
@@ -54,7 +56,8 @@ public sealed class TrayMenuCoordinator : IDisposable
         IDisplayTopologyService displays,
         IStartupTaskService startup,
         IApplicationLifetimeService lifetime,
-        ILogService log)
+        ILogService log,
+        ILocalizationService localization)
     {
         _tray = tray;
         _overlay = overlay;
@@ -66,6 +69,8 @@ public sealed class TrayMenuCoordinator : IDisposable
         _startup = startup;
         _lifetime = lifetime;
         _log = log;
+        _localization = localization;
+        _localization.LanguageChanged += OnLanguageChanged;
     }
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -104,6 +109,7 @@ public sealed class TrayMenuCoordinator : IDisposable
         _media.SnapshotChanged -= OnMediaSnapshotChanged;
         _media.SourcesChanged -= OnMediaSourcesChanged;
         _displays.DisplaysChanged -= OnDisplaysChanged;
+        _localization.LanguageChanged -= OnLanguageChanged;
         _tray.Dispose();
         _disposed = true;
     }
@@ -116,9 +122,9 @@ public sealed class TrayMenuCoordinator : IDisposable
         {
             mediaControls.AddRange(
             [
-                new(PreviousCommand, "Önceki", _modules.CanExecuteCommand(MediaModuleId, "previous")),
+                new(PreviousCommand, Text("Tray.Previous"), _modules.CanExecuteCommand(MediaModuleId, "previous")),
                 new(PlayPauseCommand, PlaybackLabel(), _modules.CanExecuteCommand(MediaModuleId, "play-pause")),
-                new(NextCommand, "Sonraki", _modules.CanExecuteCommand(MediaModuleId, "next")),
+                new(NextCommand, Text("Tray.Next"), _modules.CanExecuteCommand(MediaModuleId, "next")),
                 TrayMenuItem.Separator
             ]);
         }
@@ -138,14 +144,14 @@ public sealed class TrayMenuCoordinator : IDisposable
 
         if (sourceItems.Count == 0)
         {
-            sourceItems.Add(new TrayMenuItem(0, "Medya uygulaması bulunamadı", IsEnabled: false));
+            sourceItems.Add(new TrayMenuItem(0, Text("Tray.MediaNotFound"), IsEnabled: false));
         }
 
         _displayCommands.Clear();
         var monitorItems = new List<TrayMenuItem>
         {
-            new(PrimaryMonitorCommand, "Ana monitör", IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Primary),
-            new(ActiveMonitorCommand, "Aktif pencerenin monitörü", IsChecked: settings.Monitor.Mode == MonitorSelectionMode.ActiveWindow),
+            new(PrimaryMonitorCommand, Text("Tray.PrimaryMonitor"), IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Primary),
+            new(ActiveMonitorCommand, Text("Tray.ActiveMonitor"), IsChecked: settings.Monitor.Mode == MonitorSelectionMode.ActiveWindow),
             TrayMenuItem.Separator
         };
         for (var index = 0; index < _displays.Displays.Count; index++)
@@ -162,36 +168,36 @@ public sealed class TrayMenuCoordinator : IDisposable
 
         var items = new List<TrayMenuItem>
         {
-            new(ToggleDockCommand, _overlay.IsDockVisible ? "Adayı gizle" : "Adayı göster")
+            new(ToggleDockCommand, _overlay.IsDockVisible ? Text("Dock.Hide") : Text("Dock.Show"))
         };
         items.AddRange(mediaControls);
-        items.Add(new TrayMenuItem(SettingsCommand, "Ayarlar"));
-        items.Add(new TrayMenuItem(0, "Varsayılan medya uygulaması", Children: sourceItems));
+        items.Add(new TrayMenuItem(SettingsCommand, Text("Dock.Settings")));
+        items.Add(new TrayMenuItem(0, Text("Tray.DefaultMedia"), Children: sourceItems));
         items.Add(new TrayMenuItem(
             StartupCommand,
-            "Windows başlangıcında çalıştır",
+            Text("Tray.StartWithWindows"),
             IsEnabled: _startupStatus != StartupTaskStatus.Unavailable,
             IsChecked: _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy));
-        items.Add(new TrayMenuItem(0, "Tam ekran davranışı", Children:
+        items.Add(new TrayMenuItem(0, Text("Tray.FullscreenBehavior"), Children:
         [
-            new(FullscreenEnabledCommand, "Tam ekranda bildirimleri göster", IsChecked: settings.Fullscreen.Enabled),
+            new(FullscreenEnabledCommand, Text("Tray.Fullscreen.Show"), IsChecked: settings.Fullscreen.Enabled),
             TrayMenuItem.Separator,
-            new(FullscreenMinimalCommand, "Sade görünüm", IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal),
-            new(FullscreenControlledCommand, "Kontrollü görünüm", IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls)
+            new(FullscreenMinimalCommand, Text("Tray.Fullscreen.Minimal"), IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal),
+            new(FullscreenControlledCommand, Text("Tray.Fullscreen.Controls"), IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls)
         ]));
-        items.Add(new TrayMenuItem(0, "Monitör seç", Children: monitorItems));
+        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems));
         items.Add(new TrayMenuItem(
             NotificationsCommand,
-            "Geçici bildirimleri göster",
+            Text("Tray.TemporaryNotifications"),
             IsChecked: settings.Tray.EnableTemporaryNotifications));
         items.Add(TrayMenuItem.Separator);
-        items.Add(new TrayMenuItem(ExitCommand, "Uygulamadan tamamen çık"));
+        items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit")));
         return items;
     }
 
     private string PlaybackLabel() => _media.Current.PlaybackStatus == PlaybackStatus.Playing
-        ? "Duraklat"
-        : "Oynat";
+        ? Text("Common.Pause")
+        : Text("Common.Play");
 
     private void RefreshMenu()
     {
@@ -349,4 +355,8 @@ public sealed class TrayMenuCoordinator : IDisposable
     private void OnMediaSourcesChanged(object? sender, IReadOnlyList<MediaSourceInfo> sources) => RefreshMenu();
 
     private void OnDisplaysChanged(object? sender, IReadOnlyList<DisplayDescriptor> displays) => RefreshMenu();
+
+    private void OnLanguageChanged(object? sender, EventArgs args) => RefreshMenu();
+
+    private string Text(string key) => _localization.Get(key);
 }

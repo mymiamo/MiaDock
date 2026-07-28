@@ -1,23 +1,93 @@
-<UserControl x:Class="MiaDock.App.Views.Settings.StartupShutdownSettingsPage"
-             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <ScrollViewer Padding="32,24,32,40">
-    <StackPanel MaxWidth="760" HorizontalAlignment="Left" Spacing="18">
-      <TextBlock Text="Başlangıç ve kapanış" Style="{ThemeResource TitleTextBlockStyle}" />
-      <TextBlock Text="MiaDock'un Windows ile ve pencere kapatıldığında nasıl davranacağını seçin." TextWrapping="Wrap" Opacity="0.68" />
-      <ToggleSwitch Header="Windows açılışında başlat"
-                    IsOn="{Binding StartWithWindows, Mode=TwoWay}"
-                    IsEnabled="{Binding IsStartupTaskAvailable}" />
-      <TextBlock Text="{Binding StartupStatusMessage}" TextWrapping="Wrap" Opacity="0.68" />
-      <TextBlock Text="Uygulama açıldığında" Style="{ThemeResource SubtitleTextBlockStyle}" />
-      <ComboBox ItemsSource="{Binding LaunchModes}" DisplayMemberPath="Label"
-                SelectedIndex="{Binding LaunchModeIndex, Mode=TwoWay}" HorizontalAlignment="Stretch"
-                AutomationProperties.Name="Uygulama açıldığında" />
-      <TextBlock Text="Pencere kapatıldığında" Style="{ThemeResource SubtitleTextBlockStyle}" />
-      <ComboBox ItemsSource="{Binding CloseBehaviors}" DisplayMemberPath="Label"
-                SelectedIndex="{Binding CloseBehaviorIndex, Mode=TwoWay}" HorizontalAlignment="Stretch"
-                AutomationProperties.Name="Pencere kapatıldığında" />
-      <InfoBar IsOpen="True" Severity="Informational" Title="Güvenli başlangıç" Message="MiaDock, kayıt defteri yerine Microsoft Store uyumlu StartupTask API'sini kullanır." />
+<UserControl
+    x:Class="MiaDock.App.Views.Settings.StartupShutdownSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer Padding="28,24,28,48"
+                HorizontalScrollMode="Disabled"
+                HorizontalContentAlignment="Stretch">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
+      <StackPanel Spacing="5" Margin="0,0,0,8">
+        <TextBlock Text="Başlangıç ve kapanış"
+                   Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
+        <TextBlock Text="MiaDock'un Windows ile ve pencere kapatıldığında nasıl davranacağını seçin."
+                   Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
+      </StackPanel>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <Border Style="{StaticResource SettingsIconTileBorderStyle}">
+            <FontIcon Glyph="&#xE7E8;"
+                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
+          </Border>
+          <StackPanel Grid.Column="1" Spacing="3">
+            <TextBlock Text="Windows açılışında başlat" FontWeight="SemiBold" />
+            <TextBlock Text="{Binding StartupStatusMessage}"
+                       FontSize="12" Opacity="0.68" TextWrapping="Wrap" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="2"
+                        IsOn="{Binding StartWithWindows, Mode=TwoWay}"
+                        IsEnabled="{Binding IsStartupTaskAvailable}"
+                        AutomationProperties.Name="Windows açılışında başlat" />
+        </Grid>
+      </Border>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="280" />
+          </Grid.ColumnDefinitions>
+          <Border Style="{StaticResource SettingsIconTileBorderStyle}">
+            <FontIcon Glyph="&#xE768;"
+                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
+          </Border>
+          <TextBlock Grid.Column="1"
+                     Text="Uygulama açıldığında"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+          <ComboBox Grid.Column="2"
+                    ItemsSource="{Binding LaunchModes}"
+                    DisplayMemberPath="Label"
+                    SelectedIndex="{Binding LaunchModeIndex, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Uygulama açıldığında" />
+        </Grid>
+      </Border>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="280" />
+          </Grid.ColumnDefinitions>
+          <Border Style="{StaticResource SettingsIconTileBorderStyle}">
+            <FontIcon Glyph="&#xE8BB;"
+                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
+          </Border>
+          <TextBlock Grid.Column="1"
+                     Text="Pencere kapatıldığında"
+                     FontWeight="SemiBold"
+                     VerticalAlignment="Center" />
+          <ComboBox Grid.Column="2"
+                    ItemsSource="{Binding CloseBehaviors}"
+                    DisplayMemberPath="Label"
+                    SelectedIndex="{Binding CloseBehaviorIndex, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Pencere kapatıldığında" />
+        </Grid>
+      </Border>
+
+      <InfoBar IsOpen="True"
+               Severity="Informational"
+               Title="Güvenli başlangıç"
+               Message="MiaDock, kayıt defteri yerine Microsoft Store uyumlu StartupTask API'sini kullanır." />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

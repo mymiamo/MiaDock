@@ -20,6 +20,7 @@ internal static class NativeConstants
     internal const uint WmSettingChange = 0x001A;
     internal const uint WmMouseActivate = 0x0021;
     internal const uint WmDisplayChange = 0x007E;
+    internal const uint WmNcHitTest = 0x0084;
     internal const uint WmNcDestroy = 0x0082;
     internal const uint WmThemeChanged = 0x031A;
     internal const uint WmDwmCompositionChanged = 0x031E;
@@ -47,8 +48,11 @@ internal static class NativeConstants
     internal const uint DwmNcRenderingDisabled = 1;
     internal const uint DwmWindowCornerDoNotRound = 1;
     internal const uint DwmColorNone = 0xFFFFFFFE;
+    internal const uint DwmBlurBehindEnable = 0x00000001;
+    internal const uint DwmBlurBehindRegion = 0x00000002;
 
     internal const nint MaNoActivate = 3;
+    internal const nint HtTransparent = -1;
     internal const int SwShowNoActivate = 4;
     internal const int SwHide = 0;
     internal const uint LwaAlpha = 0x00000002;

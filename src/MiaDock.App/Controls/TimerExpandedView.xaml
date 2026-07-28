@@ -5,6 +5,7 @@
   <TabView x:Name="TimeToolTabs"
            IsAddTabButtonVisible="False"
            TabWidthMode="Equal"
+           SelectionChanged="OnToolSelectionChanged"
            SelectedIndex="{Binding SelectedToolIndex, Mode=TwoWay}"
            Margin="14,0,14,8"
            AutomationProperties.Name="Zaman araçları">
@@ -68,13 +69,15 @@
                     Content="{Binding TimerPrimaryText}"
                     Command="{Binding TimerPrimaryCommand}"
                     Style="{StaticResource AccentButtonStyle}" />
-            <Button MinWidth="54" Content="İptal" Command="{Binding CancelTimerCommand}" />
+            <Button MinWidth="86"
+                    Content="{Binding TimerSecondaryText}"
+                    Command="{Binding CancelTimerCommand}" />
           </StackPanel>
         </Grid>
 
         <StackPanel Grid.Row="4" Orientation="Horizontal" Spacing="5" HorizontalAlignment="Center">
           <FontIcon Glyph="&#xE7E7;" FontSize="11" Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-          <TextBlock Text="Süre dolduğunda alarm sesi çalar."
+          <TextBlock Text="Süre dolduğunda alarm sesi en fazla 5 kez çalar."
                      Style="{StaticResource IslandCaptionTextStyle}" />
         </StackPanel>
       </Grid>

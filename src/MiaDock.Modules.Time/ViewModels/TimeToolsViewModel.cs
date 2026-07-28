@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MiaDock.Core.Localization;
 using MiaDock.Core.Threading;
 using MiaDock.Modules.Time.Models;
 using MiaDock.Modules.Time.Services;
@@ -10,19 +11,28 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 {
     private readonly ITimeToolsService _service;
     private readonly IUiDispatcher _dispatcher;
+    private readonly ILocalizationService? _localization;
     private readonly object _snapshotSync = new();
     private TimeToolsSnapshot _pendingSnapshot;
     private long _pendingSnapshotVersion;
     private int _snapshotDispatchPending;
     private bool _disposed;
 
-    public TimeToolsViewModel(ITimeToolsService service, IUiDispatcher? dispatcher = null)
+    public TimeToolsViewModel(
+        ITimeToolsService service,
+        IUiDispatcher? dispatcher = null,
+        ILocalizationService? localization = null)
     {
         _service = service;
         _dispatcher = dispatcher ?? ImmediateUiDispatcher.Instance;
+        _localization = localization;
         _current = service.Current;
         _pendingSnapshot = _current;
         _service.SnapshotChanged += OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     [ObservableProperty]
@@ -30,6 +40,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(TimerStatusText))]
     [NotifyPropertyChangedFor(nameof(TimerProgressPercent))]
     [NotifyPropertyChangedFor(nameof(TimerPrimaryText))]
+    [NotifyPropertyChangedFor(nameof(TimerSecondaryText))]
     [NotifyPropertyChangedFor(nameof(TimerPrimaryGlyph))]
     [NotifyPropertyChangedFor(nameof(StopwatchText))]
     [NotifyPropertyChangedFor(nameof(StopwatchPrimaryText))]
@@ -38,6 +49,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(CompactPrimaryText))]
     [NotifyPropertyChangedFor(nameof(CompactPrimaryGlyph))]
     [NotifyPropertyChangedFor(nameof(CompactSecondaryText))]
+    [NotifyPropertyChangedFor(nameof(IsTimerCompleted))]
     [NotifyCanExecuteChangedFor(nameof(TimerPrimaryCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelTimerCommand))]
     [NotifyCanExecuteChangedFor(nameof(StopwatchPrimaryCommand))]
@@ -58,26 +70,32 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 
     public string TimerStatusText => Current.TimerState switch
     {
-        TimerRunState.Running => "Zamanlayıcı çalışıyor",
-        TimerRunState.Paused => "Zamanlayıcı duraklatıldı",
-        TimerRunState.Completed => "Süre doldu",
-        _ => "Bir süre seçin"
+        TimerRunState.Running => Text("Timer.Running", "Zamanlayıcı çalışıyor"),
+        TimerRunState.Paused => Text("Timer.Paused", "Zamanlayıcı duraklatıldı"),
+        TimerRunState.Completed => Text("Timer.Completed", "Süre doldu"),
+        _ => Text("Timer.SelectDuration", "Bir süre seçin")
     };
 
     public double TimerProgressPercent => Current.TimerProgress * 100;
 
     public string TimerPrimaryText => Current.TimerState switch
     {
-        TimerRunState.Running => "Duraklat",
-        TimerRunState.Paused => "Devam et",
-        _ => "Başlat"
+        TimerRunState.Running => Text("Common.Pause", "Duraklat"),
+        TimerRunState.Paused => Text("Common.Resume", "Devam et"),
+        _ => Text("Common.Start", "Başlat")
     };
 
     public string TimerPrimaryGlyph => Current.TimerState == TimerRunState.Running ? "\uE769" : "\uE768";
 
+    public string TimerSecondaryText => Current.TimerState == TimerRunState.Completed
+        ? Text("Timer.StopAlarm", "Alarmı sustur")
+        : Text("Common.Cancel", "İptal");
+
     public string StopwatchText => Current.StopwatchElapsed.ToString(@"hh\:mm\:ss\.f");
 
-    public string StopwatchPrimaryText => Current.IsStopwatchRunning ? "Duraklat" : "Başlat";
+    public string StopwatchPrimaryText => Current.IsStopwatchRunning
+        ? Text("Common.Pause", "Duraklat")
+        : Text("Common.Start", "Başlat");
 
     public string CompactTimeText => Current.TimerState is TimerRunState.Running or TimerRunState.Paused
         ? TimerText
@@ -87,19 +105,21 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 
     public string CompactStatusText => Current.TimerState switch
     {
-        TimerRunState.Running or TimerRunState.Paused => TimerStatusText,
-        _ when Current.IsStopwatchRunning => "Kronometre çalışıyor",
-        _ when HasStopwatchActivity => "Kronometre duraklatıldı",
-        _ => "Zaman araçları"
+        TimerRunState.Running or TimerRunState.Paused or TimerRunState.Completed => TimerStatusText,
+        _ when Current.IsStopwatchRunning => Text("Timer.StopwatchRunning", "Kronometre çalışıyor"),
+        _ when HasStopwatchActivity => Text("Timer.StopwatchPaused", "Kronometre duraklatıldı"),
+        _ => Text("Timer.Tools", "Zaman araçları")
     };
+
+    public bool IsTimerCompleted => Current.TimerState == TimerRunState.Completed;
 
     public string CompactPrimaryText => Current.TimerState switch
     {
-        TimerRunState.Running => "Duraklat",
-        TimerRunState.Paused => "Devam et",
-        _ when Current.IsStopwatchRunning => "Duraklat",
-        _ when HasStopwatchActivity => "Devam et",
-        _ => "Başlat"
+        TimerRunState.Running => Text("Common.Pause", "Duraklat"),
+        TimerRunState.Paused => Text("Common.Resume", "Devam et"),
+        _ when Current.IsStopwatchRunning => Text("Common.Pause", "Duraklat"),
+        _ when HasStopwatchActivity => Text("Common.Resume", "Devam et"),
+        _ => Text("Common.Start", "Başlat")
     };
 
     public string CompactPrimaryGlyph =>
@@ -108,13 +128,17 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
             : "\uE768";
 
     public string CompactSecondaryText =>
-        Current.TimerState != TimerRunState.Idle ? "Zamanlayıcıyı iptal et" : "Kronometreyi sıfırla";
+        Current.TimerState == TimerRunState.Completed
+            ? Text("Timer.StopAlarm", "Alarmı sustur")
+            : Current.TimerState != TimerRunState.Idle
+            ? Text("Timer.Cancel", "Zamanlayıcıyı iptal et")
+            : Text("Timer.ResetStopwatch", "Kronometreyi sıfırla");
 
     private bool HasStopwatchActivity =>
         Current.IsStopwatchRunning || Current.StopwatchElapsed > TimeSpan.Zero || Current.Laps.Count > 0;
 
     public IReadOnlyList<string> LapTexts => Current.Laps
-        .Select((lap, index) => $"Tur {index + 1}  {lap:hh\\:mm\\:ss\\.f}")
+        .Select((lap, index) => Text("Timer.Lap", "Tur {0}  {1}", index + 1, lap.ToString(@"hh\:mm\:ss\.f")))
         .Reverse()
         .ToArray();
 
@@ -292,6 +316,26 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
         return value.TotalHours >= 1 ? value.ToString(@"hh\:mm\:ss") : value.ToString(@"mm\:ss");
     }
 
+    private void OnLanguageChanged(object? sender, EventArgs args)
+    {
+        OnPropertyChanged(nameof(TimerStatusText));
+        OnPropertyChanged(nameof(TimerPrimaryText));
+        OnPropertyChanged(nameof(TimerSecondaryText));
+        OnPropertyChanged(nameof(StopwatchPrimaryText));
+        OnPropertyChanged(nameof(CompactStatusText));
+        OnPropertyChanged(nameof(CompactPrimaryText));
+        OnPropertyChanged(nameof(CompactSecondaryText));
+        OnPropertyChanged(nameof(LapTexts));
+    }
+
+    private string Text(string key, string fallback, params object?[] arguments)
+    {
+        var value = _localization?.Get(key, arguments);
+        return value is not null && value != key
+            ? value
+            : string.Format(fallback, arguments);
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -301,6 +345,10 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 
         _disposed = true;
         _service.SnapshotChanged -= OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
     }
 
     private sealed class ImmediateUiDispatcher : IUiDispatcher

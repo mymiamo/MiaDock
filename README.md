@@ -11,7 +11,7 @@
 [![CI](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml/badge.svg)](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/github/license/mymiamo/MiaDock)](LICENSE)
 
-[Version **1.0.0.0** · Pre-release](https://github.com/mymiamo/MiaDock/releases)
+[Version **1.1.1.0** · Pre-release](https://github.com/mymiamo/MiaDock/releases)
 </div>
 
 ## Overview
@@ -19,6 +19,8 @@
 MiaDock is a lightweight, always-on-top Windows 11 overlay built with C#, .NET, WinUI 3, XAML, and the Windows App SDK. It stays outside the desktop work area, avoids stealing keyboard focus during normal use, and presents system events through compact, hover, expanded, and temporary notification states.
 
 The application works locally without an account, server connection, telemetry, or a custom updater. Updates will be distributed through Microsoft Store after the public release.
+
+Planned focus profiles, the Windows-style volume view, and the per-application audio mixer are tracked in the [product roadmap](ROADMAP.md).
 
 ## Features
 

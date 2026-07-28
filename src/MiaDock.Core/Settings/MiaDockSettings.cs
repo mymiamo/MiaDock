@@ -12,9 +12,10 @@ public sealed record MiaDockSettings(
     OnboardingSettings Onboarding,
     GlobalHotKeySettings HotKeys,
     PresentationPrivacySettings Privacy,
+    StoreUpdateSettings StoreUpdates,
     IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules)
 {
-    public const int CurrentSchemaVersion = 12;
+    public const int CurrentSchemaVersion = 14;
 
     public static MiaDockSettings Default { get; } = new(
         CurrentSchemaVersion,
@@ -28,6 +29,7 @@ public sealed record MiaDockSettings(
         OnboardingSettings.Default,
         GlobalHotKeySettings.Default,
         PresentationPrivacySettings.Default,
+        StoreUpdateSettings.Default,
         new Dictionary<string, ModuleSettingsEnvelope>(StringComparer.Ordinal)
         {
             ["media"] = ModuleSettingsEnvelope.MediaDefault,

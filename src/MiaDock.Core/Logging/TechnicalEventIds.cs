@@ -15,9 +15,12 @@ public static class TechnicalEventIds
     public const string CameraWatcherUnavailable = "system-activity.camera-watcher-unavailable";
     public const string PowerStatusReady = "device-status.power-ready";
     public const string NetworkStatusReady = "device-status.network-ready";
+    public const string NetworkCountersUnavailable = "device-status.network-counters-unavailable";
     public const string BluetoothWatcherReady = "device-status.bluetooth-ready";
     public const string DeviceStatusUnavailable = "device-status.unavailable";
     public const string TrayCommandFailed = "tray.command-failed";
     public const string LogsCleared = "logs.cleared";
     public const string LogExportFailed = "logs.export-failed";
+    public const string StoreUpdateCheckCompleted = "store-update.check-completed";
+    public const string StoreUpdateCheckFailed = "store-update.check-failed";
 }

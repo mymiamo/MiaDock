@@ -1,4 +1,5 @@
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.DeviceStatus.Models;
 using MiaDock.Modules.DeviceStatus.Services;
 using MiaDock.Modules.DeviceStatus.Settings;
@@ -12,16 +13,26 @@ public sealed class BatteryModule : IIslandModule, IDisposable
     private readonly IPowerStatusService _service;
     private readonly BatteryModuleViewModel _viewModel;
     private readonly IBatteryModuleSettings _settings;
+    private readonly ILocalizationService? _localization;
     private readonly HashSet<int> _firedThresholds = [];
     private BatteryStatusSnapshot? _previous;
     private bool _isEnabled = true;
 
-    public BatteryModule(IPowerStatusService service, BatteryModuleViewModel viewModel, IBatteryModuleSettings settings)
+    public BatteryModule(
+        IPowerStatusService service,
+        BatteryModuleViewModel viewModel,
+        IBatteryModuleSettings settings,
+        ILocalizationService? localization = null)
     {
         _service = service;
         _viewModel = viewModel;
         _settings = settings;
+        _localization = localization;
         _service.SnapshotChanged += OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     public ModuleDescriptor Descriptor { get; } = new(
@@ -89,13 +100,31 @@ public sealed class BatteryModule : IIslandModule, IDisposable
 
     private ModulePresentation CreatePresentation(BatteryStatusSnapshot snapshot) => new(
         ModuleId,
-        snapshot.IsCharging ? "Pil şarj oluyor" : $"Pil %{snapshot.ChargePercent}",
-        snapshot.IsEnergySaverOn ? "Enerji tasarrufu açık" : snapshot.PowerSource,
+        snapshot.IsCharging
+            ? Text("Battery.Charging.Title", "Pil şarj oluyor")
+            : Text("Battery.Percent", "Pil %{0}", snapshot.ChargePercent),
+        snapshot.IsEnergySaverOn ? Text("Battery.EnergySaver", "Enerji tasarrufu açık") : _viewModel.PowerText,
         _viewModel.BatteryGlyph,
         ModuleIndicatorKind.Value,
         valueText: $"%{snapshot.ChargePercent}",
         progress: snapshot.ChargePercent / 100d,
         presentationKind: snapshot.ChargePercent <= _settings.Current.CriticalThresholdPercent ? ModulePresentationKind.Alert : ModulePresentationKind.Status);
 
-    public void Dispose() => _service.SnapshotChanged -= OnSnapshotChanged;
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
+
+    private string Text(string key, string fallback, params object?[] arguments)
+    {
+        var value = _localization?.Get(key, arguments);
+        return value is not null && value != key ? value : string.Format(fallback, arguments);
+    }
+
+    public void Dispose()
+    {
+        _service.SnapshotChanged -= OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+    }
 }

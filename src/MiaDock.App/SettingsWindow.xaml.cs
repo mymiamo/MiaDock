@@ -1,6 +1,8 @@
 using Microsoft.UI.Windowing;
+using Microsoft.UI.Composition.SystemBackdrops;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
 using MiaDock.App.ViewModels;
 using MiaDock.App.Views.Settings;
 using MiaDock.App.Dialogs;
@@ -17,6 +19,7 @@ public sealed partial class SettingsWindow : Window
     private readonly ISettingsService _settings;
     private readonly IApplicationLifetimeService _lifetime;
     private readonly IAppLocalizationService _localization;
+    private readonly HomeSettingsPage _homePage;
     private readonly ModulesSettingsPage _modulesPage;
     private readonly Dictionary<string, UserControl> _pages;
     private bool _closeDecisionPending;
@@ -38,21 +41,24 @@ public sealed partial class SettingsWindow : Window
         _lifetime = lifetime;
         _localization = localization;
         Root.DataContext = viewModel;
-        _modulesPage = CreatePage(new ModulesSettingsPage());
+        _homePage = CreatePage(new HomeSettingsPage());
+        _homePage.NavigationRequested += OnHomeNavigationRequested;
+        _modulesPage = CreatePage(new ModulesSettingsPage(localization));
         _modulesPage.DetailsRequested += OnModuleDetailsRequested;
         _pages = new Dictionary<string, UserControl>(StringComparer.Ordinal)
         {
+            ["home"] = _homePage,
             ["general"] = CreatePage(new GeneralSettingsPage()),
             ["modules"] = _modulesPage,
             ["appearance"] = CreatePage(new AppearanceSettingsPage()),
             ["media"] = CreatePage(new MediaSettingsPage()),
-            ["notifications"] = CreatePage(new NotificationSettingsPage()),
+            ["notifications"] = CreatePage(new NotificationSettingsPage(localization)),
             ["time"] = CreatePage(new TimeAndHotKeysSettingsPage()),
             ["fullscreen"] = CreatePage(new FullscreenSettingsPage()),
             ["monitor"] = CreatePage(new MonitorSettingsPage()),
             ["tray"] = CreatePage(new TraySettingsPage()),
             ["startup"] = CreatePage(new StartupShutdownSettingsPage()),
-            ["diagnostics"] = new DiagnosticsSettingsPage(diagnosticsViewModel, diagnosticsFileService, this),
+            ["diagnostics"] = new DiagnosticsSettingsPage(diagnosticsViewModel, diagnosticsFileService, this, localization),
             ["about"] = CreatePage(new AboutSettingsPage())
         };
 
@@ -71,11 +77,12 @@ public sealed partial class SettingsWindow : Window
 
         ExtendsContentIntoTitleBar = true;
         SetTitleBar(TitleBar);
+        TryApplySystemBackdrop();
         AppWindow.TitleBar.ButtonBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
         AppWindow.TitleBar.ButtonInactiveBackgroundColor = Windows.UI.Color.FromArgb(0, 0, 0, 0);
 
         Navigation.SelectedItem = Navigation.MenuItems[0];
-        PageHost.Content = _pages["general"];
+        PageHost.Content = _pages["home"];
         AppWindow.Closing += OnAppWindowClosing;
     }
 
@@ -83,20 +90,22 @@ public sealed partial class SettingsWindow : Window
     {
         string L(string turkish, string english) => _localization.Text(turkish, english);
         Title = L("MiaDock Ayarları", "MiaDock Settings");
+        var english = _localization.CurrentLanguage == AppLanguage.English;
         _searchItems =
         [
-            new(L("Genel", "General"), L("Görünürlük, etkileşim ve ada konumu", "Visibility, interaction and island position"), "general"),
-            new(L("Modüller", "Modules"), L("Özellikler, izinler ve hassas içerik", "Features, permissions and sensitive content"), "modules"),
-            new(L("Görünüm", "Appearance"), L("Tema, boyut, renk ve animasyon", "Theme, size, color and animation"), "appearance"),
-            new(L("Medya", "Media"), L("Kaynak uygulama ve ses denetimi", "Source app and volume controls"), "media"),
-            new(L("Bildirimler", "Notifications"), L("Windows izni, uygulama filtreleri ve gizlilik", "Windows access, app filters and privacy"), "notifications"),
-            new(L("Zaman ve kısayollar", "Time and shortcuts"), L("Zamanlayıcı, kronometre ve global kısayollar", "Timer, stopwatch and global shortcuts"), "time"),
-            new(L("Tam ekran", "Fullscreen"), L("Oyun ve tam ekran bildirim davranışı", "Games and fullscreen notification behavior"), "fullscreen"),
-            new(L("Monitör", "Monitor"), L("Ekran seçimi ve konumlandırma", "Display selection and positioning"), "monitor"),
-            new(L("Sistem tepsisi", "System tray"), L("Tepsi simgesi ve geçici bildirimler", "Tray icon and temporary notifications"), "tray"),
-            new(L("Başlangıç ve kapanış", "Startup and shutdown"), L("Windows başlangıcı ve kapatma davranışı", "Windows startup and close behavior"), "startup"),
-            new(L("Tanılama", "Diagnostics"), L("Yerel loglar ve dışa aktarma", "Local logs and export"), "diagnostics"),
-            new(L("Hakkında", "About"), L("Sürüm ve gizlilik bilgileri", "Version and privacy information"), "about")
+            SearchItem.Create("Ana sayfa", "Home", "Hızlı ayarlar, durum ve güncellemeler", "Quick settings, status and updates", "home", english),
+            SearchItem.Create("Genel", "General", "Görünürlük, etkileşim ve dock konumu", "Visibility, interaction and dock position", "general", english),
+            SearchItem.Create("Modüller", "Modules", "Özellikler, izinler ve hassas içerik", "Features, permissions and sensitive content", "modules", english),
+            SearchItem.Create("Görünüm", "Appearance", "Tema, boyut, renk ve animasyon", "Theme, size, color and animation", "appearance", english),
+            SearchItem.Create("Medya", "Media", "Kaynak uygulama ve ses denetimi", "Source app and volume controls", "media", english),
+            SearchItem.Create("Bildirimler", "Notifications", "Windows izni, uygulama filtreleri ve gizlilik", "Windows access, app filters and privacy", "notifications", english),
+            SearchItem.Create("Zaman ve kısayollar", "Time and shortcuts", "Zamanlayıcı, kronometre ve global kısayollar", "Timer, stopwatch and global shortcuts", "time", english),
+            SearchItem.Create("Tam ekran", "Fullscreen", "Oyun ve tam ekran bildirim davranışı", "Games and fullscreen notification behavior", "fullscreen", english),
+            SearchItem.Create("Monitör", "Monitor", "Ekran seçimi ve konumlandırma", "Display selection and positioning", "monitor", english),
+            SearchItem.Create("Sistem tepsisi", "System tray", "Tepsi simgesi ve geçici bildirimler", "Tray icon and temporary notifications", "tray", english),
+            SearchItem.Create("Başlangıç ve kapanış", "Startup and shutdown", "Windows başlangıcı ve kapatma davranışı", "Windows startup and close behavior", "startup", english),
+            SearchItem.Create("Tanılama", "Diagnostics", "Yerel loglar ve dışa aktarma", "Local logs and export", "diagnostics", english),
+            SearchItem.Create("Hakkında", "About", "Sürüm ve gizlilik bilgileri", "Version and privacy information", "about", english)
         ];
         _localization.Apply(Root);
         foreach (var page in _pages.Values) _localization.Apply(page);
@@ -110,12 +119,37 @@ public sealed partial class SettingsWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         _localization.LanguageChanged -= OnLanguageChanged;
+        _homePage.NavigationRequested -= OnHomeNavigationRequested;
         _modulesPage.DetailsRequested -= OnModuleDetailsRequested;
         foreach (var page in _pages.Values) page.Loaded -= OnPageLoaded;
         Closed -= OnClosed;
     }
 
-    private void OnHomeClick(object sender, RoutedEventArgs args) => Navigate("general");
+    private void OnHomeNavigationRequested(object? sender, string tag) => Navigate(tag);
+
+    private void OnRootSizeChanged(object sender, SizeChangedEventArgs args)
+    {
+        var wide = args.NewSize.Width >= 920;
+        Navigation.PaneDisplayMode = wide
+            ? NavigationViewPaneDisplayMode.Left
+            : NavigationViewPaneDisplayMode.LeftCompact;
+        Navigation.IsPaneOpen = wide;
+        TitleBarAppName.Visibility = args.NewSize.Width >= 720
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+    }
+
+    private void TryApplySystemBackdrop()
+    {
+        try
+        {
+            SystemBackdrop = new MicaBackdrop { Kind = MicaKind.Base };
+        }
+        catch
+        {
+            SystemBackdrop = null;
+        }
+    }
 
     private void OnModuleDetailsRequested(object? sender, string moduleId) => Navigate(moduleId switch
     {
@@ -201,7 +235,7 @@ public sealed partial class SettingsWindow : Window
         _closeDecisionPending = true;
         try
         {
-            var dialog = new CloseBehaviorDialog { XamlRoot = Root.XamlRoot };
+            var dialog = new CloseBehaviorDialog(_localization) { XamlRoot = Root.XamlRoot };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary)
             {
                 return;
@@ -239,9 +273,34 @@ public sealed partial class SettingsWindow : Window
         }
     }
 
-    private sealed record SearchItem(string Title, string Description, string Tag)
+    private sealed record SearchItem(
+        string Title,
+        string Description,
+        string Tag,
+        string TurkishTitle,
+        string EnglishTitle,
+        string TurkishDescription,
+        string EnglishDescription)
     {
-        public string SearchText => $"{Title} {Description}";
+        public string SearchText =>
+            $"{TurkishTitle} {EnglishTitle} {TurkishDescription} {EnglishDescription}";
+
+        public static SearchItem Create(
+            string turkishTitle,
+            string englishTitle,
+            string turkishDescription,
+            string englishDescription,
+            string tag,
+            bool english) =>
+            new(
+                english ? englishTitle : turkishTitle,
+                english ? englishDescription : turkishDescription,
+                tag,
+                turkishTitle,
+                englishTitle,
+                turkishDescription,
+                englishDescription);
+
         public override string ToString() => Title;
     }
 }

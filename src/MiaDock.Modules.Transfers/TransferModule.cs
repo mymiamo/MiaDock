@@ -1,4 +1,5 @@
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.Transfers.Models;
 using MiaDock.Modules.Transfers.Services;
 using MiaDock.Modules.Transfers.Settings;
@@ -12,20 +13,27 @@ public sealed class TransferModule : IIslandModule, IDisposable
     private readonly ITransferStateService _service;
     private readonly TransferModuleViewModel _viewModel;
     private readonly ITransferModuleSettings _settings;
+    private readonly ILocalizationService? _localization;
     private bool _isEnabled;
 
     public TransferModule(
         ITransferStateService service,
         TransferModuleViewModel viewModel,
-        ITransferModuleSettings settings)
+        ITransferModuleSettings settings,
+        ILocalizationService? localization = null)
     {
         _service = service;
         _viewModel = viewModel;
         _settings = settings;
+        _localization = localization;
         _isEnabled = settings.Current.IsEnabled;
         _service.SnapshotChanged += OnSnapshotChanged;
         _service.TransfersChanged += OnTransfersChanged;
         _settings.Changed += OnSettingsChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     public ModuleDescriptor Descriptor { get; } = new(
@@ -88,6 +96,10 @@ public sealed class TransferModule : IIslandModule, IDisposable
         _service.SnapshotChanged -= OnSnapshotChanged;
         _service.TransfersChanged -= OnTransfersChanged;
         _settings.Changed -= OnSettingsChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
     }
 
     private void OnSnapshotChanged(object? sender, TransferSnapshot snapshot)
@@ -113,10 +125,10 @@ public sealed class TransferModule : IIslandModule, IDisposable
     private void OnSettingsChanged(object? sender, TransferModuleOptions options) =>
         PresentationChanged?.Invoke(this, CurrentPresentation);
 
-    private static ModulePresentation CreatePresentation(TransferSnapshot snapshot, bool persistent) => new(
+    private ModulePresentation CreatePresentation(TransferSnapshot snapshot, bool persistent) => new(
         ModuleId,
         snapshot.SafeDisplayName,
-        TransferModuleViewModel.StatusToText(snapshot.Status),
+        _viewModel.StatusToText(snapshot.Status),
         "\uE896",
         snapshot.Status is TransferStatus.Failed or TransferStatus.Disconnected
             ? ModuleIndicatorKind.StatusDot
@@ -131,4 +143,7 @@ public sealed class TransferModule : IIslandModule, IDisposable
             : ModulePresentationKind.Progress,
         isPersistentOverride: persistent,
         persistentPriorityOverride: persistent ? 400 : null);
+
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
 }

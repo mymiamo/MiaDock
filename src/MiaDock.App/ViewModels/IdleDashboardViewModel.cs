@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.DeviceStatus.Models;
 using MiaDock.Modules.DeviceStatus.Services;
 using Windows.UI;
@@ -12,6 +13,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     private readonly IPowerStatusService _powerService;
     private readonly INetworkStatusService _networkService;
     private readonly IBluetoothStatusService _bluetoothService;
+    private readonly ILocalizationService _localization;
     private BatteryStatusSnapshot _battery;
     private NetworkStatusSnapshot _network;
     private BluetoothStatusSnapshot _bluetooth;
@@ -19,11 +21,13 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     public IdleDashboardViewModel(
         IPowerStatusService powerService,
         INetworkStatusService networkService,
-        IBluetoothStatusService bluetoothService)
+        IBluetoothStatusService bluetoothService,
+        ILocalizationService localization)
     {
         _powerService = powerService;
         _networkService = networkService;
         _bluetoothService = bluetoothService;
+        _localization = localization;
         _battery = powerService.Current;
         _network = networkService.Current;
         _bluetooth = bluetoothService.Current;
@@ -31,6 +35,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         _powerService.SnapshotChanged += OnBatteryChanged;
         _networkService.SnapshotChanged += OnNetworkChanged;
         _bluetoothService.SnapshotChanged += OnBluetoothChanged;
+        _localization.LanguageChanged += OnLanguageChanged;
     }
 
     public string BatteryGlyph => _battery.IsCharging ? "\uE83E" : "\uE850";
@@ -42,12 +47,12 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         : Visibility.Collapsed;
 
     public string BatteryStatus => !_battery.IsBatteryPresent
-        ? "Pil bulunmuyor"
+        ? Text("Battery.NotPresent")
         : _battery.IsCharging
-            ? $"Pil yüzde {_battery.ChargePercent}, şarj oluyor"
+            ? Text("Battery.Percent.Charging.Automation", _battery.ChargePercent)
             : _battery.IsEnergySaverOn
-                ? $"Pil yüzde {_battery.ChargePercent}, enerji tasarrufu açık"
-                : $"Pil yüzde {_battery.ChargePercent}";
+                ? Text("Battery.Percent.Saver.Automation", _battery.ChargePercent)
+                : Text("Battery.Percent.Automation", _battery.ChargePercent);
 
     public string NetworkGlyph => _network.ConnectionKind switch
     {
@@ -72,14 +77,18 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     {
         NetworkConnectivityKind.Internet => _network.ConnectionKind switch
         {
-            NetworkConnectionKind.WiFi => _network.IsMetered ? "Wi-Fi, tarifeli bağlantı" : "Wi-Fi bağlı",
-            NetworkConnectionKind.Ethernet => _network.IsMetered ? "Ethernet, tarifeli bağlantı" : "Ethernet bağlı",
-            NetworkConnectionKind.Cellular => "Mobil ağa bağlı",
-            _ => "İnternete bağlı"
+            NetworkConnectionKind.WiFi => _network.IsMetered
+                ? Text("Network.WiFi.Metered")
+                : Text("Network.WiFi.Connected"),
+            NetworkConnectionKind.Ethernet => _network.IsMetered
+                ? Text("Network.Ethernet.Metered")
+                : Text("Network.Ethernet.Connected"),
+            NetworkConnectionKind.Cellular => Text("Network.Cellular.Connected"),
+            _ => Text("Network.Internet")
         },
-        NetworkConnectivityKind.ConstrainedInternet => "Sınırlı internet bağlantısı",
-        NetworkConnectivityKind.LocalAccess => "Yalnızca yerel ağ bağlantısı",
-        _ => "Çevrimdışı"
+        NetworkConnectivityKind.ConstrainedInternet => Text("Network.Constrained.Full"),
+        NetworkConnectivityKind.LocalAccess => Text("Network.Local.Full"),
+        _ => Text("Network.Offline")
     };
 
     public int ConnectedBluetoothCount => _bluetooth.Devices.Count(device => device.IsConnected);
@@ -92,9 +101,9 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
 
     public string BluetoothStatus => ConnectedBluetoothCount switch
     {
-        0 => "Bağlı Bluetooth cihazı yok",
-        1 => "Bir Bluetooth cihazı bağlı",
-        var count => $"{count} Bluetooth cihazı bağlı"
+        0 => Text("Bluetooth.None.Automation"),
+        1 => Text("Bluetooth.One.Automation"),
+        var count => Text("Bluetooth.Many.Automation", count)
     };
 
     public string StatusSummary
@@ -146,10 +155,22 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(StatusSummary));
     }
 
+    private void OnLanguageChanged(object? sender, EventArgs args)
+    {
+        OnPropertyChanged(nameof(BatteryStatus));
+        OnPropertyChanged(nameof(NetworkStatus));
+        OnPropertyChanged(nameof(BluetoothStatus));
+        OnPropertyChanged(nameof(StatusSummary));
+    }
+
+    private string Text(string key, params object?[] arguments) =>
+        _localization.Get(key, arguments);
+
     public void Dispose()
     {
         _powerService.SnapshotChanged -= OnBatteryChanged;
         _networkService.SnapshotChanged -= OnNetworkChanged;
         _bluetoothService.SnapshotChanged -= OnBluetoothChanged;
+        _localization.LanguageChanged -= OnLanguageChanged;
     }
 }

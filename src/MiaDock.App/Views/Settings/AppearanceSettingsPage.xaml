@@ -5,14 +5,13 @@
                 HorizontalScrollMode="Disabled"
                 HorizontalScrollBarVisibility="Disabled"
                 HorizontalContentAlignment="Stretch">
-    <StackPanel MaxWidth="820" HorizontalAlignment="Center" Spacing="16">
-      <TextBlock Text="Görünüm" Style="{ThemeResource TitleTextBlockStyle}" />
-      <TextBlock Text="Tema, boyut ve hareket ayarları adada anında önizlenir."
-                 TextWrapping="Wrap" Opacity="0.68" />
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
+      <TextBlock Text="Görünüm" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
+      <TextBlock Text="Tema, boyut ve hareket ayarları dock üzerinde anında önizlenir."
+                 Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
 
       <TextBlock Text="Tema" Style="{ThemeResource SubtitleTextBlockStyle}" />
-      <Border Padding="16" CornerRadius="10"
-              Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="36" />
@@ -39,9 +38,8 @@
                Title="Saydam Bulanık Cam"
                Message="Bu tema sabit bir arka plan rengi kullanmaz; masaüstünü gerçek Windows Acrylic ile bulanık gösterir. Opaklık, yalnızca ince cam katmanının yoğunluğunu değiştirir." />
 
-      <TextBlock Text="Ada boyutları" Style="{ThemeResource SubtitleTextBlockStyle}" />
-      <Border Padding="16" CornerRadius="10"
-              Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <TextBlock Text="Dock boyutları" Style="{ThemeResource SubtitleTextBlockStyle}" />
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="12">
           <Grid ColumnSpacing="16">
             <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
@@ -67,8 +65,7 @@
       </Border>
 
       <TextBlock Text="Yüzey ve renk" Style="{ThemeResource SubtitleTextBlockStyle}" />
-      <Border Padding="16" CornerRadius="10"
-              Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="12">
           <TextBlock Text="Köşe yuvarlaklığı" />
           <Slider x:Name="CornerRadiusSlider" Minimum="0" Maximum="48"
@@ -101,8 +98,7 @@
       </Border>
 
       <TextBlock Text="Hareket" Style="{ThemeResource SubtitleTextBlockStyle}" />
-      <Border Padding="16" CornerRadius="10"
-              Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="12">
           <TextBlock Text="Animasyon türü" />
           <ComboBox ItemsSource="{Binding AnimationKinds}" DisplayMemberPath="Label"

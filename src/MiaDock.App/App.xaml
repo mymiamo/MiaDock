@@ -12,6 +12,7 @@
         <ResourceDictionary Source="ms-appx:///Themes/Typography.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/MotionTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/ControlStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/SettingsStyles.xaml" />
       </ResourceDictionary.MergedDictionaries>
 
       <DataTemplate x:Key="SettingOptionItemTemplate">

@@ -3,42 +3,64 @@ using System.Runtime.InteropServices;
 
 namespace MiaDock.Platform.Windows.Startup;
 
-public sealed class WindowsStartupTaskService : IStartupTaskService
+public sealed class WindowsStartupTaskService : IStartupTaskService, IDisposable
 {
     public const string TaskId = "MiaDockStartupTask";
+    private readonly SemaphoreSlim _operationGate = new(1, 1);
 
     public async Task<StartupTaskStatus> GetStatusAsync(CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        var task = await TryGetTaskAsync();
-        return task is null ? StartupTaskStatus.Unavailable : Map(task.State);
+        await _operationGate.WaitAsync(cancellationToken);
+        try
+        {
+            var task = await TryGetTaskAsync();
+            return task is null ? StartupTaskStatus.Unavailable : Map(task.State);
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
     }
 
     public async Task<StartupTaskStatus> SetEnabledAsync(
         bool enabled,
         CancellationToken cancellationToken = default)
     {
-        cancellationToken.ThrowIfCancellationRequested();
-        var task = await TryGetTaskAsync();
-        if (task is null)
+        await _operationGate.WaitAsync(cancellationToken);
+        try
         {
-            return StartupTaskStatus.Unavailable;
-        }
-
-        if (enabled)
-        {
-            if (task.State == StartupTaskState.Disabled)
+            var task = await TryGetTaskAsync();
+            if (task is null)
             {
-                _ = await task.RequestEnableAsync();
+                return StartupTaskStatus.Unavailable;
             }
-        }
-        else if (task.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy)
-        {
-            task.Disable();
-        }
 
-        cancellationToken.ThrowIfCancellationRequested();
-        return Map(task.State);
+            try
+            {
+                if (enabled)
+                {
+                    if (task.State == StartupTaskState.Disabled)
+                    {
+                        _ = await task.RequestEnableAsync();
+                    }
+                }
+                else if (task.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy)
+                {
+                    task.Disable();
+                }
+            }
+            catch (Exception exception) when (IsRecoverableWindowsApiException(exception))
+            {
+                return StartupTaskStatus.Failed;
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            return Map(task.State);
+        }
+        finally
+        {
+            _operationGate.Release();
+        }
     }
 
     private static async Task<StartupTask?> TryGetTaskAsync()
@@ -48,11 +70,17 @@ public sealed class WindowsStartupTaskService : IStartupTaskService
             _ = Package.Current.Id.Name;
             return await StartupTask.GetAsync(TaskId);
         }
-        catch (Exception exception) when (exception is InvalidOperationException or ArgumentException or UnauthorizedAccessException or COMException)
+        catch (Exception exception) when (IsRecoverableWindowsApiException(exception))
         {
             return null;
         }
     }
+
+    private static bool IsRecoverableWindowsApiException(Exception exception) =>
+        exception is InvalidOperationException
+            or ArgumentException
+            or UnauthorizedAccessException
+            or COMException;
 
     private static StartupTaskStatus Map(StartupTaskState state) => state switch
     {
@@ -63,4 +91,6 @@ public sealed class WindowsStartupTaskService : IStartupTaskService
         StartupTaskState.EnabledByPolicy => StartupTaskStatus.EnabledByPolicy,
         _ => StartupTaskStatus.Unavailable
     };
+
+    public void Dispose() => _operationGate.Dispose();
 }

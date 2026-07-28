@@ -107,6 +107,38 @@ public sealed class JsonSettingsStoreTests
     }
 
     [TestMethod]
+    public async Task Load_SchemaTwelveWithoutStoreUpdates_AddsEnabledDefaults()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["SchemaVersion"] = 12;
+        node.Remove("StoreUpdates");
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(StoreUpdateSettings.Default, result.StoreUpdates);
+    }
+
+    [TestMethod]
+    public async Task Load_SchemaThirteenWithoutClockSettings_AddsDisplayDefaults()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["SchemaVersion"] = 13;
+        node["General"]!.AsObject().Remove("Clock");
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(ClockDisplaySettings.Default, result.General.Clock);
+    }
+
+    [TestMethod]
     public async Task Load_OneCorruptModule_RepairsOnlyThatModuleAndRewritesValidJson()
     {
         Directory.CreateDirectory(_directory);

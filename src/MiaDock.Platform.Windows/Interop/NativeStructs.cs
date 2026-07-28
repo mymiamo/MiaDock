@@ -44,3 +44,17 @@ internal struct NativeMonitorInfo
         Size = checked((uint)Marshal.SizeOf<NativeMonitorInfo>())
     };
 }
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct NativeDwmBlurBehind
+{
+    public uint Flags;
+
+    [MarshalAs(UnmanagedType.Bool)]
+    public bool Enable;
+
+    public nint BlurRegion;
+
+    [MarshalAs(UnmanagedType.Bool)]
+    public bool TransitionOnMaximized;
+}

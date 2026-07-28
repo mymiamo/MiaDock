@@ -17,4 +17,16 @@
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Include="..\..\src\MiaDock.App\Modules\StoreUpdateModule.cs"
+             Link="App\StoreUpdateModule.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\ISettingsService.cs"
+             Link="App\ISettingsService.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\SettingsChangedEventArgs.cs"
+             Link="App\SettingsChangedEventArgs.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\IStoreUpdateCoordinator.cs"
+             Link="App\IStoreUpdateCoordinator.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\StoreUpdateCoordinator.cs"
+             Link="App\StoreUpdateCoordinator.cs" />
+  </ItemGroup>
 </Project>

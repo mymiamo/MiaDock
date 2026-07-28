@@ -1,12 +1,25 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MiaDock.Core.Localization;
 using MiaDock.Core.Modules;
 
 namespace MiaDock.App.Controls;
 
 public sealed partial class GenericExpandedModuleView : UserControl
 {
-    public GenericExpandedModuleView() => InitializeComponent();
+    private ILocalizationService? _localization;
+
+    public GenericExpandedModuleView(ILocalizationService? localization = null)
+    {
+        _localization = localization;
+        InitializeComponent();
+    }
+
+    public void ConfigureLocalization(ILocalizationService localization)
+    {
+        _localization = localization;
+        UpdateContentState(DataContext as ModulePresentation);
+    }
 
     private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args) =>
         UpdateContentState(args.NewValue as ModulePresentation);
@@ -26,11 +39,14 @@ public sealed partial class GenericExpandedModuleView : UserControl
          !string.IsNullOrWhiteSpace(presentation.ValueText) ||
          presentation.Progress is not null);
 
-    private static string GetEmptyStateText(string? moduleId) => moduleId switch
+    private string GetEmptyStateText(string? moduleId) => moduleId switch
     {
-        "timer" => "Etkin zamanlayıcı yok",
-        "bluetooth" => "Bluetooth cihazı bağlı değil",
-        "transfers" => "Aktarım bulunmuyor",
-        _ => "Etkin olay yok"
+        "timer" => Text("Dock.Empty.Timer", "Etkin zamanlayıcı yok"),
+        "bluetooth" => Text("Dock.Empty.Bluetooth", "Bluetooth cihazı bağlı değil"),
+        "transfers" => Text("Dock.Empty.Transfers", "Aktarım bulunmuyor"),
+        _ => Text("Dock.NoActiveEvent", "Etkin olay yok")
     };
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
 }

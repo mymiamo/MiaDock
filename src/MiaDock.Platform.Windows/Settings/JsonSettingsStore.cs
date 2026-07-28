@@ -139,6 +139,7 @@ public sealed class JsonSettingsStore : ISettingsStore
             Onboarding = ReadValue(root, nameof(MiaDockSettings.Onboarding), defaults.Onboarding),
             HotKeys = ReadValue(root, nameof(MiaDockSettings.HotKeys), defaults.HotKeys),
             Privacy = ReadValue(root, nameof(MiaDockSettings.Privacy), defaults.Privacy),
+            StoreUpdates = ReadValue(root, nameof(MiaDockSettings.StoreUpdates), defaults.StoreUpdates),
             Modules = RecoverModules(root, defaults.Modules)
         };
         return SettingsValidator.Normalize(recovered);

@@ -6,11 +6,11 @@
                 HorizontalScrollMode="Disabled"
                 HorizontalScrollBarVisibility="Disabled"
                 HorizontalContentAlignment="Stretch">
-    <StackPanel MaxWidth="820" HorizontalAlignment="Stretch" Spacing="14">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
       <StackPanel Spacing="5" Margin="0,0,0,8">
-        <TextBlock Text="Modüller" FontSize="25" FontWeight="SemiBold" />
+        <TextBlock Text="Modüller" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Dock'ta çalışacak özellikleri, olay sürelerini ve tam ekran davranışını yönetin."
-                   TextWrapping="Wrap" Opacity="0.72" />
+                   Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
       </StackPanel>
 
       <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
@@ -31,7 +31,7 @@
       <TextBlock Text="Bildirim ve aktarım gibi hassas içerikler için iki koruma da varsayılan olarak kapalıdır."
                  TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="38" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE740;" FontSize="19" VerticalAlignment="Center" />
@@ -46,7 +46,7 @@
         </Grid>
       </Border>
 
-      <Border Padding="16" CornerRadius="10" Background="#272C40" BorderBrush="#32384D" BorderThickness="1">
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">
           <Grid.ColumnDefinitions><ColumnDefinition Width="38" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
           <FontIcon Glyph="&#xE72E;" FontSize="19" VerticalAlignment="Center" />

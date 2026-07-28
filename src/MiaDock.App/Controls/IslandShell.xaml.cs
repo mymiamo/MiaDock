@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Composition.SystemBackdrops;
 using MiaDock.App.Animations;
 using MiaDock.App.Services;
 using MiaDock.Core.Overlay;
@@ -9,6 +10,7 @@ using MiaDock.Core.Theming;
 using Windows.UI;
 using MiaDock.Core.Settings;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using System.Numerics;
 
 namespace MiaDock.App.Controls;
@@ -153,6 +155,16 @@ public sealed partial class IslandShell : UserControl
         _notificationView.Configure(viewRegistry);
     }
 
+    public void ConfigureLocalization(ILocalizationService localization)
+    {
+        _collapsedView.ConfigureLocalization(localization);
+        _hoverView.ConfigureLocalization(localization);
+        _expandedView.ConfigureLocalization(localization);
+        _notificationView.ConfigureLocalization(localization);
+    }
+
+    public void RefreshLocalizedContent() => _expandedView.RefreshLocalizedContent();
+
     public void ApplyTransition(IslandTransition transition) =>
         _animationCoordinator?.RequestTransition(transition);
 
@@ -187,6 +199,21 @@ public sealed partial class IslandShell : UserControl
             ? new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24))
             : Vector3.Zero;
     }
+
+    public void ApplySystemBackdrop(ThemeStyle theme)
+    {
+        BackdropSurface.SystemBackdrop = theme switch
+        {
+            ThemeStyle.Windows11Mica => new MicaBackdrop { Kind = MicaKind.Base },
+            ThemeStyle.Windows11MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
+            ThemeStyle.Windows11Acrylic => new DesktopAcrylicBackdrop(),
+            ThemeStyle.Windows11AcrylicThin or ThemeStyle.BlurredGlass =>
+                new DesktopAcrylicBackdrop(),
+            _ => null
+        };
+    }
+
+    public void ClearSystemBackdrop() => BackdropSurface.SystemBackdrop = null;
 
     private static void OnStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
@@ -309,6 +336,7 @@ public sealed partial class IslandShell : UserControl
     {
         LayoutRoot.Width = metrics.Width;
         LayoutRoot.Height = metrics.Height;
+        BackdropSurface.CornerRadius = new CornerRadius(metrics.CornerRadius);
         Surface.CornerRadius = new CornerRadius(metrics.CornerRadius);
         VisualSizeChanged?.Invoke(this, EventArgs.Empty);
     }

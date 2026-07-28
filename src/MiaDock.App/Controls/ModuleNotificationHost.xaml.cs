@@ -2,6 +2,7 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Services;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 
 namespace MiaDock.App.Controls;
 
@@ -16,6 +17,7 @@ public sealed partial class ModuleNotificationHost : UserControl
 
     private IModuleViewRegistry? _viewRegistry;
     private string? _activeViewKey;
+    private ILocalizationService? _localization;
 
     public ModuleNotificationHost() => InitializeComponent();
 
@@ -36,6 +38,9 @@ public sealed partial class ModuleNotificationHost : UserControl
         _viewRegistry = viewRegistry ?? throw new ArgumentNullException(nameof(viewRegistry));
         Render();
     }
+
+    public void ConfigureLocalization(ILocalizationService localization) =>
+        _localization = localization;
 
     private static void OnDisplayStateChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
         ((ModuleNotificationHost)sender).Render();

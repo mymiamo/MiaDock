@@ -1,13 +1,20 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Controls;
+using MiaDock.App.Services;
 using MiaDock.App.ViewModels;
 
 namespace MiaDock.App.Views.Settings;
 
 public sealed partial class ModulesSettingsPage : UserControl
 {
-    public ModulesSettingsPage() => InitializeComponent();
+    private readonly IAppLocalizationService? _localization;
+
+    public ModulesSettingsPage(IAppLocalizationService? localization = null)
+    {
+        _localization = localization;
+        InitializeComponent();
+    }
 
     public event EventHandler<string>? DetailsRequested;
 
@@ -20,10 +27,10 @@ public sealed partial class ModulesSettingsPage : UserControl
             var dialog = new ContentDialog
             {
                 XamlRoot = XamlRoot,
-                Title = "Bildirim erişimine izin verilsin mi?",
-                Content = "MiaDock kaynak uygulama ve bildirim başlığını okuyacak. Gövde metni ayrıca açılmadıkça gösterilmez; içerik teknik loglara yazılmaz.",
-                PrimaryButtonText = "Windows iznini iste",
-                CloseButtonText = "Vazgeç",
+                Title = Text("Dialog.Permission.Notification.Title", "Bildirim erişimine izin verilsin mi?"),
+                Content = Text("Dialog.Permission.Notification.Summary", "MiaDock kaynak uygulama ve bildirim başlığını okuyacak. Gövde metni ayrıca açılmadıkça gösterilmez; içerik teknik loglara yazılmaz."),
+                PrimaryButtonText = Text("Dialog.Permission.Request", "Windows iznini iste"),
+                CloseButtonText = Text("Dialog.Permission.Cancel", "Vazgeç"),
                 DefaultButton = ContentDialogButton.Primary
             };
             if (await dialog.ShowAsync() != ContentDialogResult.Primary)
@@ -39,4 +46,7 @@ public sealed partial class ModulesSettingsPage : UserControl
 
     private void OnModuleDetailsRequested(object sender, ModuleSettingsDetailsEventArgs args) =>
         DetailsRequested?.Invoke(this, args.ModuleId);
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
 }

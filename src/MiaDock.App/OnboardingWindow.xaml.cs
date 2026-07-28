@@ -78,6 +78,7 @@ public sealed partial class OnboardingWindow : Window
         Title = _localization.Text("MiaDock İlk Kurulum", "MiaDock Setup");
         _localization.Apply(Root);
         foreach (var page in _pages.Values) _localization.Apply(page);
+        UpdateStep();
     }
 
     private void OnLanguageChanged(object? sender, EventArgs args) => ApplyLocalization();
@@ -125,10 +126,14 @@ public sealed partial class OnboardingWindow : Window
     {
         StepHost.Content = _pages[_viewModel.CurrentStep];
         BackButton.IsEnabled = !_viewModel.IsFirstStep && !_viewModel.IsBusy;
-        NextButton.Content = _viewModel.IsLastStep ? "Tamamla" : "İleri";
+        NextButton.Content = _viewModel.IsLastStep
+            ? _localization.Get("Onboarding.Button.Finish")
+            : _localization.Get("Onboarding.Button.Next");
         AutomationProperties.SetName(
             NextButton,
-            _viewModel.IsLastStep ? "İlk kurulumu tamamla" : "Sonraki kurulum adımı");
+            _viewModel.IsLastStep
+                ? _localization.Get("Onboarding.Button.Finish.Automation")
+                : _localization.Get("Onboarding.Button.Next.Automation"));
     }
 
     private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)
@@ -150,10 +155,10 @@ public sealed partial class OnboardingWindow : Window
             var dialog = new ContentDialog
             {
                 XamlRoot = Root.XamlRoot,
-                Title = "Kurulum tamamlanmadı",
-                Content = "Şimdi çıkarsanız seçimleriniz kaydedilmez ve sihirbaz sonraki açılışta yeniden gösterilir.",
-                PrimaryButtonText = "Kuruluma dön",
-                SecondaryButtonText = "Çıkış",
+                Title = _localization.Get("Onboarding.Dialog.Incomplete.Title"),
+                Content = _localization.Get("Onboarding.Dialog.Incomplete.Description"),
+                PrimaryButtonText = _localization.Get("Onboarding.Dialog.Return"),
+                SecondaryButtonText = _localization.Get("Onboarding.Dialog.Exit"),
                 DefaultButton = ContentDialogButton.Primary
             };
             if (await dialog.ShowAsync() == ContentDialogResult.Secondary)

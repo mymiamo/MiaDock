@@ -5,6 +5,10 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.ViewModels;
+using MiaDock.App.Services;
+using MiaDock.Core.Localization;
+using MiaDock.Core.Presentation;
+using MiaDock.Core.Settings;
 using MiaDock.Modules.Media.ViewModels;
 using MiaDock.Modules.SystemStatus.ViewModels;
 
@@ -14,20 +18,26 @@ public sealed partial class IdleExpandedView : UserControl
 {
     private readonly MusicModuleViewModel? _music;
     private readonly IdleDashboardViewModel? _dashboard;
-    private DispatcherQueueTimer? _minuteTimer;
+    private readonly ILocalizationService? _localization;
+    private readonly ISettingsService? _settings;
+    private DispatcherQueueTimer? _clockTimer;
     private bool _isLoaded;
 
-    public IdleExpandedView() : this(null, null, null)
+    public IdleExpandedView() : this(null, null, null, null, null)
     {
     }
 
     public IdleExpandedView(
         MusicModuleViewModel? music,
         SystemActivityViewModel? system,
-        IdleDashboardViewModel? dashboard)
+        IdleDashboardViewModel? dashboard,
+        ILocalizationService? localization = null,
+        ISettingsService? settings = null)
     {
         _music = music;
         _dashboard = dashboard;
+        _localization = localization;
+        _settings = settings;
         InitializeComponent();
         LayoutRoot.DataContext = dashboard;
         SystemStatusPanel.DataContext = system;
@@ -46,6 +56,14 @@ public sealed partial class IdleExpandedView : UserControl
         {
             _music.PropertyChanged += OnMusicPropertyChanged;
         }
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
+        if (_settings is not null)
+        {
+            _settings.SettingsChanged += OnSettingsChanged;
+        }
 
         UpdateClock();
         UpdateMediaVisibility();
@@ -63,6 +81,14 @@ public sealed partial class IdleExpandedView : UserControl
         if (_music is not null)
         {
             _music.PropertyChanged -= OnMusicPropertyChanged;
+        }
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+        if (_settings is not null)
+        {
+            _settings.SettingsChanged -= OnSettingsChanged;
         }
 
         StopTimer();
@@ -87,21 +113,29 @@ public sealed partial class IdleExpandedView : UserControl
 
     private void UpdateClock()
     {
-        var now = DateTimeOffset.Now;
-        var culture = CultureInfo.CurrentCulture;
-        TimeText.Text = now.ToString("HH:mm", culture);
-        DateText.Text = now.ToString("dddd, d MMMM", culture);
+        var display = ClockDisplayFormatter.Format(
+            DateTimeOffset.Now,
+            CultureInfo.CurrentCulture,
+            ClockSettings);
+        TimeText.Text = display.Time;
+        DateText.Text = display.Date;
+        DateText.Visibility = ClockSettings.ShowDate ? Visibility.Visible : Visibility.Collapsed;
     }
 
     private void UpdateAutomationName(bool hasMedia)
     {
-        var time = DateTimeOffset.Now.ToString("HH:mm", CultureInfo.CurrentCulture);
+        var display = ClockDisplayFormatter.Format(
+            DateTimeOffset.Now,
+            CultureInfo.CurrentCulture,
+            ClockSettings);
         var detail = hasMedia
             ? $"{_music!.Current.Track.Title}, {_music.Current.Track.Artist}"
             : _dashboard?.StatusSummary;
         AutomationProperties.SetName(
             LayoutRoot,
-            string.IsNullOrWhiteSpace(detail) ? $"Ana dock, {time}" : $"Ana dock, {time}, {detail}");
+            string.IsNullOrWhiteSpace(detail)
+                ? Text("Dock.Home.Automation", "Ana dock, {0}", display.Time)
+                : $"{Text("Dock.Home.Automation", "Ana dock, {0}", display.Time)}, {detail}");
     }
 
     private void OnMinuteElapsed(DispatcherQueueTimer sender, object args)
@@ -116,31 +150,51 @@ public sealed partial class IdleExpandedView : UserControl
     {
         StopTimer();
         var now = DateTimeOffset.Now;
-        var nextMinute = new DateTimeOffset(
-            now.Year,
-            now.Month,
-            now.Day,
-            now.Hour,
-            now.Minute,
-            0,
-            now.Offset).AddMinutes(1);
-
-        _minuteTimer = DispatcherQueue.CreateTimer();
-        _minuteTimer.IsRepeating = false;
-        _minuteTimer.Interval = nextMinute - now;
-        _minuteTimer.Tick += OnMinuteElapsed;
-        _minuteTimer.Start();
+        _clockTimer = DispatcherQueue.CreateTimer();
+        _clockTimer.IsRepeating = false;
+        _clockTimer.Interval = ClockDisplayFormatter.DelayUntilNextRefresh(now, ClockSettings);
+        _clockTimer.Tick += OnMinuteElapsed;
+        _clockTimer.Start();
     }
 
     private void StopTimer()
     {
-        if (_minuteTimer is null)
+        if (_clockTimer is null)
         {
             return;
         }
 
-        _minuteTimer.Stop();
-        _minuteTimer.Tick -= OnMinuteElapsed;
-        _minuteTimer = null;
+        _clockTimer.Stop();
+        _clockTimer.Tick -= OnMinuteElapsed;
+        _clockTimer = null;
+    }
+
+    private void OnLanguageChanged(object? sender, EventArgs args)
+    {
+        UpdateClock();
+        UpdateMediaVisibility();
+    }
+
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
+    {
+        if (args.Previous.General.Clock == args.Current.General.Clock)
+        {
+            return;
+        }
+
+        UpdateClock();
+        UpdateMediaVisibility();
+        ScheduleNextMinute();
+    }
+
+    private ClockDisplaySettings ClockSettings =>
+        _settings?.Current.General.Clock ?? ClockDisplaySettings.Default;
+
+    private string Text(string key, string fallback, params object?[] arguments)
+    {
+        var value = _localization?.Get(key, arguments);
+        return value is not null && value != key
+            ? value
+            : string.Format(CultureInfo.CurrentCulture, fallback, arguments);
     }
 }

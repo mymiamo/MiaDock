@@ -101,6 +101,28 @@ public sealed class DeviceStatusModuleTests
         Assert.IsFalse(events[0].IsFullscreenEligible);
     }
 
+    [TestMethod]
+    public void NetworkViewModel_LanguageChangeUpdatesVisibleStatusWithoutNewSnapshot()
+    {
+        var localization = new TestLocalizationService(
+            new Dictionary<string, (string Turkish, string English)>
+            {
+                ["Network.Internet"] = ("İnternete bağlı", "Connected to the internet"),
+                ["Network.Unmetered"] = ("Tarifesiz bağlantı", "Unmetered connection")
+            });
+        var service = new FakeNetworkService(Network(NetworkConnectivityKind.Internet));
+        using var viewModel = new NetworkModuleViewModel(service, localization);
+        var changed = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changed.Add(args.PropertyName);
+
+        localization.SetLanguage(AppLanguage.English);
+
+        Assert.AreEqual("Connected to the internet", viewModel.ConnectivityText);
+        Assert.AreEqual("Unmetered connection", viewModel.CostText);
+        CollectionAssert.Contains(changed, nameof(NetworkModuleViewModel.ConnectivityText));
+        CollectionAssert.Contains(changed, nameof(NetworkModuleViewModel.CostText));
+    }
+
     private static BatteryStatusSnapshot Battery(int percent) => new(
         DeviceServiceState.Ready, true, percent, false, false, "Pil gücü");
 

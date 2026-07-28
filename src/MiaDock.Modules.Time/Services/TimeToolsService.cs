@@ -80,6 +80,7 @@ public sealed class TimeToolsService : ITimeToolsService
             return false;
         }
 
+        _alarmPlayer?.Stop();
         TimeToolsSnapshot snapshot;
         lock (_gate)
         {
@@ -177,6 +178,7 @@ public sealed class TimeToolsService : ITimeToolsService
             UpdateTickerLocked();
         }
 
+        _alarmPlayer?.Stop();
         Publish(snapshot);
         _ = PersistAsync();
         return true;
@@ -538,6 +540,7 @@ public sealed class TimeToolsService : ITimeToolsService
         }
 
         await PersistAsync().ConfigureAwait(false);
+        _alarmPlayer?.Stop();
         lock (_gate)
         {
             _disposed = true;

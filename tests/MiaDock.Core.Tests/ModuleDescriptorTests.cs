@@ -19,6 +19,7 @@ public sealed class ModuleDescriptorTests
             TimeSpan.FromSeconds(3));
 
         Assert.AreEqual("timer", descriptor.Id);
+        Assert.AreEqual("Module.timer.Name", descriptor.DisplayNameKey);
         Assert.AreEqual(10, descriptor.Priority);
         Assert.IsTrue(descriptor.SupportedEvents.Contains(ModuleEventKind.TimelineChanged));
     }

@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml;
 using MiaDock.App.ViewModels;
 using MiaDock.App.Infrastructure;
 using MiaDock.Core.Modules;
@@ -47,6 +48,10 @@ using MiaDock.Modules.Transfers.Services;
 using MiaDock.Modules.Transfers.Settings;
 using MiaDock.Modules.Transfers.ViewModels;
 using MiaDock.Platform.Windows.Transfers;
+using MiaDock.Core.Localization;
+using MiaDock.Core.Updates;
+using MiaDock.Platform.Windows.Updates;
+using MiaDock.App.Modules;
 
 namespace MiaDock.App.Bootstrapper;
 
@@ -81,6 +86,7 @@ public static class ServiceRegistration
         services.AddSingleton<ISystemNotificationService, WindowsSystemNotificationService>();
         services.AddSingleton<ITransferProgressProvider, WindowsTransferPipeServer>();
         services.AddSingleton<ITransferStateService, TransferStateService>();
+        services.AddSingleton<IStoreUpdateService, WindowsStoreUpdateService>();
         services.AddSingleton<ModuleSettingsCatalog>();
         services.AddSingleton<PresentationPrivacyPolicy>();
         services.AddSingleton<IIslandModule, MusicModule>();
@@ -91,53 +97,74 @@ public static class ServiceRegistration
         services.AddSingleton<IIslandModule, TimerModule>();
         services.AddSingleton<IIslandModule, NotificationModule>();
         services.AddSingleton<IIslandModule, TransferModule>();
+        services.AddSingleton<StoreUpdateModule>();
+        services.AddSingleton<IIslandModule>(provider =>
+            provider.GetRequiredService<StoreUpdateModule>());
         services.AddSingleton<IIslandModuleRegistry, IslandModuleRegistry>();
         services.AddSingleton<IModuleOrchestrator, ModuleOrchestrator>();
         services.AddSingleton<IModuleViewRegistry>(provider =>
         {
             var music = provider.GetRequiredService<MusicModuleViewModel>();
             var system = provider.GetRequiredService<SystemActivityViewModel>();
+            var localization = provider.GetRequiredService<IAppLocalizationService>();
+            var settings = provider.GetRequiredService<ISettingsService>();
             var registry = new ModuleViewRegistry();
+            void Register(string key, Func<FrameworkElement> factory) =>
+                registry.Register(key, () =>
+                {
+                    var view = factory();
+                    view.Loaded += (_, _) => localization.Apply(view);
+                    localization.Apply(view);
+                    return view;
+                });
+
             var idleDashboard = provider.GetRequiredService<IdleDashboardViewModel>();
-            registry.Register("IdleCompactView", () =>
-                new Controls.IdleCompactView(music, system) { DataContext = idleDashboard });
-            registry.Register("IdleHoverView", () =>
-                new Controls.IdleHoverView(music, idleDashboard));
-            registry.Register("IdleExpandedView", () =>
-                new Controls.IdleExpandedView(music, system, idleDashboard));
-            registry.Register("MusicCompactView", () => new Controls.MusicCompactView { DataContext = music });
-            registry.Register("MusicHoverView", () => new Controls.MusicHoverView { DataContext = music });
-            registry.Register("MusicExpandedView", () => new Controls.ExpandedMusicView { DataContext = music });
-            registry.Register("MusicNotificationView", () => new Controls.TrackNotificationView { DataContext = music });
-            registry.Register("SystemActivityCompactView", () =>
+            Register("IdleCompactView", () =>
+                new Controls.IdleCompactView(music, system, localization, settings) { DataContext = idleDashboard });
+            Register("IdleHoverView", () =>
+                new Controls.IdleHoverView(music, idleDashboard, localization, settings));
+            Register("IdleExpandedView", () =>
+                new Controls.IdleExpandedView(music, system, idleDashboard, localization, settings));
+            Register("MusicCompactView", () => new Controls.MusicCompactView { DataContext = music });
+            Register("MusicHoverView", () => new Controls.MusicHoverView { DataContext = music });
+            Register("MusicExpandedView", () => new Controls.ExpandedMusicView { DataContext = music });
+            Register("MusicNotificationView", () => new Controls.TrackNotificationView { DataContext = music });
+            Register("SystemActivityCompactView", () =>
                 new Controls.SystemActivityCompactView { DataContext = system });
-            registry.Register("SystemActivityExpandedView", () =>
+            Register("SystemActivityExpandedView", () =>
                 new Controls.SystemActivityExpandedView { DataContext = system });
             var battery = provider.GetRequiredService<BatteryModuleViewModel>();
-            registry.Register("BatteryCompactView", () => new Controls.BatteryCompactView { DataContext = battery });
-            registry.Register("BatteryExpandedView", () => new Controls.BatteryExpandedView { DataContext = battery });
+            Register("BatteryCompactView", () => new Controls.BatteryCompactView { DataContext = battery });
+            Register("BatteryExpandedView", () => new Controls.BatteryExpandedView { DataContext = battery });
             var network = provider.GetRequiredService<NetworkModuleViewModel>();
-            registry.Register("NetworkCompactView", () => new Controls.NetworkCompactView { DataContext = network });
-            registry.Register("NetworkExpandedView", () => new Controls.NetworkExpandedView { DataContext = network });
+            Register("NetworkCompactView", () => new Controls.NetworkCompactView { DataContext = network });
+            Register("NetworkExpandedView", () => new Controls.NetworkExpandedView { DataContext = network });
             var bluetooth = provider.GetRequiredService<BluetoothModuleViewModel>();
-            registry.Register("BluetoothCompactView", () => new Controls.BluetoothCompactView { DataContext = bluetooth });
-            registry.Register("BluetoothExpandedView", () => new Controls.BluetoothExpandedView { DataContext = bluetooth });
+            Register("BluetoothCompactView", () => new Controls.BluetoothCompactView { DataContext = bluetooth });
+            Register("BluetoothExpandedView", () => new Controls.BluetoothExpandedView { DataContext = bluetooth });
             var timeTools = provider.GetRequiredService<TimeToolsViewModel>();
-            registry.Register("TimerCompactView", () => new Controls.TimerCompactView { DataContext = timeTools });
-            registry.Register("TimerHoverView", () => new Controls.TimerHoverView { DataContext = timeTools });
-            registry.Register("TimerExpandedView", () => new Controls.TimerExpandedView { DataContext = timeTools });
-            registry.Register("TimerNotificationView", () => new Controls.TimerNotificationView { DataContext = timeTools });
-            registry.Register("NotificationModuleNotificationView", () => new Controls.NotificationModuleNotificationView());
+            Register("TimerCompactView", () => new Controls.TimerCompactView { DataContext = timeTools });
+            Register("TimerHoverView", () => new Controls.TimerHoverView { DataContext = timeTools });
+            Register("TimerExpandedView", () => new Controls.TimerExpandedView(localization) { DataContext = timeTools });
+            Register("TimerNotificationView", () => new Controls.TimerNotificationView { DataContext = timeTools });
+            Register("NotificationModuleNotificationView", () => new Controls.NotificationModuleNotificationView());
             var transfers = provider.GetRequiredService<TransferModuleViewModel>();
-            registry.Register("TransferCompactView", () =>
+            Register("TransferCompactView", () =>
                 new Controls.TransferCompactView { DataContext = transfers });
-            registry.Register("TransferExpandedView", () =>
+            Register("TransferExpandedView", () =>
                 new Controls.TransferExpandedView { DataContext = transfers });
-            registry.Register("TransferNotificationView", () => new Controls.TransferNotificationView());
+            Register("TransferNotificationView", () => new Controls.TransferNotificationView());
+            Register("StoreUpdateNotificationView", () =>
+                new Controls.StoreUpdateNotificationView(
+                    provider.GetRequiredService<IStoreUpdateService>()));
             return registry;
         });
         services.AddSingleton<IThemeService, ThemeService>();
-        services.AddSingleton<IAppLocalizationService, AppLocalizationService>();
+        services.AddSingleton<AppLocalizationService>();
+        services.AddSingleton<IAppLocalizationService>(provider =>
+            provider.GetRequiredService<AppLocalizationService>());
+        services.AddSingleton<ILocalizationService>(provider =>
+            provider.GetRequiredService<AppLocalizationService>());
         services.AddSingleton<IAnimationPreferenceService, WindowsAnimationPreferenceService>();
         services.AddSingleton<ISettingsPathProvider, SettingsPathProvider>();
         services.AddSingleton<ILogPathProvider, LocalLogPathProvider>();
@@ -180,6 +207,9 @@ public static class ServiceRegistration
         services.AddSingleton<TrayMenuCoordinator>();
         services.AddSingleton<GlobalHotKeyCoordinator>();
         services.AddSingleton<ModuleSettingsCoordinator>();
+        services.AddSingleton<StoreUpdateCoordinator>();
+        services.AddSingleton<IStoreUpdateCoordinator>(provider =>
+            provider.GetRequiredService<StoreUpdateCoordinator>());
 
         return services.BuildServiceProvider(validateScopes: true);
     }

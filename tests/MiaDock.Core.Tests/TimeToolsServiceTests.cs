@@ -154,6 +154,30 @@ public sealed class TimeToolsServiceTests
     }
 
     [TestMethod]
+    public async Task CancellingCompletedTimer_StopsActiveAlarm()
+    {
+        var persisted = new TimerPersistentState(
+            TimerPersistentState.CurrentSchemaVersion,
+            TimerRunState.Completed,
+            TimeSpan.FromMinutes(1).Ticks,
+            0,
+            null,
+            true);
+        var alarm = new RecordingAlarmPlayer();
+        await using var service = new TimeToolsService(
+            new MemoryStore(persisted),
+            alarmPlayer: alarm);
+
+        await service.InitializeAsync();
+        Assert.AreEqual(1, alarm.PlayCount);
+
+        Assert.IsTrue(service.CancelTimer());
+
+        Assert.AreEqual(1, alarm.StopCount);
+        Assert.AreEqual(TimerRunState.Idle, service.Current.TimerState);
+    }
+
+    [TestMethod]
     public async Task StopwatchLap_UsesMonotonicTime()
     {
         var time = new MutableTimeProvider(DateTimeOffset.Parse("2026-07-22T10:00:00Z"));
@@ -212,7 +236,9 @@ public sealed class TimeToolsServiceTests
     private sealed class RecordingAlarmPlayer : ITimerAlarmPlayer
     {
         public int PlayCount { get; private set; }
+        public int StopCount { get; private set; }
         public void Play() => PlayCount++;
+        public void Stop() => StopCount++;
     }
 
     private sealed class MutableTimeProvider(DateTimeOffset utcNow) : TimeProvider

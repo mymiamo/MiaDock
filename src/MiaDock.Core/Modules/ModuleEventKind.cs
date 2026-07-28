@@ -12,5 +12,6 @@ public enum ModuleEventKind
     Completed,
     Warning,
     Critical,
-    Notification
+    Notification,
+    UpdateAvailable
 }

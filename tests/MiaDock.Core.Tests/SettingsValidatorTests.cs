@@ -127,6 +127,50 @@ public sealed class SettingsValidatorTests
     }
 
     [TestMethod]
+    public void Normalize_SchemaThirteen_UsesDefaultClockDisplaySettings()
+    {
+        var old = MiaDockSettings.Default with
+        {
+            SchemaVersion = 13,
+            General = MiaDockSettings.Default.General with
+            {
+                Clock = new ClockDisplaySettings(
+                    ClockHourFormat.TwelveHour,
+                    ShowSeconds: true,
+                    ShowDate: false,
+                    ClockDateFormat.Long,
+                    ShowWeekday: false)
+            }
+        };
+
+        var normalized = SettingsValidator.Normalize(old);
+
+        Assert.AreEqual(ClockDisplaySettings.Default, normalized.General.Clock);
+        Assert.AreEqual(14, normalized.SchemaVersion);
+    }
+
+    [TestMethod]
+    public void Normalize_RepairsUnknownClockFormatValues()
+    {
+        var invalid = MiaDockSettings.Default with
+        {
+            General = MiaDockSettings.Default.General with
+            {
+                Clock = ClockDisplaySettings.Default with
+                {
+                    HourFormat = (ClockHourFormat)99,
+                    DateFormat = (ClockDateFormat)99
+                }
+            }
+        };
+
+        var normalized = SettingsValidator.Normalize(invalid);
+
+        Assert.AreEqual(ClockDisplaySettings.Default.HourFormat, normalized.General.Clock.HourFormat);
+        Assert.AreEqual(ClockDisplaySettings.Default.DateFormat, normalized.General.Clock.DateFormat);
+    }
+
+    [TestMethod]
     public void Normalize_ClampsExpandedHeightToAccessibleModuleMinimum()
     {
         var undersized = MiaDockSettings.Default with
@@ -272,5 +316,38 @@ public sealed class SettingsValidatorTests
         var result = SettingsValidator.Normalize(settings);
 
         Assert.AreEqual(PresentationPrivacySettings.Default, result.Privacy);
+    }
+
+    [TestMethod]
+    public void Normalize_MissingStoreUpdateSettings_EnablesAutomaticChecks()
+    {
+        var settings = MiaDockSettings.Default with
+        {
+            SchemaVersion = 12,
+            StoreUpdates = null!
+        };
+
+        var result = SettingsValidator.Normalize(settings);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.IsTrue(result.StoreUpdates.AutomaticChecksEnabled);
+        Assert.IsNull(result.StoreUpdates.LastCheckUtc);
+        Assert.IsNull(result.StoreUpdates.LastNotifiedVersion);
+    }
+
+    [TestMethod]
+    public void Normalize_StoreUpdateSettings_UsesUtcAndCanonicalVersion()
+    {
+        var localTimestamp = new DateTimeOffset(2026, 7, 27, 12, 0, 0, TimeSpan.FromHours(3));
+        var settings = MiaDockSettings.Default with
+        {
+            StoreUpdates = new StoreUpdateSettings(false, localTimestamp, "1.2")
+        };
+
+        var result = SettingsValidator.Normalize(settings);
+
+        Assert.IsFalse(result.StoreUpdates.AutomaticChecksEnabled);
+        Assert.AreEqual(TimeSpan.Zero, result.StoreUpdates.LastCheckUtc?.Offset);
+        Assert.AreEqual("1.2.0.0", result.StoreUpdates.LastNotifiedVersion);
     }
 }

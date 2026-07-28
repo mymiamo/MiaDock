@@ -10,16 +10,19 @@ public sealed partial class DiagnosticsSettingsPage : UserControl
     private readonly DiagnosticsViewModel _viewModel;
     private readonly IDiagnosticsFileService _fileService;
     private readonly Window _owner;
+    private readonly IAppLocalizationService? _localization;
 
     public DiagnosticsSettingsPage(
         DiagnosticsViewModel viewModel,
         IDiagnosticsFileService fileService,
-        Window owner)
+        Window owner,
+        IAppLocalizationService? localization = null)
     {
         InitializeComponent();
         _viewModel = viewModel;
         _fileService = fileService;
         _owner = owner;
+        _localization = localization;
         DataContext = viewModel;
         Loaded += OnLoaded;
     }
@@ -57,10 +60,10 @@ public sealed partial class DiagnosticsSettingsPage : UserControl
         var dialog = new ContentDialog
         {
             XamlRoot = XamlRoot,
-            Title = "Yerel loglar temizlensin mi?",
-            Content = "Bu işlem mevcut teknik log dosyalarını kalıcı olarak siler.",
-            PrimaryButtonText = "Logları temizle",
-            CloseButtonText = "İptal",
+            Title = Text("Dialog.Logs.Clear.Title", "Yerel loglar temizlensin mi?"),
+            Content = Text("Dialog.Logs.Clear.Description", "Bu işlem mevcut teknik log dosyalarını kalıcı olarak siler."),
+            PrimaryButtonText = Text("Dialog.Logs.Clear.Action", "Logları temizle"),
+            CloseButtonText = Text("Common.Cancel", "İptal"),
             DefaultButton = ContentDialogButton.Close
         };
         if (await dialog.ShowAsync() == ContentDialogResult.Primary)
@@ -68,4 +71,7 @@ public sealed partial class DiagnosticsSettingsPage : UserControl
             await _viewModel.ClearAsync();
         }
     }
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
 }

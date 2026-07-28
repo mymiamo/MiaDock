@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Localization;
 using MiaDock.Modules.DeviceStatus.Models;
 using MiaDock.Modules.DeviceStatus.Services;
 using MiaDock.Modules.DeviceStatus.ViewModels;
@@ -12,14 +13,23 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
     public const string ModuleId = "bluetooth";
     private readonly IBluetoothStatusService _service;
     private readonly BluetoothModuleViewModel _viewModel;
+    private readonly ILocalizationService? _localization;
     private BluetoothStatusSnapshot? _previous;
     private bool _isEnabled = true;
 
-    public BluetoothModule(IBluetoothStatusService service, BluetoothModuleViewModel viewModel)
+    public BluetoothModule(
+        IBluetoothStatusService service,
+        BluetoothModuleViewModel viewModel,
+        ILocalizationService? localization = null)
     {
         _service = service;
         _viewModel = viewModel;
+        _localization = localization;
         _service.SnapshotChanged += OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged += OnLanguageChanged;
+        }
     }
 
     public ModuleDescriptor Descriptor { get; } = new(
@@ -73,7 +83,9 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
 
         var presentation = new ModulePresentation(
             ModuleId,
-            changed.IsConnected ? "Bluetooth cihazı bağlandı" : "Bluetooth cihazı ayrıldı",
+            changed.IsConnected
+                ? Text("Bluetooth.Connected", "Bluetooth cihazı bağlandı")
+                : Text("Bluetooth.Disconnected", "Bluetooth cihazı ayrıldı"),
             changed.DisplayName,
             "\uE702",
             ModuleIndicatorKind.StatusDot,
@@ -92,7 +104,7 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
 
     private ModulePresentation CreatePresentation(BluetoothStatusSnapshot snapshot) => new(
         ModuleId,
-        "Bluetooth",
+        Text("Module.bluetooth.Name", "Bluetooth"),
         _viewModel.StatusText,
         "\uE702",
         _viewModel.ConnectedDevices.Count > 0 ? ModuleIndicatorKind.StatusDot : ModuleIndicatorKind.None,
@@ -101,5 +113,18 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
 
     private static string HashId(string id) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(id)))[..12];
 
-    public void Dispose() => _service.SnapshotChanged -= OnSnapshotChanged;
+    private void OnLanguageChanged(object? sender, EventArgs args) =>
+        PresentationChanged?.Invoke(this, CurrentPresentation);
+
+    private string Text(string key, string fallback) =>
+        _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    public void Dispose()
+    {
+        _service.SnapshotChanged -= OnSnapshotChanged;
+        if (_localization is not null)
+        {
+            _localization.LanguageChanged -= OnLanguageChanged;
+        }
+    }
 }

@@ -23,6 +23,7 @@ public partial class App : Application
     private IOnboardingWindowService? _onboardingWindow;
     private IApplicationLifetimeService? _lifetime;
     private ISingleInstanceService? _singleInstance;
+    private IUiDispatcher? _uiDispatcher;
     private readonly AppExceptionCoordinator _exceptionCoordinator;
     private readonly ILogService _log;
     private bool _shutdownStarted;
@@ -83,6 +84,7 @@ public partial class App : Application
         _singleInstance.ActivationRedirected += OnActivationRedirected;
         _lifetime = _services.GetRequiredService<IApplicationLifetimeService>();
         _lifetime.ExitRequested += OnExitRequested;
+        _uiDispatcher = _services.GetRequiredService<IUiDispatcher>();
 
         var settings = _services.GetRequiredService<ISettingsService>();
         await settings.InitializeAsync();
@@ -131,6 +133,7 @@ public partial class App : Application
 
         await _services.GetRequiredService<TrayMenuCoordinator>().StartAsync();
         _services.GetRequiredService<GlobalHotKeyCoordinator>().Start();
+        _services.GetRequiredService<IStoreUpdateCoordinator>().Start();
 
         var showSettingsFromCommandLine = Environment.GetCommandLineArgs()
             .Skip(1)
@@ -163,7 +166,7 @@ public partial class App : Application
 
     private void OnActivationRedirected(object? sender, EventArgs args)
     {
-        _services.GetRequiredService<IUiDispatcher>().TryEnqueue(() =>
+        _uiDispatcher?.TryEnqueue(() =>
         {
             if (_onboardingWindow?.IsVisible == true)
             {
@@ -211,7 +214,21 @@ public partial class App : Application
         }
         finally
         {
+            ExitOnUiThread();
+        }
+    }
+
+    private void ExitOnUiThread()
+    {
+        if (_uiDispatcher is null || _uiDispatcher.HasThreadAccess)
+        {
             Exit();
+            return;
+        }
+
+        if (!_uiDispatcher.TryEnqueue(Exit))
+        {
+            Environment.Exit(0);
         }
     }
 }

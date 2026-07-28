@@ -17,6 +17,7 @@ using MiaDock.Core.Threading;
 using MiaDock.Modules.Notifications.Models;
 using MiaDock.Modules.Notifications.Services;
 using MiaDock.Modules.Notifications.Settings;
+using MiaDock.Core.Updates;
 
 namespace MiaDock.App.ViewModels;
 
@@ -31,12 +32,18 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private readonly IUiDispatcher? _uiDispatcher;
     private readonly IAppLocalizationService _localization;
     private readonly ModuleSettingsCatalog? _moduleCatalog;
+    private readonly IStoreUpdateCoordinator? _storeUpdates;
     private bool _synchronizing;
     private AppLanguage _language;
     private IslandVisibilityMode _visibilityMode;
     private IslandInteractionMode _interactionMode;
     private IslandPositionSetting _position;
     private double _passiveModuleReturnSeconds;
+    private ClockHourFormat _clockHourFormat;
+    private bool _showClockSeconds;
+    private bool _showClockDate;
+    private ClockDateFormat _clockDateFormat;
+    private bool _showClockWeekday;
     private ThemeStyle _theme;
     private double _collapsedWidth;
     private double _collapsedHeight;
@@ -88,6 +95,9 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private string _notificationStatusMessage = "Bildirim erişimi denetleniyor.";
     private bool _showSensitiveContentInFullscreen;
     private bool _showSensitiveContentWhenLocked;
+    private bool _automaticUpdateChecksEnabled = true;
+    private StoreUpdateSnapshot _storeUpdateSnapshot =
+        StoreUpdateSnapshot.Unavailable(new Version(1, 1, 0, 0));
 
     public SettingsViewModel(
         ISettingsService settingsService,
@@ -98,7 +108,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ISystemNotificationService? notificationService = null,
         IUiDispatcher? uiDispatcher = null,
         IAppLocalizationService? localization = null,
-        ModuleSettingsCatalog? moduleCatalog = null)
+        ModuleSettingsCatalog? moduleCatalog = null,
+        IStoreUpdateCoordinator? storeUpdates = null)
     {
         _settingsService = settingsService;
         _music = music;
@@ -109,6 +120,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         _uiDispatcher = uiDispatcher;
         _localization = localization ?? new AppLocalizationService();
         _moduleCatalog = moduleCatalog;
+        _storeUpdates = storeUpdates;
+        _storeUpdateSnapshot = storeUpdates?.Current ?? _storeUpdateSnapshot;
         BuildModuleItems();
         RebuildLocalizedOptions();
         LoadFrom(settingsService.Current);
@@ -134,6 +147,16 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ResetAllCommand = new RelayCommand(_settingsService.Reset);
         ResetAppearanceCommand = new RelayCommand(() =>
             ApplyAppearanceAndSave(AppearanceSettings.Default));
+        CheckForUpdatesCommand = new AsyncRelayCommand(
+            CheckForUpdatesAsync,
+            () => !IsStoreUpdateChecking);
+        OpenStoreCommand = new AsyncRelayCommand(
+            OpenStoreAsync,
+            () => IsStoreUpdateAvailable);
+        if (_storeUpdates is not null)
+        {
+            _storeUpdates.UpdateAvailabilityChanged += OnStoreUpdateAvailabilityChanged;
+        }
         _ = RefreshStartupStatusAsync();
     }
 
@@ -141,6 +164,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<IslandVisibilityMode>> VisibilityModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<IslandInteractionMode>> InteractionModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<IslandPositionSetting>> Positions { get; private set; } = [];
+    public IReadOnlyList<SettingOption<ClockHourFormat>> ClockHourFormats { get; private set; } = [];
+    public IReadOnlyList<SettingOption<ClockDateFormat>> ClockDateFormats { get; private set; } = [];
     public IReadOnlyList<SettingOption<ThemeStyle>> Themes { get; private set; } = [];
     public IReadOnlyList<SettingOption<IslandAnimationKind>> AnimationKinds { get; private set; } = [];
     public IReadOnlyList<SettingOption<MediaFallbackSetting>> MediaFallbackModes { get; private set; } = [];
@@ -152,10 +177,12 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.0.0.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.1.1.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
+    public IAsyncRelayCommand CheckForUpdatesCommand { get; }
+    public IAsyncRelayCommand OpenStoreCommand { get; }
     public bool IsStartupTaskAvailable { get => _isStartupTaskAvailable; private set => SetProperty(ref _isStartupTaskAvailable, value); }
     public string StartupStatusMessage { get => _startupStatusMessage; private set => SetProperty(ref _startupStatusMessage, value); }
     public double BatteryLowThreshold { get => _batteryLowThreshold; set => SetBatteryThreshold(value, ref _batteryLowThreshold, ThresholdKind.Low); }
@@ -188,6 +215,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         NotificationAccessState is NotificationAccessState.Allowed or NotificationAccessState.Unspecified;
     public ObservableCollection<NotificationApplicationSettingItem> NotificationApplications { get; } = [];
     public ObservableCollection<ModuleSettingsItemViewModel> ModuleItems { get; } = [];
+    public int EnabledModuleCount => ModuleItems.Count(item => item.IsEnabled);
+    public string EnabledModuleSummary => _localization.Text(
+        $"{EnabledModuleCount} / {ModuleItems.Count} modül etkin",
+        $"{EnabledModuleCount} of {ModuleItems.Count} modules enabled");
     public bool ShowSensitiveContentInFullscreen
     {
         get => _showSensitiveContentInFullscreen;
@@ -206,6 +237,43 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                 Privacy = settings.Privacy with { ShowSensitiveContentWhenLocked = value }
             });
     }
+
+    public bool AutomaticUpdateChecksEnabled
+    {
+        get => _automaticUpdateChecksEnabled;
+        set
+        {
+            if (!SetProperty(ref _automaticUpdateChecksEnabled, value) ||
+                _synchronizing)
+            {
+                return;
+            }
+
+            _storeUpdates?.SetAutomaticChecksEnabled(value);
+        }
+    }
+
+    public StoreUpdateStatus StoreUpdateStatus => _storeUpdateSnapshot.Status;
+    public bool IsStoreUpdateChecking =>
+        StoreUpdateStatus == StoreUpdateStatus.Checking;
+    public bool IsStoreUpdateAvailable =>
+        StoreUpdateStatus == StoreUpdateStatus.UpdateAvailable;
+    public string StoreUpdateStatusMessage => StoreUpdateStatus switch
+    {
+        StoreUpdateStatus.Checking => _localization.Get("Update.Checking"),
+        StoreUpdateStatus.UpToDate => _localization.Get("Update.UpToDate"),
+        StoreUpdateStatus.UpdateAvailable => _localization.Get("Update.Available"),
+        StoreUpdateStatus.Offline => _localization.Get("Update.Offline"),
+        StoreUpdateStatus.Failed => _localization.Get("Update.Failed"),
+        _ => _localization.Get("Update.StoreOnly")
+    };
+    public string StoreUpdateVersionText =>
+        _storeUpdateSnapshot.AvailableVersion is { } available
+            ? _localization.Get(
+                "Update.VersionPair",
+                _storeUpdateSnapshot.CurrentVersion,
+                available)
+            : $"MiaDock {_storeUpdateSnapshot.CurrentVersion}";
 
     public AppLanguage Language
     {
@@ -234,6 +302,39 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                 General = settings.General with { PassiveModuleReturnSeconds = value }
             });
     }
+    public ClockHourFormat ClockHourFormat
+    {
+        get => _clockHourFormat;
+        set
+        {
+            SetClock(value, ref _clockHourFormat, clock => clock with { HourFormat = value });
+            OnPropertyChanged(nameof(ClockHourFormatIndex));
+        }
+    }
+    public bool ShowClockSeconds
+    {
+        get => _showClockSeconds;
+        set => SetClock(value, ref _showClockSeconds, clock => clock with { ShowSeconds = value });
+    }
+    public bool ShowClockDate
+    {
+        get => _showClockDate;
+        set => SetClock(value, ref _showClockDate, clock => clock with { ShowDate = value });
+    }
+    public ClockDateFormat ClockDateFormat
+    {
+        get => _clockDateFormat;
+        set
+        {
+            SetClock(value, ref _clockDateFormat, clock => clock with { DateFormat = value });
+            OnPropertyChanged(nameof(ClockDateFormatIndex));
+        }
+    }
+    public bool ShowClockWeekday
+    {
+        get => _showClockWeekday;
+        set => SetClock(value, ref _showClockWeekday, clock => clock with { ShowWeekday = value });
+    }
     public ThemeStyle Theme
     {
         get => _theme;
@@ -254,8 +355,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public string ThemeDescription => Theme switch
     {
         ThemeStyle.AppleLike => _localization.Text(
-            "Tam siyah, sade ve yüksek kontrastlı ada.",
-            "Pure black, minimal, high-contrast island."),
+            "Tam siyah, sade ve yüksek kontrastlı dock.",
+            "Pure black, minimal, high-contrast dock."),
         ThemeStyle.Windows11Mica => _localization.Text(
             "Windows 11 ile uyumlu, yumuşak Mica yüzeyi.",
             "A soft Mica surface that matches Windows 11."),
@@ -325,6 +426,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public int VisibilityModeIndex { get => IndexOf(VisibilityModes, VisibilityMode); set => VisibilityMode = ValueAt(VisibilityModes, value, VisibilityMode); }
     public int InteractionModeIndex { get => IndexOf(InteractionModes, InteractionMode); set => InteractionMode = ValueAt(InteractionModes, value, InteractionMode); }
     public int PositionIndex { get => IndexOf(Positions, Position); set => Position = ValueAt(Positions, value, Position); }
+    public int ClockHourFormatIndex { get => IndexOf(ClockHourFormats, ClockHourFormat); set => ClockHourFormat = ValueAt(ClockHourFormats, value, ClockHourFormat); }
+    public int ClockDateFormatIndex { get => IndexOf(ClockDateFormats, ClockDateFormat); set => ClockDateFormat = ValueAt(ClockDateFormats, value, ClockDateFormat); }
     public int ThemeIndex { get => IndexOf(Themes, Theme); set => Theme = ValueAt(Themes, value, Theme); }
     public int AnimationKindIndex { get => IndexOf(AnimationKinds, AnimationKind); set => AnimationKind = ValueAt(AnimationKinds, value, AnimationKind); }
     public int MediaFallbackIndex { get => IndexOf(MediaFallbackModes, MediaFallback); set => MediaFallback = ValueAt(MediaFallbackModes, value, MediaFallback); }
@@ -367,6 +470,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         {
             _moduleCatalog.Changed -= OnModuleCatalogChanged;
         }
+        if (_storeUpdates is not null)
+        {
+            _storeUpdates.UpdateAvailabilityChanged -= OnStoreUpdateAvailabilityChanged;
+        }
     }
 
     private void Set<T>(T value, ref T field, Func<MiaDockSettings, MiaDockSettings> update)
@@ -377,6 +484,23 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         }
 
         _settingsService.Update(update);
+    }
+
+    private void SetClock<T>(
+        T value,
+        ref T field,
+        Func<ClockDisplaySettings, ClockDisplaySettings> update)
+    {
+        Set(
+            value,
+            ref field,
+            settings => settings with
+            {
+                General = settings.General with
+                {
+                    Clock = update(settings.General.Clock)
+                }
+            });
     }
 
     private static int IndexOf<T>(IReadOnlyList<SettingOption<T>> options, T value)
@@ -415,6 +539,16 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             new(IslandPositionSetting.BottomCenter, L("Alt orta", "Bottom center")),
             new(IslandPositionSetting.BottomLeft, L("Alt sol", "Bottom left")),
             new(IslandPositionSetting.BottomRight, L("Alt sağ", "Bottom right"))
+        ];
+        ClockHourFormats =
+        [
+            new(ClockHourFormat.TwentyFourHour, L("24 saat", "24-hour")),
+            new(ClockHourFormat.TwelveHour, L("12 saat", "12-hour"))
+        ];
+        ClockDateFormats =
+        [
+            new(ClockDateFormat.Short, L("Kısa", "Short")),
+            new(ClockDateFormat.Long, L("Uzun", "Long"))
         ];
         Themes =
         [
@@ -455,7 +589,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ];
         LaunchModes =
         [
-            new(StartupLaunchMode.Island, L("Doğrudan adayı başlat", "Start the island")),
+            new(StartupLaunchMode.Island, L("Doğrudan dock'u başlat", "Start the dock")),
             new(StartupLaunchMode.Settings, L("Ayarları aç", "Open Settings")),
             new(StartupLaunchMode.SilentTray, L("Sistem tepsisinde sessiz başlat", "Start silently in system tray"))
         ];
@@ -468,13 +602,16 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         foreach (var propertyName in new[]
                  {
                      nameof(Languages), nameof(VisibilityModes), nameof(InteractionModes), nameof(Positions),
+                     nameof(ClockHourFormats), nameof(ClockDateFormats),
                      nameof(Themes), nameof(AnimationKinds), nameof(MediaFallbackModes), nameof(VolumeTargets),
                      nameof(FullscreenStyles), nameof(MonitorModes), nameof(LaunchModes), nameof(CloseBehaviors),
                      nameof(LanguageIndex), nameof(VisibilityModeIndex), nameof(InteractionModeIndex),
-                     nameof(PositionIndex), nameof(ThemeIndex), nameof(AnimationKindIndex),
+                     nameof(PositionIndex), nameof(ClockHourFormatIndex), nameof(ClockDateFormatIndex),
+                     nameof(ThemeIndex), nameof(AnimationKindIndex),
                      nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex),
                      nameof(MonitorModeIndex), nameof(LaunchModeIndex), nameof(CloseBehaviorIndex),
-                     nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable)
+                     nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable),
+                     nameof(StoreUpdateStatusMessage), nameof(StoreUpdateVersionText)
                  })
         {
             OnPropertyChanged(propertyName);
@@ -518,6 +655,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             InteractionMode = settings.General.InteractionMode;
             Position = settings.General.Position;
             PassiveModuleReturnSeconds = settings.General.PassiveModuleReturnSeconds;
+            ClockHourFormat = settings.General.Clock.HourFormat;
+            ShowClockSeconds = settings.General.Clock.ShowSeconds;
+            ShowClockDate = settings.General.Clock.ShowDate;
+            ClockDateFormat = settings.General.Clock.DateFormat;
+            ShowClockWeekday = settings.General.Clock.ShowWeekday;
             Theme = settings.Appearance.Theme;
             CollapsedWidth = settings.Appearance.CollapsedWidth;
             CollapsedHeight = settings.Appearance.CollapsedHeight;
@@ -571,6 +713,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             LoadNotificationApplications(notificationOptions);
             ShowSensitiveContentInFullscreen = settings.Privacy.ShowSensitiveContentInFullscreen;
             ShowSensitiveContentWhenLocked = settings.Privacy.ShowSensitiveContentWhenLocked;
+            AutomaticUpdateChecksEnabled =
+                settings.StoreUpdates.AutomaticChecksEnabled;
             RefreshModuleItems(settings);
         }
         finally
@@ -729,6 +873,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                 availability,
                 AvailabilityText(availability.State));
         }
+        OnPropertyChanged(nameof(EnabledModuleCount));
+        OnPropertyChanged(nameof(EnabledModuleSummary));
     }
 
     private string AvailabilityText(ModuleAvailabilityState state) => state switch
@@ -883,6 +1029,45 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private void OnModuleCatalogChanged(object? sender, EventArgs args) =>
         DispatchNotificationUpdate(() => RefreshModuleItems(_settingsService.Current));
 
+    private void OnStoreUpdateAvailabilityChanged(
+        object? sender,
+        StoreUpdateSnapshot snapshot) =>
+        DispatchNotificationUpdate(() => ApplyStoreUpdateSnapshot(snapshot));
+
+    private void ApplyStoreUpdateSnapshot(StoreUpdateSnapshot snapshot)
+    {
+        _storeUpdateSnapshot = snapshot;
+        foreach (var propertyName in new[]
+                 {
+                     nameof(StoreUpdateStatus),
+                     nameof(IsStoreUpdateChecking),
+                     nameof(IsStoreUpdateAvailable),
+                     nameof(StoreUpdateStatusMessage),
+                     nameof(StoreUpdateVersionText)
+                 })
+        {
+            OnPropertyChanged(propertyName);
+        }
+        CheckForUpdatesCommand.NotifyCanExecuteChanged();
+        OpenStoreCommand.NotifyCanExecuteChanged();
+    }
+
+    private async Task CheckForUpdatesAsync()
+    {
+        if (_storeUpdates is not null)
+        {
+            await _storeUpdates.CheckNowAsync();
+        }
+    }
+
+    private async Task OpenStoreAsync()
+    {
+        if (_storeUpdates is not null)
+        {
+            await _storeUpdates.OpenStorePageAsync();
+        }
+    }
+
     private void UpdateNotificationStatus()
     {
         NotificationStatusMessage = NotificationAccessState switch
@@ -969,6 +1154,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         StartupStatusMessage = status switch
         {
             StartupTaskStatus.Unavailable => _localization.Text("Bu seçenek, MSIX paketi kurulduğunda kullanılabilir.", "This option is available when the MSIX package is installed."),
+            StartupTaskStatus.Failed => _localization.Text("Başlangıç ayarı değiştirilemedi. Windows Başlangıç Uygulamaları ayarını kontrol edin.", "The startup setting could not be changed. Check Windows Startup Apps settings."),
             StartupTaskStatus.DisabledByUser => _localization.Text("Windows bu görevi devre dışı bıraktı. Başlangıç Uygulamaları ayarından yeniden etkinleştirin.", "Windows disabled this task. Re-enable it from Startup Apps settings."),
             StartupTaskStatus.DisabledByPolicy => _localization.Text("Başlangıç görevi sistem ilkesi tarafından engelleniyor.", "The startup task is blocked by system policy."),
             StartupTaskStatus.EnabledByPolicy => _localization.Text("Başlangıç görevi sistem ilkesi tarafından etkinleştirildi.", "The startup task is enabled by system policy."),

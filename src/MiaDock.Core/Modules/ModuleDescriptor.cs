@@ -15,7 +15,8 @@ public sealed record ModuleDescriptor
         int? persistentPriority = null,
         bool isPersistent = true,
         string? hoverViewKey = null,
-        string? iconGlyph = null)
+        string? iconGlyph = null,
+        string? displayNameKey = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -48,11 +49,16 @@ public sealed record ModuleDescriptor
         IsPersistent = isPersistent;
         HoverViewKey = string.IsNullOrWhiteSpace(hoverViewKey) ? compactViewKey : hoverViewKey;
         IconGlyph = string.IsNullOrWhiteSpace(iconGlyph) ? "\uE10C" : iconGlyph;
+        DisplayNameKey = string.IsNullOrWhiteSpace(displayNameKey)
+            ? $"Module.{id}.Name"
+            : displayNameKey;
     }
 
     public string Id { get; }
 
     public string DisplayName { get; }
+
+    public string DisplayNameKey { get; }
 
     public int Priority { get; }
 
