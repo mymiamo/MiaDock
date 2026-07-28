@@ -177,7 +177,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.1.1.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.2.0.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
