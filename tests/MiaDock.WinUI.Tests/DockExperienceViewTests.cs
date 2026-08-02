@@ -118,7 +118,9 @@ public sealed class DockExperienceViewTests
                 !string.IsNullOrWhiteSpace(AttributeValue(button, "AutomationProperties.HelpText")) &&
                 !string.IsNullOrWhiteSpace(AttributeValue(button, "ToolTipService.ToolTip"))));
             Assert.IsTrue(buttons.All(button =>
-                button.Attribute("Style")?.Value == "{StaticResource IslandCompactIconButtonStyle}" &&
+                button.Attribute("Style")?.Value is
+                    "{StaticResource IslandCompactIconButtonStyle}" or
+                    "{StaticResource DockIconButtonStyle}" &&
                 button.Attribute("Background") is null &&
                 button.Attribute("CornerRadius") is null));
         }
@@ -205,13 +207,149 @@ public sealed class DockExperienceViewTests
                     "Background" or "BorderBrush" or "Fill" or "Foreground")
                 .Select(attribute => attribute.Value)
                 .ToArray();
+            var sharedDockStyles = document.Descendants()
+                .Attributes("Style")
+                .Select(attribute => attribute.Value)
+                .Where(value => value.StartsWith(
+                    "{StaticResource Dock",
+                    StringComparison.Ordinal))
+                .ToArray();
 
-            Assert.IsNotEmpty(semanticPaints);
+            Assert.IsTrue(
+                semanticPaints.Length > 0 || sharedDockStyles.Length > 0,
+                $"{fileName} should consume semantic paint or a shared dock style.");
             Assert.IsTrue(semanticPaints.All(value =>
                     value.StartsWith("{ThemeResource ", StringComparison.Ordinal) ||
                     value.StartsWith("{Binding ", StringComparison.Ordinal)),
                 $"{fileName} contains a literal semantic color.");
         }
+    }
+
+    [TestMethod]
+    public void TimerExpandedView_UsesToggleButtonCompatibleSegmentStyle()
+    {
+        var document = LoadControl("TimerExpandedView.xaml");
+        var segments = document.Descendants()
+            .Where(element => element.Name.LocalName == "ToggleButton")
+            .ToArray();
+
+        Assert.HasCount(2, segments);
+        Assert.IsTrue(segments.All(segment =>
+            segment.Attribute("Style")?.Value ==
+                "{StaticResource DockSegmentToggleButtonStyle}"));
+        Assert.IsFalse(segments.Any(segment =>
+            segment.Attribute("Style")?.Value ==
+                "{StaticResource DockInlineButtonStyle}"));
+
+        var numberBoxes = document.Descendants()
+            .Where(element => element.Name.LocalName == "NumberBox")
+            .ToArray();
+        Assert.HasCount(3, numberBoxes);
+        Assert.IsTrue(numberBoxes.All(box =>
+            box.Attribute("SpinButtonPlacementMode")?.Value == "Inline"));
+        Assert.IsTrue(numberBoxes.All(box =>
+            box.Attribute("GotFocus")?.Value == "OnDurationEditorGotFocus" &&
+            box.Attribute("LostFocus")?.Value == "OnDurationEditorLostFocus"));
+    }
+
+    [TestMethod]
+    public void ExpandedHost_ReservesTheFullSwitcherHeight()
+    {
+        var document = LoadControl("ExpandedModuleHost.xaml");
+        var rowDefinitions = document.Descendants()
+            .Where(element => element.Name.LocalName == "RowDefinition")
+            .ToArray();
+        var switcher = FindNamedElement(document, "Switcher");
+
+        Assert.AreEqual("64", rowDefinitions[^1].Attribute("Height")?.Value);
+        Assert.AreEqual("12,6,12,10", switcher.Attribute("Margin")?.Value);
+        Assert.AreEqual("Stretch", switcher.Attribute("HorizontalAlignment")?.Value);
+        Assert.IsNull(switcher.Attribute("Width"));
+        Assert.IsNull(switcher.Attribute("MaxWidth"));
+    }
+
+    [TestMethod]
+    public void ModuleVariants_UseTheSharedDockHierarchy()
+    {
+        foreach (var fileName in new[]
+                 {
+                     "MusicCompactView.xaml",
+                     "VolumeCompactView.xaml",
+                     "SystemActivityCompactView.xaml",
+                     "BatteryCompactView.xaml",
+                     "NetworkCompactView.xaml",
+                     "BluetoothCompactView.xaml",
+                     "TimerCompactView.xaml",
+                     "TransferCompactView.xaml"
+                 })
+        {
+            StringAssert.Contains(
+                LoadControl(fileName).ToString(),
+                "DockCompactModuleLayoutStyle",
+                $"{fileName} should use the shared compact hierarchy.");
+        }
+
+        foreach (var fileName in new[]
+                 {
+                     "ExpandedMusicView.xaml",
+                     "VolumeExpandedView.xaml",
+                     "SystemActivityExpandedView.xaml",
+                     "BatteryExpandedView.xaml",
+                     "NetworkExpandedView.xaml",
+                     "BluetoothExpandedView.xaml",
+                     "TransferExpandedView.xaml",
+                     "GenericExpandedModuleView.xaml"
+                 })
+        {
+            var text = LoadControl(fileName).ToString();
+            Assert.IsTrue(
+                text.Contains("DockExpandedModuleLayoutStyle", StringComparison.Ordinal) &&
+                (text.Contains("DockTitleTextStyle", StringComparison.Ordinal) ||
+                 text.Contains("DockSectionStyle", StringComparison.Ordinal)),
+                $"{fileName} should use the shared expanded hierarchy.");
+        }
+
+        foreach (var fileName in new[]
+                 {
+                     "TrackNotificationView.xaml",
+                     "VolumeNotificationView.xaml",
+                     "TimerNotificationView.xaml",
+                     "TransferNotificationView.xaml",
+                     "NotificationModuleNotificationView.xaml",
+                     "GenericModuleNotificationView.xaml",
+                     "StoreUpdateNotificationView.xaml"
+                 })
+        {
+            StringAssert.Contains(
+                LoadControl(fileName).ToString(),
+                "DockNotificationLayoutStyle",
+                $"{fileName} should use the shared notification hierarchy.");
+        }
+    }
+
+    [TestMethod]
+    public void SharedModuleActions_ProvideAccessibleTargetsAndExplanations()
+    {
+        var transport = LoadControl("MediaTransportControls.xaml");
+        var buttons = transport.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .ToArray();
+
+        Assert.HasCount(3, buttons);
+        Assert.IsTrue(buttons.All(button =>
+            button.Attribute("Width")?.Value == "44" &&
+            button.Attribute("Height")?.Value == "44" &&
+            button.Attribute("Style")?.Value == "{StaticResource DockIconButtonStyle}" &&
+            !string.IsNullOrWhiteSpace(AttributeValue(button, "AutomationProperties.HelpText"))));
+
+        var bluetooth = LoadControl("BluetoothExpandedView.xaml");
+        var deviceName = bluetooth.Descendants().Single(element =>
+            element.Name.LocalName == "TextBlock" &&
+            element.Attribute("Text")?.Value == "{Binding DisplayName}");
+        Assert.AreEqual("CharacterEllipsis", deviceName.Attribute("TextTrimming")?.Value);
+        Assert.AreEqual(
+            "{Binding DisplayName}",
+            AttributeValue(deviceName, "ToolTipService.ToolTip"));
     }
 
     private static XElement FindNamedElement(XDocument document, string name) =>

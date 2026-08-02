@@ -8,10 +8,12 @@
       <ResourceDictionary.MergedDictionaries>
         <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
         <ResourceDictionary Source="ms-appx:///Themes/PrimitiveTokens.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/DockDesignTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/SemanticTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/Typography.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/MotionTokens.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/ControlStyles.xaml" />
+        <ResourceDictionary Source="ms-appx:///Themes/DockControlStyles.xaml" />
         <ResourceDictionary Source="ms-appx:///Themes/SettingsStyles.xaml" />
       </ResourceDictionary.MergedDictionaries>
 

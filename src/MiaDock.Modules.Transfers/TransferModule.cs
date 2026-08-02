@@ -52,7 +52,8 @@ public sealed class TransferModule : IIslandModule, IDisposable
         notificationViewKey: "TransferNotificationView",
         persistentPriority: 400,
         isPersistent: false,
-        iconGlyph: "\uE896");
+        iconGlyph: "\uE896",
+        minimumExpandedHeight: 350);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
     public bool IsEnabled

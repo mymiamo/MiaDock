@@ -17,7 +17,7 @@
                                       AutomationProperties.AccessibilityView="Raw" />
       </Grid>
       <TextBlock MaxWidth="120"
-                 Style="{StaticResource IslandCaptionTextStyle}"
+                 Style="{StaticResource DockCaptionTextStyle}"
                  Text="{Binding Current.Source.DisplayName}" />
     </StackPanel>
   </Border>

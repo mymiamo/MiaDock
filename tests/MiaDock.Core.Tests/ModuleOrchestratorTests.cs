@@ -1,3 +1,4 @@
+using MiaDock.Core.Focus;
 using MiaDock.Core.Modules;
 using System.Diagnostics;
 
@@ -189,6 +190,26 @@ public sealed class ModuleOrchestratorTests
 
         orchestrator.EndManualSelection();
         Assert.AreEqual("timer", orchestrator.CurrentDisplay?.Descriptor.Id);
+    }
+
+    [TestMethod]
+    public async Task RapidCarouselNavigation_RemainsStableAndBounded()
+    {
+        var media = new FakeModule("media", 100);
+        var timer = new FakeModule("timer", 300);
+        var network = new FakeModule("network", 200, isPersistent: false);
+        await using var registry = new IslandModuleRegistry([media, timer, network]);
+        using var orchestrator = new ModuleOrchestrator(registry);
+        await registry.InitializeAsync();
+
+        for (var index = 0; index < 50_000; index++)
+        {
+            Assert.IsTrue(orchestrator.MoveSelection((index & 1) == 0 ? 1 : -1));
+        }
+
+        var selected = orchestrator.CurrentDisplay?.Descriptor.Id;
+        Assert.IsTrue(selected is null or "media" or "timer" or "network");
+        Assert.AreEqual(0, orchestrator.PendingEventCount);
     }
 
     [TestMethod]
@@ -434,6 +455,105 @@ public sealed class ModuleOrchestratorTests
     }
 
     [TestMethod]
+    public async Task FocusPolicy_FiltersAvailableAndPersistentModules()
+    {
+        var media = new FakeModule("media", 100);
+        var timer = new FakeModule("timer", 300);
+        var policy = new MutableFocusPolicyService();
+        await using var registry = new IslandModuleRegistry([media, timer]);
+        using var orchestrator = new ModuleOrchestrator(
+            registry,
+            focusPolicy: policy);
+        await registry.InitializeAsync();
+
+        Assert.HasCount(2, orchestrator.AvailableModules);
+        Assert.AreEqual("timer", orchestrator.CurrentDisplay?.Descriptor.Id);
+
+        policy.Update(ActivePolicy(
+            new HashSet<string> { "media" },
+            ModuleEventPriority.Low));
+
+        Assert.HasCount(1, orchestrator.AvailableModules);
+        Assert.AreEqual("media", orchestrator.CurrentDisplay?.Descriptor.Id);
+        Assert.IsFalse(orchestrator.SelectModule("timer"));
+    }
+
+    [TestMethod]
+    public async Task FocusPolicy_DropsEventsBelowMinimumPriority()
+    {
+        var module = new FakeModule("battery", 300);
+        var policy = new MutableFocusPolicyService(
+            ActivePolicy(
+                new HashSet<string> { "battery" },
+                ModuleEventPriority.Critical));
+        await using var registry = new IslandModuleRegistry([module]);
+        using var orchestrator = new ModuleOrchestrator(
+            registry,
+            focusPolicy: policy);
+        await registry.InitializeAsync();
+
+        module.PublishEvent("low", ModuleEventPriority.High, "low");
+        Assert.IsNull(orchestrator.ActiveEvent);
+        Assert.AreEqual(0, orchestrator.PendingEventCount);
+
+        module.PublishEvent("critical", ModuleEventPriority.Critical, "critical");
+        Assert.AreEqual("critical", orchestrator.ActiveEvent?.Presentation.PrimaryText);
+    }
+
+    [TestMethod]
+    public async Task FocusPolicyChange_RemovesBlockedActiveEventAndPromotesAllowedPendingEvent()
+    {
+        var media = new FakeModule("media", 100);
+        var battery = new FakeModule("battery", 300);
+        var policy = new MutableFocusPolicyService();
+        await using var registry = new IslandModuleRegistry([media, battery]);
+        using var orchestrator = new ModuleOrchestrator(
+            registry,
+            focusPolicy: policy);
+        await registry.InitializeAsync();
+
+        media.PublishEvent("track", ModuleEventPriority.Normal, "media:track");
+        battery.PublishEvent("battery", ModuleEventPriority.Critical, "battery:critical");
+        Assert.AreEqual("battery", orchestrator.ActiveEvent?.ModuleId);
+        Assert.AreEqual(1, orchestrator.PendingEventCount);
+
+        policy.Update(ActivePolicy(
+            new HashSet<string> { "media" },
+            ModuleEventPriority.Low));
+
+        Assert.AreEqual("media", orchestrator.ActiveEvent?.ModuleId);
+        Assert.AreEqual("track", orchestrator.ActiveEvent?.Presentation.PrimaryText);
+        Assert.AreEqual(0, orchestrator.PendingEventCount);
+    }
+
+    [TestMethod]
+    public async Task FocusPolicy_FiftyThousandBlockedEventsNeverEnterQueue()
+    {
+        var module = new FakeModule("network", 100);
+        var policy = new MutableFocusPolicyService(
+            ActivePolicy(
+                new HashSet<string> { "timer" },
+                ModuleEventPriority.Critical));
+        await using var registry = new IslandModuleRegistry([module]);
+        using var orchestrator = new ModuleOrchestrator(
+            registry,
+            focusPolicy: policy);
+        await registry.InitializeAsync();
+
+        for (var index = 0; index < 50_000; index++)
+        {
+            module.PublishEvent(
+                $"blocked-{index}",
+                ModuleEventPriority.Critical,
+                $"blocked-{index}");
+        }
+
+        Assert.IsNull(orchestrator.ActiveEvent);
+        Assert.AreEqual(0, orchestrator.PendingEventCount);
+        Assert.AreEqual(50_000, orchestrator.Statistics.ReceivedEvents);
+    }
+
+    [TestMethod]
     public async Task Dispose_DetachesRegistryCallbacks()
     {
         var module = new FakeModule("lifecycle", 100);
@@ -447,6 +567,41 @@ public sealed class ModuleOrchestratorTests
         module.PublishEvent("after", ModuleEventPriority.Critical, "after");
 
         Assert.AreEqual(beforeDispose, orchestrator.Statistics.ReceivedEvents);
+    }
+
+    private static FocusPolicySnapshot ActivePolicy(
+        IReadOnlySet<string> allowedModuleIds,
+        ModuleEventPriority minimumPriority) =>
+        new(
+            true,
+            "test-focus",
+            FocusDockVisibility.EventsOnly,
+            allowedModuleIds,
+            minimumPriority,
+            true,
+            true,
+            true);
+
+    private sealed class MutableFocusPolicyService : IFocusPolicyService
+    {
+        public MutableFocusPolicyService(FocusPolicySnapshot? current = null)
+        {
+            Current = current ?? FocusPolicySnapshot.Inactive;
+        }
+
+        public FocusPolicySnapshot Current { get; private set; }
+
+        public event EventHandler? PolicyChanged;
+
+        public void Update(FocusPolicySnapshot current)
+        {
+            Current = current;
+            PolicyChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void Dispose()
+        {
+        }
     }
 
     private sealed class FakeModule : IIslandModule

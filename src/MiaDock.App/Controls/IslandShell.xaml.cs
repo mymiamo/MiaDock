@@ -12,6 +12,7 @@ using MiaDock.Core.Settings;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
 using System.Numerics;
+using MiaDock.UI.Services;
 
 namespace MiaDock.App.Controls;
 
@@ -24,6 +25,10 @@ public sealed partial class IslandShell : UserControl
     private readonly IReadOnlyDictionary<IslandVisualState, FrameworkElement> _views;
     private IIslandAnimationCoordinator? _animationCoordinator;
     private IslandLayoutOptions _layoutOptions = IslandLayoutOptions.Default;
+    private IslandLayoutOptions _baseLayoutOptions = IslandLayoutOptions.Default;
+    private IslandMotionOptions _motionOptions = IslandMotionOptions.Default;
+    private IAnimationPreferenceService? _animationPreferences;
+    private IslandVisualState _activeState = IslandVisualState.Collapsed;
     public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
         nameof(State),
         typeof(string),
@@ -78,6 +83,13 @@ public sealed partial class IslandShell : UserControl
         _expandedView.NextRequested += OnNextModuleRequested;
         _expandedView.DefaultRequested += OnDefaultModuleRequested;
         _expandedView.ModuleSelected += OnModuleSelected;
+        _expandedView.ContentMotionRequested += OnContentMotionRequested;
+        _collapsedView.ViewLoadFailed += OnViewLoadFailed;
+        _hoverView.ViewLoadFailed += OnViewLoadFailed;
+        _expandedView.ViewLoadFailed += OnViewLoadFailed;
+        _notificationView.ViewLoadFailed += OnViewLoadFailed;
+        PointerMoved += OnParallaxPointerMoved;
+        PointerExited += OnParallaxPointerExited;
 
         ApplyTheme(Theme);
         ApplyState(State);
@@ -107,17 +119,26 @@ public sealed partial class IslandShell : UserControl
         IslandLayoutOptions layoutOptions,
         IslandVisualState initialState)
     {
-        _animationCoordinator?.Dispose();
-        _layoutOptions = layoutOptions;
-        _animationCoordinator = new IslandAnimationCoordinator(
-            LayoutRoot,
-            Surface,
-            _views,
-            ApplyMetrics,
-            animationPreferences,
-            options,
-            layoutOptions);
-        _animationCoordinator.ApplyInitialState(initialState);
+        _baseLayoutOptions = layoutOptions;
+        _layoutOptions = CreateEffectiveLayout(layoutOptions, ModuleDisplay);
+        _motionOptions = options;
+        _animationPreferences = animationPreferences;
+        if (_animationCoordinator is null)
+        {
+            _animationCoordinator = new IslandAnimationCoordinator(
+                LayoutRoot,
+                Surface,
+                _views,
+                ApplyMetrics,
+                animationPreferences,
+                options,
+                _layoutOptions);
+            _animationCoordinator.ApplyInitialState(initialState);
+        }
+        else
+        {
+            _animationCoordinator.UpdateOptions(options, _layoutOptions);
+        }
     }
 
     public ModuleDisplayState? ModuleDisplay
@@ -146,6 +167,8 @@ public sealed partial class IslandShell : UserControl
 
     public event EventHandler<ModuleSelectedEventArgs>? ModuleSelected;
 
+    public event EventHandler<ModuleViewLoadFailedEventArgs>? ModuleViewLoadFailed;
+
     public void ConfigureModuleViews(IModuleViewRegistry viewRegistry)
     {
         ArgumentNullException.ThrowIfNull(viewRegistry);
@@ -165,8 +188,24 @@ public sealed partial class IslandShell : UserControl
 
     public void RefreshLocalizedContent() => _expandedView.RefreshLocalizedContent();
 
-    public void ApplyTransition(IslandTransition transition) =>
-        _animationCoordinator?.RequestTransition(transition);
+    public void ApplyTransition(IslandTransition transition)
+    {
+        _activeState = transition.CurrentState;
+        UpdateHostActivation(transition.CurrentState);
+        if (!transition.Changed && transition.Trigger == IslandTrigger.ModuleEventReceived)
+        {
+            _animationCoordinator?.RequestContentRefresh(_views[transition.CurrentState]);
+        }
+        else
+        {
+            _animationCoordinator?.RequestTransition(transition);
+        }
+
+        AnimateBackdropEmphasis();
+    }
+
+    public void RefreshActiveContent() =>
+        _animationCoordinator?.RequestContentRefresh(_expandedView);
 
     public void DisposeAnimations()
     {
@@ -179,8 +218,22 @@ public sealed partial class IslandShell : UserControl
         ArgumentNullException.ThrowIfNull(appearance);
         var background = ColorParser.ParseRgb(appearance.BackgroundColor);
         var accent = ColorParser.ParseRgb(appearance.AccentColor);
-        Surface.Background = CreateSurfaceBrush(appearance.Theme, background, appearance.Opacity);
-        Surface.BorderBrush = appearance.Theme == ThemeStyle.BlurredGlass
+        RequestedTheme = appearance.Theme is ThemeStyle.OledBlack || appearance.Theme.UsesColorlessGlass()
+            ? ElementTheme.Dark
+            : appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.CustomSolidColor
+            ? SolidThemeContrastPaletteFactory.Create(background, accent).Primary.R > 127
+                ? ElementTheme.Dark
+                : ElementTheme.Light
+            : ElementTheme.Default;
+        if (appearance.Theme == ThemeStyle.AdaptiveFluent)
+        {
+            Surface.ClearValue(Border.BackgroundProperty);
+            Surface.ClearValue(Border.BorderBrushProperty);
+        }
+        else
+        {
+            Surface.Background = CreateSurfaceBrush(appearance.Theme, background, appearance.Opacity);
+            Surface.BorderBrush = appearance.Theme.UsesColorlessGlass()
             ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
             : appearance.Theme.IsWindows11Style()
             ? new SolidColorBrush(Color.FromArgb(
@@ -193,6 +246,7 @@ public sealed partial class IslandShell : UserControl
                 37,
                 37,
                 37));
+        }
         Surface.BorderThickness = new Thickness(1 + appearance.ShadowIntensity);
         Surface.Shadow = appearance.ShadowIntensity > 0.01 ? new ThemeShadow() : null;
         Surface.Translation = appearance.ShadowIntensity > 0.01
@@ -206,8 +260,9 @@ public sealed partial class IslandShell : UserControl
         {
             ThemeStyle.Windows11Mica => new MicaBackdrop { Kind = MicaKind.Base },
             ThemeStyle.Windows11MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
+            ThemeStyle.AdaptiveFluent => new MicaBackdrop { Kind = MicaKind.Base },
             ThemeStyle.Windows11Acrylic => new DesktopAcrylicBackdrop(),
-            ThemeStyle.Windows11AcrylicThin or ThemeStyle.BlurredGlass =>
+            ThemeStyle.Windows11AcrylicThin or ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass =>
                 new DesktopAcrylicBackdrop(),
             _ => null
         };
@@ -236,14 +291,17 @@ public sealed partial class IslandShell : UserControl
         var theme = Enum.TryParse<ThemeStyle>(themeName, out var parsed)
             ? parsed
             : ThemeStyle.AppleLike;
-        var fallback = theme == ThemeStyle.BlurredGlass
+        RequestedTheme = theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack || theme.UsesColorlessGlass()
+            ? ElementTheme.Dark
+            : ElementTheme.Default;
+        var fallback = theme.UsesColorlessGlass()
             ? Color.FromArgb(0xFF, 0x14, 0x14, 0x14)
             : theme.IsWindows11Style()
             ? Color.FromArgb(0xFF, 0x20, 0x21, 0x24)
             : Color.FromArgb(0xFF, 0x05, 0x05, 0x06);
         Surface.Background = CreateSurfaceBrush(theme, fallback, 1);
 
-        Surface.BorderBrush = theme == ThemeStyle.BlurredGlass
+        Surface.BorderBrush = theme.UsesColorlessGlass()
             ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
             : new SolidColorBrush(Color.FromArgb(255, 37, 37, 37));
         Surface.BorderThickness = new Thickness(1);
@@ -258,7 +316,8 @@ public sealed partial class IslandShell : UserControl
             ThemeStyle.Windows11MicaAlt => new SolidColorBrush(WithOpacity(color, 0.86 * normalizedOpacity)),
             ThemeStyle.Windows11Acrylic => CreateAcrylic(color, 0.72, normalizedOpacity),
             ThemeStyle.Windows11AcrylicThin => CreateAcrylic(color, 0.46, normalizedOpacity),
-            ThemeStyle.BlurredGlass => CreateGlassOverlay(normalizedOpacity),
+            ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass => CreateGlassOverlay(normalizedOpacity),
+            ThemeStyle.OledBlack => new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)),
             _ => new SolidColorBrush(WithOpacity(color, normalizedOpacity))
         };
     }
@@ -290,12 +349,20 @@ public sealed partial class IslandShell : UserControl
             state = IslandVisualState.Collapsed;
         }
 
+        _activeState = state;
         ApplyMetrics(IslandAnimationProfile.ForState(state, _layoutOptions));
 
         _collapsedView.Visibility = state == IslandVisualState.Collapsed ? Visibility.Visible : Visibility.Collapsed;
         _hoverView.Visibility = state == IslandVisualState.Hover ? Visibility.Visible : Visibility.Collapsed;
         _expandedView.Visibility = state == IslandVisualState.ExpandedModule ? Visibility.Visible : Visibility.Collapsed;
         _notificationView.Visibility = state == IslandVisualState.ModuleNotification ? Visibility.Visible : Visibility.Collapsed;
+        UpdateHostActivation(state);
+    }
+
+    private void UpdateHostActivation(IslandVisualState state)
+    {
+        _collapsedView.SetHostActive(state == IslandVisualState.Collapsed);
+        _hoverView.SetHostActive(state == IslandVisualState.Hover);
         _expandedView.SetHostActive(state == IslandVisualState.ExpandedModule);
     }
 
@@ -311,6 +378,7 @@ public sealed partial class IslandShell : UserControl
         shell._hoverView.DisplayState = display;
         shell._expandedView.DisplayState = display;
         shell._notificationView.DisplayState = display;
+        shell.RefreshEffectiveLayout();
     }
 
     private static void OnAvailableModulesChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args) =>
@@ -332,12 +400,100 @@ public sealed partial class IslandShell : UserControl
     private void OnModuleSelected(object? sender, ModuleSelectedEventArgs args) =>
         ModuleSelected?.Invoke(this, args);
 
+    private void OnViewLoadFailed(object? sender, ModuleViewLoadFailedEventArgs args) =>
+        ModuleViewLoadFailed?.Invoke(this, args);
+
+    private void OnContentMotionRequested(object? sender, ContentMotionRequestedEventArgs args) =>
+        RequestContentMotion(args);
+
+    private void RequestContentMotion(ContentMotionRequestedEventArgs args)
+    {
+        _animationCoordinator?.RequestContentTransition(args.Target, args.Direction);
+        AnimateBackdropEmphasis();
+    }
+
+    private void AnimateBackdropEmphasis()
+    {
+        if (!_motionOptions.EnableTransientBlur ||
+            _animationPreferences?.AnimationsEnabled != true ||
+            _motionOptions.Preset == MotionPreset.Off)
+        {
+            return;
+        }
+
+        var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(BackdropSurface);
+        visual.StopAnimation(nameof(visual.Opacity));
+        var animation = visual.Compositor.CreateScalarKeyFrameAnimation();
+        animation.Duration = _motionOptions.ContentRefreshDuration;
+        animation.InsertKeyFrame(0, 0.78f);
+        animation.InsertKeyFrame(1, 1f);
+        visual.StartAnimation(nameof(visual.Opacity), animation);
+    }
+
+    private void OnParallaxPointerMoved(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs args)
+    {
+        if (!_motionOptions.EnableParallax ||
+            State != nameof(IslandVisualState.ExpandedModule))
+        {
+            ResetParallax();
+            return;
+        }
+
+        var point = args.GetCurrentPoint(LayoutRoot).Position;
+        var width = Math.Max(LayoutRoot.ActualWidth, 1);
+        var height = Math.Max(LayoutRoot.ActualHeight, 1);
+        var limit = 3f * (float)_motionOptions.Intensity;
+        Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.SetIsTranslationEnabled(_expandedView, true);
+        var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(_expandedView);
+        visual.Properties.InsertVector3("Translation", new Vector3(
+            ((float)(point.X / width) - 0.5f) * limit * 2,
+            ((float)(point.Y / height) - 0.5f) * limit * 2,
+            0));
+    }
+
+    private void OnParallaxPointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs args) =>
+        ResetParallax();
+
+    private void ResetParallax()
+    {
+        var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(_expandedView);
+        visual.Properties.InsertVector3("Translation", Vector3.Zero);
+    }
+
     private void ApplyMetrics(IslandVisualMetrics metrics)
     {
         LayoutRoot.Width = metrics.Width;
         LayoutRoot.Height = metrics.Height;
+        var rootVisual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(LayoutRoot);
+        var clipGeometry = rootVisual.Compositor.CreateRoundedRectangleGeometry();
+        clipGeometry.Size = new Vector2((float)metrics.Width, (float)metrics.Height);
+        clipGeometry.CornerRadius = new Vector2((float)metrics.CornerRadius);
+        rootVisual.Clip = rootVisual.Compositor.CreateGeometricClip(clipGeometry);
         BackdropSurface.CornerRadius = new CornerRadius(metrics.CornerRadius);
         Surface.CornerRadius = new CornerRadius(metrics.CornerRadius);
         VisualSizeChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void RefreshEffectiveLayout()
+    {
+        var effective = CreateEffectiveLayout(_baseLayoutOptions, ModuleDisplay);
+        if (effective == _layoutOptions)
+        {
+            return;
+        }
+
+        _layoutOptions = effective;
+        _animationCoordinator?.RequestLayoutTransition(effective);
+    }
+
+    private static IslandLayoutOptions CreateEffectiveLayout(
+        IslandLayoutOptions baseLayout,
+        ModuleDisplayState? display)
+    {
+        var minimum = display?.Descriptor.MinimumExpandedHeight ?? 300;
+        return baseLayout with
+        {
+            ExpandedHeight = Math.Clamp(Math.Max(baseLayout.ExpandedHeight, minimum), 360, 420)
+        };
     }
 }

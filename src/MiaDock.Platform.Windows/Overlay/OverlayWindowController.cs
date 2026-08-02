@@ -26,6 +26,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     private uint _lastDpi;
     private bool _disposed;
     private bool _subclassInstalled;
+    private bool _inputActivationEnabled;
     private nint _mouseHook;
     private int _outsideClickPending;
     private OverlayPosition _position;
@@ -174,6 +175,18 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         }
     }
 
+    public void SetInputActivationEnabled(bool enabled)
+    {
+        ThrowIfDisposed();
+        if (_inputActivationEnabled == enabled)
+        {
+            return;
+        }
+
+        _inputActivationEnabled = enabled;
+        ApplyExtendedStyles();
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -218,7 +231,9 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             throw new Win32Exception(error, "Unable to read overlay window styles.");
         }
 
-        var desiredStyles = WindowStylePolicy.ApplyOverlayStyles(currentStyles.ToInt64());
+        var desiredStyles = WindowStylePolicy.ApplyOverlayStyles(
+            currentStyles.ToInt64(),
+            _inputActivationEnabled);
         Marshal.SetLastPInvokeError(0);
         var previousStyles = NativeMethods.SetWindowLongPtr(
             WindowHandle,
@@ -461,7 +476,10 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     {
         if (message == NativeConstants.WmMouseActivate)
         {
-            return NativeConstants.MaNoActivate;
+            if (!_inputActivationEnabled)
+            {
+                return NativeConstants.MaNoActivate;
+            }
         }
 
         if (message == NativeConstants.WmNcHitTest &&

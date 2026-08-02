@@ -6,17 +6,26 @@ public static class ThemeStyleExtensions
         ThemeStyle.Windows11Mica or
         ThemeStyle.Windows11MicaAlt or
         ThemeStyle.Windows11Acrylic or
-        ThemeStyle.Windows11AcrylicThin;
+        ThemeStyle.Windows11AcrylicThin or
+        ThemeStyle.AdaptiveFluent;
 
     public static bool UsesMicaBackdrop(this ThemeStyle style) => style is
         ThemeStyle.Windows11Mica or
-        ThemeStyle.Windows11MicaAlt;
+        ThemeStyle.Windows11MicaAlt or
+        ThemeStyle.AdaptiveFluent;
 
     public static bool UsesAcrylicBackdrop(this ThemeStyle style) => style is
         ThemeStyle.Windows11Acrylic or
         ThemeStyle.Windows11AcrylicThin or
-        ThemeStyle.BlurredGlass;
+        ThemeStyle.BlurredGlass or
+        ThemeStyle.NeutralFrostedGlass;
 
     public static bool UsesSystemBackdrop(this ThemeStyle style) =>
         style.UsesMicaBackdrop() || style.UsesAcrylicBackdrop();
+
+    public static bool UsesColorlessGlass(this ThemeStyle style) => style is
+        ThemeStyle.BlurredGlass or
+        ThemeStyle.NeutralFrostedGlass;
+
+    public static ThemeDescriptor Descriptor(this ThemeStyle style) => ThemeCatalog.Get(style);
 }

@@ -35,12 +35,13 @@ public sealed class OnboardingWindowTests
     }
 
     [TestMethod]
-    public void ModulesStep_DoesNotRequestPermissionsInBulk()
+    public void ModulesStep_ExplainsThatSelectedServicesRequireConsent()
     {
         var document = Load("Onboarding", "ModulesStepView.xaml");
         var text = document.ToString();
 
-        StringAssert.Contains(text, "hiçbir Windows izni istemez");
+        StringAssert.Contains(text, "kullanılan servisler açıklanır");
+        StringAssert.Contains(text, "onayınız istenir");
         StringAssert.Contains(text, "CanSelectDuringOnboarding");
     }
 

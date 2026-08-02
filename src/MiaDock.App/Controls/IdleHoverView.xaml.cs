@@ -22,7 +22,7 @@ public sealed partial class IdleHoverView : UserControl
     private readonly ISettingsService? _settings;
     private DispatcherQueueTimer? _clockTimer;
 
-    public IdleHoverView() : this(null, null, null, null)
+    public IdleHoverView() : this(null, null, null, null, null)
     {
     }
 
@@ -30,7 +30,8 @@ public sealed partial class IdleHoverView : UserControl
         MusicModuleViewModel? music,
         IdleDashboardViewModel? idleDashboard,
         ILocalizationService? localization = null,
-        ISettingsService? settings = null)
+        ISettingsService? settings = null,
+        FocusDockViewModel? focus = null)
     {
         _music = music;
         _dashboard = idleDashboard;
@@ -39,6 +40,10 @@ public sealed partial class IdleHoverView : UserControl
         InitializeComponent();
         LayoutRoot.DataContext = idleDashboard;
         MusicRow.DataContext = music;
+        if (focus is not null)
+        {
+            FocusStatus.Configure(focus);
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs args)

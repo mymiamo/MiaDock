@@ -13,7 +13,13 @@ public static class WindowStylePolicy
     public const long MaximizeBox = NativeConstants.WsMaximizeBox;
 
     public static long ApplyOverlayStyles(long currentStyles) =>
-        (currentStyles | ToolWindow | NoActivate) & ~(AppWindow | Layered);
+        ApplyOverlayStyles(currentStyles, allowActivation: false);
+
+    public static long ApplyOverlayStyles(long currentStyles, bool allowActivation)
+    {
+        var styles = (currentStyles | ToolWindow) & ~(AppWindow | Layered);
+        return allowActivation ? styles & ~NoActivate : styles | NoActivate;
+    }
 
     public static long ApplyOverlayWindowStyles(long currentStyles) =>
         currentStyles & ~(Caption | ThickFrame | SystemMenu | MinimizeBox | MaximizeBox);

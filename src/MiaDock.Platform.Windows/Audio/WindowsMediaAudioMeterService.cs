@@ -2,12 +2,14 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.Services;
+using MiaDock.Core.Logging;
 
 namespace MiaDock.Platform.Windows.Audio;
 
 public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 {
     private readonly IMediaSessionService _media;
+    private readonly ILogService? _log;
     private readonly object _gate = new();
     private readonly AutoResetEvent _wake = new(false);
     private readonly AudioLevelSmoother _smoother = new();
@@ -24,9 +26,10 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     private readonly List<float[]> _channelBuffers = [];
     private MediaAudioBindingIdentity _bindingIdentity;
 
-    public WindowsMediaAudioMeterService(IMediaSessionService media)
+    public WindowsMediaAudioMeterService(IMediaSessionService media, ILogService? log = null)
     {
         _media = media;
+        _log = log;
         _bindingIdentity = MediaAudioBindingIdentity.From(media.Current);
         _media.SnapshotChanged += OnMediaSnapshotChanged;
         _media.StateChanged += OnMediaStateChanged;
@@ -108,16 +111,30 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 }
             }
         }
-        catch (Exception) when (!_disposed)
+        catch (Exception exception)
         {
-            Publish(_smoother.Reset());
+            if (!_disposed)
+            {
+                Publish(_smoother.Reset());
+                _log?.Write(
+                    TechnicalLogLevel.Warning,
+                    TechnicalEventIds.MediaAudioMeterFailed,
+                    "MediaAudio",
+                    "Media audio meter worker stopped safely.",
+                    exception);
+            }
         }
         finally
         {
-            CleanupAudio();
+            TryCleanupAudio();
             if (comInitialized)
             {
                 CoreAudioNative.CoUninitialize();
+            }
+
+            lock (_gate)
+            {
+                _worker = null;
             }
         }
     }
@@ -159,7 +176,6 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                         var processName = ResolveProcessName(processId);
                         if (!MediaAudioSessionMatcher.IsMatch(sourceId, processName))
                         {
-                            ReleaseComObject(control);
                             control = null;
                             continue;
                         }
@@ -176,13 +192,13 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     }
                     catch (Exception) when (control is not null)
                     {
-                        ReleaseComObject(control);
+                        control = null;
                     }
                 }
             }
             finally
             {
-                ReleaseComObject(sessions);
+                sessions = null!;
             }
         }
         catch (Exception exception) when (exception is COMException or InvalidCastException)
@@ -270,7 +286,8 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     succeeded = true;
                 }
             }
-            catch (COMException)
+            catch (Exception exception) when (
+                exception is COMException or InvalidComObjectException)
             {
                 _needsRebind = true;
             }
@@ -294,13 +311,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     {
         _meters.Clear();
         _channelBuffers.Clear();
-        foreach (var control in _meterControls)
-        {
-            ReleaseComObject(control);
-        }
         _meterControls.Clear();
-        ReleaseComObject(_sessionManager);
-        ReleaseComObject(_renderDevice);
         _sessionManager = null;
         _renderDevice = null;
     }
@@ -310,12 +321,38 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
         CleanupBinding();
         if (_deviceEnumerator is not null && _deviceNotification is not null)
         {
-            _deviceEnumerator.UnregisterEndpointNotificationCallback(_deviceNotification);
+            try
+            {
+                _deviceEnumerator.UnregisterEndpointNotificationCallback(_deviceNotification);
+            }
+            catch (Exception exception) when (
+                exception is COMException or InvalidComObjectException)
+            {
+                // The endpoint can disappear while the worker is shutting down.
+            }
         }
 
-        ReleaseComObject(_deviceEnumerator);
         _deviceEnumerator = null;
         _deviceNotification = null;
+    }
+
+    private void TryCleanupAudio()
+    {
+        try
+        {
+            CleanupAudio();
+        }
+        catch (Exception exception) when (
+            exception is COMException or InvalidComObjectException)
+        {
+            _deviceEnumerator = null;
+            _deviceNotification = null;
+            _sessionManager = null;
+            _renderDevice = null;
+            _meters.Clear();
+            _meterControls.Clear();
+            _channelBuffers.Clear();
+        }
     }
 
     private static string ResolveProcessName(uint processId)
@@ -328,20 +365,6 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
         catch (Exception)
         {
             return string.Empty;
-        }
-    }
-
-    private static void ReleaseComObject(object? value)
-    {
-        if (value is not null && Marshal.IsComObject(value))
-        {
-            try
-            {
-                Marshal.FinalReleaseComObject(value);
-            }
-            catch (InvalidComObjectException)
-            {
-            }
         }
     }
 

@@ -9,8 +9,9 @@
       <ColumnDefinition Width="*" />
       <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
-    <TextBlock VerticalAlignment="Center"
-               Style="{StaticResource IslandCaptionTextStyle}"
+    <TextBlock x:Name="PositionTextBlock"
+               VerticalAlignment="Center"
+               Style="{StaticResource DockCaptionTextStyle}"
                Text="{Binding PositionText}" />
     <Slider x:Name="TimelineSlider"
             Grid.Column="1"
@@ -20,9 +21,10 @@
             Value="{Binding ProgressPercent, Mode=OneWay}"
             IsEnabled="{Binding Current.Capabilities.CanSeek}"
             AutomationProperties.Name="Parça konumu" />
-    <TextBlock Grid.Column="2"
+    <TextBlock x:Name="RemainingTextBlock"
+               Grid.Column="2"
                VerticalAlignment="Center"
-               Style="{StaticResource IslandCaptionTextStyle}"
+               Style="{StaticResource DockCaptionTextStyle}"
                Text="{Binding RemainingText}" />
   </Grid>
 </UserControl>

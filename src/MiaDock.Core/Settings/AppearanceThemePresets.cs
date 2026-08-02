@@ -57,6 +57,27 @@ public static class AppearanceThemePresets
                 Opacity = 1,
                 ShadowIntensity = 0.2
             },
+            ThemeStyle.OledBlack => next with
+            {
+                BackgroundColor = "#000000",
+                AccentColor = "#FFFFFF",
+                Opacity = 1,
+                ShadowIntensity = 0
+            },
+            ThemeStyle.NeutralFrostedGlass => next with
+            {
+                BackgroundColor = "#101010",
+                AccentColor = "#FFFFFF",
+                Opacity = 0.78,
+                ShadowIntensity = 0.18
+            },
+            ThemeStyle.AdaptiveFluent => next with
+            {
+                BackgroundColor = "#202124",
+                AccentColor = "#60CDFF",
+                Opacity = 0.94,
+                ShadowIntensity = 0.42
+            },
             _ => next
         };
     }
@@ -76,6 +97,12 @@ public static class AppearanceThemePresets
                 PaletteMatches(appearance, "#16181D", "#8AB4F8", 0.92, 0.35),
             ThemeStyle.BlurredGlass =>
                 PaletteMatches(appearance, "#141414", "#FFFFFF", 1, 0.2),
+            ThemeStyle.OledBlack =>
+                PaletteMatches(appearance, "#000000", "#FFFFFF", 1, 0),
+            ThemeStyle.NeutralFrostedGlass =>
+                PaletteMatches(appearance, "#101010", "#FFFFFF", 0.78, 0.18),
+            ThemeStyle.AdaptiveFluent =>
+                PaletteMatches(appearance, "#202124", "#60CDFF", 0.94, 0.42),
             _ => false
         };
 

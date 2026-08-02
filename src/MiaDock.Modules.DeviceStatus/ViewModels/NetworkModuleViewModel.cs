@@ -29,6 +29,7 @@ public sealed partial class NetworkModuleViewModel : ObservableObject, IDisposab
     [NotifyPropertyChangedFor(nameof(DownloadText))]
     [NotifyPropertyChangedFor(nameof(UploadText))]
     [NotifyPropertyChangedFor(nameof(NetworkGlyph))]
+    [NotifyPropertyChangedFor(nameof(ThroughputStatusText))]
     private NetworkStatusSnapshot _snapshot;
 
     public string ConnectivityText => Snapshot.Connectivity switch
@@ -56,6 +57,14 @@ public sealed partial class NetworkModuleViewModel : ObservableObject, IDisposab
 
     public string UploadText => FormatRate(Snapshot.UploadBytesPerSecond);
 
+    public string ThroughputStatusText => Snapshot.ThroughputState switch
+    {
+        NetworkThroughputState.Sampling => Text("Network.Throughput.Sampling", "Ölçülüyor…"),
+        NetworkThroughputState.Ready => Text("Network.Throughput.Ready", "Canlı hız"),
+        NetworkThroughputState.Unavailable => Text("Network.Throughput.Unavailable", "Hız kullanılamıyor"),
+        _ => Text("Network.Throughput.Inactive", "Görünüm açıldığında ölçülür")
+    };
+
     public string NetworkGlyph => Snapshot.ConnectionKind switch
     {
         NetworkConnectionKind.WiFi => "\uE701",
@@ -69,6 +78,16 @@ public sealed partial class NetworkModuleViewModel : ObservableObject, IDisposab
 
     private string FormatRate(double? bytesPerSecond)
     {
+        if (Snapshot.ThroughputState == NetworkThroughputState.Sampling)
+        {
+            return Text("Network.Throughput.Sampling", "Ölçülüyor…");
+        }
+
+        if (Snapshot.ThroughputState == NetworkThroughputState.Unavailable)
+        {
+            return Text("Network.Throughput.Unavailable", "Hız kullanılamıyor");
+        }
+
         if (bytesPerSecond is null)
         {
             return "—";
@@ -87,6 +106,7 @@ public sealed partial class NetworkModuleViewModel : ObservableObject, IDisposab
         OnPropertyChanged(nameof(CostText));
         OnPropertyChanged(nameof(DownloadText));
         OnPropertyChanged(nameof(UploadText));
+        OnPropertyChanged(nameof(ThroughputStatusText));
     }
 
     private string Text(string key, string fallback, params object?[] arguments)

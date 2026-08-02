@@ -40,7 +40,9 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
 
     public string BatteryGlyph => _battery.IsCharging ? "\uE83E" : "\uE850";
 
-    public string BatteryText => $"{_battery.ChargePercent}%";
+    public string BatteryText => _battery.IsBatteryPresent
+        ? $"{_battery.ChargePercent}%"
+        : Text("Battery.NotPresent");
 
     public Visibility BatteryVisibility => _battery.IsBatteryPresent
         ? Visibility.Visible

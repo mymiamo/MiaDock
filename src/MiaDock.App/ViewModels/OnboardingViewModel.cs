@@ -357,11 +357,14 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
         _themes =
         [
             new(ThemeStyle.AppleLike, Text("Onboarding.Option.Theme.Apple")),
+            new(ThemeStyle.OledBlack, "OLED Black"),
             new(ThemeStyle.Windows11Mica, "Windows 11 Mica"),
             new(ThemeStyle.Windows11MicaAlt, "Windows 11 Mica Alt"),
             new(ThemeStyle.Windows11Acrylic, "Windows 11 Acrylic"),
             new(ThemeStyle.Windows11AcrylicThin, "Windows 11 Acrylic Thin"),
             new(ThemeStyle.BlurredGlass, Text("Onboarding.Option.Theme.Glass")),
+            new(ThemeStyle.NeutralFrostedGlass, Text("Theme.NeutralFrostedGlass")),
+            new(ThemeStyle.AdaptiveFluent, "Adaptive Fluent"),
             new(ThemeStyle.CustomSolidColor, Text("Onboarding.Option.Theme.Solid"))
         ];
         _monitorModes =
@@ -492,6 +495,7 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
             ? selected
             : settings.Modules.TryGetValue(id, out var envelope) && envelope.IsEnabled;
         yield return new("media", Text("Onboarding.Module.Media.Title"), Text("Onboarding.Module.Media.Description"), "\uE8D6", Enabled("media"));
+        yield return new("volume", Text("Onboarding.Module.Volume.Title"), Text("Onboarding.Module.Volume.Description"), "\uE995", Enabled("volume"));
         yield return new("system-activity", Text("Onboarding.Module.System.Title"), Text("Onboarding.Module.System.Description"), "\uE767", Enabled("system-activity"));
         yield return new("battery", Text("Onboarding.Module.Battery.Title"), Text("Onboarding.Module.Battery.Description"), "\uE850", Enabled("battery"));
         yield return new("network", Text("Onboarding.Module.Network.Title"), Text("Onboarding.Module.Network.Description"), "\uE968", Enabled("network"));

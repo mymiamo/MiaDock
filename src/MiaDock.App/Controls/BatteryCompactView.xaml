@@ -1,12 +1,14 @@
 <UserControl x:Class="MiaDock.App.Controls.BatteryCompactView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid Padding="14,0" ColumnSpacing="10">
+  <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding StatusText}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-    <FontIcon Glyph="{Binding BatteryGlyph}" FontSize="15" Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <FontIcon Glyph="{Binding BatteryGlyph}" Style="{StaticResource DockModuleIconStyle}" />
     <TextBlock Grid.Column="1" Text="{Binding StatusText}" VerticalAlignment="Center" MaxLines="1" TextTrimming="CharacterEllipsis"
-               Style="{StaticResource IslandBodyTextStyle}" />
-    <TextBlock Grid.Column="2" Text="{Binding ChargeText}" VerticalAlignment="Center" FontWeight="SemiBold"
-               Foreground="{ThemeResource IslandTextPrimaryBrush}" />
+               Style="{StaticResource DockBodyTextStyle}"
+               ToolTipService.ToolTip="{Binding StatusText}" />
+    <TextBlock Grid.Column="2" Text="{Binding ChargeText}" VerticalAlignment="Center"
+               Style="{StaticResource DockStatusTextStyle}" />
   </Grid>
 </UserControl>

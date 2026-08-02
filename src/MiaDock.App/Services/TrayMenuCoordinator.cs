@@ -1,6 +1,7 @@
 using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
 using MiaDock.Core.Settings;
+using MiaDock.Core.Focus;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.Services;
 using MiaDock.Platform.Windows.Display;
@@ -25,6 +26,7 @@ public sealed class TrayMenuCoordinator : IDisposable
     private const int PrimaryMonitorCommand = 500;
     private const int ActiveMonitorCommand = 501;
     private const int NotificationsCommand = 600;
+    private const int DeactivateFocusCommand = 700;
     private const int ExitCommand = 900;
     private const int SourceCommandBase = 2000;
     private const int DisplayCommandBase = 3000;
@@ -40,6 +42,7 @@ public sealed class TrayMenuCoordinator : IDisposable
     private readonly IApplicationLifetimeService _lifetime;
     private readonly ILogService _log;
     private readonly ILocalizationService _localization;
+    private readonly IFocusService _focus;
     private readonly Dictionary<int, string> _sourceCommands = new();
     private readonly Dictionary<int, string> _displayCommands = new();
     private StartupTaskStatus _startupStatus = StartupTaskStatus.Unavailable;
@@ -57,7 +60,8 @@ public sealed class TrayMenuCoordinator : IDisposable
         IStartupTaskService startup,
         IApplicationLifetimeService lifetime,
         ILogService log,
-        ILocalizationService localization)
+        ILocalizationService localization,
+        IFocusService focus)
     {
         _tray = tray;
         _overlay = overlay;
@@ -70,6 +74,7 @@ public sealed class TrayMenuCoordinator : IDisposable
         _lifetime = lifetime;
         _log = log;
         _localization = localization;
+        _focus = focus;
         _localization.LanguageChanged += OnLanguageChanged;
     }
 
@@ -89,9 +94,10 @@ public sealed class TrayMenuCoordinator : IDisposable
         _media.SnapshotChanged += OnMediaSnapshotChanged;
         _media.SourcesChanged += OnMediaSourcesChanged;
         _displays.DisplaysChanged += OnDisplaysChanged;
+        _focus.FocusChanged += OnFocusChanged;
         _startupStatus = await _startup.GetStatusAsync(cancellationToken);
         _tray.SetMenu(BuildMenu());
-        _tray.SetVisible(_settings.Current.Tray.ShowIcon);
+        UpdateTrayVisibility();
         _started = true;
     }
 
@@ -109,6 +115,7 @@ public sealed class TrayMenuCoordinator : IDisposable
         _media.SnapshotChanged -= OnMediaSnapshotChanged;
         _media.SourcesChanged -= OnMediaSourcesChanged;
         _displays.DisplaysChanged -= OnDisplaysChanged;
+        _focus.FocusChanged -= OnFocusChanged;
         _localization.LanguageChanged -= OnLanguageChanged;
         _tray.Dispose();
         _disposed = true;
@@ -122,9 +129,9 @@ public sealed class TrayMenuCoordinator : IDisposable
         {
             mediaControls.AddRange(
             [
-                new(PreviousCommand, Text("Tray.Previous"), _modules.CanExecuteCommand(MediaModuleId, "previous")),
-                new(PlayPauseCommand, PlaybackLabel(), _modules.CanExecuteCommand(MediaModuleId, "play-pause")),
-                new(NextCommand, Text("Tray.Next"), _modules.CanExecuteCommand(MediaModuleId, "next")),
+                new(PreviousCommand, Text("Tray.Previous"), _modules.CanExecuteCommand(MediaModuleId, "previous"), IconGlyph: "\uE892"),
+                new(PlayPauseCommand, PlaybackLabel(), _modules.CanExecuteCommand(MediaModuleId, "play-pause"), IconGlyph: "\uE768"),
+                new(NextCommand, Text("Tray.Next"), _modules.CanExecuteCommand(MediaModuleId, "next"), IconGlyph: "\uE893"),
                 TrayMenuItem.Separator
             ]);
         }
@@ -166,32 +173,44 @@ public sealed class TrayMenuCoordinator : IDisposable
                            settings.Monitor.FixedMonitorId == display.Id));
         }
 
-        var items = new List<TrayMenuItem>
+        var items = new List<TrayMenuItem>();
+        if (_focus.Current is { IsActive: true, ActiveProfile: { } activeProfile })
         {
-            new(ToggleDockCommand, _overlay.IsDockVisible ? Text("Dock.Hide") : Text("Dock.Show"))
-        };
+            items.Add(new TrayMenuItem(
+                DeactivateFocusCommand,
+                Text("Tray.FocusTurnOff", FocusProfileName(activeProfile)),
+                IconGlyph: "\uE708"));
+            items.Add(TrayMenuItem.Separator);
+        }
+
+        items.Add(new TrayMenuItem(
+            ToggleDockCommand,
+            _overlay.IsDockVisible ? Text("Dock.Hide") : Text("Dock.Show"),
+            IconGlyph: "\uE7F4"));
         items.AddRange(mediaControls);
-        items.Add(new TrayMenuItem(SettingsCommand, Text("Dock.Settings")));
-        items.Add(new TrayMenuItem(0, Text("Tray.DefaultMedia"), Children: sourceItems));
+        items.Add(new TrayMenuItem(SettingsCommand, Text("Dock.Settings"), IconGlyph: "\uE713"));
+        items.Add(new TrayMenuItem(0, Text("Tray.DefaultMedia"), Children: sourceItems, IconGlyph: "\uE8D6"));
         items.Add(new TrayMenuItem(
             StartupCommand,
             Text("Tray.StartWithWindows"),
             IsEnabled: _startupStatus != StartupTaskStatus.Unavailable,
-            IsChecked: _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy));
+            IsChecked: _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy,
+            IconGlyph: "\uE7E8"));
         items.Add(new TrayMenuItem(0, Text("Tray.FullscreenBehavior"), Children:
         [
             new(FullscreenEnabledCommand, Text("Tray.Fullscreen.Show"), IsChecked: settings.Fullscreen.Enabled),
             TrayMenuItem.Separator,
             new(FullscreenMinimalCommand, Text("Tray.Fullscreen.Minimal"), IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal),
             new(FullscreenControlledCommand, Text("Tray.Fullscreen.Controls"), IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls)
-        ]));
-        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems));
+        ], IconGlyph: "\uE740"));
+        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems, IconGlyph: "\uE7F4"));
         items.Add(new TrayMenuItem(
             NotificationsCommand,
             Text("Tray.TemporaryNotifications"),
-            IsChecked: settings.Tray.EnableTemporaryNotifications));
+            IsChecked: settings.Tray.EnableTemporaryNotifications,
+            IconGlyph: "\uEA8F"));
         items.Add(TrayMenuItem.Separator);
-        items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit")));
+        items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit"), IconGlyph: "\uE8BB"));
         return items;
     }
 
@@ -313,6 +332,12 @@ public sealed class TrayMenuCoordinator : IDisposable
                     }
                 });
                 break;
+            case DeactivateFocusCommand:
+                if (_focus.Deactivate())
+                {
+                    _overlay.ShowDock();
+                }
+                break;
             case ExitCommand:
                 _lifetime.RequestExit();
                 return;
@@ -340,11 +365,7 @@ public sealed class TrayMenuCoordinator : IDisposable
 
     private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
     {
-        if (_tray.IsVisible != args.Current.Tray.ShowIcon)
-        {
-            _tray.SetVisible(args.Current.Tray.ShowIcon);
-        }
-
+        UpdateTrayVisibility();
         RefreshMenu();
     }
 
@@ -356,7 +377,39 @@ public sealed class TrayMenuCoordinator : IDisposable
 
     private void OnDisplaysChanged(object? sender, IReadOnlyList<DisplayDescriptor> displays) => RefreshMenu();
 
+    private void OnFocusChanged(object? sender, FocusChangedEventArgs args)
+    {
+        UpdateTrayVisibility();
+        RefreshMenu();
+    }
+
     private void OnLanguageChanged(object? sender, EventArgs args) => RefreshMenu();
 
-    private string Text(string key) => _localization.Get(key);
+    private void UpdateTrayVisibility()
+    {
+        var settings = _settings.Current;
+        var visible = settings.Tray.ShowIcon ||
+                      FocusAccessPolicy.RequiresTrayEscape(
+                          _focus.Current,
+                          settings.General.VisibilityMode);
+        if (_tray.IsVisible != visible)
+        {
+            _tray.SetVisible(visible);
+        }
+    }
+
+    private string FocusProfileName(FocusProfile profile)
+    {
+        if (profile.Kind == FocusProfileKind.Custom)
+        {
+            return string.IsNullOrWhiteSpace(profile.CustomName)
+                ? Text("Focus.Title")
+                : profile.CustomName;
+        }
+
+        return Text(FocusProfileDefaults.GetDisplayNameKey(profile));
+    }
+
+    private string Text(string key, params object?[] arguments) =>
+        _localization.Get(key, arguments);
 }

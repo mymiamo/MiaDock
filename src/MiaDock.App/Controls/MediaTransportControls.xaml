@@ -3,23 +3,35 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-  <StackPanel Orientation="Horizontal" Spacing="8">
-    <Button Style="{StaticResource IslandIconButtonStyle}"
+  <StackPanel Orientation="Horizontal" Spacing="4">
+    <Button Width="44"
+            Height="44"
+            Style="{StaticResource DockIconButtonStyle}"
+            IsTabStop="True"
             Command="{Binding PreviousCommand}"
             ToolTipService.ToolTip="Önceki parça"
-            AutomationProperties.Name="Önceki parça">
+            AutomationProperties.Name="Önceki parça"
+            AutomationProperties.HelpText="Önceki parçaya geçer; kaynak desteklemiyorsa kullanılamaz.">
       <FontIcon Glyph="&#xE892;" FontSize="16" />
     </Button>
-    <Button Style="{StaticResource IslandIconButtonStyle}"
+    <Button Width="44"
+            Height="44"
+            Style="{StaticResource DockIconButtonStyle}"
+            IsTabStop="True"
             Command="{Binding PlayPauseCommand}"
             ToolTipService.ToolTip="Oynat veya duraklat"
-            AutomationProperties.Name="Oynat veya duraklat">
+            AutomationProperties.Name="Oynat veya duraklat"
+            AutomationProperties.HelpText="Geçerli medyayı oynatır veya duraklatır.">
       <FontIcon Glyph="{Binding PlaybackGlyph}" FontSize="17" />
     </Button>
-    <Button Style="{StaticResource IslandIconButtonStyle}"
+    <Button Width="44"
+            Height="44"
+            Style="{StaticResource DockIconButtonStyle}"
+            IsTabStop="True"
             Command="{Binding NextCommand}"
             ToolTipService.ToolTip="Sonraki parça"
-            AutomationProperties.Name="Sonraki parça">
+            AutomationProperties.Name="Sonraki parça"
+            AutomationProperties.HelpText="Sonraki parçaya geçer; kaynak desteklemiyorsa kullanılamaz.">
       <FontIcon Glyph="&#xE893;" FontSize="16" />
     </Button>
   </StackPanel>

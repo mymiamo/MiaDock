@@ -19,13 +19,14 @@ public sealed record AppearanceSettings(
     double Opacity,
     double ShadowIntensity,
     double AnimationSpeed,
-    IslandAnimationKind AnimationKind)
+    IslandAnimationKind AnimationKind,
+    MotionSettings? Motion = null)
 {
     public static AppearanceSettings Default { get; } = new(
         ThemeStyle.AppleLike,
         292, 46,
         300, 72,
-        440, 300,
+        548, 360,
         440, 92,
         23,
         "#000000",
@@ -33,5 +34,6 @@ public sealed record AppearanceSettings(
         1,
         0,
         1,
-        IslandAnimationKind.Spring);
+        IslandAnimationKind.Spring,
+        MotionSettings.Default);
 }

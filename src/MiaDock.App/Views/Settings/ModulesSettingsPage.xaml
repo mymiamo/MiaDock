@@ -14,8 +14,14 @@
       </StackPanel>
 
       <InfoBar IsOpen="True" IsClosable="False" Severity="Informational"
-               Title="İzinler isteğe bağlıdır"
-               Message="MiaDock başlangıçta toplu izin istemez. İzin yalnız ilgili modülü açtığınızda istenir." />
+               Title="Servis kullanımı açıkça gösterilir"
+               Message="Bir modülü açmadan önce kullanılan Windows API'si veya yerel servis açıklanır ve onayınız istenir.">
+        <InfoBar.ActionButton>
+          <Button Content="Servisleri ve izinleri görüntüle"
+                  Click="OnShowServicesClick"
+                  AutomationProperties.Name="Tüm modül servislerini ve izinlerini görüntüle" />
+        </InfoBar.ActionButton>
+      </InfoBar>
 
       <ItemsControl ItemsSource="{Binding ModuleItems}">
         <ItemsControl.ItemTemplate>
@@ -26,6 +32,30 @@
           </DataTemplate>
         </ItemsControl.ItemTemplate>
       </ItemsControl>
+
+      <TextBlock Text="Windows ana sesi" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TextBlock Text="Ses kartında varsayılan çıkış aygıtının nasıl gösterileceğini seçin."
+                 TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="38" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <FontIcon Glyph="&#xE7F5;" FontSize="19" VerticalAlignment="Center"
+                    Foreground="{ThemeResource SystemAccentColor}" />
+          <StackPanel Grid.Column="1">
+            <TextBlock Text="Çıkış aygıtı adını göster" FontWeight="SemiBold" />
+            <TextBlock Text="Geçici ses kartında hoparlör veya kulaklık adını gösterir."
+                       TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="2" MinHeight="36"
+                        IsOn="{Binding VolumeShowOutputDeviceName, Mode=TwoWay}"
+                        AutomationProperties.Name="Çıkış aygıtı adını göster" />
+        </Grid>
+      </Border>
 
       <TextBlock Text="Hassas içerik" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,0" />
       <TextBlock Text="Bildirim ve aktarım gibi hassas içerikler için iki koruma da varsayılan olarak kapalıdır."

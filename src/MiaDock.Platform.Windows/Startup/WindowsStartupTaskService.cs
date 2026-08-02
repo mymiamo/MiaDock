@@ -37,25 +37,27 @@ public sealed class WindowsStartupTaskService : IStartupTaskService, IDisposable
 
             try
             {
+                var state = task.State;
                 if (enabled)
                 {
-                    if (task.State == StartupTaskState.Disabled)
+                    if (state == StartupTaskState.Disabled)
                     {
-                        _ = await task.RequestEnableAsync();
+                        state = await task.RequestEnableAsync();
                     }
                 }
-                else if (task.State is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy)
+                else if (state is StartupTaskState.Enabled or StartupTaskState.EnabledByPolicy)
                 {
                     task.Disable();
+                    state = task.State;
                 }
+
+                cancellationToken.ThrowIfCancellationRequested();
+                return Map(state);
             }
             catch (Exception exception) when (IsRecoverableWindowsApiException(exception))
             {
                 return StartupTaskStatus.Failed;
             }
-
-            cancellationToken.ThrowIfCancellationRequested();
-            return Map(task.State);
         }
         finally
         {

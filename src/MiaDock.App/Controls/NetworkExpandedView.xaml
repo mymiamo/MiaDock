@@ -1,23 +1,42 @@
 <UserControl x:Class="MiaDock.App.Controls.NetworkExpandedView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             Loaded="OnLoaded"
-             Unloaded="OnUnloaded">
-  <Grid Padding="22,10,22,14" RowSpacing="12">
-    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
-    <Grid ColumnSpacing="12">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-      <FontIcon x:Name="NetworkIcon" Glyph="{Binding NetworkGlyph}" FontSize="26"
-                VerticalAlignment="Center"
-                AutomationProperties.Name="{Binding ConnectivityText}" />
-      <StackPanel Grid.Column="1" Spacing="2"><TextBlock Text="{Binding ConnectivityText}" Style="{StaticResource IslandTitleTextStyle}" /><TextBlock Text="{Binding ConnectionText}" Style="{StaticResource IslandBodyTextStyle}" /></StackPanel>
-      <TextBlock Grid.Column="2" Text="{Binding CostText}" Style="{StaticResource IslandCaptionTextStyle}" VerticalAlignment="Center" />
+             Loaded="OnLoaded" Unloaded="OnUnloaded">
+  <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding ConnectivityText}">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+    <StackPanel Orientation="Horizontal" Spacing="7" Margin="3,0,3,2">
+      <Border Style="{StaticResource DockStatusBadgeStyle}">
+        <StackPanel Orientation="Horizontal" Spacing="6">
+          <FontIcon x:Name="NetworkIcon" Glyph="{Binding NetworkGlyph}" FontSize="13" />
+          <TextBlock Text="{Binding ConnectionText}" Style="{StaticResource DockStatusTextStyle}" />
+        </StackPanel>
+      </Border>
+      <Border Style="{StaticResource DockStatusBadgeStyle}">
+        <TextBlock Text="{Binding CostText}" Style="{StaticResource DockStatusTextStyle}" />
+      </Border>
+    </StackPanel>
+
+    <Grid Grid.Row="1" ColumnSpacing="10">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+      <Border Style="{StaticResource DockSectionStyle}" Padding="14,12">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74B;" FontSize="18" Foreground="{ThemeResource IslandStyleAccentBrush}"/><TextBlock Text="İndirme" Style="{StaticResource DockModuleHeaderTextStyle}"/></StackPanel>
+          <TextBlock Text="{Binding DownloadText}" Style="{StaticResource DockMetricTextStyle}" AutomationProperties.Name="İndirme hızı" />
+        </StackPanel>
+      </Border>
+      <Border Grid.Column="1" Style="{StaticResource DockSectionStyle}" Padding="14,12">
+        <StackPanel Spacing="8">
+          <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74A;" FontSize="18" Foreground="{ThemeResource IslandStyleAccentBrush}"/><TextBlock Text="Yükleme" Style="{StaticResource DockModuleHeaderTextStyle}"/></StackPanel>
+          <TextBlock Text="{Binding UploadText}" Style="{StaticResource DockMetricTextStyle}" AutomationProperties.Name="Yükleme hızı" />
+        </StackPanel>
+      </Border>
     </Grid>
-    <Grid Grid.Row="1" ColumnSpacing="12">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-      <Border Background="{ThemeResource IslandStyleControlBrush}" CornerRadius="12" Padding="12,8"><StackPanel><TextBlock Text="İndirme" Style="{StaticResource IslandCaptionTextStyle}" /><TextBlock Text="{Binding DownloadText}" FontWeight="SemiBold" AutomationProperties.Name="İndirme hızı" /></StackPanel></Border>
-      <Border Grid.Column="1" Background="{ThemeResource IslandStyleControlBrush}" CornerRadius="12" Padding="12,8"><StackPanel><TextBlock Text="Yükleme" Style="{StaticResource IslandCaptionTextStyle}" /><TextBlock Text="{Binding UploadText}" FontWeight="SemiBold" AutomationProperties.Name="Yükleme hızı" /></StackPanel></Border>
-    </Grid>
-    <TextBlock Grid.Row="2" Text="Hız, yalnızca bu görünüm açıkken ölçülür." Style="{StaticResource IslandCaptionTextStyle}" />
+
+    <StackPanel Grid.Row="2" Margin="4,1,4,0" Orientation="Horizontal" Spacing="6">
+      <FontIcon Glyph="&#xE946;" FontSize="11" Foreground="{ThemeResource IslandTextSecondaryBrush}" />
+      <TextBlock Text="{Binding ThroughputStatusText}" Style="{StaticResource DockCaptionTextStyle}" AutomationProperties.LiveSetting="Polite" />
+    </StackPanel>
   </Grid>
 </UserControl>

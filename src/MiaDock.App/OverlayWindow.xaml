@@ -21,7 +21,8 @@
                     PreviousModuleRequested="OnPreviousModuleRequested"
                     NextModuleRequested="OnNextModuleRequested"
                     DefaultModuleRequested="OnDefaultModuleRequested"
-                    ModuleSelected="OnModuleSelected">
+                    ModuleSelected="OnModuleSelected"
+                    ModuleViewLoadFailed="OnModuleViewLoadFailed">
       <ui:IslandShell.ContextFlyout>
         <MenuFlyout>
           <MenuFlyoutItem x:Name="SettingsMenuItem" Text="Ayarlar" Click="OnSettingsClick" />

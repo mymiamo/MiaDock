@@ -1,0 +1,14 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#FF000000" />
+  <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#FF121212" />
+  <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FF000000" />
+  <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
+  <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#24FFFFFF" />
+  <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#3DFFFFFF" />
+  <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FFFFFFFF" />
+  <CornerRadius x:Key="IslandIconButtonCornerRadius">999</CornerRadius>
+</ResourceDictionary>

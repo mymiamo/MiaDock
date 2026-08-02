@@ -25,4 +25,24 @@
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Include="..\..\src\MiaDock.App\Services\ISettingsService.cs"
+             Link="App\ISettingsService.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\SettingsChangedEventArgs.cs"
+             Link="App\SettingsChangedEventArgs.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\StartupTaskCoordinator.cs"
+             Link="App\StartupTaskCoordinator.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\FocusAutomationService.cs"
+             Link="App\FocusAutomationService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="..\..\src\MiaDock.Platform.Windows\Tray\WindowsTrayIconService.cs"
+             Link="Tray\WindowsTrayIconService.cs"
+             CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.Platform.Windows\Applications\WindowsFocusSettingsLauncher.cs"
+             Link="Applications\WindowsFocusSettingsLauncher.cs"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

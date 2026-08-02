@@ -13,9 +13,10 @@ public sealed record MiaDockSettings(
     GlobalHotKeySettings HotKeys,
     PresentationPrivacySettings Privacy,
     StoreUpdateSettings StoreUpdates,
+    FocusSettings Focus,
     IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules)
 {
-    public const int CurrentSchemaVersion = 14;
+    public const int CurrentSchemaVersion = 18;
 
     public static MiaDockSettings Default { get; } = new(
         CurrentSchemaVersion,
@@ -30,10 +31,12 @@ public sealed record MiaDockSettings(
         GlobalHotKeySettings.Default,
         PresentationPrivacySettings.Default,
         StoreUpdateSettings.Default,
+        FocusSettings.Default,
         new Dictionary<string, ModuleSettingsEnvelope>(StringComparer.Ordinal)
         {
             ["media"] = ModuleSettingsEnvelope.MediaDefault,
             ["system-activity"] = ModuleSettingsEnvelope.SystemActivityDefault,
+            ["volume"] = ModuleSettingsEnvelope.VolumeDefault,
             ["battery"] = ModuleSettingsEnvelope.BatteryDefault,
             ["network"] = ModuleSettingsEnvelope.NetworkDefault,
             ["bluetooth"] = ModuleSettingsEnvelope.BluetoothDefault,

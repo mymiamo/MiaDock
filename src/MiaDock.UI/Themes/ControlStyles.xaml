@@ -72,4 +72,19 @@
     <Setter Property="MinHeight" Value="0" />
     <Setter Property="Padding" Value="0" />
   </Style>
+
+  <Style x:Key="IslandExpandedCardStyle" TargetType="Border">
+    <Setter Property="Background" Value="{ThemeResource IslandStyleControlBrush}" />
+    <Setter Property="BorderBrush" Value="{ThemeResource IslandStrokeBrush}" />
+    <Setter Property="BorderThickness" Value="1" />
+    <Setter Property="CornerRadius" Value="14" />
+    <Setter Property="Padding" Value="12" />
+  </Style>
+
+  <Style x:Key="IslandExpandedMetricCardStyle"
+         TargetType="Border"
+         BasedOn="{StaticResource IslandExpandedCardStyle}">
+    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="Padding" Value="10,8" />
+  </Style>
 </ResourceDictionary>

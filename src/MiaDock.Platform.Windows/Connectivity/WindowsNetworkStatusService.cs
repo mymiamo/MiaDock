@@ -93,7 +93,7 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
 
     public void SetThroughputSamplingEnabled(bool enabled)
     {
-        var clearPublishedRate = false;
+        var publishState = false;
         lock (_gate)
         {
             if (_samplingRequested == enabled) return;
@@ -107,8 +107,8 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
                 _samplingTask = Task.CompletedTask;
                 _rateCalculator.Reset();
                 _counterFailureLogged = false;
-                clearPublishedRate = Current.DownloadBytesPerSecond is not null ||
-                    Current.UploadBytesPerSecond is not null;
+                publishState = Current.ThroughputState != NetworkThroughputState.Inactive ||
+                    Current.DownloadBytesPerSecond is not null || Current.UploadBytesPerSecond is not null;
                 if (cancellation is not null)
                 {
                     _ = task.ContinueWith(_ => cancellation.Dispose(), TaskScheduler.Default);
@@ -116,13 +116,21 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
             }
             else
             {
+                publishState = true;
                 StartSamplingUnderLock();
             }
         }
 
-        if (clearPublishedRate)
+        if (publishState)
         {
-            Publish(Current with { DownloadBytesPerSecond = null, UploadBytesPerSecond = null });
+            Publish(Current with
+            {
+                DownloadBytesPerSecond = null,
+                UploadBytesPerSecond = null,
+                ThroughputState = enabled
+                    ? NetworkThroughputState.Sampling
+                    : NetworkThroughputState.Inactive
+            });
         }
     }
 
@@ -182,7 +190,10 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
                 metered,
                 adapterId,
                 previous.AdapterId == adapterId ? previous.DownloadBytesPerSecond : null,
-                previous.AdapterId == adapterId ? previous.UploadBytesPerSecond : null));
+                previous.AdapterId == adapterId ? previous.UploadBytesPerSecond : null,
+                previous.AdapterId == adapterId
+                    ? previous.ThroughputState
+                    : _samplingRequested ? NetworkThroughputState.Sampling : NetworkThroughputState.Inactive));
         }
         catch (Exception)
         {
@@ -214,7 +225,12 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
             !_counterReader.TryRead(adapterId.Value, out var received, out var sent))
         {
             _rateCalculator.Reset();
-            Publish(Current with { DownloadBytesPerSecond = null, UploadBytesPerSecond = null });
+            Publish(Current with
+            {
+                DownloadBytesPerSecond = null,
+                UploadBytesPerSecond = null,
+                ThroughputState = NetworkThroughputState.Unavailable
+            });
             if (!_counterFailureLogged)
             {
                 _counterFailureLogged = true;
@@ -235,7 +251,8 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
             Publish(Current with
             {
                 DownloadBytesPerSecond = value.Download,
-                UploadBytesPerSecond = value.Upload
+                UploadBytesPerSecond = value.Upload,
+                ThroughputState = NetworkThroughputState.Ready
             });
         }
     }

@@ -11,17 +11,19 @@ namespace MiaDock.App.Controls;
 public sealed partial class ModuleSwitcher : UserControl
 {
     private ILocalizationService? _localization;
+    private readonly Dictionary<string, ModuleButtonVisual> _moduleButtons =
+        new(StringComparer.Ordinal);
     public static readonly DependencyProperty ModulesProperty = DependencyProperty.Register(
         nameof(Modules), typeof(IReadOnlyList<ModuleDisplayState>), typeof(ModuleSwitcher),
-        new PropertyMetadata(null, OnDataChanged));
+        new PropertyMetadata(null, OnModulesChanged));
     public static readonly DependencyProperty SelectedModuleIdProperty = DependencyProperty.Register(
         nameof(SelectedModuleId), typeof(string), typeof(ModuleSwitcher),
-        new PropertyMetadata(null, OnDataChanged));
+        new PropertyMetadata(null, OnSelectionChanged));
 
     public ModuleSwitcher()
     {
         InitializeComponent();
-        UpdateVisualState();
+        RebuildModuleButtons();
     }
 
     public event EventHandler? PreviousRequested;
@@ -44,43 +46,100 @@ public sealed partial class ModuleSwitcher : UserControl
     public void ConfigureLocalization(ILocalizationService localization)
     {
         _localization = localization ?? throw new ArgumentNullException(nameof(localization));
-        UpdateVisualState();
+        RefreshLocalizedLabels();
     }
 
-    public void RefreshLocalizedContent() => UpdateVisualState();
+    public void RefreshLocalizedContent() => RefreshLocalizedLabels();
 
-    private static void OnDataChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
-        ((ModuleSwitcher)sender).UpdateVisualState();
+    private static void OnModulesChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
+        ((ModuleSwitcher)sender).RebuildModuleButtons();
 
-    private void UpdateVisualState()
+    private static void OnSelectionChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
+        ((ModuleSwitcher)sender).UpdateSelectionVisuals();
+
+    private void RebuildModuleButtons()
     {
         Visibility = Modules is { Count: > 0 } ? Visibility.Visible : Visibility.Collapsed;
-        var defaultSelected = SelectedModuleId is null;
-        DefaultButton.Opacity = defaultSelected ? 1 : 0.66;
-        DefaultButton.BorderThickness = defaultSelected ? new Thickness(1.5) : new Thickness(0);
-        DefaultButton.BorderBrush = defaultSelected ? ResourceBrush("IslandStyleAccentBrush") : null;
         ModuleButtons.Children.Clear();
+        _moduleButtons.Clear();
         foreach (var module in Modules ?? Array.Empty<ModuleDisplayState>())
         {
-            var selected = module.Descriptor.Id == SelectedModuleId;
+            var content = CreateButtonContent(module.Descriptor.IconGlyph, out var indicator);
             var button = new Button
             {
-                Width = 36,
-                Height = 36,
-                Style = ResourceStyle("IslandCompactIconButtonStyle"),
+                Width = 44,
+                Height = 44,
+                Style = ResourceStyle("DockIconButtonStyle"),
                 Tag = module.Descriptor.Id,
-                Opacity = selected ? 1 : 0.66,
-                BorderThickness = selected ? new Thickness(1.5) : new Thickness(0),
-                BorderBrush = selected ? ResourceBrush("IslandStyleAccentBrush") : null,
                 UseSystemFocusVisuals = true,
-                Content = new FontIcon { Glyph = module.Descriptor.IconGlyph, FontSize = 11 }
+                Content = content
             };
             var displayName = LocalizedModuleName(module.Descriptor);
             ToolTipService.SetToolTip(button, displayName);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, displayName);
             button.Click += OnModuleClick;
             ModuleButtons.Children.Add(button);
+            _moduleButtons[module.Descriptor.Id] = new ModuleButtonVisual(button, indicator);
         }
+
+        UpdateSelectionVisuals();
+    }
+
+    private void UpdateSelectionVisuals()
+    {
+        var defaultSelected = SelectedModuleId is null;
+        DefaultButton.Opacity = defaultSelected ? 1 : 0.72;
+        DefaultButton.Background = defaultSelected ? ResourceBrush("IslandControlFillBrush") : null;
+        DefaultIndicator.Visibility = defaultSelected ? Visibility.Visible : Visibility.Collapsed;
+
+        foreach (var (moduleId, visual) in _moduleButtons)
+        {
+            var selected = string.Equals(moduleId, SelectedModuleId, StringComparison.Ordinal);
+            visual.Button.Opacity = selected ? 1 : 0.72;
+            visual.Button.Background = selected ? ResourceBrush("IslandControlFillBrush") : null;
+            visual.Indicator.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+        }
+    }
+
+    private void RefreshLocalizedLabels()
+    {
+        foreach (var module in Modules ?? Array.Empty<ModuleDisplayState>())
+        {
+            if (!_moduleButtons.TryGetValue(module.Descriptor.Id, out var visual))
+            {
+                continue;
+            }
+
+            var displayName = LocalizedModuleName(module.Descriptor);
+            ToolTipService.SetToolTip(visual.Button, displayName);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(visual.Button, displayName);
+        }
+    }
+
+    private static UIElement CreateButtonContent(string glyph, out Border indicator)
+    {
+        var content = new Grid();
+        content.Children.Add(new FontIcon
+        {
+            Glyph = glyph,
+            FontSize = 14,
+            VerticalAlignment = VerticalAlignment.Center,
+            HorizontalAlignment = HorizontalAlignment.Center
+        });
+        indicator = new Border
+        {
+            Width = 4,
+            Height = 2,
+            Margin = new Thickness(0, 0, 0, 2),
+            CornerRadius = new CornerRadius(1),
+            Background = ResourceBrush("IslandStyleAccentBrush"),
+            HorizontalAlignment = HorizontalAlignment.Center,
+            VerticalAlignment = VerticalAlignment.Bottom,
+            Visibility = Visibility.Collapsed
+        };
+        content.Children.Add(indicator);
+
+        return content;
     }
 
     private void OnPreviousClick(object sender, RoutedEventArgs args) => RaisePrevious();
@@ -157,6 +216,8 @@ public sealed partial class ModuleSwitcher : UserControl
             ? value
             : descriptor.DisplayName;
     }
+
+    private sealed record ModuleButtonVisual(Button Button, Border Indicator);
 }
 
 public sealed class ModuleSelectedEventArgs(string moduleId) : EventArgs

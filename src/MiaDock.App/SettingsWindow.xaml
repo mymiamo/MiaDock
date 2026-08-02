@@ -45,7 +45,19 @@
                       AutomationProperties.Name="Ayarlarda ara"
                       TextChanged="OnSearchTextChanged"
                       SuggestionChosen="OnSearchSuggestionChosen"
-                      QuerySubmitted="OnSearchQuerySubmitted" />
+                      QuerySubmitted="OnSearchQuerySubmitted">
+        <AutoSuggestBox.ItemTemplate>
+          <DataTemplate>
+            <StackPanel Padding="2,4" Spacing="2">
+              <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding Description}"
+                         FontSize="11"
+                         Opacity="0.68"
+                         TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+          </DataTemplate>
+        </AutoSuggestBox.ItemTemplate>
+      </AutoSuggestBox>
     </Grid>
 
     <NavigationView x:Name="Navigation"
@@ -74,6 +86,14 @@
           <NavigationViewItem.Icon>
             <FontIcon Glyph="&#xE713;"
                       Foreground="{ThemeResource SettingsGeneralIconBrush}" />
+          </NavigationViewItem.Icon>
+        </NavigationViewItem>
+        <NavigationViewItem Content="Odak"
+                            Tag="focus"
+                            ToolTipService.ToolTip="Odak">
+          <NavigationViewItem.Icon>
+            <FontIcon Glyph="&#xE734;"
+                      Foreground="{ThemeResource SettingsFocusIconBrush}" />
           </NavigationViewItem.Icon>
         </NavigationViewItem>
         <NavigationViewItem Content="Modüller"

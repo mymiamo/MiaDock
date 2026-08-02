@@ -25,7 +25,7 @@
 
   <Grid x:Name="LayoutRoot"
         Padding="12,0"
-        ColumnSpacing="8"
+        ColumnSpacing="10"
         AutomationProperties.LiveSetting="Polite">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="Auto" />
@@ -47,16 +47,13 @@
     <TextBlock x:Name="TimeText"
                Grid.Column="1"
                VerticalAlignment="Center"
-               FontFamily="Segoe UI Variable Display"
-               FontSize="15"
-               FontWeight="SemiBold"
-               Foreground="{ThemeResource IslandTextPrimaryBrush}"
+               Style="{StaticResource DockTitleTextStyle}"
                AutomationProperties.AccessibilityView="Raw" />
 
     <Border x:Name="DateContainer"
             Grid.Column="2"
             MinWidth="0"
-            Padding="8,0,0,0"
+            Padding="10,0,0,0"
             VerticalAlignment="Center"
             BorderBrush="{ThemeResource IslandStrokeBrush}"
             BorderThickness="1,0,0,0">
@@ -64,12 +61,12 @@
                  VerticalAlignment="Center"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandCaptionTextStyle}"
+                 Style="{StaticResource DockCaptionTextStyle}"
                  Opacity="0.82"
                  AutomationProperties.AccessibilityView="Raw" />
     </Border>
 
-    <StackPanel x:Name="StatusTray" Grid.Column="3" Orientation="Horizontal" Spacing="5"
+    <StackPanel x:Name="StatusTray" Grid.Column="3" Orientation="Horizontal" Spacing="6"
                  VerticalAlignment="Center">
       <FontIcon Glyph="{Binding NetworkGlyph}"
                 Width="14"
@@ -103,28 +100,32 @@
                     Foreground="{ThemeResource IslandTextPrimaryBrush}" />
           <TextBlock Text="{Binding BluetoothCountText}"
                      MaxLines="1"
-                     FontSize="9"
+                     Style="{StaticResource DockCaptionTextStyle}"
                      VerticalAlignment="Center"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
+                     Opacity="0.82" />
         </StackPanel>
       </Border>
 
-      <Border Padding="4,2" CornerRadius="9"
-              Background="{ThemeResource IslandStyleControlBrush}"
+      <Border Style="{StaticResource DockStatusBadgeStyle}"
+              Padding="6,2"
               Visibility="{Binding BatteryVisibility}"
               ToolTipService.ToolTip="{Binding BatteryStatus}"
               AutomationProperties.Name="{Binding BatteryStatus}">
         <StackPanel Orientation="Horizontal" Spacing="3">
-          <FontIcon Glyph="{Binding BatteryGlyph}" FontFamily="Segoe Fluent Icons" FontSize="11"
+          <FontIcon Glyph="{Binding BatteryGlyph}"
+                    FontFamily="Segoe Fluent Icons"
+                    FontSize="11"
                     Foreground="{ThemeResource IslandStyleAccentBrush}" />
           <TextBlock Text="{Binding BatteryText}"
                      MaxLines="1"
-                     FontSize="10"
-                     FontWeight="SemiBold"
+                     Style="{StaticResource DockStatusTextStyle}"
                      VerticalAlignment="Center"
                      Foreground="{ThemeResource IslandTextPrimaryBrush}" />
         </StackPanel>
       </Border>
+
+      <local:FocusStatusBadge x:Name="FocusStatus"
+                              VerticalAlignment="Center" />
 
       <local:AudioActivityIndicator x:Name="MusicActivity"
                                     Width="10"

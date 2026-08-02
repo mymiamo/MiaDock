@@ -9,10 +9,7 @@
     <SystemBackdropElement x:Name="BackdropSurface"
                            CornerRadius="23" />
     <Border x:Name="Surface"
-            Background="#FF000000"
-            BorderBrush="#FF252525"
-            BorderThickness="1"
-            CornerRadius="23">
+            Style="{StaticResource DockSurfaceStyle}">
       <Grid x:Name="ContentHost" />
     </Border>
   </Grid>

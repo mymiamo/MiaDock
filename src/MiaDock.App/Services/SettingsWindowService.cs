@@ -8,7 +8,8 @@ public sealed class SettingsWindowService(
     IApplicationLifetimeService lifetime,
     DiagnosticsViewModel diagnosticsViewModel,
     IDiagnosticsFileService diagnosticsFileService,
-    IAppLocalizationService localization) : ISettingsWindowService
+    IAppLocalizationService localization,
+    FocusSettingsViewModel focusSettingsViewModel) : ISettingsWindowService
 {
     private SettingsWindow? _window;
 
@@ -24,7 +25,8 @@ public sealed class SettingsWindowService(
                 lifetime,
                 diagnosticsViewModel,
                 diagnosticsFileService,
-                localization);
+                localization,
+                focusSettingsViewModel);
             _window.Closed += OnWindowClosed;
         }
 

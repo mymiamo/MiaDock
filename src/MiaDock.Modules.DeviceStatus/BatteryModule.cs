@@ -39,7 +39,8 @@ public sealed class BatteryModule : IIslandModule, IDisposable
         ModuleId, "Pil", 400, "BatteryCompactView", "BatteryExpandedView",
         new HashSet<ModuleEventKind> { ModuleEventKind.Warning, ModuleEventKind.Critical, ModuleEventKind.StatusChanged },
         TimeSpan.FromSeconds(5), notificationViewKey: "BatteryNotificationView",
-        persistentPriority: 0, isPersistent: false, iconGlyph: "\uE850");
+        persistentPriority: 0, isPersistent: false, iconGlyph: "\uE850",
+        minimumExpandedHeight: 300);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
     public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; PresentationChanged?.Invoke(this, CurrentPresentation); } }

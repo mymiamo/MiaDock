@@ -8,5 +8,8 @@ public enum ThemeStyle
     Windows11Acrylic = 3,
     Windows11AcrylicThin = 4,
     CustomSolidColor = 5,
-    BlurredGlass = 6
+    BlurredGlass = 6,
+    OledBlack = 7,
+    NeutralFrostedGlass = 8,
+    AdaptiveFluent = 9
 }

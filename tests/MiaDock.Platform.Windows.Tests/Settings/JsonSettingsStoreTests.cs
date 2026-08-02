@@ -1,4 +1,5 @@
 using MiaDock.Core.Settings;
+using MiaDock.Core.Focus;
 using MiaDock.Platform.Windows.Settings;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -139,6 +140,157 @@ public sealed class JsonSettingsStoreTests
     }
 
     [TestMethod]
+    public async Task Load_SchemaFourteenWithoutFocus_AddsBuiltInProfilesWithoutDataLoss()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["SchemaVersion"] = 14;
+        node.Remove("Focus");
+        node["Appearance"]!["AccentColor"] = "#123456";
+        node["General"]!["Language"] = (int)AppLanguage.English;
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual("#123456", result.Appearance.AccentColor);
+        Assert.AreEqual(AppLanguage.English, result.General.Language);
+        Assert.AreEqual(FocusSettings.Default, result.Focus);
+    }
+
+    [TestMethod]
+    public async Task SaveAndLoad_RoundTripsCustomFocusProfileAndActiveState()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var custom = new FocusProfile(
+            "reading",
+            FocusProfileKind.Custom,
+            "Reading",
+            "book",
+            "#22C55E",
+            45,
+            FocusProfileBehavior.Default,
+            Array.Empty<FocusSchedule>(),
+            Array.Empty<FocusActivationRule>());
+        var expected = MiaDockSettings.Default with
+        {
+            Focus = new FocusSettings(
+                FocusSettings.CurrentSchemaVersion,
+                [.. FocusSettings.Default.Profiles, custom],
+                new FocusActivationState(
+                    "reading",
+                    FocusActivationSource.Manual,
+                    now,
+                    now.AddMinutes(45)))
+        };
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        await store.SaveAsync(expected);
+        var result = await store.LoadAsync();
+
+        var actualCustom = result.Focus.Profiles.Single(profile => profile.Id == "reading");
+        Assert.AreEqual("Reading", actualCustom.CustomName);
+        Assert.AreEqual("book", actualCustom.IconKey);
+        Assert.AreEqual(45, actualCustom.DefaultDurationMinutes);
+        Assert.AreEqual("reading", result.Focus.ActiveState?.ProfileId);
+        Assert.AreEqual(TimeSpan.Zero, result.Focus.ActiveState?.StartedAtUtc.Offset);
+    }
+
+    [TestMethod]
+    public async Task Load_SchemaFifteen_PreservesFocusSchedulesAndAutomationRules()
+    {
+        Directory.CreateDirectory(_directory);
+        var profile = FocusProfileDefaults.FindBuiltIn(FocusProfileDefaults.WorkId)! with
+        {
+            Schedules =
+            [
+                new FocusSchedule(
+                    "weekday",
+                    true,
+                    FocusDays.Weekdays,
+                    9 * 60,
+                    17 * 60)
+            ],
+            ActivationRules =
+            [
+                new FocusActivationRule(
+                    "code",
+                    true,
+                    FocusActivationRuleKind.ApplicationForeground,
+                    "Code")
+            ]
+        };
+        var settings = MiaDockSettings.Default with
+        {
+            SchemaVersion = 15,
+            Focus = new FocusSettings(
+                1,
+                MiaDockSettings.Default.Focus.Profiles
+                    .Select(item => item.Id == profile.Id ? profile : item)
+                    .ToArray(),
+                null)
+        };
+        await File.WriteAllTextAsync(
+            _settingsPath,
+            JsonSerializer.Serialize(settings));
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(FocusSettings.CurrentSchemaVersion, result.Focus.SchemaVersion);
+        var migrated = result.Focus.Profiles.Single(item => item.Id == profile.Id);
+        Assert.HasCount(1, migrated.Schedules);
+        Assert.HasCount(1, migrated.ActivationRules);
+        Assert.AreEqual("code.exe", migrated.ActivationRules[0].Target);
+    }
+
+    [TestMethod]
+    public async Task Load_FocusSchemaTwo_KeepsDoNotDisturbDockReachable()
+    {
+        Directory.CreateDirectory(_directory);
+        var current = FocusProfileDefaults.ForKind(FocusProfileKind.DoNotDisturb);
+        var legacy = current with
+        {
+            Behavior = current.Behavior with
+            {
+                DockVisibility = FocusDockVisibility.EventsOnly
+            }
+        };
+        var active = new FocusActivationState(
+            legacy.Id,
+            FocusActivationSource.Manual,
+            DateTimeOffset.Parse("2026-07-30T10:00:00Z"),
+            null);
+        var settings = MiaDockSettings.Default with
+        {
+            Focus = new FocusSettings(
+                2,
+                MiaDockSettings.Default.Focus.Profiles
+                    .Select(profile => profile.Id == legacy.Id ? legacy : profile)
+                    .ToArray(),
+                active)
+        };
+        await File.WriteAllTextAsync(
+            _settingsPath,
+            JsonSerializer.Serialize(settings));
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+        var migrated = result.Focus.Profiles.Single(profile =>
+            profile.Id == FocusProfileDefaults.DoNotDisturbId);
+
+        Assert.AreEqual(
+            FocusSettings.CurrentSchemaVersion,
+            result.Focus.SchemaVersion);
+        Assert.AreEqual(
+            FocusDockVisibility.UseGlobalSetting,
+            migrated.Behavior.DockVisibility);
+        Assert.AreEqual(active, result.Focus.ActiveState);
+    }
+
+    [TestMethod]
     public async Task Load_OneCorruptModule_RepairsOnlyThatModuleAndRewritesValidJson()
     {
         Directory.CreateDirectory(_directory);
@@ -190,6 +342,53 @@ public sealed class JsonSettingsStoreTests
         Assert.AreEqual(
             MiaDockSettings.Default.Modules["media"].IsEnabled,
             result.Modules["media"].IsEnabled);
+    }
+
+    [TestMethod]
+    public async Task Load_CorruptAppearanceSection_ResetsOnlyAppearance()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["Appearance"]!["Motion"]!["Speed"] = "invalid-speed";
+        node["General"]!["Language"] = (int)AppLanguage.English;
+        node["Privacy"]!["ShowSensitiveContentInFullscreen"] = true;
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+        var persisted = await store.LoadAsync();
+
+        Assert.AreEqual(AppearanceSettings.Default, result.Appearance);
+        Assert.AreEqual(AppLanguage.English, result.General.Language);
+        Assert.IsTrue(result.Privacy.ShowSensitiveContentInFullscreen);
+        Assert.AreEqual(result.Appearance, persisted.Appearance);
+        Assert.AreEqual(result.General, persisted.General);
+        Assert.HasCount(0, Directory.GetFiles(_directory, "settings.corrupt-*.json"));
+    }
+
+    [TestMethod]
+    public async Task Load_CorruptFocusSection_ResetsOnlyFocusAndRewritesValidJson()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["Focus"] = "invalid-focus-section";
+        node["Appearance"]!["AccentColor"] = "#654321";
+        node["General"]!["Language"] = (int)AppLanguage.English;
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+        var secondLoad = await store.LoadAsync();
+
+        Assert.AreEqual(FocusSettings.Default, result.Focus);
+        Assert.AreEqual("#654321", result.Appearance.AccentColor);
+        Assert.AreEqual(AppLanguage.English, result.General.Language);
+        CollectionAssert.AreEqual(
+            result.Focus.Profiles.Select(profile => profile.Id).ToArray(),
+            secondLoad.Focus.Profiles.Select(profile => profile.Id).ToArray());
+        Assert.AreEqual(result.Focus.ActiveState, secondLoad.Focus.ActiveState);
+        Assert.AreEqual(result.Appearance, secondLoad.Appearance);
+        Assert.HasCount(0, Directory.GetFiles(_directory, "settings.corrupt-*.json"));
     }
 
     [TestMethod]

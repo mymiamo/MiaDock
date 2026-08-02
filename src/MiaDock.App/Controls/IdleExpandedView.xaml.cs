@@ -23,7 +23,7 @@ public sealed partial class IdleExpandedView : UserControl
     private DispatcherQueueTimer? _clockTimer;
     private bool _isLoaded;
 
-    public IdleExpandedView() : this(null, null, null, null, null)
+    public IdleExpandedView() : this(null, null, null, null, null, null)
     {
     }
 
@@ -32,7 +32,8 @@ public sealed partial class IdleExpandedView : UserControl
         SystemActivityViewModel? system,
         IdleDashboardViewModel? dashboard,
         ILocalizationService? localization = null,
-        ISettingsService? settings = null)
+        ISettingsService? settings = null,
+        FocusDockViewModel? focus = null)
     {
         _music = music;
         _dashboard = dashboard;
@@ -42,6 +43,10 @@ public sealed partial class IdleExpandedView : UserControl
         LayoutRoot.DataContext = dashboard;
         SystemStatusPanel.DataContext = system;
         MusicPanel.DataContext = music;
+        if (focus is not null)
+        {
+            FocusPanel.Configure(focus);
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs args)
@@ -55,6 +60,7 @@ public sealed partial class IdleExpandedView : UserControl
         if (_music is not null)
         {
             _music.PropertyChanged += OnMusicPropertyChanged;
+            _music.SetAudioMeterActive(this, true);
         }
         if (_localization is not null)
         {
@@ -81,6 +87,7 @@ public sealed partial class IdleExpandedView : UserControl
         if (_music is not null)
         {
             _music.PropertyChanged -= OnMusicPropertyChanged;
+            _music.SetAudioMeterActive(this, false);
         }
         if (_localization is not null)
         {
@@ -106,8 +113,10 @@ public sealed partial class IdleExpandedView : UserControl
     private void UpdateMediaVisibility()
     {
         var hasMedia = _music?.Current.HasMedia == true;
-        MusicPanel.Visibility = hasMedia ? Visibility.Visible : Visibility.Collapsed;
-        IdlePanel.Visibility = hasMedia ? Visibility.Collapsed : Visibility.Visible;
+        MediaArtwork.Visibility = hasMedia ? Visibility.Visible : Visibility.Collapsed;
+        EmptyArtwork.Visibility = hasMedia ? Visibility.Collapsed : Visibility.Visible;
+        MediaMetadataPanel.Visibility = hasMedia ? Visibility.Visible : Visibility.Collapsed;
+        MediaEmptyPanel.Visibility = hasMedia ? Visibility.Collapsed : Visibility.Visible;
         UpdateAutomationName(hasMedia);
     }
 

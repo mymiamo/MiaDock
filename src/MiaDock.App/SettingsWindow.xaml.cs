@@ -10,6 +10,8 @@ using MiaDock.App.Services;
 using MiaDock.Core.Settings;
 using Windows.Graphics;
 using MiaDock.App.Infrastructure;
+using System.Globalization;
+using System.Text;
 
 namespace MiaDock.App;
 
@@ -32,7 +34,8 @@ public sealed partial class SettingsWindow : Window
         IApplicationLifetimeService lifetime,
         DiagnosticsViewModel diagnosticsViewModel,
         IDiagnosticsFileService diagnosticsFileService,
-        IAppLocalizationService localization)
+        IAppLocalizationService localization,
+        FocusSettingsViewModel focusSettingsViewModel)
     {
         InitializeComponent();
         WindowBranding.ApplyIcon(this);
@@ -49,6 +52,9 @@ public sealed partial class SettingsWindow : Window
         {
             ["home"] = _homePage,
             ["general"] = CreatePage(new GeneralSettingsPage()),
+            ["focus"] = new FocusSettingsPage(
+                focusSettingsViewModel,
+                localization),
             ["modules"] = _modulesPage,
             ["appearance"] = CreatePage(new AppearanceSettingsPage()),
             ["media"] = CreatePage(new MediaSettingsPage()),
@@ -93,22 +99,39 @@ public sealed partial class SettingsWindow : Window
         var english = _localization.CurrentLanguage == AppLanguage.English;
         _searchItems =
         [
-            SearchItem.Create("Ana sayfa", "Home", "Hızlı ayarlar, durum ve güncellemeler", "Quick settings, status and updates", "home", english),
-            SearchItem.Create("Genel", "General", "Görünürlük, etkileşim ve dock konumu", "Visibility, interaction and dock position", "general", english),
-            SearchItem.Create("Modüller", "Modules", "Özellikler, izinler ve hassas içerik", "Features, permissions and sensitive content", "modules", english),
-            SearchItem.Create("Görünüm", "Appearance", "Tema, boyut, renk ve animasyon", "Theme, size, color and animation", "appearance", english),
-            SearchItem.Create("Medya", "Media", "Kaynak uygulama ve ses denetimi", "Source app and volume controls", "media", english),
-            SearchItem.Create("Bildirimler", "Notifications", "Windows izni, uygulama filtreleri ve gizlilik", "Windows access, app filters and privacy", "notifications", english),
-            SearchItem.Create("Zaman ve kısayollar", "Time and shortcuts", "Zamanlayıcı, kronometre ve global kısayollar", "Timer, stopwatch and global shortcuts", "time", english),
-            SearchItem.Create("Tam ekran", "Fullscreen", "Oyun ve tam ekran bildirim davranışı", "Games and fullscreen notification behavior", "fullscreen", english),
-            SearchItem.Create("Monitör", "Monitor", "Ekran seçimi ve konumlandırma", "Display selection and positioning", "monitor", english),
-            SearchItem.Create("Sistem tepsisi", "System tray", "Tepsi simgesi ve geçici bildirimler", "Tray icon and temporary notifications", "tray", english),
-            SearchItem.Create("Başlangıç ve kapanış", "Startup and shutdown", "Windows başlangıcı ve kapatma davranışı", "Windows startup and close behavior", "startup", english),
-            SearchItem.Create("Tanılama", "Diagnostics", "Yerel loglar ve dışa aktarma", "Local logs and export", "diagnostics", english),
-            SearchItem.Create("Hakkında", "About", "Sürüm ve gizlilik bilgileri", "Version and privacy information", "about", english)
+            SearchItem.Create("Ana sayfa", "Home", "Hızlı ayarlar, durum ve güncellemeler", "Quick settings, status and updates", "home", english,
+                "dashboard başlangıç özeti modül durumu güncelleme denetle update check status"),
+            SearchItem.Create("Genel", "General", "Görünürlük, etkileşim, dil, saat ve dock konumu", "Visibility, interaction, language, clock and dock position", "general", english,
+                "türkçe english language dil hover fare tıklama click always visible events only saat clock saniye seconds tarih date weekday konum position otomatik güncelleme"),
+            SearchItem.Create("Odak", "Focus", "Profiller, Rahatsız Etmeyin, görünürlük ve gizlilik", "Profiles, Do Not Disturb, visibility and privacy", "focus", english,
+                "dnd rahatsız etmeyin work gaming sleep çalışma oyun uyku schedule zamanlama otomasyon profile"),
+            SearchItem.Create("Modüller", "Modules", "Özellikler, kullanılan Windows servisleri ve izinler", "Features, Windows services used and permissions", "modules", english,
+                "media volume microphone camera battery network bluetooth timer notifications transfer servis izin permission privacy hassas içerik"),
+            SearchItem.Create("Görünüm", "Appearance", "Tema, boyut, renk, opaklık, radius ve animasyon", "Theme, size, color, opacity, radius and animation", "appearance", english,
+                "apple mica acrylic blur blurred glass saydam cam köşe corner radius genişlik width height yükseklik opacity şeffaflık shadow gölge animation"),
+            SearchItem.Create("Medya", "Media", "Kaynak uygulama, oynatma ve ses denetimi", "Source app, playback and volume controls", "media", english,
+                "spotify apple music youtube browser tarayıcı play pause previous next seek album cover kapak ses volume"),
+            SearchItem.Create("Bildirimler", "Notifications", "Windows izni, uygulama filtreleri, başlık ve gövde gizliliği", "Windows access, app filters, title and body privacy", "notifications", english,
+                "usernotificationlistener allow list block list izin permission title body başlık gövde uygulama"),
+            SearchItem.Create("Zaman ve kısayollar", "Time and shortcuts", "Zamanlayıcı, kronometre, alarm ve global kısayollar", "Timer, stopwatch, alarm and global shortcuts", "time", english,
+                "countdown sayaç lap tur ringtone alarm sustur hotkey registerhotkey ctrl alt shift"),
+            SearchItem.Create("Tam ekran", "Fullscreen", "Oyun ve tam ekran bildirim davranışı", "Games and fullscreen notification behavior", "fullscreen", english,
+                "game oyun borderless fullscreen minimal controls notification süre"),
+            SearchItem.Create("Monitör", "Monitor", "Ekran seçimi, DPI ve konumlandırma", "Display selection, DPI and positioning", "monitor", english,
+                "primary active fixed ana aktif sabit monitor display screen ölçek scaling dpi"),
+            SearchItem.Create("Sistem tepsisi", "System tray", "Koyu tepsi menüsü, simge ve geçici bildirimler", "Dark tray menu, icon and temporary notifications", "tray", english,
+                "tray icon sağ tık right click menu göster gizle exit çıkış"),
+            SearchItem.Create("Başlangıç ve kapanış", "Startup and shutdown", "Windows başlangıcı ve kapatma davranışı", "Windows startup and close behavior", "startup", english,
+                "start with windows startup task açılışta çalıştır minimize küçült tamamen çık silent tray"),
+            SearchItem.Create("Tanılama", "Diagnostics", "Yerel loglar, temizleme ve ZIP dışa aktarma", "Local logs, cleanup and ZIP export", "diagnostics", english,
+                "log logs hata error clear temizle folder klasör export dışa aktar zip"),
+            SearchItem.Create("Hakkında", "About", "Sürüm, Microsoft Store ve gizlilik bilgileri", "Version, Microsoft Store and privacy information", "about", english,
+                "version sürüm update güncelle store mağaza privacy gizlilik 1.2.1.0")
         ];
         _localization.Apply(Root);
         foreach (var page in _pages.Values) _localization.Apply(page);
+        ApplyNavigationLocalization();
+        SettingsSearch.ItemsSource = Array.Empty<SearchItem>();
     }
 
     private void OnLanguageChanged(object? sender, EventArgs args) => ApplyLocalization();
@@ -166,7 +189,12 @@ public sealed partial class SettingsWindow : Window
         var query = sender.Text.Trim();
         sender.ItemsSource = string.IsNullOrEmpty(query)
             ? Array.Empty<SearchItem>()
-            : _searchItems.Where(item => item.SearchText.Contains(query, StringComparison.CurrentCultureIgnoreCase)).ToArray();
+            : _searchItems
+                .Where(item => item.Matches(query))
+                .OrderBy(item => item.Score(query))
+                .ThenBy(item => item.Title, StringComparer.CurrentCultureIgnoreCase)
+                .Take(8)
+                .ToArray();
     }
 
     private void OnSearchSuggestionChosen(AutoSuggestBox sender, AutoSuggestBoxSuggestionChosenEventArgs args)
@@ -177,8 +205,46 @@ public sealed partial class SettingsWindow : Window
     private void OnSearchQuerySubmitted(AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args)
     {
         var item = args.ChosenSuggestion as SearchItem ??
-                   _searchItems.FirstOrDefault(candidate => candidate.SearchText.Contains(args.QueryText, StringComparison.CurrentCultureIgnoreCase));
+                   _searchItems
+                       .Where(candidate => candidate.Matches(args.QueryText))
+                       .OrderBy(candidate => candidate.Score(args.QueryText))
+                       .FirstOrDefault();
         if (item is not null) Navigate(item.Tag);
+    }
+
+    private void ApplyNavigationLocalization()
+    {
+        var labels = new Dictionary<string, (string Turkish, string English)>(
+            StringComparer.Ordinal)
+        {
+            ["home"] = ("Ana sayfa", "Home"),
+            ["general"] = ("Genel", "General"),
+            ["focus"] = ("Odak", "Focus"),
+            ["modules"] = ("Modüller", "Modules"),
+            ["appearance"] = ("Görünüm", "Appearance"),
+            ["media"] = ("Medya", "Media"),
+            ["notifications"] = ("Bildirimler", "Notifications"),
+            ["time"] = ("Zaman ve kısayollar", "Time and shortcuts"),
+            ["fullscreen"] = ("Tam ekran", "Fullscreen"),
+            ["monitor"] = ("Monitör", "Monitor"),
+            ["tray"] = ("Sistem tepsisi", "System tray"),
+            ["startup"] = ("Başlangıç ve kapanış", "Startup and shutdown"),
+            ["diagnostics"] = ("Tanılama", "Diagnostics"),
+            ["about"] = ("Hakkında", "About")
+        };
+
+        foreach (var item in Navigation.MenuItems.OfType<NavigationViewItem>())
+        {
+            if (item.Tag is not string tag ||
+                !labels.TryGetValue(tag, out var label))
+            {
+                continue;
+            }
+
+            var text = _localization.Text(label.Turkish, label.English);
+            item.Content = text;
+            ToolTipService.SetToolTip(item, text);
+        }
     }
 
     private void Navigate(string tag)
@@ -280,10 +346,31 @@ public sealed partial class SettingsWindow : Window
         string TurkishTitle,
         string EnglishTitle,
         string TurkishDescription,
-        string EnglishDescription)
+        string EnglishDescription,
+        string Keywords)
     {
         public string SearchText =>
-            $"{TurkishTitle} {EnglishTitle} {TurkishDescription} {EnglishDescription}";
+            $"{TurkishTitle} {EnglishTitle} {TurkishDescription} {EnglishDescription} {Keywords}";
+
+        public bool Matches(string query)
+        {
+            var search = Normalize(SearchText);
+            return Normalize(query)
+                .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                .All(token => search.Contains(token, StringComparison.Ordinal));
+        }
+
+        public int Score(string query)
+        {
+            var normalizedQuery = Normalize(query);
+            var currentTitle = Normalize(Title);
+            var bothTitles = Normalize($"{TurkishTitle} {EnglishTitle}");
+            return currentTitle.StartsWith(normalizedQuery, StringComparison.Ordinal)
+                ? 0
+                : bothTitles.Contains(normalizedQuery, StringComparison.Ordinal)
+                    ? 1
+                    : 2;
+        }
 
         public static SearchItem Create(
             string turkishTitle,
@@ -291,7 +378,8 @@ public sealed partial class SettingsWindow : Window
             string turkishDescription,
             string englishDescription,
             string tag,
-            bool english) =>
+            bool english,
+            string keywords) =>
             new(
                 english ? englishTitle : turkishTitle,
                 english ? englishDescription : turkishDescription,
@@ -299,7 +387,26 @@ public sealed partial class SettingsWindow : Window
                 turkishTitle,
                 englishTitle,
                 turkishDescription,
-                englishDescription);
+                englishDescription,
+                keywords);
+
+        private static string Normalize(string value)
+        {
+            var builder = new StringBuilder(value.Length);
+            foreach (var character in value
+                         .Replace('ı', 'i')
+                         .Replace('İ', 'I')
+                         .Normalize(NormalizationForm.FormD))
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(character) !=
+                    UnicodeCategory.NonSpacingMark)
+                {
+                    builder.Append(char.ToLowerInvariant(character));
+                }
+            }
+
+            return builder.ToString().Normalize(NormalizationForm.FormC);
+        }
 
         public override string ToString() => Title;
     }

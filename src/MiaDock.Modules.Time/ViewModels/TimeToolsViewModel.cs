@@ -50,6 +50,9 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(CompactPrimaryGlyph))]
     [NotifyPropertyChangedFor(nameof(CompactSecondaryText))]
     [NotifyPropertyChangedFor(nameof(IsTimerCompleted))]
+    [NotifyPropertyChangedFor(nameof(IsTimerIdle))]
+    [NotifyPropertyChangedFor(nameof(HasTimerActivity))]
+    [NotifyPropertyChangedFor(nameof(HasStopwatchActivity))]
     [NotifyCanExecuteChangedFor(nameof(TimerPrimaryCommand))]
     [NotifyCanExecuteChangedFor(nameof(CancelTimerCommand))]
     [NotifyCanExecuteChangedFor(nameof(StopwatchPrimaryCommand))]
@@ -112,6 +115,8 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     };
 
     public bool IsTimerCompleted => Current.TimerState == TimerRunState.Completed;
+    public bool IsTimerIdle => Current.TimerState == TimerRunState.Idle;
+    public bool HasTimerActivity => !IsTimerIdle;
 
     public string CompactPrimaryText => Current.TimerState switch
     {
@@ -134,7 +139,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
             ? Text("Timer.Cancel", "Zamanlayıcıyı iptal et")
             : Text("Timer.ResetStopwatch", "Kronometreyi sıfırla");
 
-    private bool HasStopwatchActivity =>
+    public bool HasStopwatchActivity =>
         Current.IsStopwatchRunning || Current.StopwatchElapsed > TimeSpan.Zero || Current.Laps.Count > 0;
 
     public IReadOnlyList<string> LapTexts => Current.Laps
@@ -147,6 +152,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     {
         if (int.TryParse(minutes, out var value) && value is > 0 and <= 99 * 60)
         {
+            SelectedToolIndex = 0;
             _service.StartTimer(TimeSpan.FromMinutes(value));
         }
     }
@@ -154,6 +160,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanUseTimerPrimary))]
     private void TimerPrimary()
     {
+        SelectedToolIndex = 0;
         switch (Current.TimerState)
         {
             case TimerRunState.Running:
@@ -182,6 +189,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
     [RelayCommand(CanExecute = nameof(CanUseStopwatchPrimary))]
     private void StopwatchPrimary()
     {
+        SelectedToolIndex = 1;
         if (Current.IsStopwatchRunning)
         {
             _service.PauseStopwatch();

@@ -22,6 +22,7 @@ public sealed class ModuleDescriptorTests
         Assert.AreEqual("Module.timer.Name", descriptor.DisplayNameKey);
         Assert.AreEqual(10, descriptor.Priority);
         Assert.IsTrue(descriptor.SupportedEvents.Contains(ModuleEventKind.TimelineChanged));
+        Assert.AreEqual(300, descriptor.MinimumExpandedHeight);
     }
 
     [TestMethod]
@@ -35,6 +36,21 @@ public sealed class ModuleDescriptorTests
             "TimerExpanded",
             new HashSet<ModuleEventKind>(),
             TimeSpan.Zero));
+    }
+
+    [TestMethod]
+    public void Constructor_ValidatesAndPreservesMinimumExpandedHeight()
+    {
+        var descriptor = new ModuleDescriptor(
+            "timer", "Timer", 10, "TimerCompact", "TimerExpanded",
+            new HashSet<ModuleEventKind>(), TimeSpan.FromSeconds(3),
+            minimumExpandedHeight: 390);
+
+        Assert.AreEqual(390, descriptor.MinimumExpandedHeight);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => new ModuleDescriptor(
+            "timer", "Timer", 10, "TimerCompact", "TimerExpanded",
+            new HashSet<ModuleEventKind>(), TimeSpan.FromSeconds(3),
+            minimumExpandedHeight: 421));
     }
 
     [TestMethod]

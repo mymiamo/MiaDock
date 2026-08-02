@@ -102,7 +102,7 @@ public sealed class SettingsWindowTests
             .ToArray();
 
         CollectionAssert.AreEquivalent(
-            new[] { "home", "general", "modules", "appearance", "media", "time", "notifications", "fullscreen", "monitor", "tray", "startup", "diagnostics", "about" },
+            new[] { "home", "general", "focus", "modules", "appearance", "media", "time", "notifications", "fullscreen", "monitor", "tray", "startup", "diagnostics", "about" },
             tags);
     }
 
@@ -136,8 +136,68 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(source, "EnglishTitle");
         StringAssert.Contains(source, "TurkishDescription");
         StringAssert.Contains(source, "EnglishDescription");
-        StringAssert.Contains(source, "Görünürlük, etkileşim ve dock konumu");
-        StringAssert.Contains(source, "Visibility, interaction and dock position");
+        StringAssert.Contains(source, "Görünürlük, etkileşim, dil, saat ve dock konumu");
+        StringAssert.Contains(source, "Visibility, interaction, language, clock and dock position");
+        StringAssert.Contains(source, "radius");
+        StringAssert.Contains(source, "usernotificationlistener");
+        StringAssert.Contains(source, "Normalize(NormalizationForm.FormD)");
+        StringAssert.Contains(source, ".OrderBy(item => item.Score(query))");
+    }
+
+    [TestMethod]
+    public void LanguageChange_RefreshesNavigationItemsOutsideTheVisualTree()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "SettingsWindow.xaml.cs"));
+
+        StringAssert.Contains(source, "ApplyNavigationLocalization()");
+        StringAssert.Contains(source, "Navigation.MenuItems.OfType<NavigationViewItem>()");
+        StringAssert.Contains(source, "item.Content = text");
+        StringAssert.Contains(source, "ToolTipService.SetToolTip(item, text)");
+    }
+
+    [TestMethod]
+    public void ModuleConsent_ExplainsEveryServiceInSettingsAndOnboarding()
+    {
+        var catalog = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Services",
+            "ModuleServiceDisclosureCatalog.cs"));
+        var dialog = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Dialogs",
+            "ModuleServiceConsentDialog.cs"));
+        var settings = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "ModulesSettingsPage.xaml.cs"));
+        var onboarding = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OnboardingWindow.xaml.cs"));
+
+        foreach (var moduleId in new[]
+                 {
+                     "media", "volume", "system-activity", "battery",
+                     "network", "bluetooth", "timer", "notifications",
+                     "transfers"
+                 })
+        {
+            StringAssert.Contains(catalog, $"\"{moduleId}\"");
+        }
+
+        StringAssert.Contains(catalog, "Global System Media Transport Controls");
+        StringAssert.Contains(catalog, "IAudioEndpointVolume");
+        StringAssert.Contains(catalog, "Windows IP Helper API");
+        StringAssert.Contains(catalog, "Windows UserNotificationListener");
+        StringAssert.Contains(dialog, "Service used:");
+        StringAssert.Contains(settings, "ModuleServiceConsentDialog");
+        StringAssert.Contains(settings, "!disclosure.RequiresWindowsPermission");
+        StringAssert.Contains(onboarding, "OnboardingStep.Modules");
+        StringAssert.Contains(onboarding, "_approvedModuleIds");
+        StringAssert.Contains(onboarding, "!disclosure.RequiresWindowsPermission");
     }
 
     [TestMethod]
@@ -267,7 +327,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.2.0.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.2.1.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -278,6 +338,43 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(manifestText, @"Assets\Wide310x150Logo.png");
         StringAssert.Contains(manifestText, @"Assets\SplashScreen.png");
         Assert.DoesNotContain("NoiseAsset", manifestText, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void ApplicationManifest_MatchesThePackageVersion()
+    {
+        var package = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Package.appxmanifest"));
+        var application = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "app.manifest"));
+        var packageNamespace = package.Root!.GetDefaultNamespace();
+        var packageVersion = package.Root
+            .Element(packageNamespace + "Identity")
+            ?.Attribute("Version")
+            ?.Value;
+        var applicationVersion = application.Root!
+            .Elements()
+            .Single(element => element.Name.LocalName == "assemblyIdentity")
+            .Attribute("version")
+            ?.Value;
+
+        Assert.AreEqual("1.2.1.0", packageVersion);
+        Assert.AreEqual(packageVersion, applicationVersion);
+    }
+
+    [TestMethod]
+    public void FocusPage_ExplainsScopeAndCanOpenWindowsFocusSettings()
+    {
+        var text = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "FocusSettingsPage.xaml")).ToString();
+
+        StringAssert.Contains(text, "Windows Rahatsız Etme ayarını değiştirmez");
+        StringAssert.Contains(text, "OpenWindowsFocusSettingsCommand");
+        StringAssert.Contains(text, "Windows Odak ayarlarını aç");
     }
 
     [TestMethod]
@@ -332,6 +429,17 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "Opacity");
         StringAssert.Contains(text, "ShadowIntensity");
         StringAssert.Contains(text, "AnimationSpeed");
+        StringAssert.Contains(text, "MotionPresets");
+        StringAssert.Contains(text, "MotionIntensity");
+        StringAssert.Contains(text, "MotionSpringiness");
+        StringAssert.Contains(text, "MotionContentDelayMilliseconds");
+        StringAssert.Contains(text, "MotionParallax");
+        StringAssert.Contains(text, "MotionTransientBlur");
+        StringAssert.Contains(text, "PreviewDock");
+        StringAssert.Contains(text, "CompactPreviewContent");
+        StringAssert.Contains(text, "HoverPreviewContent");
+        StringAssert.Contains(text, "ExpandedPreviewContent");
+        StringAssert.Contains(text, "OnTestAnimationClick");
         StringAssert.Contains(text, "ResetAppearanceCommand");
     }
 
@@ -359,7 +467,11 @@ public sealed class SettingsWindowTests
         var expandedHeight = document.Descendants().Single(element =>
             element.Name.LocalName == "NumberBox" &&
             element.Attribute("Value")?.Value == "{Binding ExpandedHeight, Mode=TwoWay}");
-        Assert.AreEqual("260", expandedHeight.Attribute("Minimum")?.Value);
+        Assert.AreEqual("360", expandedHeight.Attribute("Minimum")?.Value);
+        var expandedWidth = document.Descendants().Single(element =>
+            element.Name.LocalName == "NumberBox" &&
+            element.Attribute("Value")?.Value == "{Binding ExpandedWidth, Mode=TwoWay}");
+        Assert.AreEqual("548", expandedWidth.Attribute("Minimum")?.Value);
     }
 
     [TestMethod]
@@ -509,7 +621,53 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "ModuleItems");
         StringAssert.Contains(text, "ShowSensitiveContentInFullscreen");
         StringAssert.Contains(text, "ShowSensitiveContentWhenLocked");
-        StringAssert.Contains(text, "başlangıçta toplu izin istemez");
+        StringAssert.Contains(text, "kullanılan Windows API'si veya yerel servis");
+        StringAssert.Contains(text, "onayınız istenir");
+        StringAssert.Contains(text, "Servisleri ve izinleri görüntüle");
+        StringAssert.Contains(text, "OnShowServicesClick");
+    }
+
+    [TestMethod]
+    public void FocusPage_ExposesProfileCrudAndActiveState()
+    {
+        var text = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "FocusSettingsPage.xaml")).ToString();
+
+        StringAssert.Contains(text, "Profiles");
+        StringAssert.Contains(text, "CanCreateProfile");
+        StringAssert.Contains(text, "OnAddProfileClick");
+        StringAssert.Contains(text, "OnEditProfileClick");
+        StringAssert.Contains(text, "OnDeleteProfileClick");
+        StringAssert.Contains(text, "OnResetProfileClick");
+        StringAssert.Contains(text, "IsActive");
+    }
+
+    [TestMethod]
+    public void FocusEditor_ProvidesValidatedBehaviorAndPrivacyFields()
+    {
+        var text = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Dialogs",
+            "FocusProfileEditorDialog.xaml")).ToString();
+
+        StringAssert.Contains(text, "ColorPicker");
+        StringAssert.Contains(text, "DefaultDurationMinutes");
+        StringAssert.Contains(text, "DockVisibilityOptions");
+        StringAssert.Contains(text, "PriorityOptions");
+        StringAssert.Contains(text, "AllowAllModules");
+        StringAssert.Contains(text, "AllowFullscreenNotifications");
+        StringAssert.Contains(text, "AllowSensitiveContentInFullscreen");
+        StringAssert.Contains(text, "AllowSensitiveContentWhenLocked");
+        StringAssert.Contains(text, "Schedules");
+        StringAssert.Contains(text, "AutomationRules");
+        StringAssert.Contains(text, "OnAddScheduleClick");
+        StringAssert.Contains(text, "OnRemoveScheduleClick");
+        StringAssert.Contains(text, "OnAddAutomationRuleClick");
+        StringAssert.Contains(text, "OnRemoveAutomationRuleClick");
+        StringAssert.Contains(text, "TimePicker");
+        StringAssert.Contains(text, "HasError");
     }
 
     [TestMethod]
@@ -544,22 +702,22 @@ public sealed class SettingsWindowTests
     }
 
     [TestMethod]
-    public void TimerExpandedView_FitsDockAndExplainsAlarm()
+    public void TimerExpandedView_UsesAccessibleSegmentsAndIndependentPanels()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
             "Controls",
             "TimerExpandedView.xaml"));
-        var tabItems = document.Descendants()
-            .Where(element => element.Name.LocalName == "TabViewItem")
+        var segments = document.Descendants()
+            .Where(element => element.Name.LocalName == "ToggleButton")
             .ToArray();
         var text = document.ToString();
 
-        Assert.HasCount(2, tabItems);
-        Assert.IsTrue(tabItems.All(item => item.Attribute("IsClosable")?.Value == "False"));
-        StringAssert.Contains(text, "SelectedIndex=\"{Binding SelectedToolIndex, Mode=TwoWay}\"");
-        StringAssert.Contains(text, "CommandParameter=\"1\"");
-        StringAssert.Contains(text, "Süre dolduğunda alarm sesi en fazla 5 kez çalar.");
+        Assert.HasCount(2, segments);
+        Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "TabView"));
+        StringAssert.Contains(text, "TimerPanel");
+        StringAssert.Contains(text, "StopwatchPanel");
+        StringAssert.Contains(text, "CommandParameter=\"5\"");
         StringAssert.Contains(text, "TimerSecondaryText");
         StringAssert.Contains(text, "AccentButtonStyle");
     }

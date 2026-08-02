@@ -17,6 +17,14 @@ public enum NetworkConnectionKind
     Other
 }
 
+public enum NetworkThroughputState
+{
+    Inactive,
+    Sampling,
+    Ready,
+    Unavailable
+}
+
 public sealed record NetworkStatusSnapshot(
     DeviceServiceState State,
     NetworkConnectivityKind Connectivity,
@@ -24,7 +32,8 @@ public sealed record NetworkStatusSnapshot(
     bool IsMetered,
     Guid? AdapterId,
     double? DownloadBytesPerSecond,
-    double? UploadBytesPerSecond)
+    double? UploadBytesPerSecond,
+    NetworkThroughputState ThroughputState = NetworkThroughputState.Inactive)
 {
     public static NetworkStatusSnapshot Default { get; } = new(
         DeviceServiceState.Stopped,

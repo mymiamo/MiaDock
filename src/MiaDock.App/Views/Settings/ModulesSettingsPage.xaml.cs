@@ -22,21 +22,26 @@ public sealed partial class ModulesSettingsPage : UserControl
     {
         if (DataContext is not SettingsViewModel viewModel) return;
 
-        if (args.Item.ModuleId == "notifications" && args.IsEnabled)
+        if (args.IsEnabled)
         {
-            var dialog = new ContentDialog
+            var localization = _localization ?? new AppLocalizationService();
+            var disclosure = ModuleServiceDisclosureCatalog.Get(
+                args.Item.ModuleId,
+                localization);
+            if (!disclosure.RequiresWindowsPermission)
             {
-                XamlRoot = XamlRoot,
-                Title = Text("Dialog.Permission.Notification.Title", "Bildirim erişimine izin verilsin mi?"),
-                Content = Text("Dialog.Permission.Notification.Summary", "MiaDock kaynak uygulama ve bildirim başlığını okuyacak. Gövde metni ayrıca açılmadıkça gösterilmez; içerik teknik loglara yazılmaz."),
-                PrimaryButtonText = Text("Dialog.Permission.Request", "Windows iznini iste"),
-                CloseButtonText = Text("Dialog.Permission.Cancel", "Vazgeç"),
-                DefaultButton = ContentDialogButton.Primary
-            };
-            if (await dialog.ShowAsync() != ContentDialogResult.Primary)
-            {
-                (sender as ModuleSettingsCard)?.SynchronizeToggle();
-                return;
+                var dialog = new Dialogs.ModuleServiceConsentDialog(
+                    [disclosure],
+                    localization,
+                    isOnboarding: false)
+                {
+                    XamlRoot = XamlRoot
+                };
+                if (await dialog.ShowAsync() != ContentDialogResult.Primary)
+                {
+                    (sender as ModuleSettingsCard)?.SynchronizeToggle();
+                    return;
+                }
             }
         }
 
@@ -47,6 +52,30 @@ public sealed partial class ModulesSettingsPage : UserControl
     private void OnModuleDetailsRequested(object sender, ModuleSettingsDetailsEventArgs args) =>
         DetailsRequested?.Invoke(this, args.ModuleId);
 
-    private string Text(string key, string fallback) =>
-        _localization?.Get(key) is { } value && value != key ? value : fallback;
+    private async void OnShowServicesClick(
+        object sender,
+        RoutedEventArgs args)
+    {
+        if (DataContext is not SettingsViewModel viewModel)
+        {
+            return;
+        }
+
+        var localization = _localization ?? new AppLocalizationService();
+        var disclosures = viewModel.ModuleItems
+            .Select(item => ModuleServiceDisclosureCatalog.Get(
+                item.ModuleId,
+                localization))
+            .ToArray();
+        var dialog = new Dialogs.ModuleServiceConsentDialog(
+            disclosures,
+            localization,
+            isOnboarding: false,
+            isReviewOnly: true)
+        {
+            XamlRoot = XamlRoot
+        };
+        await dialog.ShowAsync();
+    }
+
 }

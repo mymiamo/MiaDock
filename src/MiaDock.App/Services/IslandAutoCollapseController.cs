@@ -9,6 +9,7 @@ public sealed class IslandAutoCollapseController : IDisposable
     private readonly DispatcherQueueTimer _notificationTimer;
     private readonly DispatcherQueueTimer _inactivityTimer;
     private readonly Dictionary<DispatcherQueueTimer, IslandTrigger> _timerTriggers = new();
+    private bool _transientInteractionActive;
     private bool _disposed;
 
     public IslandAutoCollapseController(DispatcherQueue dispatcherQueue, IslandMotionOptions options)
@@ -55,18 +56,43 @@ public sealed class IslandAutoCollapseController : IDisposable
     {
         ThrowIfDisposed();
         _pointerExitTimer.Stop();
-        RestartIfRunning(_inactivityTimer);
+        if (!_transientInteractionActive)
+        {
+            RestartIfRunning(_inactivityTimer);
+        }
     }
 
     public void PointerExited()
     {
         ThrowIfDisposed();
-        Restart(_pointerExitTimer);
+        if (!_transientInteractionActive)
+        {
+            Restart(_pointerExitTimer);
+        }
     }
 
     public void RegisterActivity(IslandVisualState state)
     {
         ThrowIfDisposed();
+        if (!_transientInteractionActive && state == IslandVisualState.ExpandedModule)
+        {
+            Restart(_inactivityTimer);
+        }
+    }
+
+    public void SuspendTransientInteraction()
+    {
+        ThrowIfDisposed();
+        _transientInteractionActive = true;
+        _pointerExitTimer.Stop();
+        _inactivityTimer.Stop();
+    }
+
+    public void ResumeTransientInteraction(IslandVisualState state)
+    {
+        ThrowIfDisposed();
+        _transientInteractionActive = false;
+        _pointerExitTimer.Stop();
         if (state == IslandVisualState.ExpandedModule)
         {
             Restart(_inactivityTimer);
@@ -89,7 +115,8 @@ public sealed class IslandAutoCollapseController : IDisposable
             _notificationTimer.Stop();
         }
 
-        if (transition.CurrentState == IslandVisualState.ExpandedModule)
+        if (!_transientInteractionActive &&
+            transition.CurrentState == IslandVisualState.ExpandedModule)
         {
             Restart(_inactivityTimer);
         }
@@ -128,7 +155,8 @@ public sealed class IslandAutoCollapseController : IDisposable
     private void OnTimerTick(DispatcherQueueTimer sender, object args)
     {
         sender.Stop();
-        if (_timerTriggers.TryGetValue(sender, out var trigger))
+        if (!_transientInteractionActive &&
+            _timerTriggers.TryGetValue(sender, out var trigger))
         {
             Elapsed?.Invoke(this, trigger);
         }

@@ -11,7 +11,9 @@ public sealed record SystemActivitySnapshot(
     MicrophoneUsageState MicrophoneUsage,
     CameraDeviceAvailability CameraDeviceAvailability,
     CameraAccessState CameraAccess,
-    CallActivityState CallActivity)
+    CallActivityState CallActivity,
+    string? DefaultOutputDeviceId = null,
+    string? DefaultOutputDeviceName = null)
 {
     public static SystemActivitySnapshot Default { get; } = new(
         SystemActivityServiceState.NotInitialized,

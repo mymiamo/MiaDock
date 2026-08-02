@@ -10,7 +10,12 @@ public sealed record IslandMotionOptions(
     TimeSpan PointerExitDelay,
     TimeSpan NotificationVisibleDuration,
     TimeSpan ExpandedInactivityDuration,
-    IslandAnimationKind AnimationKind)
+    MotionPreset Preset,
+    double Intensity,
+    double Springiness,
+    TimeSpan ContentDelay,
+    bool EnableParallax,
+    bool EnableTransientBlur)
 {
     public static IslandMotionOptions Default { get; } = new(
         TimeSpan.FromMilliseconds(170),
@@ -22,7 +27,12 @@ public sealed record IslandMotionOptions(
         TimeSpan.FromMilliseconds(250),
         TimeSpan.FromSeconds(5),
         TimeSpan.FromSeconds(8),
-        IslandAnimationKind.Spring);
+        MotionPreset.Balanced,
+        0.7,
+        0.55,
+        TimeSpan.FromMilliseconds(35),
+        false,
+        false);
 
     public void Validate()
     {
@@ -35,6 +45,19 @@ public sealed record IslandMotionOptions(
         ValidateDuration(PointerExitDelay, nameof(PointerExitDelay), allowZero: true);
         ValidateDuration(NotificationVisibleDuration, nameof(NotificationVisibleDuration), allowZero: false);
         ValidateDuration(ExpandedInactivityDuration, nameof(ExpandedInactivityDuration), allowZero: false);
+        ValidateDuration(ContentDelay, nameof(ContentDelay), allowZero: true);
+        if (!Enum.IsDefined(Preset))
+        {
+            throw new ArgumentOutOfRangeException(nameof(Preset));
+        }
+        if (!double.IsFinite(Intensity) || Intensity is < 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(Intensity));
+        }
+        if (!double.IsFinite(Springiness) || Springiness is < 0 or > 1)
+        {
+            throw new ArgumentOutOfRangeException(nameof(Springiness));
+        }
     }
 
     private static void ValidateDuration(TimeSpan value, string name, bool allowZero)
