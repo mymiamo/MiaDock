@@ -5,8 +5,7 @@
     DataContextChanged="OnDataContextChanged">
   <Grid>
     <Grid x:Name="ContentRow"
-          Padding="12,0"
-          ColumnSpacing="9"
+          Style="{StaticResource DockCompactModuleLayoutStyle}"
           Visibility="Collapsed"
           AutomationProperties.Name="{Binding PrimaryText}">
       <Grid.ColumnDefinitions>
@@ -14,24 +13,15 @@
         <ColumnDefinition Width="*" />
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
-      <Border Width="22"
-              Height="22"
-              CornerRadius="11"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              AutomationProperties.AccessibilityView="Raw">
-        <FontIcon Glyph="{Binding LeadingGlyph}"
-                  FontSize="13"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Foreground="{ThemeResource IslandStyleAccentBrush}" />
-      </Border>
+      <FontIcon Glyph="{Binding LeadingGlyph}"
+                Style="{StaticResource DockModuleIconStyle}"
+                AutomationProperties.AccessibilityView="Raw" />
       <TextBlock Grid.Column="1"
                  Text="{Binding PrimaryText}"
                  VerticalAlignment="Center"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandBodyTextStyle}"
-                 Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                 Style="{StaticResource DockBodyTextStyle}"
                  ToolTipService.ToolTip="{Binding PrimaryText}" />
       <TextBlock Grid.Column="2"
                  MaxWidth="86"
@@ -39,36 +29,27 @@
                  VerticalAlignment="Center"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandBodyTextStyle}"
+                 Style="{StaticResource DockStatusTextStyle}"
                  ToolTipService.ToolTip="{Binding ValueText}" />
     </Grid>
 
     <Grid x:Name="EmptyState"
-          Padding="12,0"
-          ColumnSpacing="9"
+          Style="{StaticResource DockCompactModuleLayoutStyle}"
           AutomationProperties.Name="Etkin olay yok">
       <Grid.ColumnDefinitions>
         <ColumnDefinition Width="22" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <Border Width="22"
-              Height="22"
-              CornerRadius="11"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              AutomationProperties.AccessibilityView="Raw">
-        <FontIcon Glyph="&#xE946;"
-                  FontSize="12"
-                  HorizontalAlignment="Center"
-                  VerticalAlignment="Center"
-                  Foreground="{ThemeResource IslandStyleAccentBrush}" />
-      </Border>
+      <FontIcon Glyph="&#xE946;"
+                Style="{StaticResource DockModuleIconStyle}"
+                AutomationProperties.AccessibilityView="Raw" />
       <TextBlock x:Name="EmptyStateText"
                  Grid.Column="1"
                  Text="Etkin olay yok"
                  VerticalAlignment="Center"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandBodyTextStyle}" />
+                 Style="{StaticResource DockBodyTextStyle}" />
     </Grid>
   </Grid>
 </UserControl>

@@ -34,6 +34,17 @@ public sealed class WindowStylePolicyTests
     }
 
     [TestMethod]
+    public void ApplyOverlayStyles_RemovesNoActivateForExplicitInteraction()
+    {
+        var result = WindowStylePolicy.ApplyOverlayStyles(
+            WindowStylePolicy.NoActivate,
+            allowActivation: true);
+
+        Assert.AreEqual(0, result & WindowStylePolicy.NoActivate);
+        Assert.AreNotEqual(0, result & WindowStylePolicy.ToolWindow);
+    }
+
+    [TestMethod]
     public void ApplyOverlayWindowStyles_RemovesEveryNativeFrameDecoration()
     {
         var frameStyles = WindowStylePolicy.Caption

@@ -13,10 +13,11 @@ using Windows.Security.Authorization.AppCapabilityAccess;
 
 namespace MiaDock.Platform.Windows.Audio;
 
-public sealed class WindowsSystemActivityService : ISystemActivityService
+public sealed class WindowsSystemActivityService : ISystemActivityService, IAudioMixerService
 {
     private static readonly Guid EventContext = new("1C7FD31E-7D88-45CA-BA36-56DFEA691D08");
     private const int MaximumQueuedWorkItems = 256;
+    private static readonly TimeSpan MixerMeterInterval = TimeSpan.FromMilliseconds(125);
 
     private readonly IUiDispatcher _dispatcher;
     private readonly IMediaSessionService _media;
@@ -25,6 +26,8 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
         new(new ConcurrentQueue<Action>(), MaximumQueuedWorkItems);
     private readonly CoalescingActionScheduler _refreshScheduler;
     private readonly CoalescingActionScheduler _rebindScheduler;
+    private readonly CoalescingActionScheduler _mixerSampleScheduler;
+    private readonly Timer _mixerMeterTimer;
     private readonly object _stateGate = new();
     private readonly object _startGate = new();
     private readonly HashSet<string> _cameraDeviceIds = new(StringComparer.Ordinal);
@@ -48,12 +51,18 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
     private bool _audioAvailable;
     private bool _captureAvailable;
     private bool _cameraApiAvailable;
+    private string? _defaultOutputDeviceId;
+    private string? _defaultOutputDeviceName;
     private bool _disposed;
     private bool _initialStateLogged;
     private bool _initializing = true;
     private SystemActivitySnapshot _pendingSnapshot = SystemActivitySnapshot.Default;
     private long _pendingSnapshotVersion;
     private int _snapshotDispatchPending;
+    private AudioMixerSnapshot _pendingMixerSnapshot = AudioMixerSnapshot.Default;
+    private long _pendingMixerSnapshotVersion;
+    private int _mixerSnapshotDispatchPending;
+    private bool _mixerMeteringEnabled;
 
     public WindowsSystemActivityService(
         IUiDispatcher dispatcher,
@@ -66,6 +75,12 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
         Interlocked.Exchange(ref _selectedMediaSourceId, ResolveSelectedMediaSourceId());
         _refreshScheduler = new CoalescingActionScheduler(Post, RefreshAndPublish);
         _rebindScheduler = new CoalescingActionScheduler(Post, RebindAudio);
+        _mixerSampleScheduler = new CoalescingActionScheduler(Post, SampleMixerAndPublish);
+        _mixerMeterTimer = new Timer(
+            _ => _mixerSampleScheduler.Request(),
+            null,
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan);
         _media.SnapshotChanged += OnMediaSnapshotChanged;
         _media.StateChanged += OnMediaStateChanged;
     }
@@ -73,6 +88,10 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
     public SystemActivitySnapshot Current { get; private set; } = SystemActivitySnapshot.Default;
 
     public event EventHandler<SystemActivitySnapshot>? SnapshotChanged;
+
+    public AudioMixerSnapshot CurrentMixer { get; private set; } = AudioMixerSnapshot.Default;
+
+    public event EventHandler<AudioMixerSnapshot>? MixerChanged;
 
     public async Task StartAsync(CancellationToken cancellationToken = default)
     {
@@ -133,8 +152,12 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
             }
 
             var context = EventContext;
-            CoreAudioNative.ThrowIfFailed(_applicationSession.Volume.SetMasterVolume(
-                (float)Math.Clamp(volume, 0, 1), ref context));
+            if (!_applicationSession.SetVolume(
+                    (float)Math.Clamp(volume, 0, 1),
+                    ref context))
+            {
+                return false;
+            }
             RefreshAndPublish();
             return true;
         }, cancellationToken);
@@ -142,16 +165,112 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
     public Task<bool> ToggleApplicationMuteAsync(CancellationToken cancellationToken = default) =>
         ExecuteAsync(() =>
         {
-            if (_applicationSession is null || _applicationSession.Volume.GetMute(out var muted) < 0)
+            if (_applicationSession is null)
             {
                 return false;
             }
 
             var context = EventContext;
-            CoreAudioNative.ThrowIfFailed(_applicationSession.Volume.SetMute(!muted, ref context));
+            if (!_applicationSession.ToggleMute(ref context))
+            {
+                return false;
+            }
             RefreshAndPublish();
             return true;
         }, cancellationToken);
+
+    public Task<bool> SetSessionVolumeAsync(
+        string sessionKey,
+        double volume,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionKey);
+        return ExecuteAsync(() =>
+        {
+            var context = EventContext;
+            var changed = false;
+            foreach (var session in _sessions.Where(session =>
+                         session.Flow == AudioDataFlow.Render &&
+                         session.MixerKey == sessionKey))
+            {
+                changed |= session.SetVolume(
+                    (float)Math.Clamp(volume, 0, 1),
+                    ref context);
+            }
+
+            if (changed)
+            {
+                RefreshAndPublish();
+            }
+
+            return changed;
+        }, cancellationToken);
+    }
+
+    public Task<bool> ToggleSessionMuteAsync(
+        string sessionKey,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sessionKey);
+        return ExecuteAsync(() =>
+        {
+            var group = _sessions
+                .Where(session =>
+                    session.Flow == AudioDataFlow.Render &&
+                    session.MixerKey == sessionKey &&
+                    session.CanControlVolume)
+                .ToArray();
+            if (group.Length == 0)
+            {
+                return false;
+            }
+
+            var targetMuted = !group.All(session => session.IsMuted);
+            var context = EventContext;
+            var changed = false;
+            foreach (var session in group)
+            {
+                changed |= session.SetMute(targetMuted, ref context);
+            }
+
+            if (changed)
+            {
+                RefreshAndPublish();
+            }
+
+            return changed;
+        }, cancellationToken);
+    }
+
+    public void SetMeteringEnabled(bool enabled)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        Post(() =>
+        {
+            if (_mixerMeteringEnabled == enabled)
+            {
+                return;
+            }
+
+            _mixerMeteringEnabled = enabled;
+            _mixerMeterTimer.Change(
+                enabled ? TimeSpan.Zero : Timeout.InfiniteTimeSpan,
+                enabled ? MixerMeterInterval : Timeout.InfiniteTimeSpan);
+            if (!enabled)
+            {
+                foreach (var session in _sessions)
+                {
+                    session.ResetPeak();
+                }
+            }
+
+            PublishMixerSnapshot();
+        });
+    }
 
     public async ValueTask DisposeAsync()
     {
@@ -163,6 +282,8 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
         _disposed = true;
         _media.SnapshotChanged -= OnMediaSnapshotChanged;
         _media.StateChanged -= OnMediaStateChanged;
+        _mixerMeterTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+        _mixerMeterTimer.Dispose();
         _workItems.CompleteAdding();
         if (_worker is not null && _worker.IsAlive)
         {
@@ -246,6 +367,8 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
                 AudioDeviceRole.Multimedia,
                 AudioDeviceRole.Console,
                 out _renderDevice));
+            (_defaultOutputDeviceId, _defaultOutputDeviceName) =
+                ReadDeviceIdentity(_renderDevice);
             _endpointVolume = Activate<IAudioEndpointVolume>(_renderDevice, CoreAudioNative.EndpointVolumeId);
             _endpointVolumeCallback = new EndpointVolumeCallback(RequestRefresh);
             CoreAudioNative.ThrowIfFailed(
@@ -301,7 +424,8 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
                     _sessions.Add(new AudioSessionHandle(
                         control,
                         flow,
-                        RequestRefresh));
+                        RequestRefresh,
+                        PostRebindAudio));
                     control = null;
                 }
                 catch (Exception)
@@ -436,8 +560,11 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
                     ? CameraDeviceAvailability.Available
                     : CameraDeviceAvailability.NotFound,
             cameraAccess,
-            CommunicationActivityClassifier.Classify(microphoneActive, activeProcessNames));
+            CommunicationActivityClassifier.Classify(microphoneActive, activeProcessNames),
+            _defaultOutputDeviceId,
+            _defaultOutputDeviceName);
         SetCurrent(snapshot);
+        PublishMixerSnapshot();
         if (!_initializing && !_initialStateLogged && state is not SystemActivityServiceState.Initializing)
         {
             _initialStateLogged = true;
@@ -454,6 +581,89 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
                     ["status"] = $"master={masterAvailable};capture={_captureAvailable};cameraApi={_cameraApiAvailable};cameraPresent={_cameraDeviceIds.Count > 0}"
                 });
         }
+    }
+
+    private void SampleMixerAndPublish()
+    {
+        if (!_mixerMeteringEnabled || _disposed)
+        {
+            return;
+        }
+
+        foreach (var session in _sessions.Where(session =>
+                     session.Flow == AudioDataFlow.Render &&
+                     session.State == AudioSessionState.Active))
+        {
+            try
+            {
+                session.SamplePeak();
+            }
+            catch (COMException)
+            {
+                session.ResetPeak();
+            }
+        }
+
+        PublishMixerSnapshot();
+    }
+
+    private void PublishMixerSnapshot()
+    {
+        var sessions = _sessions
+            .Where(session =>
+                session.Flow == AudioDataFlow.Render &&
+                session.State == AudioSessionState.Active &&
+                session.ProcessId != Environment.ProcessId)
+            .GroupBy(session => session.MixerKey, StringComparer.Ordinal)
+            .Select(group =>
+            {
+                var items = group.ToArray();
+                var controllable = items.Where(item => item.CanControlVolume).ToArray();
+                var representative = items
+                    .OrderByDescending(item => item.PeakLevel)
+                    .First();
+                var displayName = items
+                    .Select(item => item.DisplayName)
+                    .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))
+                    ?? string.Empty;
+                var processName = items
+                    .Select(item => item.ProcessName)
+                    .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value))
+                    ?? string.Empty;
+                var iconPath = items
+                    .Select(item => item.IconPath)
+                    .FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
+                return new AudioMixerSessionSnapshot(
+                    group.Key,
+                    representative.ProcessId,
+                    displayName,
+                    processName,
+                    iconPath,
+                    controllable.Length > 0
+                        ? controllable.Average(item => item.VolumeLevel)
+                        : 0,
+                    controllable.Length > 0 &&
+                    controllable.All(item => item.IsMuted),
+                    controllable.Length > 0,
+                    items.Any(item => item.IsSystemSounds),
+                    _mixerMeteringEnabled
+                        ? items.Max(item => item.PeakLevel)
+                        : 0);
+            })
+            .OrderByDescending(session => session.PeakLevel)
+            .ThenBy(session => session.IsSystemSounds)
+            .ThenBy(session => session.DisplayName, StringComparer.CurrentCultureIgnoreCase)
+            .ThenBy(session => session.ProcessName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+
+        SetCurrentMixer(new AudioMixerSnapshot(
+            _audioAvailable
+                ? SystemActivityServiceState.Ready
+                : SystemActivityServiceState.Unavailable,
+            _defaultOutputDeviceId,
+            _defaultOutputDeviceName,
+            sessions,
+            _mixerMeteringEnabled));
     }
 
     private SystemActivityServiceState ResolveServiceState(bool masterAvailable)
@@ -485,6 +695,32 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
         QueueSnapshotDispatch();
     }
 
+    private void SetCurrentMixer(AudioMixerSnapshot snapshot)
+    {
+        lock (_stateGate)
+        {
+            if (MixerSnapshotsEqual(CurrentMixer, snapshot))
+            {
+                return;
+            }
+
+            CurrentMixer = snapshot;
+            _pendingMixerSnapshot = snapshot;
+            _pendingMixerSnapshotVersion++;
+        }
+
+        QueueMixerSnapshotDispatch();
+    }
+
+    private static bool MixerSnapshotsEqual(
+        AudioMixerSnapshot left,
+        AudioMixerSnapshot right) =>
+        left.ServiceState == right.ServiceState &&
+        left.OutputDeviceId == right.OutputDeviceId &&
+        left.OutputDeviceName == right.OutputDeviceName &&
+        left.IsMeteringEnabled == right.IsMeteringEnabled &&
+        left.Sessions.SequenceEqual(right.Sessions);
+
     private void QueueSnapshotDispatch()
     {
         if (_disposed ||
@@ -502,6 +738,26 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
         if (!_dispatcher.TryEnqueue(DrainLatestSnapshot))
         {
             Volatile.Write(ref _snapshotDispatchPending, 0);
+        }
+    }
+
+    private void QueueMixerSnapshotDispatch()
+    {
+        if (_disposed ||
+            Interlocked.CompareExchange(ref _mixerSnapshotDispatchPending, 1, 0) != 0)
+        {
+            return;
+        }
+
+        if (_dispatcher.HasThreadAccess)
+        {
+            DrainLatestMixerSnapshot();
+            return;
+        }
+
+        if (!_dispatcher.TryEnqueue(DrainLatestMixerSnapshot))
+        {
+            Volatile.Write(ref _mixerSnapshotDispatchPending, 0);
         }
     }
 
@@ -534,6 +790,41 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
             if (shouldReschedule)
             {
                 QueueSnapshotDispatch();
+            }
+        }
+    }
+
+    private void DrainLatestMixerSnapshot()
+    {
+        AudioMixerSnapshot snapshot;
+        long version;
+        lock (_stateGate)
+        {
+            snapshot = _pendingMixerSnapshot;
+            version = _pendingMixerSnapshotVersion;
+        }
+
+        var shouldReschedule = false;
+        try
+        {
+            if (!_disposed)
+            {
+                MixerChanged?.Invoke(this, snapshot);
+            }
+        }
+        finally
+        {
+            Volatile.Write(ref _mixerSnapshotDispatchPending, 0);
+            lock (_stateGate)
+            {
+                shouldReschedule =
+                    !_disposed &&
+                    version != _pendingMixerSnapshotVersion;
+            }
+
+            if (shouldReschedule)
+            {
+                QueueMixerSnapshotDispatch();
             }
         }
     }
@@ -643,6 +934,55 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
         return (T)activated;
     }
 
+    private static (string? Id, string? Name) ReadDeviceIdentity(IMMDevice device)
+    {
+        string? id = null;
+        string? name = null;
+        if (device.GetId(out var deviceId) >= 0)
+        {
+            id = deviceId;
+        }
+
+        IPropertyStore? properties = null;
+        try
+        {
+            if (device.OpenPropertyStore(CoreAudioNative.StorageModeRead, out properties) < 0)
+            {
+                return (id, null);
+            }
+
+            var key = CoreAudioNative.DeviceFriendlyNameKey;
+            if (properties.GetValue(ref key, out var value) < 0)
+            {
+                return (id, null);
+            }
+
+            try
+            {
+                if (value.ValueType == CoreAudioNative.VariantTypeStringPointer &&
+                    value.PointerValue != 0)
+                {
+                    name = Marshal.PtrToStringUni(value.PointerValue);
+                }
+            }
+            finally
+            {
+                CoreAudioNative.PropVariantClear(ref value);
+            }
+        }
+        catch (Exception exception) when (
+            exception is COMException or InvalidCastException)
+        {
+            name = null;
+        }
+        finally
+        {
+            ReleaseComObject(properties);
+        }
+
+        return (id, string.IsNullOrWhiteSpace(name) ? null : name.Trim());
+    }
+
     private int GetDefaultEndpoint(
         AudioDataFlow flow,
         AudioDeviceRole preferredRole,
@@ -664,6 +1004,8 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
 
         _sessions.Clear();
         _applicationSession = null;
+        _defaultOutputDeviceId = null;
+        _defaultOutputDeviceName = null;
 
         if (_renderSessionManager is not null && _renderSessionNotification is not null)
         {
@@ -781,7 +1123,11 @@ public sealed class WindowsSystemActivityService : ISystemActivityService
             return 0;
         }
 
-        public int OnPropertyValueChanged(string deviceId, PropertyKey key) => 0;
+        public int OnPropertyValueChanged(string deviceId, PropertyKey key)
+        {
+            rebindRequested();
+            return 0;
+        }
     }
 
     [ComVisible(true)]

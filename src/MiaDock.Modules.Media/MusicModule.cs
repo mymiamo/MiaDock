@@ -47,7 +47,8 @@ public sealed class MusicModule : IIslandModule, IDisposable
         "MusicNotificationView",
         100,
         hoverViewKey: "MusicHoverView",
-        iconGlyph: "\uE8D6");
+        iconGlyph: "\uE8D6",
+        minimumExpandedHeight: 300);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
 

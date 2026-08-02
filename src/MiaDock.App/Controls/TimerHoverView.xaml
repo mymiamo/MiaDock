@@ -1,27 +1,34 @@
 <UserControl x:Class="MiaDock.App.Controls.TimerHoverView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid Padding="14,0" ColumnSpacing="10">
+  <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding CompactStatusText}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-    <FontIcon Glyph="&#xE823;" FontSize="16" Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <FontIcon Glyph="&#xE823;" Style="{StaticResource DockModuleIconStyle}" />
     <StackPanel Grid.Column="1" VerticalAlignment="Center">
-      <TextBlock Text="{Binding CompactTimeText}" FontWeight="SemiBold" Foreground="{ThemeResource IslandTextPrimaryBrush}" />
-      <TextBlock Text="{Binding CompactStatusText}" Style="{StaticResource IslandCaptionTextStyle}" />
+      <TextBlock Text="{Binding CompactTimeText}"
+                 Style="{StaticResource DockBodyTextStyle}"
+                 FontWeight="SemiBold" />
+      <TextBlock Text="{Binding CompactStatusText}"
+                 MaxLines="1"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockCaptionTextStyle}"
+                 ToolTipService.ToolTip="{Binding CompactStatusText}" />
     </StackPanel>
     <StackPanel x:Name="NormalActions"
                 Grid.Column="2"
                 Orientation="Horizontal"
                 Spacing="4"
                 VerticalAlignment="Center">
-      <Button Width="34" Height="34"
-              Style="{StaticResource IslandCompactIconButtonStyle}"
+      <Button Width="44" Height="44"
+              Style="{StaticResource DockIconButtonStyle}"
               Command="{Binding CompactPrimaryCommand}"
               ToolTipService.ToolTip="{Binding CompactPrimaryText}"
               AutomationProperties.Name="{Binding CompactPrimaryText}">
         <FontIcon Glyph="{Binding CompactPrimaryGlyph}" FontSize="14" />
       </Button>
-      <Button Width="32" Height="32"
-              Style="{StaticResource IslandCompactIconButtonStyle}"
+      <Button Width="44" Height="44"
+              Style="{StaticResource DockIconButtonStyle}"
               Command="{Binding CompactSecondaryCommand}"
               ToolTipService.ToolTip="{Binding CompactSecondaryText}"
               AutomationProperties.Name="{Binding CompactSecondaryText}">
@@ -32,16 +39,18 @@
     <Button x:Name="SilenceAlarmButton"
             Grid.Column="2"
             MinWidth="112"
-            Height="34"
+            Height="44"
             Padding="10,0"
             Visibility="Collapsed"
-            Style="{StaticResource IslandCompactIconButtonStyle}"
+            Style="{StaticResource DockInlineButtonStyle}"
             Command="{Binding CompactSecondaryCommand}"
             ToolTipService.ToolTip="{Binding CompactSecondaryText}"
             AutomationProperties.Name="{Binding CompactSecondaryText}">
       <StackPanel Orientation="Horizontal" Spacing="6">
         <FontIcon Glyph="&#xE7ED;" FontSize="13" />
-        <TextBlock Text="{Binding CompactSecondaryText}" VerticalAlignment="Center" />
+      <TextBlock Text="{Binding CompactSecondaryText}"
+                 VerticalAlignment="Center"
+                 Style="{StaticResource DockBodyTextStyle}" />
       </StackPanel>
     </Button>
   </Grid>

@@ -54,15 +54,17 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
-    public void IslandSurface_MatchesReferenceCapsuleChrome()
+    public void IslandSurface_UsesSharedProfessionalDockChrome()
     {
         var document = LoadControl("IslandShell.xaml");
         var surface = document.Descendants().Single(element =>
             element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "Surface");
 
-        Assert.AreEqual("1", surface.Attribute("BorderThickness")?.Value);
-        Assert.AreEqual("#FF252525", surface.Attribute("BorderBrush")?.Value);
-        Assert.AreEqual("23", surface.Attribute("CornerRadius")?.Value);
+        Assert.AreEqual(
+            "{StaticResource DockSurfaceStyle}",
+            surface.Attribute("Style")?.Value);
+        Assert.IsNull(surface.Attribute("Background"));
+        Assert.IsNull(surface.Attribute("BorderBrush"));
     }
 
     [TestMethod]
@@ -176,11 +178,12 @@ public sealed class IslandShellTests
     public void IdleExpandedView_ShowsDashboardStatusAndMediaControls()
     {
         var document = LoadControl("IdleExpandedView.xaml");
+        var transport = LoadControl("MediaTransportControls.xaml");
         var names = document.Descendants()
             .Attributes(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))
             .Select(attribute => attribute.Value)
             .ToHashSet(StringComparer.Ordinal);
-        var commands = document.Descendants()
+        var commands = transport.Descendants()
             .Where(element => element.Name.LocalName == "Button")
             .Select(element => element.Attribute("Command")?.Value)
             .ToArray();
@@ -188,7 +191,8 @@ public sealed class IslandShellTests
         foreach (var name in new[]
                  {
                      "TimeText", "DateText", "NetworkCard", "BatteryCard",
-                     "BluetoothCard", "SystemCard", "MusicPanel", "IdlePanel"
+                     "BluetoothCard", "SystemCard", "FocusCard", "MusicPanel",
+                     "MediaArtwork", "EmptyArtwork", "MediaMetadataPanel", "MediaEmptyPanel"
                  })
         {
             Assert.IsTrue(names.Contains(name), $"{name} bulunamadı.");
@@ -199,6 +203,10 @@ public sealed class IslandShellTests
         CollectionAssert.Contains(commands, "{Binding NextCommand}");
         Assert.IsTrue(document.Descendants().Any(element =>
             element.Attribute("Text")?.Value == "{Binding Current.Track.Title}"));
+        Assert.IsTrue(document.Descendants().Any(element =>
+            element.Name.LocalName == "MediaTimeline"));
+        Assert.IsTrue(document.Descendants().Any(element =>
+            element.Name.LocalName == "AudioActivityIndicator"));
     }
 
     [TestMethod]
@@ -232,39 +240,95 @@ public sealed class IslandShellTests
     public void ExpandedHost_ReservesSwitcherHeightWithoutClipping()
     {
         var host = LoadControl("ExpandedModuleHost.xaml");
-        var firstRow = host.Descendants()
+        var rows = host.Descendants()
             .Where(element => element.Name.LocalName == "RowDefinition")
-            .First();
-        var switcher = LoadControl("ModuleSwitcher.xaml");
-        var buttonHeights = switcher.Descendants()
-            .Where(element => element.Name.LocalName == "Button")
-            .Select(element => double.Parse(
-                element.Attribute("Height")!.Value,
-                System.Globalization.CultureInfo.InvariantCulture))
             .ToArray();
+        var switcherHost = host.Descendants().Single(element =>
+            element.Name.LocalName == "ModuleSwitcher");
+        var switcher = LoadControl("ModuleSwitcher.xaml");
 
         var reservedHeight = double.Parse(
-            firstRow.Attribute("Height")!.Value,
+            rows[^1].Attribute("Height")!.Value,
             System.Globalization.CultureInfo.InvariantCulture);
-        Assert.IsGreaterThanOrEqualTo(buttonHeights.Max() + 4, reservedHeight);
+        Assert.AreEqual("2", switcherHost.Attribute("Grid.Row")?.Value);
+        Assert.AreEqual("Stretch", switcherHost.Attribute("HorizontalAlignment")?.Value);
+        Assert.IsNull(switcherHost.Attribute("Width"));
+        Assert.IsNull(switcherHost.Attribute("MaxWidth"));
+        Assert.IsGreaterThanOrEqualTo(64, reservedHeight);
+        Assert.IsTrue(switcher.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .All(element =>
+                element.Attribute("Width")?.Value == "44" &&
+                element.Attribute("Height")?.Value == "44"));
         Assert.IsTrue(switcher.Descendants().Any(element =>
             element.Name.LocalName == "ScrollViewer" &&
             element.Attribute("HorizontalScrollMode")?.Value == "Enabled"));
     }
 
     [TestMethod]
-    public void SystemActivityView_ExposesMasterAndApplicationVolumeAccessibly()
+    public void ExpandedDock_UsesBottomNavigationAndSharedActiveCenterHierarchy()
+    {
+        var switcher = LoadControl("ModuleSwitcher.xaml");
+        var rootGrid = switcher.Descendants()
+            .First(element => element.Name.LocalName == "Grid" &&
+                              element.Elements().Any(child => child.Name.LocalName == "ScrollViewer"));
+        var scrollViewer = rootGrid.Elements()
+            .Single(element => element.Name.LocalName == "ScrollViewer");
+        var navigationButtons = rootGrid.Elements()
+            .Where(element => element.Name.LocalName == "Button")
+            .ToArray();
+
+        Assert.AreEqual("1", scrollViewer.Attribute("Grid.Column")?.Value);
+        Assert.HasCount(2, navigationButtons);
+        Assert.IsTrue(navigationButtons.Any(button => button.Attribute("Grid.Column") is null));
+        Assert.IsTrue(navigationButtons.Any(button => button.Attribute("Grid.Column")?.Value == "2"));
+
+        var idle = LoadControl("IdleExpandedView.xaml");
+        var styledCards = idle.Descendants()
+            .Attributes("Style")
+            .Select(attribute => attribute.Value)
+            .ToArray();
+        Assert.IsGreaterThanOrEqualTo(
+            2,
+            styledCards.Count(value => value == "{StaticResource DockSectionStyle}"));
+        Assert.IsFalse(styledCards.Contains("{StaticResource IslandExpandedMetricCardStyle}"));
+
+        var music = LoadControl("ExpandedMusicView.xaml");
+        Assert.IsTrue(music.Descendants().Any(element =>
+            element.Name.LocalName == "MediaTimeline" &&
+            element.Attribute("Grid.ColumnSpan") is null));
+    }
+
+    [TestMethod]
+    public void ExpandedHost_DeactivatesSamplingWhenRemovedFromVisualTree()
+    {
+        var host = LoadControl("ExpandedModuleHost.xaml");
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "ExpandedModuleHost.xaml.cs"));
+
+        Assert.AreEqual("OnLoaded", host.Root?.Attribute("Loaded")?.Value);
+        Assert.AreEqual("OnUnloaded", host.Root?.Attribute("Unloaded")?.Value);
+        StringAssert.Contains(source, "_isHostRequestedActive && IsLoaded");
+        StringAssert.Contains(source, "aware.SetPresentationActive(false)");
+    }
+
+    [TestMethod]
+    public void SystemActivityView_ContainsPrivacyRowsWithoutAudioSliders()
     {
         var document = LoadControl("SystemActivityExpandedView.xaml");
         var sliders = document.Descendants()
             .Where(element => element.Name.LocalName == "Slider")
             .ToArray();
 
-        Assert.HasCount(2, sliders);
-        Assert.IsTrue(sliders.All(slider => slider.Attributes().Any(attribute =>
-            attribute.Name.LocalName == "AutomationProperties.Name")));
-        Assert.IsTrue(sliders.Any(slider =>
-            slider.Attribute("IsEnabled")?.Value == "{Binding IsApplicationVolumeAvailable}"));
+        Assert.IsEmpty(sliders);
+        var text = document.ToString();
+        StringAssert.Contains(text, "MicrophoneText");
+        StringAssert.Contains(text, "CameraText");
+        StringAssert.Contains(text, "CallText");
+        StringAssert.Contains(text, "OpenMicrophonePrivacySettingsCommand");
+        StringAssert.Contains(text, "OpenCameraPrivacySettingsCommand");
     }
 
     [TestMethod]
@@ -322,6 +386,79 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
+    public void ModuleSwitcher_UpdatesSelectionWithoutRebuildingTheVisualTree()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.App",
+            "Controls",
+            "ModuleSwitcher.xaml.cs"));
+
+        StringAssert.Contains(source, "OnSelectionChanged");
+        StringAssert.Contains(source, "UpdateSelectionVisuals");
+        StringAssert.Contains(source, "OnModulesChanged");
+        Assert.IsFalse(source.Contains("new PropertyMetadata(null, OnDataChanged)", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void ExpandedModuleHost_FallsBackInsteadOfCrashingOnViewLoadFailure()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.App",
+            "Controls",
+            "ExpandedModuleHost.xaml.cs"));
+
+        StringAssert.Contains(source, "catch (Exception exception)");
+        StringAssert.Contains(source, "ModuleViewLoadFailedEventArgs");
+        StringAssert.Contains(source, "CreateSafeFallbackView");
+
+        foreach (var host in new[] { "CompactModuleHost.xaml.cs", "ModuleNotificationHost.xaml.cs" })
+        {
+            var hostSource = File.ReadAllText(Path.Combine(
+                FindRepositoryRoot(),
+                "src",
+                "MiaDock.App",
+                "Controls",
+                host));
+            StringAssert.Contains(hostSource, "ModuleViewLoadFailedEventArgs");
+            StringAssert.Contains(hostSource, "catch (Exception exception)");
+        }
+    }
+
+    [TestMethod]
+    public void ExpandedShell_UsesModuleMinimumHeightAndRoundedCompositionClip()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml.cs"));
+
+        StringAssert.Contains(source, "Descriptor.MinimumExpandedHeight");
+        StringAssert.Contains(source, "Math.Clamp(Math.Max(baseLayout.ExpandedHeight, minimum), 360, 420)");
+        StringAssert.Contains(source, "RequestLayoutTransition(effective)");
+        StringAssert.Contains(source, "CreateRoundedRectangleGeometry");
+    }
+
+    [TestMethod]
+    public void RedesignedDockStates_ConsumeTheSharedDesignSystem()
+    {
+        var compact = LoadControl("IdleCompactView.xaml").ToString();
+        var hover = LoadControl("IdleHoverView.xaml").ToString();
+        var expanded = LoadControl("IdleExpandedView.xaml").ToString();
+
+        StringAssert.Contains(compact, "DockTitleTextStyle");
+        StringAssert.Contains(compact, "DockStatusBadgeStyle");
+        StringAssert.Contains(hover, "DockIconButtonStyle");
+        StringAssert.Contains(hover, "Width=\"44\"");
+        StringAssert.Contains(hover, "Height=\"44\"");
+        StringAssert.Contains(expanded, "DockDisplayTextStyle");
+        StringAssert.Contains(expanded, "DockSectionStyle");
+    }
+
+    [TestMethod]
     public void DeviceStatusViews_ArePresentAndNetworkRatesAreAccessible()
     {
         foreach (var fileName in new[]
@@ -345,4 +482,15 @@ public sealed class IslandShellTests
 
     private static XDocument LoadControl(string fileName) => XDocument.Load(
         Path.Combine(AppContext.BaseDirectory, "Controls", fileName));
+
+    private static string FindRepositoryRoot()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null && !File.Exists(Path.Combine(current.FullName, "MiaDock.sln")))
+        {
+            current = current.Parent;
+        }
+
+        return current?.FullName ?? throw new DirectoryNotFoundException("Repository root not found.");
+    }
 }

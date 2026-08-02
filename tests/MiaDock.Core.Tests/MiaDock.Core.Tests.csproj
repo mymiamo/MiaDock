@@ -4,6 +4,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="MSTest" />
+    <PackageReference Include="CommunityToolkit.Mvvm" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\MiaDock.Core\MiaDock.Core.csproj" />
@@ -28,5 +29,25 @@
              Link="App\IStoreUpdateCoordinator.cs" />
     <Compile Include="..\..\src\MiaDock.App\Services\StoreUpdateCoordinator.cs"
              Link="App\StoreUpdateCoordinator.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\FocusService.cs"
+             Link="App\FocusService.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Services\PresentationPrivacyPolicy.cs"
+             Link="App\PresentationPrivacyPolicy.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusDockViewModel.cs"
+             Link="App\FocusDockViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusProfileItemViewModel.cs"
+             Link="App\FocusProfileItemViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusSettingsProfileItemViewModel.cs"
+             Link="App\FocusSettingsProfileItemViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusProfileEditorViewModel.cs"
+             Link="App\FocusProfileEditorViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusScheduleEditorViewModel.cs"
+             Link="App\FocusScheduleEditorViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusAutomationRuleEditorViewModel.cs"
+             Link="App\FocusAutomationRuleEditorViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\FocusSettingsViewModel.cs"
+             Link="App\FocusSettingsViewModel.cs" />
+    <Compile Include="..\..\src\MiaDock.App\ViewModels\SettingOption.cs"
+             Link="App\SettingOption.cs" />
   </ItemGroup>
 </Project>

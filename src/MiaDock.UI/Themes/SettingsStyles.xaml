@@ -6,6 +6,7 @@
     <ResourceDictionary x:Key="Default">
       <SolidColorBrush x:Key="SettingsWindowBackgroundBrush" Color="Transparent" />
       <SolidColorBrush x:Key="SettingsGeneralIconBrush" Color="#FF78B9FF" />
+      <SolidColorBrush x:Key="SettingsFocusIconBrush" Color="#FF67D7C4" />
       <SolidColorBrush x:Key="SettingsModulesIconBrush" Color="#FFB69CFF" />
       <SolidColorBrush x:Key="SettingsAppearanceIconBrush" Color="#FFFF9CB5" />
       <SolidColorBrush x:Key="SettingsMediaIconBrush" Color="#FF77D9AD" />
@@ -15,6 +16,7 @@
     <ResourceDictionary x:Key="Light">
       <SolidColorBrush x:Key="SettingsWindowBackgroundBrush" Color="Transparent" />
       <SolidColorBrush x:Key="SettingsGeneralIconBrush" Color="#FF0067C0" />
+      <SolidColorBrush x:Key="SettingsFocusIconBrush" Color="#FF007D6C" />
       <SolidColorBrush x:Key="SettingsModulesIconBrush" Color="#FF744DA9" />
       <SolidColorBrush x:Key="SettingsAppearanceIconBrush" Color="#FFC42B5A" />
       <SolidColorBrush x:Key="SettingsMediaIconBrush" Color="#FF087A4E" />
@@ -25,6 +27,8 @@
       <SolidColorBrush x:Key="SettingsWindowBackgroundBrush"
                        Color="{ThemeResource SystemColorWindowColor}" />
       <SolidColorBrush x:Key="SettingsGeneralIconBrush"
+                       Color="{ThemeResource SystemColorWindowTextColor}" />
+      <SolidColorBrush x:Key="SettingsFocusIconBrush"
                        Color="{ThemeResource SystemColorWindowTextColor}" />
       <SolidColorBrush x:Key="SettingsModulesIconBrush"
                        Color="{ThemeResource SystemColorWindowTextColor}" />

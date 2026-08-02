@@ -14,7 +14,7 @@ public sealed record IslandLayoutOptions(
     public static IslandLayoutOptions Default { get; } = new(
         292, 46,
         300, 72,
-        440, 300,
+        548, 360,
         440, 92,
         23);
 }

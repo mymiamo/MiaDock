@@ -1,13 +1,15 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MiaDock.App.Services;
 using MiaDock.Modules.Media.ViewModels;
 
 namespace MiaDock.App.Controls;
 
-public sealed partial class MusicCompactView : UserControl
+public sealed partial class MusicCompactView : UserControl, IModuleViewActivationAware
 {
     private MusicModuleViewModel? _viewModel;
     private long _visibilityCallbackToken;
+    private bool _isPresentationActive;
 
     public MusicCompactView()
     {
@@ -52,7 +54,15 @@ public sealed partial class MusicCompactView : UserControl
 
     private void OnVisibilityChanged(DependencyObject sender, DependencyProperty property) => UpdateMeterActivity();
 
+    public void SetPresentationActive(bool isActive)
+    {
+        _isPresentationActive = isActive;
+        UpdateMeterActivity();
+    }
+
     private void UpdateMeterActivity() =>
-        _viewModel?.SetAudioMeterActive(this, IsLoaded && Visibility == Visibility.Visible);
+        _viewModel?.SetAudioMeterActive(
+            this,
+            IsLoaded && _isPresentationActive && Visibility == Visibility.Visible);
 
 }

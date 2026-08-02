@@ -8,6 +8,12 @@ namespace MiaDock.App.Controls;
 
 public sealed partial class MediaTimeline : UserControl
 {
+    public static readonly DependencyProperty IsCompactProperty = DependencyProperty.Register(
+        nameof(IsCompact),
+        typeof(bool),
+        typeof(MediaTimeline),
+        new PropertyMetadata(false, OnIsCompactChanged));
+
     private bool _isPointerSeeking;
 
     public MediaTimeline()
@@ -23,6 +29,25 @@ public sealed partial class MediaTimeline : UserControl
             true);
         TimelineSlider.PointerCaptureLost += OnPointerCaptureLost;
         TimelineSlider.KeyUp += OnKeyUp;
+        ApplyCompactMode();
+    }
+
+    public bool IsCompact
+    {
+        get => (bool)GetValue(IsCompactProperty);
+        set => SetValue(IsCompactProperty, value);
+    }
+
+    private static void OnIsCompactChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
+    {
+        ((MediaTimeline)dependencyObject).ApplyCompactMode();
+    }
+
+    private void ApplyCompactMode()
+    {
+        PositionTextBlock.Visibility = IsCompact ? Visibility.Collapsed : Visibility.Visible;
+        RemainingTextBlock.Visibility = IsCompact ? Visibility.Collapsed : Visibility.Visible;
+        TimelineSlider.MinWidth = IsCompact ? 0 : 140;
     }
 
     private void OnPointerPressed(object sender, PointerRoutedEventArgs args)

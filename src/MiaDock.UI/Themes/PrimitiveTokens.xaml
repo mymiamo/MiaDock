@@ -7,8 +7,8 @@
   <system:Double x:Key="IslandCollapsedHeight">46</system:Double>
   <system:Double x:Key="IslandHoverWidth">300</system:Double>
   <system:Double x:Key="IslandHoverHeight">72</system:Double>
-  <system:Double x:Key="IslandExpandedWidth">440</system:Double>
-  <system:Double x:Key="IslandExpandedHeight">210</system:Double>
+  <system:Double x:Key="IslandExpandedWidth">548</system:Double>
+  <system:Double x:Key="IslandExpandedHeight">360</system:Double>
   <system:Double x:Key="IslandNotificationWidth">360</system:Double>
   <system:Double x:Key="IslandNotificationHeight">92</system:Double>
   <system:Double x:Key="IslandArtworkSmallSize">48</system:Double>

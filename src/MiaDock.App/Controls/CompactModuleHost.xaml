@@ -1,6 +1,8 @@
 <UserControl x:Class="MiaDock.App.Controls.CompactModuleHost"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
   <Grid>
     <ContentControl x:Name="ViewHost" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" />
   </Grid>

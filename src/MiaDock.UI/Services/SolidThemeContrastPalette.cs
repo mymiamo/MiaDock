@@ -6,13 +6,15 @@ public sealed record SolidThemeContrastPalette(
     Color Primary,
     Color Secondary,
     Color Accent,
+    Color AccentForeground,
     Color Control,
     Color Stroke);
 
 public static class SolidThemeContrastPaletteFactory
 {
-    private static readonly Color LightForeground = Color.FromArgb(255, 250, 250, 252);
-    private static readonly Color DarkForeground = Color.FromArgb(255, 17, 17, 19);
+    private const double NormalTextMinimumRatio = 4.5;
+    private static readonly Color LightForeground = Color.FromArgb(255, 255, 255, 255);
+    private static readonly Color DarkForeground = Color.FromArgb(255, 0, 0, 0);
 
     public static SolidThemeContrastPalette Create(Color background, Color requestedAccent)
     {
@@ -20,12 +22,37 @@ public static class SolidThemeContrastPaletteFactory
                       ContrastRatio(DarkForeground, background)
             ? LightForeground
             : DarkForeground;
-        var secondary = Mix(background, primary, 0.72);
-        var control = Mix(background, primary, 0.11);
-        var accent = EnsureContrast(requestedAccent, background, control, primary, 3);
-        var stroke = Color.FromArgb(66, primary.R, primary.G, primary.B);
+        var control = Mix(background, primary, 0.14);
+        if (ContrastRatio(primary, control) < NormalTextMinimumRatio)
+        {
+            var opposite = primary.R > 127 ? DarkForeground : LightForeground;
+            control = Mix(background, opposite, 0.12);
+        }
+        var secondary = EnsureContrast(
+            Mix(background, primary, 0.68),
+            background,
+            control,
+            primary,
+            NormalTextMinimumRatio);
+        var accent = EnsureContrast(
+            requestedAccent,
+            background,
+            control,
+            primary,
+            NormalTextMinimumRatio);
+        var accentForeground = ContrastRatio(LightForeground, accent) >=
+                               ContrastRatio(DarkForeground, accent)
+            ? LightForeground
+            : DarkForeground;
+        var stroke = Mix(background, primary, 0.24);
 
-        return new SolidThemeContrastPalette(primary, secondary, accent, control, stroke);
+        return new SolidThemeContrastPalette(
+            primary,
+            secondary,
+            accent,
+            accentForeground,
+            control,
+            stroke);
     }
 
     public static double ContrastRatio(Color first, Color second)
@@ -43,7 +70,7 @@ public static class SolidThemeContrastPaletteFactory
         double minimumRatio)
     {
         var candidate = Color.FromArgb(255, accent.R, accent.G, accent.B);
-        for (var step = 0; step <= 20; step++)
+        for (var step = 0; step <= 32; step++)
         {
             if (ContrastRatio(candidate, surface) >= minimumRatio &&
                 ContrastRatio(candidate, control) >= minimumRatio)

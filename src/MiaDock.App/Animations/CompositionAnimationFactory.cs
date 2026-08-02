@@ -12,7 +12,9 @@ public sealed class CompositionAnimationFactory
         FrameworkElement incoming,
         FrameworkElement? outgoing,
         TimeSpan duration,
-        IslandAnimationKind animationKind,
+        MotionPreset preset,
+        double intensity,
+        double springiness,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(incoming);
@@ -47,7 +49,15 @@ public sealed class CompositionAnimationFactory
             new Vector2(0.3f, 1f));
         var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var batch = compositor.CreateScopedBatch(CompositionBatchTypes.Animation);
-        var initialScale = animationKind == IslandAnimationKind.Spring ? 0.965f : 0.98f;
+        var safeIntensity = (float)Math.Clamp(intensity, 0, 1);
+        var safeSpringiness = (float)Math.Clamp(springiness, 0, 1);
+        var initialScale = preset switch
+        {
+            MotionPreset.Minimal => 1 - (0.008f * safeIntensity),
+            MotionPreset.Springy => 1 - ((0.025f + 0.02f * safeSpringiness) * safeIntensity),
+            MotionPreset.Dynamic => 1 - ((0.035f + 0.025f * safeSpringiness) * safeIntensity),
+            _ => 1 - (0.02f * safeIntensity)
+        };
 
         incomingVisual.Opacity = 0;
         incomingVisual.Scale = new Vector3(initialScale, initialScale, 1);
@@ -106,6 +116,71 @@ public sealed class CompositionAnimationFactory
         }
     }
 
+    public Task AnimateContentAsync(
+        FrameworkElement element,
+        TimeSpan duration,
+        MotionPreset preset,
+        double intensity,
+        double springiness,
+        MotionDirection direction,
+        TimeSpan delay,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        cancellationToken.ThrowIfCancellationRequested();
+        ElementCompositionPreview.SetIsTranslationEnabled(element, true);
+        var visual = ElementCompositionPreview.GetElementVisual(element);
+        Stop(visual);
+        if (duration <= TimeSpan.Zero || preset == MotionPreset.Off)
+        {
+            Reset(visual);
+            return Task.CompletedTask;
+        }
+
+        return RunAsync();
+
+        async Task RunAsync()
+        {
+            if (delay > TimeSpan.Zero)
+            {
+                await Task.Delay(delay, cancellationToken);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            var compositor = visual.Compositor;
+            var easing = compositor.CreateCubicBezierEasingFunction(
+                preset is MotionPreset.Fluid or MotionPreset.Dynamic
+                    ? new Vector2(0.16f, 1f)
+                    : new Vector2(0.2f, 0.8f),
+                preset is MotionPreset.Springy or MotionPreset.Dynamic
+                    ? new Vector2(0.24f, 1f)
+                    : new Vector2(0.3f, 1f));
+            var directionSign = direction == MotionDirection.Previous ? -1f : 1f;
+            var distance = direction == MotionDirection.None
+                ? 0
+                : (10f + 18f * (float)Math.Clamp(intensity, 0, 1)) * directionSign;
+            var scaleOffset = (0.008f + 0.018f * (float)Math.Clamp(springiness, 0, 1)) *
+                              (float)Math.Clamp(intensity, 0, 1);
+
+            visual.Opacity = preset == MotionPreset.Minimal ? 0.72f : 0.18f;
+            SetTranslation(visual, new Vector3(distance, 0, 0));
+            visual.Scale = new Vector3(1 - scaleOffset, 1 - scaleOffset, 1);
+            StartScalar(visual, nameof(visual.Opacity), visual.Opacity, 1, duration, easing);
+            StartVector3(visual, "Translation", new Vector3(distance, 0, 0), Vector3.Zero, duration, easing);
+            StartVector3(visual, nameof(visual.Scale), visual.Scale, Vector3.One, duration, easing);
+            try
+            {
+                await Task.Delay(duration, cancellationToken);
+                Reset(visual);
+            }
+            catch (OperationCanceledException)
+            {
+                Reset(visual);
+                throw;
+            }
+        }
+    }
+
     public Task RefreshAsync(
         FrameworkElement element,
         TimeSpan duration,
@@ -138,7 +213,7 @@ public sealed class CompositionAnimationFactory
             }
             catch (OperationCanceledException)
             {
-                Stop(visual);
+                Reset(visual);
                 throw;
             }
         }
@@ -148,6 +223,14 @@ public sealed class CompositionAnimationFactory
     {
         visual.StopAnimation(nameof(visual.Opacity));
         visual.StopAnimation(nameof(visual.Scale));
+        try
+        {
+            visual.StopAnimation("Translation");
+        }
+        catch (ArgumentException)
+        {
+            // Translation is registered lazily only for content that uses it.
+        }
     }
 
     public static void Reset(Visual visual)
@@ -155,7 +238,11 @@ public sealed class CompositionAnimationFactory
         Stop(visual);
         visual.Opacity = 1;
         visual.Scale = Vector3.One;
+        SetTranslation(visual, Vector3.Zero);
     }
+
+    private static void SetTranslation(Visual visual, Vector3 value) =>
+        visual.Properties.InsertVector3("Translation", value);
 
     private static void StartScalar(
         Visual visual,

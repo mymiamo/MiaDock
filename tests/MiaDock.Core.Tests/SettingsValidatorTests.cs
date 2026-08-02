@@ -146,7 +146,7 @@ public sealed class SettingsValidatorTests
         var normalized = SettingsValidator.Normalize(old);
 
         Assert.AreEqual(ClockDisplaySettings.Default, normalized.General.Clock);
-        Assert.AreEqual(14, normalized.SchemaVersion);
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, normalized.SchemaVersion);
     }
 
     [TestMethod]
@@ -171,17 +171,22 @@ public sealed class SettingsValidatorTests
     }
 
     [TestMethod]
-    public void Normalize_ClampsExpandedHeightToAccessibleModuleMinimum()
+    public void Normalize_ClampsExpandedSizeToDashboardMinimum()
     {
         var undersized = MiaDockSettings.Default with
         {
-            Appearance = MiaDockSettings.Default.Appearance with { ExpandedHeight = 120 }
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                ExpandedWidth = 320,
+                ExpandedHeight = 120
+            }
         };
 
         var normalized = SettingsValidator.Normalize(undersized);
 
-        Assert.AreEqual(260, normalized.Appearance.ExpandedHeight);
-        Assert.IsGreaterThanOrEqualTo(260, AppearanceSettings.Default.ExpandedHeight);
+        Assert.AreEqual(548, normalized.Appearance.ExpandedWidth);
+        Assert.AreEqual(360, normalized.Appearance.ExpandedHeight);
+        Assert.IsGreaterThanOrEqualTo(360, AppearanceSettings.Default.ExpandedHeight);
     }
 
     [TestMethod]
@@ -299,6 +304,36 @@ public sealed class SettingsValidatorTests
         Assert.AreEqual(5, result.Modules["media"].EventDurationSeconds);
         Assert.IsTrue(result.Modules["system-activity"].IsEnabled);
         Assert.AreEqual(3, result.Modules["system-activity"].EventDurationSeconds);
+        Assert.IsTrue(result.Modules["volume"].IsEnabled);
+        Assert.AreEqual(2.5, result.Modules["volume"].EventDurationSeconds);
+        Assert.IsTrue(result.Modules["volume"].Options!["showOutputDeviceName"].GetBoolean());
+    }
+
+    [TestMethod]
+    public void Normalize_VolumeModule_ClampsDurationAndRepairsDeviceNameOption()
+    {
+        var modules = new Dictionary<string, ModuleSettingsEnvelope>(
+            MiaDockSettings.Default.Modules,
+            StringComparer.Ordinal)
+        {
+            ["volume"] = new(
+                1,
+                true,
+                45,
+                false,
+                new Dictionary<string, System.Text.Json.JsonElement>
+                {
+                    ["showOutputDeviceName"] =
+                        System.Text.Json.JsonSerializer.SerializeToElement("invalid")
+                })
+        };
+
+        var result = SettingsValidator.Normalize(
+            MiaDockSettings.Default with { Modules = modules });
+
+        Assert.AreEqual(10, result.Modules["volume"].EventDurationSeconds);
+        Assert.IsFalse(result.Modules["volume"].ShowInFullscreen);
+        Assert.IsTrue(result.Modules["volume"].Options!["showOutputDeviceName"].GetBoolean());
     }
 
     [TestMethod]
@@ -349,5 +384,77 @@ public sealed class SettingsValidatorTests
         Assert.IsFalse(result.StoreUpdates.AutomaticChecksEnabled);
         Assert.AreEqual(TimeSpan.Zero, result.StoreUpdates.LastCheckUtc?.Offset);
         Assert.AreEqual("1.2.0.0", result.StoreUpdates.LastNotifiedVersion);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaFourteen_AddsDefaultFocusSettingsWithoutChangingOtherPreferences()
+    {
+        var previous = MiaDockSettings.Default with
+        {
+            SchemaVersion = 14,
+            General = MiaDockSettings.Default.General with { Language = AppLanguage.English },
+            Appearance = MiaDockSettings.Default.Appearance with { AccentColor = "#123456" },
+            Focus = null!
+        };
+
+        var result = SettingsValidator.Normalize(previous);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(AppLanguage.English, result.General.Language);
+        Assert.AreEqual("#123456", result.Appearance.AccentColor);
+        Assert.AreEqual(FocusSettings.Default, result.Focus);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaSeventeen_MigratesLegacyMotionWithoutLosingAppearance()
+    {
+        var previous = MiaDockSettings.Default with
+        {
+            SchemaVersion = 17,
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                AccentColor = "#123456",
+                AnimationSpeed = 1.4,
+                AnimationKind = IslandAnimationKind.SlideFade,
+                Motion = null
+            }
+        };
+
+        var result = SettingsValidator.Normalize(previous);
+
+        Assert.AreEqual(18, result.SchemaVersion);
+        Assert.AreEqual("#123456", result.Appearance.AccentColor);
+        Assert.IsNotNull(result.Appearance.Motion);
+        Assert.AreEqual(MotionPreset.Fluid, result.Appearance.Motion.Preset);
+        Assert.AreEqual(1.4, result.Appearance.Motion.Speed, 0.001);
+    }
+
+    [TestMethod]
+    public void Normalize_ClampsAdvancedMotionSettings()
+    {
+        var invalid = MiaDockSettings.Default with
+        {
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                Motion = new MotionSettings(
+                    (MotionPreset)999,
+                    double.PositiveInfinity,
+                    -4,
+                    8,
+                    900,
+                    true,
+                    true)
+            }
+        };
+
+        var motion = SettingsValidator.Normalize(invalid).Appearance.Motion!;
+
+        Assert.AreEqual(MotionPreset.Balanced, motion.Preset);
+        Assert.AreEqual(MotionSettings.Default.Speed, motion.Speed);
+        Assert.AreEqual(0, motion.Intensity);
+        Assert.AreEqual(1, motion.Springiness);
+        Assert.AreEqual(120, motion.ContentDelayMilliseconds);
+        Assert.IsTrue(motion.EnableParallax);
+        Assert.IsTrue(motion.EnableTransientBlur);
     }
 }

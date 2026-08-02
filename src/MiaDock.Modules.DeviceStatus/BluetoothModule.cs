@@ -36,7 +36,8 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
         ModuleId, "Bluetooth", 250, "BluetoothCompactView", "BluetoothExpandedView",
         new HashSet<ModuleEventKind> { ModuleEventKind.StatusChanged },
         TimeSpan.FromSeconds(3), notificationViewKey: "BluetoothNotificationView",
-        persistentPriority: 0, isPersistent: false, iconGlyph: "\uE702");
+        persistentPriority: 0, isPersistent: false, iconGlyph: "\uE702",
+        minimumExpandedHeight: 330);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
     public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; PresentationChanged?.Invoke(this, CurrentPresentation); } }

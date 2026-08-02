@@ -9,6 +9,7 @@ public sealed class WindowsTrayIconService : ITrayIconService
     private readonly TrayNative.WindowProcedure _windowProcedure;
     private readonly string? _iconPath;
     private readonly string _windowClassName = $"MiaDock.Tray.{Guid.NewGuid():N}";
+    private readonly Dictionary<nuint, OwnerDrawMenuItem> _ownerDrawItems = new();
     private IReadOnlyList<TrayMenuItem> _items = Array.Empty<TrayMenuItem>();
     private nint _instance;
     private nint _windowHandle;
@@ -18,6 +19,12 @@ public sealed class WindowsTrayIconService : ITrayIconService
     private bool _initialized;
     private bool _disposed;
     private bool _ownsIcon;
+    private nuint _nextOwnerDrawId;
+    private nint _menuBackgroundBrush;
+    private nint _menuSelectionBrush;
+    private nint _menuSeparatorBrush;
+    private nint _menuTextFont;
+    private nint _menuIconFont;
 
     public WindowsTrayIconService(string? iconPath = null)
     {
@@ -89,6 +96,11 @@ public sealed class WindowsTrayIconService : ITrayIconService
             _icon = TrayNative.LoadIconW(0, TrayNative.IdiApplication);
         }
         _taskbarCreatedMessage = TrayNative.RegisterWindowMessageW("TaskbarCreated");
+        _menuBackgroundBrush = TrayNative.CreateSolidBrush(ColorRef(45, 51, 61));
+        _menuSelectionBrush = TrayNative.CreateSolidBrush(ColorRef(62, 72, 86));
+        _menuSeparatorBrush = TrayNative.CreateSolidBrush(ColorRef(83, 91, 104));
+        _menuTextFont = CreateMenuFont("Segoe UI", 15, 400);
+        _menuIconFont = CreateMenuFont("Segoe Fluent Icons", 16, 400);
         _initialized = true;
     }
 
@@ -146,6 +158,11 @@ public sealed class WindowsTrayIconService : ITrayIconService
             _icon = 0;
             _ownsIcon = false;
         }
+        DeleteGdiObject(ref _menuBackgroundBrush);
+        DeleteGdiObject(ref _menuSelectionBrush);
+        DeleteGdiObject(ref _menuSeparatorBrush);
+        DeleteGdiObject(ref _menuTextFont);
+        DeleteGdiObject(ref _menuIconFont);
 
         _disposed = true;
     }
@@ -212,11 +229,25 @@ public sealed class WindowsTrayIconService : ITrayIconService
             }
         }
 
+        if (message == TrayNative.WmMeasureItem &&
+            TryMeasureMenuItem(lParam))
+        {
+            return 1;
+        }
+
+        if (message == TrayNative.WmDrawItem &&
+            TryDrawMenuItem(lParam))
+        {
+            return 1;
+        }
+
         return TrayNative.DefWindowProcW(windowHandle, message, wParam, lParam);
     }
 
     private void ShowMenu()
     {
+        _ownerDrawItems.Clear();
+        _nextOwnerDrawId = 0;
         var menu = CreateMenu(_items);
         if (menu == 0)
         {
@@ -247,10 +278,11 @@ public sealed class WindowsTrayIconService : ITrayIconService
         {
             _ = TrayNative.PostMessageW(_windowHandle, TrayNative.WmNull, 0, 0);
             TrayNative.DestroyMenu(menu);
+            _ownerDrawItems.Clear();
         }
     }
 
-    private static nint CreateMenu(IReadOnlyList<TrayMenuItem> items)
+    private nint CreateMenu(IReadOnlyList<TrayMenuItem> items)
     {
         var menu = TrayNative.CreatePopupMenu();
         if (menu == 0)
@@ -258,15 +290,35 @@ public sealed class WindowsTrayIconService : ITrayIconService
             return 0;
         }
 
+        var menuInfo = new TrayNative.MenuInfo
+        {
+            Size = (uint)Marshal.SizeOf<TrayNative.MenuInfo>(),
+            Mask = TrayNative.MimBackground,
+            BackgroundBrush = _menuBackgroundBrush
+        };
+        _ = TrayNative.SetMenuInfo(menu, ref menuInfo);
+
         foreach (var item in items)
         {
+            var itemData = ++_nextOwnerDrawId;
+            _ownerDrawItems[itemData] = new OwnerDrawMenuItem(
+                item.Text,
+                item.IsSeparator,
+                item.IsEnabled,
+                item.IsChecked,
+                item.Children is { Count: > 0 },
+                item.IconGlyph);
             if (item.IsSeparator)
             {
-                _ = TrayNative.AppendMenuW(menu, TrayNative.MfSeparator, 0, null);
+                _ = TrayNative.AppendOwnerDrawMenuW(
+                    menu,
+                    TrayNative.MfSeparator | TrayNative.MfOwnerDraw,
+                    0,
+                    checked((nint)itemData));
                 continue;
             }
 
-            var flags = TrayNative.MfString;
+            var flags = TrayNative.MfOwnerDraw;
             if (!item.IsEnabled)
             {
                 flags |= TrayNative.MfGray;
@@ -281,11 +333,19 @@ public sealed class WindowsTrayIconService : ITrayIconService
             {
                 var childMenu = CreateMenu(item.Children);
                 flags |= TrayNative.MfPopup;
-                _ = TrayNative.AppendMenuW(menu, flags, (nuint)childMenu, item.Text);
+                _ = TrayNative.AppendOwnerDrawMenuW(
+                    menu,
+                    flags,
+                    checked((nuint)childMenu),
+                    checked((nint)itemData));
             }
             else
             {
-                _ = TrayNative.AppendMenuW(menu, flags, checked((nuint)item.CommandId), item.Text);
+                _ = TrayNative.AppendOwnerDrawMenuW(
+                    menu,
+                    flags,
+                    checked((nuint)item.CommandId),
+                    checked((nint)itemData));
             }
         }
 
@@ -299,4 +359,207 @@ public sealed class WindowsTrayIconService : ITrayIconService
             throw new InvalidOperationException("The tray icon service must be initialized first.");
         }
     }
+
+    private bool TryMeasureMenuItem(nint parameter)
+    {
+        var measure = Marshal.PtrToStructure<TrayNative.MeasureItem>(parameter);
+        if (measure.ControlType != TrayNative.OdtMenu ||
+            !_ownerDrawItems.TryGetValue(measure.ItemData, out var item))
+        {
+            return false;
+        }
+
+        measure.ItemHeight = item.IsSeparator ? 9u : 34u;
+        measure.ItemWidth = item.IsSeparator
+            ? 260u
+            : checked((uint)Math.Clamp(116 + item.Text.Length * 7, 260, 420));
+        Marshal.StructureToPtr(measure, parameter, false);
+        return true;
+    }
+
+    private bool TryDrawMenuItem(nint parameter)
+    {
+        var draw = Marshal.PtrToStructure<TrayNative.DrawItem>(parameter);
+        if (draw.ControlType != TrayNative.OdtMenu ||
+            !_ownerDrawItems.TryGetValue(draw.ItemData, out var item))
+        {
+            return false;
+        }
+
+        var selected = (draw.ItemState & TrayNative.OdsSelected) != 0;
+        var disabled = !item.IsEnabled ||
+                       (draw.ItemState &
+                        (TrayNative.OdsDisabled | TrayNative.OdsGrayed)) != 0;
+        var background = selected && !disabled
+            ? _menuSelectionBrush
+            : _menuBackgroundBrush;
+        var bounds = draw.ItemRectangle;
+        _ = TrayNative.FillRect(draw.DeviceContext, ref bounds, background);
+
+        if (item.IsSeparator)
+        {
+            var separator = new TrayNative.Rect
+            {
+                Left = bounds.Left + 12,
+                Top = (bounds.Top + bounds.Bottom) / 2,
+                Right = bounds.Right - 12,
+                Bottom = (bounds.Top + bounds.Bottom) / 2 + 1
+            };
+            _ = TrayNative.FillRect(
+                draw.DeviceContext,
+                ref separator,
+                _menuSeparatorBrush);
+            return true;
+        }
+
+        _ = TrayNative.SetBkMode(
+            draw.DeviceContext,
+            TrayNative.Transparent);
+        _ = TrayNative.SetTextColor(
+            draw.DeviceContext,
+            disabled
+                ? ColorRef(145, 151, 161)
+                : ColorRef(246, 247, 249));
+
+        if (!string.IsNullOrWhiteSpace(item.IconGlyph))
+        {
+            var iconBounds = new TrayNative.Rect
+            {
+                Left = bounds.Left + 10,
+                Top = bounds.Top,
+                Right = bounds.Left + 38,
+                Bottom = bounds.Bottom
+            };
+            DrawText(
+                draw.DeviceContext,
+                item.IconGlyph,
+                ref iconBounds,
+                _menuIconFont,
+                TrayNative.DtCenter);
+        }
+        else if (item.IsChecked)
+        {
+            var checkBounds = new TrayNative.Rect
+            {
+                Left = bounds.Left + 10,
+                Top = bounds.Top,
+                Right = bounds.Left + 38,
+                Bottom = bounds.Bottom
+            };
+            _ = TrayNative.SetTextColor(
+                draw.DeviceContext,
+                ColorRef(99, 158, 255));
+            DrawText(
+                draw.DeviceContext,
+                "\uE73E",
+                ref checkBounds,
+                _menuIconFont,
+                TrayNative.DtCenter);
+            _ = TrayNative.SetTextColor(
+                draw.DeviceContext,
+                disabled
+                    ? ColorRef(145, 151, 161)
+                    : ColorRef(246, 247, 249));
+        }
+
+        var textBounds = new TrayNative.Rect
+        {
+            Left = bounds.Left + 42,
+            Top = bounds.Top,
+            Right = bounds.Right - (item.HasChildren ? 30 : 12),
+            Bottom = bounds.Bottom
+        };
+        DrawText(
+            draw.DeviceContext,
+            item.Text,
+            ref textBounds,
+            _menuTextFont,
+            0);
+
+        if (item.HasChildren)
+        {
+            var arrowBounds = new TrayNative.Rect
+            {
+                Left = bounds.Right - 30,
+                Top = bounds.Top,
+                Right = bounds.Right - 8,
+                Bottom = bounds.Bottom
+            };
+            DrawText(
+                draw.DeviceContext,
+                "\uE76C",
+                ref arrowBounds,
+                _menuIconFont,
+                TrayNative.DtCenter);
+        }
+
+        return true;
+    }
+
+    private static void DrawText(
+        nint deviceContext,
+        string text,
+        ref TrayNative.Rect rectangle,
+        nint font,
+        int alignment)
+    {
+        var previousFont = font != 0
+            ? TrayNative.SelectObject(deviceContext, font)
+            : 0;
+        _ = TrayNative.DrawTextW(
+            deviceContext,
+            text,
+            text.Length,
+            ref rectangle,
+            alignment |
+            TrayNative.DtVCenter |
+            TrayNative.DtSingleLine |
+            TrayNative.DtNoPrefix);
+        if (previousFont != 0)
+        {
+            _ = TrayNative.SelectObject(deviceContext, previousFont);
+        }
+    }
+
+    private static nint CreateMenuFont(
+        string family,
+        int pixelHeight,
+        int weight) =>
+        TrayNative.CreateFontW(
+            -pixelHeight,
+            0,
+            0,
+            0,
+            weight,
+            0,
+            0,
+            0,
+            1,
+            0,
+            0,
+            5,
+            0,
+            family);
+
+    private static void DeleteGdiObject(ref nint handle)
+    {
+        if (handle == 0)
+        {
+            return;
+        }
+
+        _ = TrayNative.DeleteObject(handle);
+        handle = 0;
+    }
+
+    private static uint ColorRef(byte red, byte green, byte blue) =>
+        red | (uint)green << 8 | (uint)blue << 16;
+
+    private sealed record OwnerDrawMenuItem(
+        string Text,
+        bool IsSeparator,
+        bool IsEnabled,
+        bool IsChecked,
+        bool HasChildren,
+        string? IconGlyph);
 }

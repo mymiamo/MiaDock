@@ -13,13 +13,16 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
     private readonly IReadOnlyDictionary<IslandVisualState, FrameworkElement> _views;
     private readonly Action<IslandVisualMetrics> _applyMetrics;
     private readonly IAnimationPreferenceService _animationPreferences;
-    private readonly IslandMotionOptions _options;
-    private readonly IslandLayoutOptions _layoutOptions;
+    private IslandMotionOptions _options;
+    private IslandLayoutOptions _layoutOptions;
     private readonly IslandBoundsAnimator _boundsAnimator = new();
     private readonly CompositionAnimationFactory _compositionAnimations = new();
     private CancellationTokenSource? _animationCancellation;
+    private CancellationTokenSource? _contentCancellation;
+    private FrameworkElement? _contentAnimationTarget;
     private IslandVisualState _activeState = IslandVisualState.Collapsed;
     private long _sequence;
+    private long _contentSequence;
     private bool _disposed;
 
     public IslandAnimationCoordinator(
@@ -75,6 +78,86 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         _ = RunTransitionAsync(transition, sequence, _animationCancellation.Token);
     }
 
+    public void UpdateOptions(IslandMotionOptions options, IslandLayoutOptions layoutOptions)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(layoutOptions);
+        options.Validate();
+        _options = options;
+        _layoutOptions = layoutOptions;
+        ++_sequence;
+        CancelActiveAnimation();
+        ApplyFinalState(_activeState);
+    }
+
+    public void RequestLayoutTransition(IslandLayoutOptions layoutOptions)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(layoutOptions);
+        _layoutOptions = layoutOptions;
+        var sequence = ++_sequence;
+        CancelActiveAnimation();
+
+        if (_activeState != IslandVisualState.ExpandedModule ||
+            !_animationPreferences.AnimationsEnabled ||
+            _options.Preset == MotionPreset.Off)
+        {
+            ApplyFinalState(_activeState);
+            return;
+        }
+
+        _animationCancellation = new CancellationTokenSource();
+        _ = RunLayoutTransitionAsync(sequence, _animationCancellation.Token);
+    }
+
+    private async Task RunLayoutTransitionAsync(long sequence, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var from = new IslandVisualMetrics(
+                _layoutRoot.Width,
+                _layoutRoot.Height,
+                _surface.CornerRadius.TopLeft);
+            var to = IslandAnimationProfile.ForState(_activeState, _layoutOptions);
+            await _boundsAnimator.AnimateAsync(
+                from,
+                to,
+                _options.ContentRefreshDuration,
+                _applyMetrics,
+                cancellationToken);
+
+            if (sequence == _sequence && !cancellationToken.IsCancellationRequested)
+            {
+                ApplyFinalState(_activeState);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception)
+        {
+            if (!_disposed && sequence == _sequence)
+            {
+                ApplyFinalState(_activeState);
+            }
+        }
+        finally
+        {
+            if (sequence == _sequence)
+            {
+                _animationCancellation?.Dispose();
+                _animationCancellation = null;
+            }
+        }
+    }
+
+    public void RequestContentTransition(FrameworkElement element, MotionDirection direction) =>
+        StartContentAnimation(element, direction, refresh: false);
+
+    public void RequestContentRefresh(FrameworkElement element) =>
+        StartContentAnimation(element, MotionDirection.None, refresh: true);
+
     public void Dispose()
     {
         if (_disposed)
@@ -85,6 +168,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         _disposed = true;
         _animationPreferences.AnimationsEnabledChanged -= OnAnimationsEnabledChanged;
         CancelActiveAnimation();
+        CancelContentAnimation();
         _boundsAnimator.Dispose();
     }
 
@@ -112,7 +196,9 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
                     incoming,
                     outgoing,
                     duration,
-                    _options.AnimationKind,
+                    _options.Preset,
+                    _options.Intensity,
+                    _options.Springiness,
                     cancellationToken));
 
             if (sequence == _sequence && !cancellationToken.IsCancellationRequested)
@@ -176,6 +262,91 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         }
     }
 
+    private void StartContentAnimation(
+        FrameworkElement element,
+        MotionDirection direction,
+        bool refresh)
+    {
+        ThrowIfDisposed();
+        ArgumentNullException.ThrowIfNull(element);
+        CancelContentAnimation();
+        if (!_animationPreferences.AnimationsEnabled || _options.Preset == MotionPreset.Off)
+        {
+            CompositionAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(element));
+            return;
+        }
+
+        _contentCancellation = new CancellationTokenSource();
+        _contentAnimationTarget = element;
+        var token = _contentCancellation.Token;
+        var sequence = ++_contentSequence;
+        _ = RunContentAnimationAsync(element, direction, refresh, sequence, token);
+    }
+
+    private async Task RunContentAnimationAsync(
+        FrameworkElement element,
+        MotionDirection direction,
+        bool refresh,
+        long sequence,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (refresh)
+            {
+                await _compositionAnimations.RefreshAsync(
+                    element,
+                    _options.ContentRefreshDuration,
+                    cancellationToken);
+            }
+            else
+            {
+                await _compositionAnimations.AnimateContentAsync(
+                    element,
+                    _options.ContentRefreshDuration,
+                    _options.Preset,
+                    _options.Intensity,
+                    _options.Springiness,
+                    direction,
+                    _options.ContentDelay,
+                    cancellationToken);
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception)
+        {
+            if (!_disposed)
+            {
+                CompositionAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(element));
+            }
+        }
+        finally
+        {
+            if (sequence == _contentSequence)
+            {
+                _contentCancellation?.Dispose();
+                _contentCancellation = null;
+                _contentAnimationTarget = null;
+            }
+        }
+    }
+
+    private void CancelContentAnimation()
+    {
+        ++_contentSequence;
+        _contentCancellation?.Cancel();
+        _contentCancellation?.Dispose();
+        _contentCancellation = null;
+        if (_contentAnimationTarget is not null)
+        {
+            CompositionAnimationFactory.Reset(
+                ElementCompositionPreview.GetElementVisual(_contentAnimationTarget));
+            _contentAnimationTarget = null;
+        }
+    }
+
     private void OnAnimationsEnabledChanged(object? sender, EventArgs args)
     {
         _layoutRoot.DispatcherQueue.TryEnqueue(() =>
@@ -187,6 +358,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
             ++_sequence;
             CancelActiveAnimation();
+            CancelContentAnimation();
             ApplyFinalState(_activeState);
         });
     }

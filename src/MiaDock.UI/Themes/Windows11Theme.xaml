@@ -8,6 +8,7 @@
                 TintOpacity="0.82" />
   <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#28FFFFFF" />
   <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="{ThemeResource SystemAccentColor}" />
+  <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FFFFFFFF" />
   <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="#28FFFFFF" />
   <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#3DFFFFFF" />
   <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#52FFFFFF" />

@@ -17,6 +17,8 @@ public sealed partial class OnboardingWindow : Window
     private readonly OnboardingViewModel _viewModel;
     private readonly IAppLocalizationService _localization;
     private readonly IReadOnlyDictionary<OnboardingStep, UserControl> _pages;
+    private readonly HashSet<string> _approvedModuleIds =
+        new(StringComparer.Ordinal);
     private bool _allowClose;
     private bool _closePromptOpen;
 
@@ -94,6 +96,42 @@ public sealed partial class OnboardingWindow : Window
 
     private async void OnNextClick(object sender, RoutedEventArgs args)
     {
+        if (_viewModel.CurrentStep == OnboardingStep.Modules)
+        {
+            var selected = _viewModel.ModuleOptions
+                .Where(option =>
+                    option.CanSelectDuringOnboarding &&
+                    option.IsSelected &&
+                    !_approvedModuleIds.Contains(option.ModuleId))
+                .Select(option =>
+                    ModuleServiceDisclosureCatalog.Get(
+                        option.ModuleId,
+                        _localization))
+                .Where(disclosure =>
+                    !disclosure.RequiresWindowsPermission)
+                .ToArray();
+            if (selected.Length > 0)
+            {
+                var consentDialog = new Dialogs.ModuleServiceConsentDialog(
+                    selected,
+                    _localization,
+                    isOnboarding: true)
+                {
+                    XamlRoot = Root.XamlRoot
+                };
+                if (await consentDialog.ShowAsync() !=
+                    ContentDialogResult.Primary)
+                {
+                    return;
+                }
+
+                foreach (var disclosure in selected)
+                {
+                    _approvedModuleIds.Add(disclosure.ModuleId);
+                }
+            }
+        }
+
         if (_viewModel.IsLastStep)
         {
             NextButton.IsEnabled = false;

@@ -1,20 +1,25 @@
 <UserControl x:Class="MiaDock.App.Controls.TransferCompactView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid Padding="14,0" ColumnSpacing="10">
+  <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding Title}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="Auto" />
       <ColumnDefinition Width="*" />
       <ColumnDefinition Width="72" />
     </Grid.ColumnDefinitions>
-    <FontIcon Glyph="&#xE896;" FontSize="16" Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <FontIcon Glyph="&#xE896;" Style="{StaticResource DockModuleIconStyle}" />
     <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
       <TextBlock Text="{Binding Title}" MaxLines="1" TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandBodyTextStyle}" />
+                 Style="{StaticResource DockBodyTextStyle}"
+                 ToolTipService.ToolTip="{Binding Title}" />
       <TextBlock Text="{Binding StatusText}" MaxLines="1"
-                 Style="{StaticResource IslandCaptionTextStyle}" />
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockCaptionTextStyle}"
+                 ToolTipService.ToolTip="{Binding StatusText}" />
     </StackPanel>
     <ProgressBar Grid.Column="2" Value="{Binding Progress}" Maximum="1"
+                 Style="{StaticResource DockProgressBarStyle}"
                  VerticalAlignment="Center" AutomationProperties.Name="Aktarım ilerlemesi" />
   </Grid>
 </UserControl>

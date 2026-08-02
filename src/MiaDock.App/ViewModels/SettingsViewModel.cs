@@ -17,6 +17,7 @@ using MiaDock.Core.Threading;
 using MiaDock.Modules.Notifications.Models;
 using MiaDock.Modules.Notifications.Services;
 using MiaDock.Modules.Notifications.Settings;
+using MiaDock.Modules.SystemStatus.Settings;
 using MiaDock.Core.Updates;
 
 namespace MiaDock.App.ViewModels;
@@ -60,6 +61,12 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private double _shadowIntensity;
     private double _animationSpeed;
     private IslandAnimationKind _animationKind;
+    private MotionPreset _motionPreset;
+    private double _motionIntensity;
+    private double _motionSpringiness;
+    private double _motionContentDelayMilliseconds;
+    private bool _motionParallax;
+    private bool _motionTransientBlur;
     private string? _selectedSourceId;
     private MediaFallbackSetting _mediaFallback;
     private VolumeTargetSetting _volumeTarget;
@@ -80,6 +87,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private double _batteryLowThreshold;
     private double _batteryCriticalThreshold;
     private double _batteryEmergencyThreshold;
+    private bool _volumeShowOutputDeviceName = true;
     private bool _hotKeysEnabled;
     private HotKeyGestureSetting? _toggleDockHotKey;
     private HotKeyGestureSetting? _toggleExpandedHotKey;
@@ -168,6 +176,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<ClockDateFormat>> ClockDateFormats { get; private set; } = [];
     public IReadOnlyList<SettingOption<ThemeStyle>> Themes { get; private set; } = [];
     public IReadOnlyList<SettingOption<IslandAnimationKind>> AnimationKinds { get; private set; } = [];
+    public IReadOnlyList<SettingOption<MotionPreset>> MotionPresets { get; private set; } = [];
     public IReadOnlyList<SettingOption<MediaFallbackSetting>> MediaFallbackModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<VolumeTargetSetting>> VolumeTargets { get; private set; } = [];
     public IReadOnlyList<SettingOption<FullscreenNotificationStyle>> FullscreenStyles { get; private set; } = [];
@@ -177,7 +186,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
 
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.1.1.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.2.1.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
@@ -188,6 +197,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public double BatteryLowThreshold { get => _batteryLowThreshold; set => SetBatteryThreshold(value, ref _batteryLowThreshold, ThresholdKind.Low); }
     public double BatteryCriticalThreshold { get => _batteryCriticalThreshold; set => SetBatteryThreshold(value, ref _batteryCriticalThreshold, ThresholdKind.Critical); }
     public double BatteryEmergencyThreshold { get => _batteryEmergencyThreshold; set => SetBatteryThreshold(value, ref _batteryEmergencyThreshold, ThresholdKind.Emergency); }
+    public bool VolumeShowOutputDeviceName
+    {
+        get => _volumeShowOutputDeviceName;
+        set => SetVolumeShowOutputDeviceName(value);
+    }
     public bool HotKeysEnabled { get => _hotKeysEnabled; set => Set(value, ref _hotKeysEnabled, s => s with { HotKeys = s.HotKeys with { IsEnabled = value } }); }
     public HotKeyGestureSetting? ToggleDockHotKey { get => _toggleDockHotKey; set => SetHotKey(HotKeyAction.ToggleDock, value, ref _toggleDockHotKey); }
     public HotKeyGestureSetting? ToggleExpandedHotKey { get => _toggleExpandedHotKey; set => SetHotKey(HotKeyAction.ToggleExpanded, value, ref _toggleExpandedHotKey); }
@@ -345,6 +359,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(ThemeDescription));
             OnPropertyChanged(nameof(IsBlurredGlassTheme));
             OnPropertyChanged(nameof(IsBackgroundColorEditable));
+            OnPropertyChanged(nameof(IsAccentColorEditable));
             if (_synchronizing) return;
             var appearance = AppearanceThemePresets.ApplyWhenSafe(
                 _settingsService.Current.Appearance,
@@ -372,13 +387,23 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ThemeStyle.BlurredGlass => _localization.Text(
             "Arkasındaki masaüstünü gösteren renksiz, saydam ve bulanık cam.",
             "Colorless transparent glass that reveals and blurs the desktop behind it."),
+        ThemeStyle.OledBlack => _localization.Text(
+            "Saf siyah, gölgesiz ve OLED ekranlar için verimli yüzey.",
+            "Pure black, shadow-free surface optimized for OLED displays."),
+        ThemeStyle.NeutralFrostedGlass => _localization.Text(
+            "Renk tonu eklemeden masaüstünü gösteren nötr buzlu cam.",
+            "Neutral frosted glass that reveals the desktop without a color tint."),
+        ThemeStyle.AdaptiveFluent => _localization.Text(
+            "Windows açık/koyu modu ve vurgu rengiyle otomatik uyum sağlar.",
+            "Automatically follows the Windows light/dark mode and accent color."),
         ThemeStyle.CustomSolidColor => _localization.Text(
             "Seçtiğiniz arka plan ve vurgu renklerini kullanan düz yüzey.",
             "A solid surface using your selected background and accent colors."),
         _ => string.Empty
     };
-    public bool IsBlurredGlassTheme => Theme == ThemeStyle.BlurredGlass;
-    public bool IsBackgroundColorEditable => !IsBlurredGlassTheme;
+    public bool IsBlurredGlassTheme => Theme.UsesColorlessGlass();
+    public bool IsBackgroundColorEditable => Theme.Descriptor().Capabilities.SupportsBackgroundColor;
+    public bool IsAccentColorEditable => Theme.Descriptor().Capabilities.SupportsAccentColor;
     public double CollapsedWidth { get => _collapsedWidth; set => Set(value, ref _collapsedWidth, s => s with { Appearance = s.Appearance with { CollapsedWidth = value } }); }
     public double CollapsedHeight { get => _collapsedHeight; set => Set(value, ref _collapsedHeight, s => s with { Appearance = s.Appearance with { CollapsedHeight = value } }); }
     public double HoverWidth { get => _hoverWidth; set => Set(value, ref _hoverWidth, s => s with { Appearance = s.Appearance with { HoverWidth = value } }); }
@@ -392,8 +417,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public string AccentColor { get => _accentColor; set => Set(value, ref _accentColor, s => s with { Appearance = s.Appearance with { AccentColor = value } }); }
     public double Opacity { get => _opacity; set => Set(value, ref _opacity, s => s with { Appearance = s.Appearance with { Opacity = value } }); }
     public double ShadowIntensity { get => _shadowIntensity; set => Set(value, ref _shadowIntensity, s => s with { Appearance = s.Appearance with { ShadowIntensity = value } }); }
-    public double AnimationSpeed { get => _animationSpeed; set => Set(value, ref _animationSpeed, s => s with { Appearance = s.Appearance with { AnimationSpeed = value } }); }
+    public double AnimationSpeed { get => _animationSpeed; set => Set(value, ref _animationSpeed, s => s with { Appearance = s.Appearance with { AnimationSpeed = value, Motion = ResolveMotion(s.Appearance) with { Speed = value } } }); }
     public IslandAnimationKind AnimationKind { get => _animationKind; set { Set(value, ref _animationKind, s => s with { Appearance = s.Appearance with { AnimationKind = value } }); OnPropertyChanged(nameof(AnimationKindIndex)); } }
+    public MotionPreset MotionPreset { get => _motionPreset; set { Set(value, ref _motionPreset, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { Preset = value } } }); OnPropertyChanged(nameof(MotionPresetIndex)); } }
+    public double MotionIntensity { get => _motionIntensity; set => Set(value, ref _motionIntensity, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { Intensity = value } } }); }
+    public double MotionSpringiness { get => _motionSpringiness; set => Set(value, ref _motionSpringiness, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { Springiness = value } } }); }
+    public double MotionContentDelayMilliseconds { get => _motionContentDelayMilliseconds; set => Set(value, ref _motionContentDelayMilliseconds, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { ContentDelayMilliseconds = checked((int)Math.Round(value)) } } }); }
+    public bool MotionParallax { get => _motionParallax; set => Set(value, ref _motionParallax, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { EnableParallax = value } } }); }
+    public bool MotionTransientBlur { get => _motionTransientBlur; set => Set(value, ref _motionTransientBlur, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { EnableTransientBlur = value } } }); }
     public string? SelectedSourceId { get => _selectedSourceId; set { Set(value, ref _selectedSourceId, s => s with { Media = s.Media with { SelectedSourceId = value } }); OnPropertyChanged(nameof(MediaSourceIndex)); } }
     public MediaFallbackSetting MediaFallback { get => _mediaFallback; set { Set(value, ref _mediaFallback, s => s with { Media = s.Media with { Fallback = value } }); OnPropertyChanged(nameof(MediaFallbackIndex)); } }
     public VolumeTargetSetting VolumeTarget { get => _volumeTarget; set { Set(value, ref _volumeTarget, s => s with { Media = s.Media with { VolumeTarget = value } }); OnPropertyChanged(nameof(VolumeTargetIndex)); } }
@@ -430,6 +461,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public int ClockDateFormatIndex { get => IndexOf(ClockDateFormats, ClockDateFormat); set => ClockDateFormat = ValueAt(ClockDateFormats, value, ClockDateFormat); }
     public int ThemeIndex { get => IndexOf(Themes, Theme); set => Theme = ValueAt(Themes, value, Theme); }
     public int AnimationKindIndex { get => IndexOf(AnimationKinds, AnimationKind); set => AnimationKind = ValueAt(AnimationKinds, value, AnimationKind); }
+    public int MotionPresetIndex { get => IndexOf(MotionPresets, MotionPreset); set => MotionPreset = ValueAt(MotionPresets, value, MotionPreset); }
     public int MediaFallbackIndex { get => IndexOf(MediaFallbackModes, MediaFallback); set => MediaFallback = ValueAt(MediaFallbackModes, value, MediaFallback); }
     public int VolumeTargetIndex { get => IndexOf(VolumeTargets, VolumeTarget); set => VolumeTarget = ValueAt(VolumeTargets, value, VolumeTarget); }
     public int FullscreenStyleIndex { get => IndexOf(FullscreenStyles, FullscreenStyle); set => FullscreenStyle = ValueAt(FullscreenStyles, value, FullscreenStyle); }
@@ -519,7 +551,17 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private void RebuildLocalizedOptions()
     {
         string L(string turkish, string english) => _localization.Text(turkish, english);
-        Languages = [new(AppLanguage.Turkish, "Türkçe"), new(AppLanguage.English, "English")];
+        if (Languages.Count == 0)
+        {
+            // These labels are intentionally language-invariant. Keeping the
+            // same collection instance prevents the active ComboBox selection
+            // from briefly becoming empty during a live language switch.
+            Languages =
+            [
+                new(AppLanguage.Turkish, "Türkçe"),
+                new(AppLanguage.English, "English")
+            ];
+        }
         VisibilityModes =
         [
             new(IslandVisibilityMode.Always, L("Her zaman görünür", "Always visible")),
@@ -553,11 +595,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         Themes =
         [
             new(ThemeStyle.AppleLike, L("Apple benzeri", "Apple-like")),
+            new(ThemeStyle.OledBlack, "OLED Black"),
             new(ThemeStyle.Windows11Mica, "Windows 11 Mica"),
             new(ThemeStyle.Windows11MicaAlt, "Windows 11 Mica Alt"),
             new(ThemeStyle.Windows11Acrylic, "Windows 11 Acrylic"),
             new(ThemeStyle.Windows11AcrylicThin, "Windows 11 Acrylic Thin"),
             new(ThemeStyle.BlurredGlass, L("Bulanık Cam", "Blurred Glass")),
+            new(ThemeStyle.NeutralFrostedGlass, L("Nötr Buzlu Cam", "Neutral Frosted Glass")),
+            new(ThemeStyle.AdaptiveFluent, "Adaptive Fluent"),
             new(ThemeStyle.CustomSolidColor, L("Özel Düz Renk", "Custom solid color"))
         ];
         AnimationKinds =
@@ -565,6 +610,15 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             new(IslandAnimationKind.Spring, L("Yay", "Spring")),
             new(IslandAnimationKind.ScaleFade, L("Ölçek ve solma", "Scale and fade")),
             new(IslandAnimationKind.SlideFade, L("Kayma ve solma", "Slide and fade"))
+        ];
+        MotionPresets =
+        [
+            new(MotionPreset.Off, L("Kapalı", "Off")),
+            new(MotionPreset.Minimal, L("Minimal", "Minimal")),
+            new(MotionPreset.Balanced, L("Dengeli", "Balanced")),
+            new(MotionPreset.Fluid, L("Akıcı", "Fluid")),
+            new(MotionPreset.Springy, L("Yaylı", "Springy")),
+            new(MotionPreset.Dynamic, L("Dinamik", "Dynamic"))
         ];
         MediaFallbackModes =
         [
@@ -603,14 +657,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                  {
                      nameof(Languages), nameof(VisibilityModes), nameof(InteractionModes), nameof(Positions),
                      nameof(ClockHourFormats), nameof(ClockDateFormats),
-                     nameof(Themes), nameof(AnimationKinds), nameof(MediaFallbackModes), nameof(VolumeTargets),
+                     nameof(Themes), nameof(AnimationKinds), nameof(MotionPresets), nameof(MediaFallbackModes), nameof(VolumeTargets),
                      nameof(FullscreenStyles), nameof(MonitorModes), nameof(LaunchModes), nameof(CloseBehaviors),
                      nameof(LanguageIndex), nameof(VisibilityModeIndex), nameof(InteractionModeIndex),
                      nameof(PositionIndex), nameof(ClockHourFormatIndex), nameof(ClockDateFormatIndex),
-                     nameof(ThemeIndex), nameof(AnimationKindIndex),
+                     nameof(ThemeIndex), nameof(AnimationKindIndex), nameof(MotionPresetIndex),
                      nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex),
                      nameof(MonitorModeIndex), nameof(LaunchModeIndex), nameof(CloseBehaviorIndex),
-                     nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable),
+                     nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable), nameof(IsAccentColorEditable),
                      nameof(StoreUpdateStatusMessage), nameof(StoreUpdateVersionText)
                  })
         {
@@ -676,6 +730,13 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             ShadowIntensity = settings.Appearance.ShadowIntensity;
             AnimationSpeed = settings.Appearance.AnimationSpeed;
             AnimationKind = settings.Appearance.AnimationKind;
+            var motion = ResolveMotion(settings.Appearance);
+            MotionPreset = motion.Preset;
+            MotionIntensity = motion.Intensity;
+            MotionSpringiness = motion.Springiness;
+            MotionContentDelayMilliseconds = motion.ContentDelayMilliseconds;
+            MotionParallax = motion.EnableParallax;
+            MotionTransientBlur = motion.EnableTransientBlur;
             SelectedSourceId = settings.Media.SelectedSourceId;
             MediaFallback = settings.Media.Fallback;
             VolumeTarget = settings.Media.VolumeTarget;
@@ -696,6 +757,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             BatteryLowThreshold = batteryOptions.LowThresholdPercent;
             BatteryCriticalThreshold = batteryOptions.CriticalThresholdPercent;
             BatteryEmergencyThreshold = batteryOptions.EmergencyThresholdPercent;
+            var volumeOptions = VolumeModuleOptions.FromEnvelope(
+                settings.Modules.TryGetValue("volume", out var volumeEnvelope)
+                    ? volumeEnvelope
+                    : null);
+            VolumeShowOutputDeviceName = volumeOptions.ShowOutputDeviceName;
             HotKeysEnabled = settings.HotKeys.IsEnabled;
             ToggleDockHotKey = GetHotKey(settings, HotKeyAction.ToggleDock);
             ToggleExpandedHotKey = GetHotKey(settings, HotKeyAction.ToggleExpanded);
@@ -744,6 +810,13 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             ShadowIntensity = appearance.ShadowIntensity;
             AnimationSpeed = appearance.AnimationSpeed;
             AnimationKind = appearance.AnimationKind;
+            var motion = ResolveMotion(appearance);
+            MotionPreset = motion.Preset;
+            MotionIntensity = motion.Intensity;
+            MotionSpringiness = motion.Springiness;
+            MotionContentDelayMilliseconds = motion.ContentDelayMilliseconds;
+            MotionParallax = motion.EnableParallax;
+            MotionTransientBlur = motion.EnableTransientBlur;
         }
         finally
         {
@@ -766,7 +839,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                      nameof(NotificationWidth), nameof(NotificationHeight), nameof(CornerRadius),
                      nameof(BackgroundColor), nameof(AccentColor), nameof(Opacity), nameof(ShadowIntensity),
                      nameof(AnimationSpeed), nameof(AnimationKind), nameof(AnimationKindIndex),
-                     nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable)
+                     nameof(MotionPreset), nameof(MotionPresetIndex), nameof(MotionIntensity),
+                     nameof(MotionSpringiness), nameof(MotionContentDelayMilliseconds),
+                     nameof(MotionParallax), nameof(MotionTransientBlur),
+                     nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable), nameof(IsAccentColorEditable)
                  })
         {
             OnPropertyChanged(propertyName);
@@ -787,6 +863,28 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                 : ModuleSettingsEnvelope.BatteryDefault;
             modules["battery"] = BatteryModuleOptions.ApplyThresholds(envelope, low, critical, emergency);
             return settings with { Modules = modules };
+        });
+    }
+
+    private static MotionSettings ResolveMotion(AppearanceSettings appearance) =>
+        appearance.Motion ?? MotionSettings.FromLegacy(
+            appearance.AnimationKind,
+            appearance.AnimationSpeed);
+
+    private void SetVolumeShowOutputDeviceName(bool value)
+    {
+        if (!SetProperty(ref _volumeShowOutputDeviceName, value) || _synchronizing)
+        {
+            return;
+        }
+
+        UpdateModuleEnvelope("volume", envelope =>
+        {
+            var options = VolumeModuleOptions.FromEnvelope(envelope) with
+            {
+                ShowOutputDeviceName = value
+            };
+            return VolumeModuleOptions.ToEnvelope(options, envelope.IsEnabled);
         });
     }
 
@@ -917,6 +1015,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     {
         "media" => ModuleSettingsEnvelope.MediaDefault,
         "system-activity" => ModuleSettingsEnvelope.SystemActivityDefault,
+        "volume" => ModuleSettingsEnvelope.VolumeDefault,
         "battery" => ModuleSettingsEnvelope.BatteryDefault,
         "network" => ModuleSettingsEnvelope.NetworkDefault,
         "bluetooth" => ModuleSettingsEnvelope.BluetoothDefault,
@@ -929,7 +1028,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private static IReadOnlyList<ModuleDefinition> ModuleDefinitions() =>
     [
         new("media", "Medya", "Media", "Windows medya oturumları ve oynatma denetimleri.", "Windows media sessions and playback controls.", "\uE8D6"),
-        new("system-activity", "Ses, mikrofon, kamera ve arama", "Audio, microphone, camera and calls", "Ses durumunu ve gizlilik göstergelerini yerel olarak izler.", "Locally monitors audio state and privacy indicators.", "\uE767"),
+        new("volume", "Windows ana sesi", "Windows master volume", "Ses değişikliklerini gösterir ve ana ses seviyesini denetler.", "Shows volume changes and controls the Windows master volume.", "\uE995"),
+        new("system-activity", "Mikrofon, kamera ve arama", "Microphone, camera and calls", "Gizlilik göstergelerini ve iletişim etkinliğini yerel olarak izler.", "Locally monitors privacy indicators and communication activity.", "\uE767"),
         new("battery", "Pil", "Battery", "Şarj, enerji tasarrufu ve pil eşiklerini gösterir.", "Shows charging, energy saver and battery thresholds.", "\uE850"),
         new("network", "Ağ", "Network", "Bağlantı türünü ve görünürken aktarım hızını gösterir.", "Shows connection type and throughput while visible.", "\uE968"),
         new("bluetooth", "Bluetooth", "Bluetooth", "Eşleştirilmiş cihaz bağlantı durumlarını izler.", "Monitors paired device connection states.", "\uE702"),

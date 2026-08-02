@@ -2,16 +2,17 @@
     x:Class="MiaDock.App.Controls.IdleExpandedView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:MiaDock.App.Controls"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded">
 
   <Grid x:Name="LayoutRoot"
-        Padding="16,4,16,12"
-        RowSpacing="9"
+        Padding="16,8,16,6"
+        RowSpacing="7"
         AutomationProperties.LiveSetting="Polite">
     <Grid.RowDefinitions>
-      <RowDefinition Height="50" />
-      <RowDefinition Height="64" />
+      <RowDefinition Height="48" />
+      <RowDefinition Height="36" />
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
@@ -22,186 +23,175 @@
       </Grid.ColumnDefinitions>
       <TextBlock x:Name="TimeText"
                  VerticalAlignment="Center"
+                 Style="{StaticResource DockDisplayTextStyle}"
                  FontFamily="Segoe UI Variable Display"
                  FontSize="30"
-                 FontWeight="SemiBold"
+                 FontWeight="Bold"
                  Foreground="{ThemeResource IslandTextPrimaryBrush}" />
       <StackPanel Grid.Column="1"
                   VerticalAlignment="Center"
-                  Spacing="1">
+                  Spacing="0">
         <TextBlock x:Name="DateText"
-                   FontSize="12"
+                   FontFamily="Segoe UI Variable Text"
+                   FontSize="17"
                    FontWeight="SemiBold"
                    Foreground="{ThemeResource IslandTextPrimaryBrush}" />
-        <TextBlock Text="{Binding StatusSummary}"
+        <TextBlock Text="{Binding NetworkStatus}"
                    MaxLines="1"
                    TextTrimming="CharacterEllipsis"
-                   Style="{StaticResource IslandCaptionTextStyle}" />
+                   Style="{StaticResource DockCaptionTextStyle}" />
       </StackPanel>
     </Grid>
 
-    <Grid Grid.Row="1" ColumnSpacing="7">
+    <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                Spacing="10"
+                VerticalAlignment="Center">
+      <StackPanel x:Name="NetworkCard"
+                  Orientation="Horizontal"
+                  Spacing="6"
+                  VerticalAlignment="Center">
+        <FontIcon Glyph="{Binding NetworkGlyph}"
+                  FontSize="14"
+                  Foreground="{Binding NetworkStatusBrush}" />
+        <TextBlock Text="{Binding NetworkStatus}"
+                   MaxWidth="122"
+                   MaxLines="1"
+                   TextTrimming="CharacterEllipsis"
+                   Style="{StaticResource DockStatusTextStyle}" />
+      </StackPanel>
+
+      <Border Width="1" Height="20" Background="{ThemeResource DockDividerBrush}" />
+
+      <StackPanel x:Name="BluetoothCard"
+                  Orientation="Horizontal"
+                  Spacing="6"
+                  VerticalAlignment="Center">
+        <FontIcon Glyph="&#xE702;" FontSize="14" />
+        <TextBlock Text="{Binding BluetoothStatus}"
+                   MaxWidth="118"
+                   MaxLines="1"
+                   TextTrimming="CharacterEllipsis"
+                   Style="{StaticResource DockStatusTextStyle}" />
+      </StackPanel>
+
+      <Border Width="1" Height="20" Background="{ThemeResource DockDividerBrush}" />
+
+      <StackPanel x:Name="BatteryCard"
+                  Orientation="Horizontal"
+                  Spacing="6"
+                  VerticalAlignment="Center">
+        <FontIcon Glyph="{Binding BatteryGlyph}" FontSize="14" />
+        <TextBlock Text="{Binding BatteryText}"
+                   MaxLines="1"
+                   Style="{StaticResource DockStatusTextStyle}" />
+      </StackPanel>
+
+      <Border Width="1" Height="20" Background="{ThemeResource DockDividerBrush}" />
+
+      <Grid x:Name="SystemCard" VerticalAlignment="Center">
+        <StackPanel x:Name="SystemStatusPanel"
+                    Orientation="Horizontal"
+                    Spacing="6">
+          <FontIcon Glyph="{Binding MasterVolumeGlyph}" FontSize="14" />
+          <TextBlock Text="{Binding MasterVolumeText}"
+                     MaxLines="1"
+                     Style="{StaticResource DockStatusTextStyle}" />
+        </StackPanel>
+      </Grid>
+    </StackPanel>
+
+    <Grid Grid.Row="2" ColumnSpacing="10">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="170" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 
-      <Border x:Name="NetworkCard"
-              Padding="8,7"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              CornerRadius="10">
-        <StackPanel Spacing="4">
-          <FontIcon Glyph="{Binding NetworkGlyph}"
-                    HorizontalAlignment="Left"
-                    FontSize="15"
-                    Foreground="{Binding NetworkStatusBrush}" />
-          <TextBlock Text="{Binding NetworkStatus}"
-                     MaxLines="1"
-                     TextTrimming="CharacterEllipsis"
-                     FontSize="9"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-        </StackPanel>
+      <Border x:Name="FocusCard"
+              Style="{StaticResource DockSectionStyle}"
+              Padding="10,6">
+        <local:FocusQuickPanel x:Name="FocusPanel" />
       </Border>
 
-      <Border x:Name="BatteryCard"
+      <Border x:Name="MusicPanel"
               Grid.Column="1"
-              Padding="8,7"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              CornerRadius="10"
-              Visibility="{Binding BatteryVisibility}">
-        <StackPanel Spacing="4">
-          <FontIcon Glyph="{Binding BatteryGlyph}"
-                    HorizontalAlignment="Left"
-                    FontSize="15" />
-          <TextBlock Text="{Binding BatteryText}"
-                     FontSize="9"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-        </StackPanel>
-      </Border>
+              Style="{StaticResource DockSectionStyle}"
+              Padding="10">
+        <Grid ColumnSpacing="12">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="142" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
 
-      <Border x:Name="BluetoothCard"
-              Grid.Column="2"
-              Padding="8,7"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              CornerRadius="10">
-        <StackPanel Spacing="4">
-          <FontIcon Glyph="&#xE702;"
-                    HorizontalAlignment="Left"
-                    FontSize="15" />
-          <TextBlock Text="{Binding BluetoothStatus}"
-                     MaxLines="1"
-                     TextTrimming="CharacterEllipsis"
-                     FontSize="9"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-        </StackPanel>
-      </Border>
+          <Grid Width="142" Height="142" VerticalAlignment="Center">
+            <Border x:Name="EmptyArtwork"
+                    Background="{ThemeResource IslandSurfaceSecondaryBrush}"
+                    BorderBrush="{ThemeResource DockSurfaceStrokeBrush}"
+                    BorderThickness="1"
+                    CornerRadius="16" />
+            <local:AlbumArtwork x:Name="MediaArtwork"
+                                Width="142"
+                                Height="142" />
+          </Grid>
 
-      <Border x:Name="SystemCard"
-              Grid.Column="3"
-              Padding="8,7"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              CornerRadius="10">
-        <StackPanel x:Name="SystemStatusPanel" Spacing="4">
-          <FontIcon Glyph="{Binding MasterVolumeGlyph}"
-                    HorizontalAlignment="Left"
-                    FontSize="15" />
-          <TextBlock Text="{Binding MasterVolumeText}"
-                     FontSize="9"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-        </StackPanel>
+          <Grid Grid.Column="1" RowSpacing="5">
+            <Grid.RowDefinitions>
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="*" />
+              <RowDefinition Height="Auto" />
+              <RowDefinition Height="44" />
+            </Grid.RowDefinitions>
+
+            <Grid>
+              <TextBlock Text="Şimdi Çalıyor"
+                         Style="{StaticResource DockCaptionTextStyle}" />
+              <local:AudioActivityIndicator x:Name="MusicActivity"
+                                            HorizontalAlignment="Right"
+                                            Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                                            LeftLevel="{Binding LeftAudioLevel}"
+                                            CenterLevel="{Binding CenterAudioLevel}"
+                                            RightLevel="{Binding RightAudioLevel}"
+                                            IsPlaying="{Binding HasAudioActivity}"
+                                            IsAudioAvailable="{Binding IsAudioLevelAvailable}" />
+            </Grid>
+
+            <StackPanel x:Name="MediaMetadataPanel"
+                        Grid.Row="1"
+                        MinWidth="0"
+                        VerticalAlignment="Center"
+                        Spacing="2">
+              <TextBlock Text="{Binding Current.Track.Title}"
+                         MaxLines="2"
+                         TextTrimming="CharacterEllipsis"
+                         Style="{StaticResource DockTitleTextStyle}"
+                         ToolTipService.ToolTip="{Binding Current.Track.Title}" />
+              <TextBlock Text="{Binding Current.Track.Artist}"
+                         MaxLines="1"
+                         TextTrimming="CharacterEllipsis"
+                         Style="{StaticResource DockCaptionTextStyle}"
+                         ToolTipService.ToolTip="{Binding Current.Track.Artist}" />
+            </StackPanel>
+
+            <StackPanel x:Name="MediaEmptyPanel"
+                        Grid.Row="1"
+                        VerticalAlignment="Center"
+                        Spacing="3">
+              <TextBlock Text="Şu an çalınan medya yok"
+                         MaxLines="2"
+                         Style="{StaticResource DockTitleTextStyle}" />
+              <TextBlock Text="Desteklenen bir uygulamada medya oynatın."
+                         MaxLines="2"
+                         Style="{StaticResource DockCaptionTextStyle}" />
+            </StackPanel>
+
+            <local:MediaTimeline Grid.Row="2" IsCompact="True" />
+
+            <local:MediaTransportControls Grid.Row="3"
+                                          HorizontalAlignment="Center"
+                                          VerticalAlignment="Bottom" />
+          </Grid>
+        </Grid>
       </Border>
     </Grid>
-
-    <Border x:Name="MusicPanel"
-            Grid.Row="2"
-            Padding="11,8"
-            Background="{ThemeResource IslandStyleControlBrush}"
-            CornerRadius="12">
-      <Grid ColumnSpacing="10">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto" />
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <FontIcon Glyph="&#xE8D6;"
-                  VerticalAlignment="Center"
-                  FontSize="18"
-                  Foreground="{ThemeResource IslandTextPrimaryBrush}" />
-        <StackPanel Grid.Column="1"
-                    MinWidth="0"
-                    VerticalAlignment="Center"
-                    Spacing="1">
-          <TextBlock Text="{Binding Current.Track.Title}"
-                     MaxLines="1"
-                     TextTrimming="CharacterEllipsis"
-                     FontSize="12"
-                     FontWeight="SemiBold"
-                     Foreground="{ThemeResource IslandTextPrimaryBrush}" />
-          <TextBlock Text="{Binding Current.Track.Artist}"
-                     MaxLines="1"
-                     TextTrimming="CharacterEllipsis"
-                     FontSize="9"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-        </StackPanel>
-        <StackPanel Grid.Column="2"
-                    Orientation="Horizontal"
-                    VerticalAlignment="Center"
-                    Spacing="3">
-          <Button Width="28" Height="28"
-                  Style="{StaticResource IslandCompactIconButtonStyle}"
-                  Command="{Binding PreviousCommand}"
-                  ToolTipService.ToolTip="Önceki parça"
-                  AutomationProperties.Name="Önceki parça">
-            <FontIcon Glyph="&#xE892;" FontSize="10" />
-          </Button>
-          <Button Width="30" Height="30"
-                  Style="{StaticResource IslandCompactIconButtonStyle}"
-                  Command="{Binding PlayPauseCommand}"
-                  ToolTipService.ToolTip="Oynat veya duraklat"
-                  AutomationProperties.Name="Oynat veya duraklat">
-            <FontIcon Glyph="{Binding PlaybackGlyph}" FontSize="11" />
-          </Button>
-          <Button Width="28" Height="28"
-                  Style="{StaticResource IslandCompactIconButtonStyle}"
-                  Command="{Binding NextCommand}"
-                  ToolTipService.ToolTip="Sonraki parça"
-                  AutomationProperties.Name="Sonraki parça">
-            <FontIcon Glyph="&#xE893;" FontSize="10" />
-          </Button>
-        </StackPanel>
-      </Grid>
-    </Border>
-
-    <Border x:Name="IdlePanel"
-            Grid.Row="2"
-            Padding="12"
-            Background="{ThemeResource IslandStyleControlBrush}"
-            CornerRadius="12">
-      <Grid ColumnSpacing="10">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <FontIcon Glyph="&#xE823;"
-                  VerticalAlignment="Center"
-                  FontSize="17"
-                  Foreground="{ThemeResource IslandStyleAccentBrush}" />
-        <StackPanel Grid.Column="1"
-                    VerticalAlignment="Center"
-                    Spacing="1">
-          <TextBlock Text="Ana dock"
-                     FontSize="11"
-                     FontWeight="SemiBold"
-                     Foreground="{ThemeResource IslandTextPrimaryBrush}" />
-          <TextBlock Text="Bir modüle geçmek için üstteki simgeleri veya kaydırmayı kullanın."
-                     MaxLines="1"
-                     TextTrimming="CharacterEllipsis"
-                     FontSize="9"
-                     Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-        </StackPanel>
-      </Grid>
-    </Border>
   </Grid>
 </UserControl>

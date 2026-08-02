@@ -21,12 +21,14 @@ public sealed class SystemActivityModuleTests
         Assert.IsFalse(module.Descriptor.IsPersistent);
         Assert.AreEqual("system-activity", module.CurrentPresentation?.ModuleId);
         Assert.AreEqual(ModulePresentationKind.Status, module.CurrentPresentation?.PresentationKind);
-        Assert.AreEqual("%40", module.CurrentPresentation?.ValueText);
+        Assert.AreEqual(string.Empty, module.CurrentPresentation?.ValueText);
+        Assert.AreEqual("\uE83D", module.Descriptor.IconGlyph);
+        Assert.AreEqual(340, module.Descriptor.MinimumExpandedHeight);
         Assert.IsFalse(module.CurrentPresentation?.IsPersistentOverride);
     }
 
     [TestMethod]
-    public async Task MasterVolumeChange_RaisesLowPriorityCoalescedEvent()
+    public async Task MasterVolumeChange_DoesNotDuplicateDedicatedVolumeEvent()
     {
         var service = new FakeSystemActivityService(CreateSnapshot());
         var module = new SystemActivityModule(service, new SystemActivityViewModel(service));
@@ -36,10 +38,7 @@ public sealed class SystemActivityModuleTests
 
         service.Publish(CreateSnapshot() with { MasterVolume = 0.75 });
 
-        Assert.IsNotNull(raised);
-        Assert.AreEqual(ModuleEventPriority.Low, raised.Priority);
-        Assert.AreEqual("system:master-volume", raised.CoalescingKey);
-        Assert.AreEqual("%75", raised.Presentation.ValueText);
+        Assert.IsNull(raised);
     }
 
     [TestMethod]
@@ -66,7 +65,7 @@ public sealed class SystemActivityModuleTests
     }
 
     [TestMethod]
-    public async Task ApplicationVolumeChange_RaisesSeparateLowPriorityEvent()
+    public async Task ApplicationVolumeChange_DoesNotLeakIntoPrivacyModule()
     {
         var service = new FakeSystemActivityService(CreateSnapshot());
         var module = new SystemActivityModule(service, new SystemActivityViewModel(service));
@@ -76,10 +75,7 @@ public sealed class SystemActivityModuleTests
 
         service.Publish(CreateSnapshot() with { ApplicationVolume = 0.25 });
 
-        Assert.IsNotNull(raised);
-        Assert.AreEqual("system:application-volume", raised.CoalescingKey);
-        Assert.AreEqual("%25", raised.Presentation.ValueText);
-        Assert.AreEqual(ModuleEventPriority.Low, raised.Priority);
+        Assert.IsNull(raised);
     }
 
     [TestMethod]
@@ -93,7 +89,9 @@ public sealed class SystemActivityModuleTests
         await module.ActivateAsync();
 
         Assert.IsFalse(module.CanExecuteCommand("app-mute"));
+        Assert.IsFalse(module.CanExecuteCommand("master-mute"));
         Assert.IsFalse(await module.ExecuteCommandAsync("app-mute"));
+        Assert.IsEmpty(module.Descriptor.InteractionCommands);
     }
 
     [TestMethod]

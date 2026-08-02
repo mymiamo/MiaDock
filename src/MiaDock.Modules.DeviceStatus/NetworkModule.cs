@@ -34,7 +34,8 @@ public sealed class NetworkModule : IIslandModule, IDisposable
         ModuleId, "Ağ", 300, "NetworkCompactView", "NetworkExpandedView",
         new HashSet<ModuleEventKind> { ModuleEventKind.StatusChanged },
         TimeSpan.FromSeconds(3), notificationViewKey: "NetworkNotificationView",
-        persistentPriority: 0, isPersistent: false, iconGlyph: "\uE701");
+        persistentPriority: 0, isPersistent: false, iconGlyph: "\uE701",
+        minimumExpandedHeight: 320);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
     public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; PresentationChanged?.Invoke(this, CurrentPresentation); } }

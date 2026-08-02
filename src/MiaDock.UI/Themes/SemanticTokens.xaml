@@ -14,6 +14,7 @@
       <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#FA050506" />
       <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#FF1B1B1D" />
       <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FFFFFFFF" />
+      <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FF000000" />
       <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
       <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#28FFFFFF" />
       <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#42FFFFFF" />
@@ -31,6 +32,7 @@
       <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#F2F7F7FA" />
       <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#12000000" />
       <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FF0067C0" />
+      <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FFFFFFFF" />
       <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="#12000000" />
       <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#22000000" />
       <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#33000000" />
@@ -48,6 +50,7 @@
       <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="{ThemeResource SystemColorWindowColor}" />
       <SolidColorBrush x:Key="IslandStyleControlBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
       <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+      <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="{ThemeResource SystemColorHighlightTextColor}" />
       <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
       <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
       <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="{ThemeResource SystemColorHotlightColor}" />

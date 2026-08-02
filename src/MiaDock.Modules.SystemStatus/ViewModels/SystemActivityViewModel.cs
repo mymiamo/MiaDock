@@ -10,13 +10,16 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
 {
     private readonly ISystemActivityService _service;
     private readonly ILocalizationService? _localization;
+    private readonly IPrivacySettingsLauncher? _privacySettingsLauncher;
 
     public SystemActivityViewModel(
         ISystemActivityService service,
-        ILocalizationService? localization = null)
+        ILocalizationService? localization = null,
+        IPrivacySettingsLauncher? privacySettingsLauncher = null)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _localization = localization;
+        _privacySettingsLauncher = privacySettingsLauncher;
         Snapshot = service.Current;
         service.SnapshotChanged += OnSnapshotChanged;
         if (_localization is not null)
@@ -33,6 +36,9 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
     [NotifyPropertyChangedFor(nameof(CameraText))]
     [NotifyPropertyChangedFor(nameof(CallText))]
     [NotifyPropertyChangedFor(nameof(MasterVolumeGlyph))]
+    [NotifyPropertyChangedFor(nameof(ActivityTitle))]
+    [NotifyPropertyChangedFor(nameof(ActivityDetail))]
+    [NotifyPropertyChangedFor(nameof(ActivityGlyph))]
     public partial SystemActivitySnapshot Snapshot { get; set; }
 
     public string MasterVolumeText => Snapshot.IsMasterVolumeAvailable
@@ -76,6 +82,20 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
         ? Text("Dock.CallPossible", "Olası arama etkinliği")
         : Text("System.Call.None", "Arama algılanmadı");
 
+    public string ActivityTitle => Snapshot.CallActivity == CallActivityState.Possible
+        ? Text("Dock.CallPossible", "Olası arama etkinliği")
+        : Snapshot.MicrophoneUsage == MicrophoneUsageState.Active
+            ? Text("System.Microphone.Active", "Mikrofon etkin")
+            : Text("System.Privacy.None", "Gizlilik etkinliği yok");
+
+    public string ActivityDetail => Snapshot.CallActivity == CallActivityState.Possible
+        ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
+        : Text("System.Privacy.Summary", "Mikrofon, kamera ve arama durumu");
+
+    public string ActivityGlyph => Snapshot.CallActivity == CallActivityState.Possible
+        ? "\uE717"
+        : Snapshot.MicrophoneUsage == MicrophoneUsageState.Active ? "\uE720" : "\uE83D";
+
     public string MasterVolumeGlyph => Snapshot.IsMasterMuted || Snapshot.MasterVolume <= 0
         ? "\uE74F"
         : Snapshot.MasterVolume < 0.5 ? "\uE993" : "\uE995";
@@ -100,6 +120,14 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
     public Task SetApplicationVolumeAsync(double percent) =>
         _service.SetApplicationVolumeAsync(Math.Clamp(percent / 100, 0, 1));
 
+    [RelayCommand]
+    private Task OpenMicrophonePrivacySettingsAsync() =>
+        _privacySettingsLauncher?.OpenMicrophonePrivacySettingsAsync() ?? Task.FromResult(false);
+
+    [RelayCommand]
+    private Task OpenCameraPrivacySettingsAsync() =>
+        _privacySettingsLauncher?.OpenCameraPrivacySettingsAsync() ?? Task.FromResult(false);
+
     private void OnSnapshotChanged(object? sender, SystemActivitySnapshot snapshot) => Snapshot = snapshot;
 
     private void OnLanguageChanged(object? sender, EventArgs args)
@@ -109,6 +137,8 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
         OnPropertyChanged(nameof(MicrophoneText));
         OnPropertyChanged(nameof(CameraText));
         OnPropertyChanged(nameof(CallText));
+        OnPropertyChanged(nameof(ActivityTitle));
+        OnPropertyChanged(nameof(ActivityDetail));
     }
 
     private string Text(string key, string fallback) =>

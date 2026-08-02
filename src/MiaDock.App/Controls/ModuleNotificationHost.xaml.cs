@@ -16,10 +16,14 @@ public sealed partial class ModuleNotificationHost : UserControl
         new PropertyMetadata(false, OnShowControlsChanged));
 
     private IModuleViewRegistry? _viewRegistry;
+    private readonly Dictionary<string, FrameworkElement> _viewCache =
+        new(StringComparer.Ordinal);
     private string? _activeViewKey;
     private ILocalizationService? _localization;
 
     public ModuleNotificationHost() => InitializeComponent();
+
+    public event EventHandler<ModuleViewLoadFailedEventArgs>? ViewLoadFailed;
 
     public ModuleDisplayState? DisplayState
     {
@@ -60,7 +64,9 @@ public sealed partial class ModuleNotificationHost : UserControl
         var key = state.Descriptor.NotificationViewKey;
         if (_activeViewKey != key || ViewHost.Content is null)
         {
-            ViewHost.Content = _viewRegistry?.Create(key) ?? new GenericModuleNotificationView();
+            ViewHost.Content = GetOrCreateView(
+                key,
+                static () => new GenericModuleNotificationView());
             _activeViewKey = key;
         }
 
@@ -86,5 +92,47 @@ public sealed partial class ModuleNotificationHost : UserControl
         {
             musicView.ShowControls = ShowControls;
         }
+        else if (ViewHost.Content is VolumeNotificationView volumeView)
+        {
+            volumeView.ShowControls = ShowControls;
+        }
+    }
+
+    private FrameworkElement GetOrCreateView(
+        string viewKey,
+        Func<FrameworkElement> fallbackFactory)
+    {
+        if (_viewCache.TryGetValue(viewKey, out var cached))
+        {
+            return cached;
+        }
+
+        FrameworkElement view;
+        try
+        {
+            view = _viewRegistry?.Create(viewKey) ?? fallbackFactory();
+        }
+        catch (Exception exception)
+        {
+            ViewLoadFailed?.Invoke(
+                this,
+                new ModuleViewLoadFailedEventArgs(viewKey, exception));
+            view = new Grid
+            {
+                Padding = new Thickness(16, 10, 16, 10),
+                Children =
+                {
+                    new TextBlock
+                    {
+                        Text = "MiaDock",
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }
+                }
+            };
+        }
+
+        _viewCache.Add(viewKey, view);
+        return view;
     }
 }

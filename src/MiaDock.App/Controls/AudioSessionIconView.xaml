@@ -1,0 +1,19 @@
+<UserControl x:Class="MiaDock.App.Controls.AudioSessionIconView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
+  <Border CornerRadius="8"
+          Background="{ThemeResource IslandStyleControlHoverBrush}">
+    <Grid>
+      <FontIcon x:Name="FallbackIcon"
+                Glyph="{Binding IconGlyph}"
+                FontSize="14"
+                Foreground="{ThemeResource IslandStyleAccentBrush}" />
+      <Image x:Name="SessionIcon"
+             Margin="5"
+             Stretch="Uniform"
+             Visibility="Collapsed" />
+    </Grid>
+  </Border>
+</UserControl>

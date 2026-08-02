@@ -25,6 +25,7 @@ using MiaDock.Core.Logging;
 using MiaDock.Platform.Windows.Logging;
 using MiaDock.Modules.SystemStatus;
 using MiaDock.Modules.SystemStatus.Services;
+using MiaDock.Modules.SystemStatus.Settings;
 using MiaDock.Modules.SystemStatus.ViewModels;
 using MiaDock.Platform.Windows.Audio;
 using MiaDock.Modules.DeviceStatus;
@@ -52,6 +53,8 @@ using MiaDock.Core.Localization;
 using MiaDock.Core.Updates;
 using MiaDock.Platform.Windows.Updates;
 using MiaDock.App.Modules;
+using MiaDock.Core.Focus;
+using MiaDock.Platform.Windows.Applications;
 
 namespace MiaDock.App.Bootstrapper;
 
@@ -62,10 +65,13 @@ public static class ServiceRegistration
         var services = new ServiceCollection();
 
         services.AddSingleton<IIslandStateMachine, IslandStateMachine>();
+        services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IOverlayPlacementCalculator, OverlayPlacementCalculator>();
         services.AddSingleton<IDisplayTopologyService, DisplayTopologyService>();
         services.AddSingleton<IOverlayWindowControllerFactory, OverlayWindowControllerFactory>();
         services.AddSingleton<IFullscreenDetectionService, WindowsFullscreenDetectionService>();
+        services.AddSingleton<IApplicationActivityService, WindowsApplicationActivityService>();
+        services.AddSingleton<IFocusSettingsLauncher, WindowsFocusSettingsLauncher>();
         services.AddSingleton<ISingleInstanceService, WindowsSingleInstanceService>();
         services.AddSingleton<IWindowsSessionLockStateService, WindowsSessionLockStateService>();
         services.AddSingleton<IStartupTaskService, WindowsStartupTaskService>();
@@ -75,6 +81,10 @@ public static class ServiceRegistration
         services.AddSingleton<IMediaSessionService, WindowsMediaSessionService>();
         services.AddSingleton<IMediaAudioMeterService, WindowsMediaAudioMeterService>();
         services.AddSingleton<ISystemActivityService, WindowsSystemActivityService>();
+        services.AddSingleton<IAudioMixerService>(provider =>
+            (IAudioMixerService)provider.GetRequiredService<ISystemActivityService>());
+        services.AddSingleton<IAudioSettingsLauncher, WindowsAudioSettingsLauncher>();
+        services.AddSingleton<IPrivacySettingsLauncher, WindowsPrivacySettingsLauncher>();
         services.AddSingleton<IPowerStatusService, WindowsPowerStatusService>();
         services.AddSingleton<INetworkStatusService, WindowsNetworkStatusService>();
         services.AddSingleton<IBluetoothStatusService, WindowsBluetoothStatusService>();
@@ -90,6 +100,7 @@ public static class ServiceRegistration
         services.AddSingleton<ModuleSettingsCatalog>();
         services.AddSingleton<PresentationPrivacyPolicy>();
         services.AddSingleton<IIslandModule, MusicModule>();
+        services.AddSingleton<IIslandModule, VolumeModule>();
         services.AddSingleton<IIslandModule, SystemActivityModule>();
         services.AddSingleton<IIslandModule, BatteryModule>();
         services.AddSingleton<IIslandModule, NetworkModule>();
@@ -106,8 +117,10 @@ public static class ServiceRegistration
         {
             var music = provider.GetRequiredService<MusicModuleViewModel>();
             var system = provider.GetRequiredService<SystemActivityViewModel>();
+            var volume = provider.GetRequiredService<VolumeModuleViewModel>();
             var localization = provider.GetRequiredService<IAppLocalizationService>();
             var settings = provider.GetRequiredService<ISettingsService>();
+            var focus = provider.GetRequiredService<FocusDockViewModel>();
             var registry = new ModuleViewRegistry();
             void Register(string key, Func<FrameworkElement> factory) =>
                 registry.Register(key, () =>
@@ -120,15 +133,21 @@ public static class ServiceRegistration
 
             var idleDashboard = provider.GetRequiredService<IdleDashboardViewModel>();
             Register("IdleCompactView", () =>
-                new Controls.IdleCompactView(music, system, localization, settings) { DataContext = idleDashboard });
+                new Controls.IdleCompactView(music, system, localization, settings, focus) { DataContext = idleDashboard });
             Register("IdleHoverView", () =>
-                new Controls.IdleHoverView(music, idleDashboard, localization, settings));
+                new Controls.IdleHoverView(music, idleDashboard, localization, settings, focus));
             Register("IdleExpandedView", () =>
-                new Controls.IdleExpandedView(music, system, idleDashboard, localization, settings));
+                new Controls.IdleExpandedView(music, system, idleDashboard, localization, settings, focus));
             Register("MusicCompactView", () => new Controls.MusicCompactView { DataContext = music });
             Register("MusicHoverView", () => new Controls.MusicHoverView { DataContext = music });
             Register("MusicExpandedView", () => new Controls.ExpandedMusicView { DataContext = music });
             Register("MusicNotificationView", () => new Controls.TrackNotificationView { DataContext = music });
+            Register("VolumeCompactView", () =>
+                new Controls.VolumeCompactView { DataContext = volume });
+            Register("VolumeExpandedView", () =>
+                new Controls.VolumeExpandedView { DataContext = volume });
+            Register("VolumeNotificationView", () =>
+                new Controls.VolumeNotificationView { DataContext = volume });
             Register("SystemActivityCompactView", () =>
                 new Controls.SystemActivityCompactView { DataContext = system });
             Register("SystemActivityExpandedView", () =>
@@ -176,8 +195,20 @@ public static class ServiceRegistration
         services.AddSingleton<ILogArchiveService>(provider => provider.GetRequiredService<JsonLinesLogService>());
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<FocusService>();
+        services.AddSingleton<IFocusService>(provider =>
+            provider.GetRequiredService<FocusService>());
+        services.AddSingleton<FocusPolicyService>();
+        services.AddSingleton<IFocusPolicyService>(provider =>
+            provider.GetRequiredService<FocusPolicyService>());
+        services.AddSingleton<FocusAutomationService>();
+        services.AddSingleton<IFocusAutomationService>(provider =>
+            provider.GetRequiredService<FocusAutomationService>());
         services.AddSingleton<BatteryModuleSettingsAdapter>();
         services.AddSingleton<IBatteryModuleSettings>(provider => provider.GetRequiredService<BatteryModuleSettingsAdapter>());
+        services.AddSingleton<VolumeModuleSettingsAdapter>();
+        services.AddSingleton<IVolumeModuleSettings>(provider =>
+            provider.GetRequiredService<VolumeModuleSettingsAdapter>());
         services.AddSingleton<NotificationModuleSettingsAdapter>();
         services.AddSingleton<INotificationModuleSettings>(provider => provider.GetRequiredService<NotificationModuleSettingsAdapter>());
         services.AddSingleton<TransferModuleSettingsAdapter>();
@@ -185,12 +216,15 @@ public static class ServiceRegistration
 
         services.AddSingleton<MusicModuleViewModel>();
         services.AddSingleton<SystemActivityViewModel>();
+        services.AddSingleton<VolumeModuleViewModel>();
         services.AddSingleton<BatteryModuleViewModel>();
         services.AddSingleton<NetworkModuleViewModel>();
         services.AddSingleton<BluetoothModuleViewModel>();
         services.AddSingleton<TimeToolsViewModel>();
         services.AddSingleton<TransferModuleViewModel>();
         services.AddSingleton<IdleDashboardViewModel>();
+        services.AddSingleton<FocusDockViewModel>();
+        services.AddSingleton<FocusSettingsViewModel>();
         services.AddSingleton<IslandViewModel>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();
@@ -208,6 +242,7 @@ public static class ServiceRegistration
         services.AddSingleton<GlobalHotKeyCoordinator>();
         services.AddSingleton<ModuleSettingsCoordinator>();
         services.AddSingleton<StoreUpdateCoordinator>();
+        services.AddSingleton<StartupTaskCoordinator>();
         services.AddSingleton<IStoreUpdateCoordinator>(provider =>
             provider.GetRequiredService<StoreUpdateCoordinator>());
 

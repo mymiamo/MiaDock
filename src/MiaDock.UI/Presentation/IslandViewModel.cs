@@ -177,8 +177,40 @@ public sealed partial class IslandViewModel : ObservableObject, IDisposable
     private void OnCurrentDisplayChanged(object? sender, ModuleDisplayState? display)
     {
         ActiveModuleDisplay = display;
-        AvailableModules = _orchestrator.AvailableModules;
+        var availableModules = _orchestrator.AvailableModules;
+        if (!HaveSameNavigationItems(AvailableModules, availableModules))
+        {
+            AvailableModules = availableModules;
+        }
         OnPropertyChanged(nameof(TemporarySelectionExpiresAtUtc));
+    }
+
+    private static bool HaveSameNavigationItems(
+        IReadOnlyList<ModuleDisplayState> current,
+        IReadOnlyList<ModuleDisplayState> next)
+    {
+        if (ReferenceEquals(current, next))
+        {
+            return true;
+        }
+
+        if (current.Count != next.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < current.Count; index++)
+        {
+            if (!string.Equals(
+                    current[index].Descriptor.Id,
+                    next[index].Descriptor.Id,
+                    StringComparison.Ordinal))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void OnActiveEventChanged(object? sender, ModuleEvent? moduleEvent)

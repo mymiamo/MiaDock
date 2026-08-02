@@ -1,0 +1,88 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:system="using:System">
+
+  <!-- Spacing -->
+  <system:Double x:Key="DockSpace2">2</system:Double>
+  <system:Double x:Key="DockSpace4">4</system:Double>
+  <system:Double x:Key="DockSpace6">6</system:Double>
+  <system:Double x:Key="DockSpace8">8</system:Double>
+  <system:Double x:Key="DockSpace12">12</system:Double>
+  <system:Double x:Key="DockSpace16">16</system:Double>
+  <system:Double x:Key="DockSpace20">20</system:Double>
+  <system:Double x:Key="DockSpace24">24</system:Double>
+
+  <!-- Sizing -->
+  <system:Double x:Key="DockTouchTargetSize">44</system:Double>
+  <system:Double x:Key="DockIconSmallSize">14</system:Double>
+  <system:Double x:Key="DockIconSize">18</system:Double>
+  <system:Double x:Key="DockIconLargeSize">22</system:Double>
+  <system:Double x:Key="DockStatusBadgeHeight">24</system:Double>
+  <system:Double x:Key="DockStrokeThickness">1</system:Double>
+
+  <!-- Typography -->
+  <system:Double x:Key="DockFontSizeDisplay">28</system:Double>
+  <system:Double x:Key="DockFontSizeMetric">20</system:Double>
+  <system:Double x:Key="DockFontSizeTitle">15</system:Double>
+  <system:Double x:Key="DockFontSizeBody">13</system:Double>
+  <system:Double x:Key="DockFontSizeCaption">11</system:Double>
+
+  <!-- Geometry -->
+  <CornerRadius x:Key="DockRadiusSmall">8</CornerRadius>
+  <CornerRadius x:Key="DockRadiusMedium">12</CornerRadius>
+  <CornerRadius x:Key="DockRadiusLarge">16</CornerRadius>
+  <CornerRadius x:Key="DockRadiusPill">999</CornerRadius>
+  <Thickness x:Key="DockCompactContentPadding">12,0</Thickness>
+  <Thickness x:Key="DockHoverContentPadding">14,8</Thickness>
+  <Thickness x:Key="DockExpandedContentPadding">16,8</Thickness>
+  <Thickness x:Key="DockSectionPadding">14,12</Thickness>
+  <Thickness x:Key="DockStatusBadgePadding">8,3</Thickness>
+
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Default">
+      <SolidColorBrush x:Key="DockSectionBrush" Color="#14FFFFFF" />
+      <SolidColorBrush x:Key="DockSectionPointerOverBrush" Color="#20FFFFFF" />
+      <SolidColorBrush x:Key="DockSurfaceStrokeBrush" Color="#2EFFFFFF" />
+      <SolidColorBrush x:Key="DockDividerBrush" Color="#24FFFFFF" />
+      <SolidColorBrush x:Key="DockFocusStrokeBrush" Color="#FFFFFFFF" />
+      <SolidColorBrush x:Key="DockStatusNeutralFillBrush" Color="#18FFFFFF" />
+      <SolidColorBrush x:Key="DockStatusPositiveFillBrush" Color="#2632D583" />
+      <SolidColorBrush x:Key="DockStatusWarningFillBrush" Color="#2EFFB340" />
+      <SolidColorBrush x:Key="DockStatusCriticalFillBrush" Color="#30FF5D5D" />
+      <SolidColorBrush x:Key="DockStatusPositiveForegroundBrush" Color="#FF68E6A6" />
+      <SolidColorBrush x:Key="DockStatusWarningForegroundBrush" Color="#FFFFC766" />
+      <SolidColorBrush x:Key="DockStatusCriticalForegroundBrush" Color="#FFFF8585" />
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="DockSectionBrush" Color="#10000000" />
+      <SolidColorBrush x:Key="DockSectionPointerOverBrush" Color="#18000000" />
+      <SolidColorBrush x:Key="DockSurfaceStrokeBrush" Color="#26000000" />
+      <SolidColorBrush x:Key="DockDividerBrush" Color="#1F000000" />
+      <SolidColorBrush x:Key="DockFocusStrokeBrush" Color="#FF005FB8" />
+      <SolidColorBrush x:Key="DockStatusNeutralFillBrush" Color="#10000000" />
+      <SolidColorBrush x:Key="DockStatusPositiveFillBrush" Color="#1F0F7B47" />
+      <SolidColorBrush x:Key="DockStatusWarningFillBrush" Color="#24A15C00" />
+      <SolidColorBrush x:Key="DockStatusCriticalFillBrush" Color="#22C42B1C" />
+      <SolidColorBrush x:Key="DockStatusPositiveForegroundBrush" Color="#FF086F3F" />
+      <SolidColorBrush x:Key="DockStatusWarningForegroundBrush" Color="#FF8A4F00" />
+      <SolidColorBrush x:Key="DockStatusCriticalForegroundBrush" Color="#FFB42318" />
+    </ResourceDictionary>
+
+    <ResourceDictionary x:Key="HighContrast">
+      <SolidColorBrush x:Key="DockSectionBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+      <SolidColorBrush x:Key="DockSectionPointerOverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+      <SolidColorBrush x:Key="DockSurfaceStrokeBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+      <SolidColorBrush x:Key="DockDividerBrush" Color="{ThemeResource SystemColorWindowTextColor}" />
+      <SolidColorBrush x:Key="DockFocusStrokeBrush" Color="{ThemeResource SystemColorHighlightColor}" />
+      <SolidColorBrush x:Key="DockStatusNeutralFillBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+      <SolidColorBrush x:Key="DockStatusPositiveFillBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+      <SolidColorBrush x:Key="DockStatusWarningFillBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+      <SolidColorBrush x:Key="DockStatusCriticalFillBrush" Color="{ThemeResource SystemColorButtonFaceColor}" />
+      <SolidColorBrush x:Key="DockStatusPositiveForegroundBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+      <SolidColorBrush x:Key="DockStatusWarningForegroundBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+      <SolidColorBrush x:Key="DockStatusCriticalForegroundBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

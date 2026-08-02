@@ -3,76 +3,108 @@ using MiaDock.Core.Theming;
 using MiaDock.Core.Settings;
 using Microsoft.UI.Xaml.Media;
 using Windows.UI;
+using Microsoft.UI.Dispatching;
+using Windows.UI.ViewManagement;
 
 namespace MiaDock.UI.Services;
 
-public sealed class ThemeService : IThemeService
+public sealed class ThemeService : IThemeService, IDisposable
 {
+    private readonly UISettings _uiSettings = new();
+    private readonly DispatcherQueue? _dispatcher = DispatcherQueue.GetForCurrentThread();
     private ResourceDictionary? _styleDictionary;
     private ResourceDictionary? _customDictionary;
+    private AppearanceSettings? _lastAppearance;
+    private int _environmentRefreshPending;
+    private bool _disposed;
+
+    public ThemeService() => _uiSettings.ColorValuesChanged += OnColorValuesChanged;
 
     public ThemeStyle CurrentStyle { get; private set; } = ThemeStyle.AppleLike;
+
+    public ThemeDescriptor CurrentDescriptor => ThemeCatalog.Get(CurrentStyle);
+
+    public IReadOnlyList<ThemeDescriptor> AvailableThemes => ThemeCatalog.All;
+
+    public event EventHandler? ThemeEnvironmentChanged;
 
     public void Apply(ThemeStyle style)
     {
         var resources = Application.Current.Resources.MergedDictionaries;
+        var descriptor = ThemeCatalog.Get(style);
+        var styleChanged = _styleDictionary is null || CurrentStyle != style;
 
-        if (_styleDictionary is not null)
+        if (styleChanged)
         {
-            resources.Remove(_styleDictionary);
+            if (_customDictionary is not null)
+            {
+                resources.Remove(_customDictionary);
+            }
+
+            if (_styleDictionary is not null)
+            {
+                resources.Remove(_styleDictionary);
+            }
+
+            _styleDictionary = new ResourceDictionary
+            {
+                Source = new Uri($"ms-appx:///Themes/{descriptor.ResourceFileName}")
+            };
+            resources.Add(_styleDictionary);
         }
 
-        if (_customDictionary is not null)
+        if (_customDictionary is null)
         {
-            resources.Remove(_customDictionary);
+            _customDictionary = new ResourceDictionary();
+            resources.Add(_customDictionary);
+        }
+        else if (styleChanged)
+        {
+            _customDictionary.Clear();
+            // Custom values must remain after the theme dictionary so they
+            // continue to override its tokens without rebuilding controls.
+            resources.Add(_customDictionary);
         }
 
-        _styleDictionary = new ResourceDictionary
-        {
-            Source = new Uri($"ms-appx:///Themes/{GetFileName(style)}")
-        };
-        _customDictionary = new ResourceDictionary();
-
-        resources.Add(_styleDictionary);
-        resources.Add(_customDictionary);
         CurrentStyle = style;
     }
 
     public void Apply(AppearanceSettings appearance)
     {
         ArgumentNullException.ThrowIfNull(appearance);
+        _lastAppearance = appearance;
         Apply(appearance.Theme);
         var surfaceColor = ParseColor(appearance.BackgroundColor);
         var accentColor = ParseColor(appearance.AccentColor);
-        _customDictionary!["IslandStyleSurfaceBrush"] = CreateSurfaceBrush(
-            appearance.Theme,
-            surfaceColor,
-            appearance.Opacity);
-        if (appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.CustomSolidColor)
+        if (appearance.Theme != ThemeStyle.AdaptiveFluent)
         {
+            _customDictionary!["IslandStyleSurfaceBrush"] = CreateSurfaceBrush(
+                appearance.Theme,
+                surfaceColor,
+                appearance.Opacity);
+        }
+
+        if (appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.CustomSolidColor or ThemeStyle.OledBlack)
+        {
+            if (appearance.Theme == ThemeStyle.OledBlack)
+            {
+                surfaceColor = Color.FromArgb(255, 0, 0, 0);
+                _customDictionary!["IslandStyleSurfaceBrush"] = new SolidColorBrush(surfaceColor);
+            }
             ApplyAdaptiveSolidPalette(surfaceColor, accentColor);
             return;
         }
 
-        _customDictionary["IslandStyleControlBrush"] = new SolidColorBrush(Color.FromArgb(
-            appearance.Theme == ThemeStyle.BlurredGlass ? (byte)0x20 : (byte)0x38,
-            accentColor.R,
-            accentColor.G,
-            accentColor.B));
-        _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(accentColor);
+        if (appearance.Theme != ThemeStyle.AdaptiveFluent)
+        {
+            _customDictionary!["IslandStyleControlBrush"] = new SolidColorBrush(Color.FromArgb(
+                appearance.Theme.UsesColorlessGlass() ? (byte)0x20 : (byte)0x38,
+                accentColor.R,
+                accentColor.G,
+                accentColor.B));
+            _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(accentColor);
+        }
     }
-
-    private static string GetFileName(ThemeStyle style) => style switch
-    {
-        ThemeStyle.AppleLike => "AppleLikeTheme.xaml",
-        ThemeStyle.Windows11Mica or
-        ThemeStyle.Windows11MicaAlt or
-        ThemeStyle.Windows11Acrylic or
-        ThemeStyle.Windows11AcrylicThin => "Windows11Theme.xaml",
-        ThemeStyle.BlurredGlass => "BlurredGlassTheme.xaml",
-        ThemeStyle.CustomSolidColor => "AppleLikeTheme.xaml",
-        _ => throw new ArgumentOutOfRangeException(nameof(style), style, null)
-    };
 
     private static Brush CreateSurfaceBrush(ThemeStyle style, Color color, double opacity)
     {
@@ -83,7 +115,8 @@ public sealed class ThemeService : IThemeService
             ThemeStyle.Windows11MicaAlt => new SolidColorBrush(WithOpacity(color, 0.86 * normalizedOpacity)),
             ThemeStyle.Windows11Acrylic => CreateAcrylic(color, 0.72, normalizedOpacity),
             ThemeStyle.Windows11AcrylicThin => CreateAcrylic(color, 0.46, normalizedOpacity),
-            ThemeStyle.BlurredGlass => CreateGlassOverlay(normalizedOpacity),
+            ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass => CreateGlassOverlay(normalizedOpacity),
+            ThemeStyle.OledBlack => new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)),
             _ => new SolidColorBrush(WithOpacity(color, normalizedOpacity))
         };
     }
@@ -124,6 +157,8 @@ public sealed class ThemeService : IThemeService
             palette.Primary.B));
         _customDictionary["IslandStyleControlBrush"] = new SolidColorBrush(palette.Control);
         _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(palette.Accent);
+        _customDictionary["IslandAccentForegroundBrush"] =
+            new SolidColorBrush(palette.AccentForeground);
         _customDictionary["IslandIconButtonRestBrush"] = new SolidColorBrush(
             Color.FromArgb(0, 0, 0, 0));
         _customDictionary["IslandIconButtonPointerOverBrush"] = new SolidColorBrush(Color.FromArgb(
@@ -147,5 +182,59 @@ public sealed class ThemeService : IThemeService
             Convert.ToByte(normalized[0..2], 16),
             Convert.ToByte(normalized[2..4], 16),
             Convert.ToByte(normalized[4..6], 16));
+    }
+
+    private void OnColorValuesChanged(UISettings sender, object args)
+    {
+        if (_disposed || CurrentStyle != ThemeStyle.AdaptiveFluent)
+        {
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _environmentRefreshPending, 1) != 0)
+        {
+            return;
+        }
+
+        void Refresh()
+        {
+            try
+            {
+                if (_disposed || _lastAppearance is null || CurrentStyle != ThemeStyle.AdaptiveFluent)
+                {
+                    return;
+                }
+
+                Apply(_lastAppearance);
+                ThemeEnvironmentChanged?.Invoke(this, EventArgs.Empty);
+            }
+            finally
+            {
+                Interlocked.Exchange(ref _environmentRefreshPending, 0);
+            }
+        }
+
+        if (_dispatcher?.HasThreadAccess != false)
+        {
+            Refresh();
+        }
+        else
+        {
+            if (!_dispatcher.TryEnqueue(Refresh))
+            {
+                Interlocked.Exchange(ref _environmentRefreshPending, 0);
+            }
+        }
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _uiSettings.ColorValuesChanged -= OnColorValuesChanged;
     }
 }

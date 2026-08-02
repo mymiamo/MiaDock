@@ -16,7 +16,9 @@ internal delegate bool NetworkCounterReadHandler(
 internal sealed record ManagedNetworkCounter(
     Guid InterfaceId,
     ulong ReceivedBytes,
-    ulong SentBytes);
+    ulong SentBytes,
+    bool IsOperational = true,
+    bool IsLoopbackOrTunnel = false);
 
 internal sealed class NetworkInterfaceCounterReader : INetworkInterfaceCounterReader
 {
@@ -47,17 +49,33 @@ internal sealed class NetworkInterfaceCounterReader : INetworkInterfaceCounterRe
 
         try
         {
-            var counter = _managedCounterSource()
-                .FirstOrDefault(candidate => candidate.InterfaceId == interfaceId);
-            if (counter is null)
+            var counters = _managedCounterSource()
+                .Where(candidate =>
+                    candidate.IsOperational &&
+                    !candidate.IsLoopbackOrTunnel)
+                .ToArray();
+            var counter = counters.FirstOrDefault(
+                candidate => candidate.InterfaceId == interfaceId);
+            if (counter is not null)
+            {
+                receivedBytes = counter.ReceivedBytes;
+                sentBytes = counter.SentBytes;
+                return true;
+            }
+
+            // NetworkInformation can expose a VPN, bridge or virtual profile
+            // whose adapter GUID is not represented by NetworkInterface. The
+            // aggregate operational counters still provide a useful and stable
+            // device-wide throughput measurement in that case.
+            if (counters.Length == 0)
             {
                 receivedBytes = 0;
                 sentBytes = 0;
                 return false;
             }
 
-            receivedBytes = counter.ReceivedBytes;
-            sentBytes = counter.SentBytes;
+            receivedBytes = SaturatingSum(counters.Select(value => value.ReceivedBytes));
+            sentBytes = SaturatingSum(counters.Select(value => value.SentBytes));
             return true;
         }
         catch (Exception) when (
@@ -86,10 +104,7 @@ internal sealed class NetworkInterfaceCounterReader : INetworkInterfaceCounterRe
     {
         foreach (var networkInterface in NetworkInterface.GetAllNetworkInterfaces())
         {
-            if (!Guid.TryParse(networkInterface.Id, out var interfaceId))
-            {
-                continue;
-            }
+            _ = Guid.TryParse(networkInterface.Id, out var interfaceId);
 
             IPv4InterfaceStatistics statistics;
             try
@@ -113,8 +128,25 @@ internal sealed class NetworkInterfaceCounterReader : INetworkInterfaceCounterRe
             yield return new ManagedNetworkCounter(
                 interfaceId,
                 (ulong)statistics.BytesReceived,
-                (ulong)statistics.BytesSent);
+                (ulong)statistics.BytesSent,
+                networkInterface.OperationalStatus == OperationalStatus.Up,
+                networkInterface.NetworkInterfaceType is
+                    NetworkInterfaceType.Loopback or
+                    NetworkInterfaceType.Tunnel);
         }
+    }
+
+    private static ulong SaturatingSum(IEnumerable<ulong> values)
+    {
+        var total = 0UL;
+        foreach (var value in values)
+        {
+            total = ulong.MaxValue - total < value
+                ? ulong.MaxValue
+                : total + value;
+        }
+
+        return total;
     }
 
     [DllImport("iphlpapi.dll")]

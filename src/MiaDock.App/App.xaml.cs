@@ -12,6 +12,8 @@ using MiaDock.Core.Threading;
 using MiaDock.Core.Logging;
 using MiaDock.Modules.Time.Services;
 using MiaDock.Modules.Notifications.Services;
+using MiaDock.Core.Focus;
+using Microsoft.Windows.AppLifecycle;
 
 namespace MiaDock.App;
 
@@ -72,7 +74,11 @@ public partial class App : Application
             TechnicalLogLevel.Information,
             TechnicalEventIds.ApplicationStarting,
             "Application",
-            "Application startup began.");
+            "Application startup began.",
+            properties: new Dictionary<string, object?>
+            {
+                ["activationKind"] = GetActivationKind()
+            });
         _singleInstance = _services.GetRequiredService<ISingleInstanceService>();
         if (!await _singleInstance.RegisterOrRedirectAsync("MiaDock.Main"))
         {
@@ -88,6 +94,9 @@ public partial class App : Application
 
         var settings = _services.GetRequiredService<ISettingsService>();
         await settings.InitializeAsync();
+        await _services.GetRequiredService<StartupTaskCoordinator>().ReconcileAsync();
+        _services.GetRequiredService<IFocusService>().Start();
+        _services.GetRequiredService<IFocusAutomationService>().Start();
         _services.GetRequiredService<IAppLocalizationService>().SetLanguage(settings.Current.General.Language);
         _services.GetRequiredService<IThemeService>().Apply(settings.Current.Appearance);
         _services.GetRequiredService<IDisplayTopologyService>().Start();
@@ -229,6 +238,21 @@ public partial class App : Application
         if (!_uiDispatcher.TryEnqueue(Exit))
         {
             Environment.Exit(0);
+        }
+    }
+
+    private static string GetActivationKind()
+    {
+        try
+        {
+            return AppInstance.GetCurrent()
+                .GetActivatedEventArgs()
+                .Kind
+                .ToString();
+        }
+        catch
+        {
+            return "Unavailable";
         }
     }
 }

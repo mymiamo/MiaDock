@@ -13,14 +13,20 @@ public sealed partial class CompactModuleHost : UserControl
         new PropertyMetadata(null, OnDisplayStateChanged));
 
     private IModuleViewRegistry? _viewRegistry;
+    private readonly Dictionary<string, FrameworkElement> _viewCache =
+        new(StringComparer.Ordinal);
     private string? _activeViewKey;
     private ILocalizationService? _localization;
+    private bool _isHostRequestedActive;
+    private bool _isContentActive;
     private const string IdleCompactViewKey = "IdleCompactView";
     private const string IdleHoverViewKey = "IdleHoverView";
 
     public bool UseHoverView { get; set; }
 
     public CompactModuleHost() => InitializeComponent();
+
+    public event EventHandler<ModuleViewLoadFailedEventArgs>? ViewLoadFailed;
 
     public ModuleDisplayState? DisplayState
     {
@@ -37,10 +43,16 @@ public sealed partial class CompactModuleHost : UserControl
     public void ConfigureLocalization(ILocalizationService localization)
     {
         _localization = localization;
-        if (ViewHost.Content is GenericCompactModuleView generic)
+        foreach (var generic in _viewCache.Values.OfType<GenericCompactModuleView>())
         {
             generic.ConfigureLocalization(localization);
         }
+    }
+
+    public void SetHostActive(bool isActive)
+    {
+        _isHostRequestedActive = isActive;
+        UpdateContentActivation();
     }
 
     private static void OnDisplayStateChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
@@ -53,17 +65,22 @@ public sealed partial class CompactModuleHost : UserControl
             var idleViewKey = UseHoverView ? IdleHoverViewKey : IdleCompactViewKey;
             if (_activeViewKey != idleViewKey || ViewHost.Content is null)
             {
-                ViewHost.Content = _viewRegistry?.Create(idleViewKey) ?? new IdleCompactView();
+                DeactivateCurrentContent();
+                ViewHost.Content = GetOrCreateView(idleViewKey, static () => new IdleCompactView());
                 _activeViewKey = idleViewKey;
             }
 
+            UpdateContentActivation();
             return;
         }
 
         var key = UseHoverView ? state.Descriptor.HoverViewKey : state.Descriptor.CompactViewKey;
         if (_activeViewKey != key || ViewHost.Content is null)
         {
-            ViewHost.Content = _viewRegistry?.Create(key) ?? new GenericCompactModuleView(_localization);
+            DeactivateCurrentContent();
+            ViewHost.Content = GetOrCreateView(
+                key,
+                () => new GenericCompactModuleView(_localization));
             _activeViewKey = key;
         }
 
@@ -71,5 +88,80 @@ public sealed partial class CompactModuleHost : UserControl
         {
             generic.DataContext = state.Presentation;
         }
+
+        UpdateContentActivation();
     }
+
+    private FrameworkElement GetOrCreateView(
+        string viewKey,
+        Func<FrameworkElement> fallbackFactory)
+    {
+        if (_viewCache.TryGetValue(viewKey, out var cached))
+        {
+            return cached;
+        }
+
+        FrameworkElement view;
+        try
+        {
+            view = _viewRegistry?.Create(viewKey) ?? fallbackFactory();
+        }
+        catch (Exception exception)
+        {
+            ViewLoadFailed?.Invoke(
+                this,
+                new ModuleViewLoadFailedEventArgs(viewKey, exception));
+            view = new Grid
+            {
+                Padding = new Thickness(12, 0, 12, 0),
+                Children =
+                {
+                    new FontIcon
+                    {
+                        Glyph = "\uE783",
+                        FontSize = 14,
+                        HorizontalAlignment = HorizontalAlignment.Center,
+                        VerticalAlignment = VerticalAlignment.Center
+                    }
+                }
+            };
+        }
+
+        _viewCache.Add(viewKey, view);
+        return view;
+    }
+
+    private void UpdateContentActivation()
+    {
+        if (ViewHost.Content is not IModuleViewActivationAware aware)
+        {
+            _isContentActive = false;
+            return;
+        }
+
+        var shouldBeActive = _isHostRequestedActive && IsLoaded;
+        if (_isContentActive == shouldBeActive)
+        {
+            return;
+        }
+
+        aware.SetPresentationActive(shouldBeActive);
+        _isContentActive = shouldBeActive;
+    }
+
+    private void DeactivateCurrentContent()
+    {
+        if (ViewHost.Content is IModuleViewActivationAware aware)
+        {
+            aware.SetPresentationActive(false);
+        }
+
+        _isContentActive = false;
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs args) =>
+        UpdateContentActivation();
+
+    private void OnUnloaded(object sender, RoutedEventArgs args) =>
+        DeactivateCurrentContent();
 }

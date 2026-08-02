@@ -43,16 +43,12 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
             ModuleEventKind.StatusChanged
         },
         TimeSpan.FromSeconds(3),
-        [
-            new ModuleCommandDescriptor("master-volume-down", "Ana sesi azalt", "\uE993"),
-            new ModuleCommandDescriptor("master-mute", "Ana sesi aç veya kapat", "\uE74F"),
-            new ModuleCommandDescriptor("master-volume-up", "Ana sesi artır", "\uE995"),
-            new ModuleCommandDescriptor("app-mute", "Uygulama sesini aç veya kapat", "\uE74F")
-        ],
+        [],
         "SystemActivityNotificationView",
         persistentPriority: 0,
         isPersistent: false,
-        iconGlyph: "\uE74F");
+        iconGlyph: "\uE83D",
+        minimumExpandedHeight: 340);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
 
@@ -79,33 +75,14 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     public event EventHandler<ModuleEvent>? EventOccurred;
 
-    public bool CanExecuteCommand(string commandId) => commandId switch
-    {
-        "master-volume-down" or "master-mute" or "master-volume-up" =>
-            _service.Current.IsMasterVolumeAvailable,
-        "app-mute" => _service.Current.ApplicationVolumeAvailability == ApplicationVolumeAvailability.Available,
-        _ => false
-    };
+    public bool CanExecuteCommand(string commandId) => false;
 
     public async ValueTask<bool> ExecuteCommandAsync(
         string commandId,
         CancellationToken cancellationToken = default)
     {
-        if (!CanExecuteCommand(commandId))
-        {
-            return false;
-        }
-
-        return commandId switch
-        {
-            "master-volume-down" => await _service.SetMasterVolumeAsync(
-                Math.Max(0, _service.Current.MasterVolume - 0.05), cancellationToken),
-            "master-mute" => await _service.ToggleMasterMuteAsync(cancellationToken),
-            "master-volume-up" => await _service.SetMasterVolumeAsync(
-                Math.Min(1, _service.Current.MasterVolume + 0.05), cancellationToken),
-            "app-mute" => await _service.ToggleApplicationMuteAsync(cancellationToken),
-            _ => false
-        };
+        await Task.CompletedTask;
+        return false;
     }
 
     public async ValueTask ActivateAsync(CancellationToken cancellationToken = default)
@@ -177,44 +154,6 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
                 now);
         }
 
-        if (previous.IsMasterMuted != current.IsMasterMuted ||
-            Math.Abs(previous.MasterVolume - current.MasterVolume) >= 0.001)
-        {
-            var presentation = CreatePresentation(current);
-            return new ModuleEvent(
-                ModuleId,
-                ModuleEventKind.ValueChanged,
-                presentation,
-                TimeSpan.FromSeconds(2),
-                now,
-                ModuleEventPriority.Low,
-                "system:master-volume");
-        }
-
-        if (current.ApplicationVolumeAvailability == ApplicationVolumeAvailability.Available &&
-            (previous.IsApplicationMuted != current.IsApplicationMuted ||
-             Math.Abs(previous.ApplicationVolume - current.ApplicationVolume) >= 0.001))
-        {
-            return new ModuleEvent(
-                ModuleId,
-                ModuleEventKind.ValueChanged,
-                new ModulePresentation(
-                    ModuleId,
-                    current.IsApplicationMuted
-                        ? Text("System.Audio.Application.Muted", "Uygulama sesi kapalı")
-                        : Text("System.Audio.Application", "Uygulama sesi"),
-                    Text("System.Audio.SelectedMedia", "Seçili medya uygulaması"),
-                    "\uE74F",
-                    ModuleIndicatorKind.None,
-                    valueText: $"%{current.ApplicationVolumePercent}",
-                    progress: current.ApplicationVolume,
-                    presentationKind: ModulePresentationKind.Status),
-                TimeSpan.FromSeconds(2),
-                now,
-                ModuleEventPriority.Low,
-                "system:application-volume");
-        }
-
         if (previous.CameraDeviceAvailability != current.CameraDeviceAvailability ||
             previous.CameraAccess != current.CameraAccess)
         {
@@ -260,42 +199,15 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
             snapshot.MicrophoneUsage == MicrophoneUsageState.Active;
         return new ModulePresentation(
             ModuleId,
-            snapshot.IsMasterMuted
-                ? Text("System.Audio.Muted", "Ses kapalı")
-                : Text("System.Audio.Master", "Sistem sesi"),
-            snapshot.CallActivity == CallActivityState.Possible
-                ? Text("Dock.CallPossible", "Olası arama etkinliği")
-                : _viewModel.MicrophoneText,
-            _viewModel.MasterVolumeGlyph,
+            _viewModel.ActivityTitle,
+            _viewModel.ActivityDetail,
+            _viewModel.ActivityGlyph,
             snapshot.MicrophoneUsage == MicrophoneUsageState.Active
                 ? ModuleIndicatorKind.ActivityBars
                 : ModuleIndicatorKind.None,
-            valueText: snapshot.IsMasterVolumeAvailable ? $"%{snapshot.MasterVolumePercent}" : "—",
-            progress: snapshot.IsMasterVolumeAvailable ? snapshot.MasterVolume : null,
+            valueText: string.Empty,
             presentationKind: ModulePresentationKind.Status,
-            commands:
-            [
-                new ModuleCommandState(
-                    "master-volume-down",
-                    Text("System.Audio.Master.Down", "Ana sesi azalt"),
-                    "\uE993",
-                    CanExecuteCommand("master-volume-down")),
-                new ModuleCommandState(
-                    "master-mute",
-                    Text("System.Audio.Master.Toggle", "Ana sesi aç veya kapat"),
-                    "\uE74F",
-                    CanExecuteCommand("master-mute")),
-                new ModuleCommandState(
-                    "master-volume-up",
-                    Text("System.Audio.Master.Up", "Ana sesi artır"),
-                    "\uE995",
-                    CanExecuteCommand("master-volume-up")),
-                new ModuleCommandState(
-                    "app-mute",
-                    Text("System.Audio.Application.Toggle", "Uygulama sesini aç veya kapat"),
-                    "\uE74F",
-                    CanExecuteCommand("app-mute"))
-            ],
+            commands: [],
             isPersistentOverride: hasOngoingActivity,
             persistentPriorityOverride: hasOngoingActivity ? 450 : null);
     }

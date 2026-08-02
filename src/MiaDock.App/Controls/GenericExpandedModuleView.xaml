@@ -3,94 +3,86 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     DataContextChanged="OnDataContextChanged">
-  <Grid>
+  <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}">
     <Grid x:Name="ContentPanel"
-          Padding="24,16,24,20"
-          RowSpacing="12"
           Visibility="Collapsed"
           AutomationProperties.Name="{Binding PrimaryText}">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-      </Grid.RowDefinitions>
+      <Border Style="{StaticResource DockSectionStyle}">
+        <Grid ColumnSpacing="12" RowSpacing="11">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+          </Grid.RowDefinitions>
 
-      <Grid ColumnSpacing="12">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="36" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <Border Width="36"
-                Height="36"
-                CornerRadius="18"
-                Background="{ThemeResource IslandStyleControlBrush}"
-                AutomationProperties.AccessibilityView="Raw">
-          <FontIcon Glyph="{Binding LeadingGlyph}"
-                    FontSize="20"
-                    HorizontalAlignment="Center"
-                    VerticalAlignment="Center"
-                    Foreground="{ThemeResource IslandStyleAccentBrush}" />
-        </Border>
-        <StackPanel Grid.Column="1" MinWidth="0" Spacing="2">
-          <TextBlock Text="{Binding PrimaryText}"
-                     MaxLines="1"
-                     TextTrimming="CharacterEllipsis"
-                     Style="{StaticResource IslandTitleTextStyle}"
-                     ToolTipService.ToolTip="{Binding PrimaryText}" />
-          <TextBlock Text="{Binding SecondaryText}"
-                     MaxLines="2"
-                     TextTrimming="CharacterEllipsis"
-                     Style="{StaticResource IslandBodyTextStyle}"
-                     ToolTipService.ToolTip="{Binding SecondaryText}" />
-        </StackPanel>
-      </Grid>
-
-      <ProgressBar Grid.Row="1"
-                   Height="5"
-                   Minimum="0"
-                   Maximum="1"
-                   Value="{Binding Progress}"
-                   Foreground="{ThemeResource IslandStyleAccentBrush}"
-                   AutomationProperties.Name="İlerleme" />
-      <TextBlock Grid.Row="2"
-                 MaxWidth="220"
-                 Text="{Binding ValueText}"
-                 HorizontalAlignment="Right"
-                 MaxLines="1"
-                 TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandBodyTextStyle}"
-                 ToolTipService.ToolTip="{Binding ValueText}" />
+          <Border Style="{StaticResource DockModuleIconContainerStyle}"
+                  AutomationProperties.AccessibilityView="Raw">
+            <FontIcon Glyph="{Binding LeadingGlyph}"
+                      Style="{StaticResource DockModuleIconStyle}" />
+          </Border>
+          <StackPanel Grid.Column="1" MinWidth="0" VerticalAlignment="Center" Spacing="2">
+            <TextBlock Text="{Binding PrimaryText}"
+                       MaxLines="1"
+                       TextTrimming="CharacterEllipsis"
+                       Style="{StaticResource DockTitleTextStyle}"
+                       ToolTipService.ToolTip="{Binding PrimaryText}" />
+            <TextBlock Text="{Binding SecondaryText}"
+                       MaxLines="2"
+                       TextTrimming="CharacterEllipsis"
+                       Style="{StaticResource DockBodyTextStyle}"
+                       ToolTipService.ToolTip="{Binding SecondaryText}" />
+          </StackPanel>
+          <Border Grid.Column="2"
+                  Style="{StaticResource DockStatusBadgeStyle}"
+                  VerticalAlignment="Center">
+            <TextBlock MaxWidth="150"
+                       Text="{Binding ValueText}"
+                       MaxLines="1"
+                       TextTrimming="CharacterEllipsis"
+                       Style="{StaticResource DockStatusTextStyle}"
+                       ToolTipService.ToolTip="{Binding ValueText}" />
+          </Border>
+          <ProgressBar Grid.Row="1"
+                       Grid.ColumnSpan="3"
+                       Style="{StaticResource DockProgressBarStyle}"
+                       Minimum="0"
+                       Maximum="1"
+                       Value="{Binding Progress}"
+                       Foreground="{ThemeResource IslandStyleAccentBrush}"
+                       AutomationProperties.Name="İlerleme" />
+        </Grid>
+      </Border>
     </Grid>
 
-    <StackPanel x:Name="EmptyState"
-                HorizontalAlignment="Center"
-                VerticalAlignment="Center"
-                Spacing="7"
-                AutomationProperties.Name="Etkin olay yok">
-      <Border Width="36"
-              Height="36"
-              HorizontalAlignment="Center"
-              CornerRadius="18"
-              Background="{ThemeResource IslandStyleControlBrush}"
-              AutomationProperties.AccessibilityView="Raw">
-        <FontIcon Glyph="&#xE946;"
-                  FontSize="18"
-                  HorizontalAlignment="Center"
+    <Border x:Name="EmptyState"
+            Style="{StaticResource DockSectionStyle}"
+            AutomationProperties.Name="Etkin olay yok">
+      <StackPanel HorizontalAlignment="Center"
                   VerticalAlignment="Center"
-                  Foreground="{ThemeResource IslandStyleAccentBrush}" />
-      </Border>
-      <TextBlock x:Name="EmptyStateText"
-                 Text="Etkin olay yok"
-                 HorizontalAlignment="Center"
-                 MaxLines="1"
-                 TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandTitleTextStyle}" />
-      <TextBlock Text="Yeni bir etkinlik olduğunda burada görünecek."
-                 HorizontalAlignment="Center"
-                 MaxLines="2"
-                 TextAlignment="Center"
-                 TextWrapping="Wrap"
-                 Style="{StaticResource IslandBodyTextStyle}" />
-    </StackPanel>
+                  Spacing="7">
+        <Border Style="{StaticResource DockModuleIconContainerStyle}"
+                HorizontalAlignment="Center"
+                AutomationProperties.AccessibilityView="Raw">
+          <FontIcon Glyph="&#xE946;"
+                    Style="{StaticResource DockModuleIconStyle}" />
+        </Border>
+        <TextBlock x:Name="EmptyStateText"
+                   Text="Etkin olay yok"
+                   HorizontalAlignment="Center"
+                   MaxLines="1"
+                   TextTrimming="CharacterEllipsis"
+                   Style="{StaticResource DockTitleTextStyle}" />
+        <TextBlock Text="Yeni bir etkinlik olduğunda burada görünecek."
+                   HorizontalAlignment="Center"
+                   MaxLines="2"
+                   TextAlignment="Center"
+                   TextWrapping="Wrap"
+                   Style="{StaticResource DockBodyTextStyle}" />
+      </StackPanel>
+    </Border>
   </Grid>
 </UserControl>

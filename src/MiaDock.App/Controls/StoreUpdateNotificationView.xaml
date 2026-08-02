@@ -2,7 +2,7 @@
     x:Class="MiaDock.App.Controls.StoreUpdateNotificationView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid Padding="18,11" ColumnSpacing="12"
+  <Grid Style="{StaticResource DockNotificationLayoutStyle}"
         AutomationProperties.LiveSetting="Polite"
         AutomationProperties.Name="{Binding PrimaryText}">
     <Grid.ColumnDefinitions>
@@ -10,10 +10,9 @@
       <ColumnDefinition Width="*" />
       <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
-    <FontIcon Glyph="&#xE895;"
-              FontSize="20"
-              VerticalAlignment="Center"
-              Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <Border Style="{StaticResource DockNotificationIconContainerStyle}">
+      <FontIcon Glyph="&#xE895;" Style="{StaticResource DockModuleIconStyle}" />
+    </Border>
     <StackPanel Grid.Column="1"
                 MinWidth="0"
                 VerticalAlignment="Center"
@@ -21,15 +20,19 @@
       <TextBlock Text="{Binding PrimaryText}"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandTitleTextStyle}" />
+                 Style="{StaticResource DockTitleTextStyle}"
+                 ToolTipService.ToolTip="{Binding PrimaryText}" />
       <TextBlock Text="{Binding SecondaryText}"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource IslandCaptionTextStyle}" />
+                 Style="{StaticResource DockCaptionTextStyle}"
+                 ToolTipService.ToolTip="{Binding SecondaryText}" />
     </StackPanel>
     <Button Grid.Column="2"
             Content="Microsoft Store'da aç"
             Click="OnOpenStoreClick"
+            MinHeight="44"
+            Style="{StaticResource DockInlineButtonStyle}"
             VerticalAlignment="Center"
             AutomationProperties.Name="Microsoft Store'da aç" />
   </Grid>

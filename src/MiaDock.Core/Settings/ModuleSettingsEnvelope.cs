@@ -25,6 +25,16 @@ public sealed record ModuleSettingsEnvelope(
         true,
         new Dictionary<string, JsonElement>(StringComparer.Ordinal));
 
+    public static ModuleSettingsEnvelope VolumeDefault { get; } = new(
+        InitialSchemaVersion,
+        true,
+        2.5,
+        true,
+        new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+        {
+            ["showOutputDeviceName"] = JsonSerializer.SerializeToElement(true)
+        });
+
     public static ModuleSettingsEnvelope BatteryDefault { get; } = new(
         InitialSchemaVersion,
         true,

@@ -1,0 +1,284 @@
+<ContentDialog
+    x:Class="MiaDock.App.Dialogs.FocusProfileEditorDialog"
+    x:Name="Dialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls"
+    Loaded="OnLoaded"
+    Closed="OnClosed"
+    DefaultButton="Primary">
+
+  <ContentDialog.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </ContentDialog.Resources>
+
+  <ScrollViewer MaxHeight="620"
+                MinWidth="580"
+                HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled">
+    <StackPanel Spacing="15">
+      <InfoBar IsOpen="{Binding HasError}"
+               IsClosable="False"
+               Severity="Error"
+               Message="{Binding ErrorMessage}" />
+
+      <Grid ColumnSpacing="12">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="190" />
+        </Grid.ColumnDefinitions>
+        <TextBox Header="Profil adı"
+                 MaxLength="40"
+                 Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                 IsReadOnly="{Binding IsBuiltIn}"
+                 AutomationProperties.Name="Odak profili adı" />
+        <ComboBox Grid.Column="1"
+                  Header="Simge"
+                  ItemsSource="{Binding IconOptions}"
+                  DisplayMemberPath="Label"
+                  SelectedIndex="{Binding IconIndex, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="Odak profili simgesi" />
+      </Grid>
+
+      <Grid ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ColorPicker x:Name="ProfileColorPicker"
+                     Width="250"
+                     IsAlphaEnabled="False"
+                     IsAlphaSliderVisible="False"
+                     IsColorChannelTextInputVisible="False"
+                     IsHexInputVisible="False"
+                     IsMoreButtonVisible="False"
+                     ColorSpectrumShape="Ring"
+                     ColorChanged="OnColorChanged" />
+        <StackPanel Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Spacing="6">
+          <TextBlock Text="Profil rengi"
+                     FontWeight="SemiBold" />
+          <TextBox Header="HEX renk"
+                   MaxLength="7"
+                   Text="{Binding ColorHex, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                   AutomationProperties.Name="Profil rengi HEX değeri" />
+          <TextBlock Text="Renk #RRGGBB biçiminde kaydedilir."
+                     FontSize="11"
+                     Opacity="0.65"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Grid>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="10">
+          <ToggleSwitch Header="Varsayılan süre"
+                        OffContent="Kapatılana kadar"
+                        OnContent="Dakika kullan"
+                        IsOn="{Binding HasDefaultDuration, Mode=TwoWay}" />
+          <NumberBox Header="Dakika"
+                     Minimum="1"
+                     Maximum="1440"
+                     Value="{Binding DefaultDurationMinutes, Mode=TwoWay}"
+                     IsEnabled="{Binding HasDefaultDuration}"
+                     SpinButtonPlacementMode="Compact" />
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="12">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Haftalık programlar"
+                       FontWeight="SemiBold" />
+            <TextBlock Text="Profilin etkinleşeceği günleri ve saatleri seçin."
+                       FontSize="11"
+                       Opacity="0.65"
+                       TextWrapping="Wrap" />
+            <Button Content="Program ekle"
+                    HorizontalAlignment="Left"
+                    IsEnabled="{Binding CanAddSchedule}"
+                    Click="OnAddScheduleClick" />
+          </StackPanel>
+
+          <ItemsControl ItemsSource="{Binding Schedules}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,0,0,8"
+                        Padding="10"
+                        CornerRadius="8"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                  <StackPanel Spacing="9">
+                    <Grid ColumnSpacing="8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <ToggleSwitch Header="Program etkin"
+                                    IsOn="{Binding IsEnabled, Mode=TwoWay}" />
+                      <Button Grid.Column="1"
+                              Content="Sil"
+                              Tag="{Binding}"
+                              Click="OnRemoveScheduleClick" />
+                    </Grid>
+
+                    <StackPanel Orientation="Horizontal" Spacing="4">
+                      <ToggleButton Content="Pzt" IsChecked="{Binding Monday, Mode=TwoWay}" />
+                      <ToggleButton Content="Sal" IsChecked="{Binding Tuesday, Mode=TwoWay}" />
+                      <ToggleButton Content="Çar" IsChecked="{Binding Wednesday, Mode=TwoWay}" />
+                      <ToggleButton Content="Per" IsChecked="{Binding Thursday, Mode=TwoWay}" />
+                      <ToggleButton Content="Cum" IsChecked="{Binding Friday, Mode=TwoWay}" />
+                      <ToggleButton Content="Cmt" IsChecked="{Binding Saturday, Mode=TwoWay}" />
+                      <ToggleButton Content="Paz" IsChecked="{Binding Sunday, Mode=TwoWay}" />
+                    </StackPanel>
+
+                    <Grid ColumnSpacing="10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TimePicker Header="Başlangıç"
+                                  ClockIdentifier="24HourClock"
+                                  SelectedTime="{Binding StartTime, Mode=TwoWay}" />
+                      <TimePicker Grid.Column="1"
+                                  Header="Bitiş"
+                                  ClockIdentifier="24HourClock"
+                                  SelectedTime="{Binding EndTime, Mode=TwoWay}" />
+                    </Grid>
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="12">
+          <StackPanel Spacing="8">
+            <TextBlock Text="Uygulama otomasyonları"
+                       FontWeight="SemiBold" />
+            <TextBlock Text="Bir uygulama açıldığında, öne geldiğinde veya tam ekran olduğunda profili etkinleştirin."
+                       FontSize="11"
+                       Opacity="0.65"
+                       TextWrapping="Wrap" />
+            <Button Content="Kural ekle"
+                    HorizontalAlignment="Left"
+                    IsEnabled="{Binding CanAddAutomationRule}"
+                    Click="OnAddAutomationRuleClick" />
+          </StackPanel>
+
+          <ItemsControl ItemsSource="{Binding AutomationRules}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Border Margin="0,0,0,8"
+                        Padding="10"
+                        CornerRadius="8"
+                        Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}">
+                  <StackPanel Spacing="9">
+                    <Grid ColumnSpacing="8">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                      </Grid.ColumnDefinitions>
+                      <ToggleSwitch Header="Kural etkin"
+                                    IsOn="{Binding IsEnabled, Mode=TwoWay}" />
+                      <Button Grid.Column="1"
+                              Content="Sil"
+                              Tag="{Binding}"
+                              Click="OnRemoveAutomationRuleClick" />
+                    </Grid>
+                    <Grid ColumnSpacing="10">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <ComboBox Header="Tetikleyici"
+                                ItemsSource="{Binding KindOptions}"
+                                DisplayMemberPath="Label"
+                                SelectedIndex="{Binding KindIndex, Mode=TwoWay}"
+                                HorizontalAlignment="Stretch" />
+                      <ComboBox Grid.Column="1"
+                                Header="Uygulama"
+                                ItemsSource="{Binding ApplicationOptions}"
+                                DisplayMemberPath="Label"
+                                SelectedIndex="{Binding ApplicationIndex, Mode=TwoWay}"
+                                HorizontalAlignment="Stretch" />
+                    </Grid>
+                    <InfoBar IsOpen="{Binding HasAvailabilityMessage}"
+                             IsClosable="False"
+                             Severity="Warning"
+                             Message="{Binding AvailabilityMessage}" />
+                  </StackPanel>
+                </Border>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Grid ColumnSpacing="12">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <ComboBox Header="Dock görünürlüğü"
+                  ItemsSource="{Binding DockVisibilityOptions}"
+                  DisplayMemberPath="Label"
+                  SelectedIndex="{Binding DockVisibilityIndex, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch" />
+        <ComboBox Grid.Column="1"
+                  Header="Minimum olay önceliği"
+                  ItemsSource="{Binding PriorityOptions}"
+                  DisplayMemberPath="Label"
+                  SelectedIndex="{Binding MinimumPriorityIndex, Mode=TwoWay}"
+                  HorizontalAlignment="Stretch" />
+      </Grid>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="10">
+          <ToggleSwitch Header="Tüm modüllere izin ver"
+                        IsOn="{Binding AllowAllModules, Mode=TwoWay}" />
+          <TextBlock Text="Kapalıysa bu profil sırasında gösterilebilecek modülleri seçin."
+                     FontSize="12"
+                     Opacity="0.68"
+                     TextWrapping="Wrap" />
+          <ItemsControl ItemsSource="{Binding Modules}"
+                        IsEnabled="{Binding CanSelectModules}">
+            <ItemsControl.ItemsPanel>
+              <ItemsPanelTemplate>
+                <ItemsWrapGrid Orientation="Horizontal"
+                               MaximumRowsOrColumns="3" />
+              </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <CheckBox Content="{Binding Label}"
+                          Width="170"
+                          Margin="0,0,8,4"
+                          IsChecked="{Binding IsSelected, Mode=TwoWay}" />
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </StackPanel>
+      </Border>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="10">
+          <TextBlock Text="Tam ekran ve gizlilik"
+                     FontWeight="SemiBold" />
+          <ToggleSwitch Header="Tam ekran bildirimlerine izin ver"
+                        IsOn="{Binding AllowFullscreenNotifications, Mode=TwoWay}" />
+          <ToggleSwitch Header="Tam ekranda hassas içeriğe izin ver"
+                        IsOn="{Binding AllowSensitiveContentInFullscreen, Mode=TwoWay}" />
+          <ToggleSwitch Header="Windows kilitliyken hassas içeriğe izin ver"
+                        IsOn="{Binding AllowSensitiveContentWhenLocked, Mode=TwoWay}" />
+          <TextBlock Text="Profil izinleri genel gizlilik ayarlarını açamaz; yalnızca daha sıkı hale getirebilir."
+                     FontSize="11"
+                     Opacity="0.65"
+                     TextWrapping="Wrap" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</ContentDialog>

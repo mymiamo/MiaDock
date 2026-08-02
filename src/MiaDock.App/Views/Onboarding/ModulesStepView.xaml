@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <StackPanel MaxWidth="620" Spacing="16">
     <TextBlock Text="Modüllerinizi seçin" FontSize="28" FontWeight="SemiBold" />
-    <TextBlock Text="Dock'ta kullanmak istediğiniz yerleşik özellikleri seçin. Bu adım hiçbir Windows izni istemez."
+    <TextBlock Text="Dock'ta kullanmak istediğiniz özellikleri seçin. İleri dediğinizde kullanılan servisler açıklanır ve onayınız istenir."
                TextWrapping="Wrap" Opacity="0.72" />
     <ItemsControl ItemsSource="{Binding ModuleOptions}">
       <ItemsControl.ItemTemplate>

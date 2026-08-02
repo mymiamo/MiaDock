@@ -1,5 +1,7 @@
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Markup;
 using MiaDock.Core.Logging;
+using System.Runtime.InteropServices;
 
 namespace MiaDock.App.Services;
 
@@ -40,13 +42,22 @@ public sealed class AppExceptionCoordinator(ILogService logService) : IDisposabl
         _disposed = true;
     }
 
-    private void OnApplicationUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs args) =>
+    private void OnApplicationUnhandledException(object sender, Microsoft.UI.Xaml.UnhandledExceptionEventArgs args)
+    {
         logService.Write(
             TechnicalLogLevel.Critical,
             TechnicalEventIds.ApplicationUnhandled,
             "Application",
             "An unhandled WinUI exception occurred.",
             args.Exception);
+
+        // Optional views and Windows device objects can disappear during a click.
+        // Keep the shell alive for these recoverable UI failures only.
+        args.Handled = args.Exception is XamlParseException or
+            COMException or
+            InvalidComObjectException or
+            ObjectDisposedException;
+    }
 
     private void OnAppDomainUnhandledException(object sender, System.UnhandledExceptionEventArgs args) =>
         logService.Write(

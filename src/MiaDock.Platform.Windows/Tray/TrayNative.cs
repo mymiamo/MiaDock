@@ -6,6 +6,8 @@ internal static class TrayNative
 {
     internal const uint WmApp = 0x8000;
     internal const uint WmNull = 0x0000;
+    internal const uint WmDrawItem = 0x002B;
+    internal const uint WmMeasureItem = 0x002C;
     internal const uint WmContextMenu = 0x007B;
     internal const uint WmLButtonDoubleClick = 0x0203;
     internal const uint WmRButtonUp = 0x0205;
@@ -27,7 +29,18 @@ internal static class TrayNative
     internal const uint MfGray = 0x00000001;
     internal const uint MfChecked = 0x00000008;
     internal const uint MfPopup = 0x00000010;
+    internal const uint MfOwnerDraw = 0x00000100;
     internal const uint MfSeparator = 0x00000800;
+    internal const uint MimBackground = 0x00000002;
+    internal const uint OdtMenu = 1;
+    internal const uint OdsSelected = 0x0001;
+    internal const uint OdsGrayed = 0x0002;
+    internal const uint OdsDisabled = 0x0004;
+    internal const int DtCenter = 0x00000001;
+    internal const int DtVCenter = 0x00000004;
+    internal const int DtSingleLine = 0x00000020;
+    internal const int DtNoPrefix = 0x00000800;
+    internal const int Transparent = 1;
     internal const uint TpmRightButton = 0x0002;
     internal const uint TpmReturnCommand = 0x0100;
 
@@ -59,6 +72,52 @@ internal static class TrayNative
     {
         internal int X;
         internal int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct Rect
+    {
+        internal int Left;
+        internal int Top;
+        internal int Right;
+        internal int Bottom;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MeasureItem
+    {
+        internal uint ControlType;
+        internal uint ControlId;
+        internal uint ItemId;
+        internal uint ItemWidth;
+        internal uint ItemHeight;
+        internal nuint ItemData;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct DrawItem
+    {
+        internal uint ControlType;
+        internal uint ControlId;
+        internal uint ItemId;
+        internal uint ItemAction;
+        internal uint ItemState;
+        internal nint ItemWindow;
+        internal nint DeviceContext;
+        internal Rect ItemRectangle;
+        internal nuint ItemData;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MenuInfo
+    {
+        internal uint Size;
+        internal uint Mask;
+        internal uint Style;
+        internal uint MaximumHeight;
+        internal nint BackgroundBrush;
+        internal nuint ContextHelpId;
+        internal nuint MenuData;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -141,6 +200,16 @@ internal static class TrayNative
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     internal static extern bool AppendMenuW(nint menu, uint flags, nuint item, string? text);
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, EntryPoint = "AppendMenuW")]
+    internal static extern bool AppendOwnerDrawMenuW(
+        nint menu,
+        uint flags,
+        nuint item,
+        nint itemData);
+
+    [DllImport("user32.dll")]
+    internal static extern bool SetMenuInfo(nint menu, ref MenuInfo menuInfo);
+
     [DllImport("user32.dll")]
     internal static extern uint TrackPopupMenuEx(
         nint menu,
@@ -161,4 +230,47 @@ internal static class TrayNative
 
     [DllImport("user32.dll")]
     internal static extern bool PostMessageW(nint windowHandle, uint message, nuint wParam, nint lParam);
+
+    [DllImport("user32.dll")]
+    internal static extern int FillRect(nint deviceContext, ref Rect rectangle, nint brush);
+
+    [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+    internal static extern int DrawTextW(
+        nint deviceContext,
+        string text,
+        int length,
+        ref Rect rectangle,
+        int format);
+
+    [DllImport("gdi32.dll")]
+    internal static extern nint CreateSolidBrush(uint color);
+
+    [DllImport("gdi32.dll")]
+    internal static extern bool DeleteObject(nint handle);
+
+    [DllImport("gdi32.dll")]
+    internal static extern nint SelectObject(nint deviceContext, nint objectHandle);
+
+    [DllImport("gdi32.dll")]
+    internal static extern int SetBkMode(nint deviceContext, int mode);
+
+    [DllImport("gdi32.dll")]
+    internal static extern uint SetTextColor(nint deviceContext, uint color);
+
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+    internal static extern nint CreateFontW(
+        int height,
+        int width,
+        int escapement,
+        int orientation,
+        int weight,
+        uint italic,
+        uint underline,
+        uint strikeOut,
+        uint charSet,
+        uint outputPrecision,
+        uint clipPrecision,
+        uint quality,
+        uint pitchAndFamily,
+        string faceName);
 }

@@ -50,6 +50,16 @@ internal struct PropertyKey
     public uint PropertyId;
 }
 
+[StructLayout(LayoutKind.Explicit)]
+internal struct PropVariant
+{
+    [FieldOffset(0)]
+    public ushort ValueType;
+
+    [FieldOffset(8)]
+    public nint PointerValue;
+}
+
 [StructLayout(LayoutKind.Sequential)]
 internal struct AudioVolumeNotificationData
 {
@@ -125,13 +135,34 @@ internal interface IMMDevice
         [MarshalAs(UnmanagedType.IUnknown)] out object activatedInterface);
 
     [PreserveSig]
-    int OpenPropertyStore(uint accessMode, out nint properties);
+    int OpenPropertyStore(uint accessMode, out IPropertyStore properties);
 
     [PreserveSig]
     int GetId([MarshalAs(UnmanagedType.LPWStr)] out string id);
 
     [PreserveSig]
     int GetState(out uint state);
+}
+
+[ComImport]
+[Guid("886D8EEB-8CF2-4446-8D02-CDBA1DBDCF99")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IPropertyStore
+{
+    [PreserveSig]
+    int GetCount(out uint propertyCount);
+
+    [PreserveSig]
+    int GetAt(uint propertyIndex, out PropertyKey key);
+
+    [PreserveSig]
+    int GetValue(ref PropertyKey key, out PropVariant value);
+
+    [PreserveSig]
+    int SetValue(ref PropertyKey key, ref PropVariant value);
+
+    [PreserveSig]
+    int Commit();
 }
 
 [ComImport]
@@ -276,14 +307,24 @@ internal interface IAudioSessionNotification
 internal static class CoreAudioNative
 {
     internal const uint CoinitMultithreaded = 0;
+    internal const uint StorageModeRead = 0;
+    internal const ushort VariantTypeStringPointer = 31;
     internal static readonly Guid EndpointVolumeId = typeof(IAudioEndpointVolume).GUID;
     internal static readonly Guid SessionManagerId = typeof(IAudioSessionManager2).GUID;
+    internal static PropertyKey DeviceFriendlyNameKey => new()
+    {
+        FormatId = new Guid("A45C254E-DF1C-4EFD-8020-67D146A850E0"),
+        PropertyId = 14
+    };
 
     [DllImport("ole32.dll")]
     internal static extern int CoInitializeEx(nint reserved, uint initializationType);
 
     [DllImport("ole32.dll")]
     internal static extern void CoUninitialize();
+
+    [DllImport("ole32.dll")]
+    internal static extern int PropVariantClear(ref PropVariant value);
 
     internal static void ThrowIfFailed(int result)
     {

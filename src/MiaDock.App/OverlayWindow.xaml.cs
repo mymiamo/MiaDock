@@ -22,6 +22,7 @@ using MiaDock.App.Infrastructure;
 using MiaDock.Platform.Windows.Lifecycle;
 using MiaDock.Core.Theming;
 using MiaDock.Modules.Time.Services;
+using MiaDock.Core.Focus;
 using Windows.UI;
 using WinRT;
 
@@ -29,6 +30,7 @@ namespace MiaDock.App;
 
 public sealed partial class OverlayWindow : Window
 {
+    private const long WheelNavigationThrottleMilliseconds = 90;
     private readonly OverlayWindowViewModel _viewModel;
     private readonly IOverlayWindowController _windowController;
     private readonly IslandAutoCollapseController _autoCollapse;
@@ -44,6 +46,7 @@ public sealed partial class OverlayWindow : Window
     private readonly IWindowsSessionLockStateService _sessionLockState;
     private readonly ISystemResumeService _systemResume;
     private readonly PresentationPrivacyPolicy _privacyPolicy;
+    private readonly IFocusPolicyService _focusPolicy;
     private readonly ILogService _log;
     private readonly IAppLocalizationService _localization;
     private DesktopAcrylicController? _glassAcrylicController;
@@ -58,6 +61,7 @@ public sealed partial class OverlayWindow : Window
     private FullscreenSnapshot _fullscreenState = FullscreenSnapshot.None;
     private bool _temporaryNotificationVisible;
     private bool _manuallyHidden = true;
+    private long _lastWheelNavigationTimestamp;
 
     public OverlayWindow(
         OverlayWindowViewModel viewModel,
@@ -75,6 +79,7 @@ public sealed partial class OverlayWindow : Window
         IWindowsSessionLockStateService sessionLockState,
         ISystemResumeService systemResume,
         PresentationPrivacyPolicy privacyPolicy,
+        IFocusPolicyService focusPolicy,
         IAppLocalizationService localization)
     {
         InitializeComponent();
@@ -92,6 +97,7 @@ public sealed partial class OverlayWindow : Window
         _sessionLockState = sessionLockState;
         _systemResume = systemResume;
         _privacyPolicy = privacyPolicy;
+        _focusPolicy = focusPolicy;
         _localization = localization;
         Root.DataContext = viewModel;
         ApplyTransparentWindowBackdrop();
@@ -120,7 +126,10 @@ public sealed partial class OverlayWindow : Window
         _moduleRegistry.ModuleEventOccurred += OnModuleEventOccurred;
         _sessionLockState.LockStateChanged += OnSessionLockStateChanged;
         _systemResume.Resumed += OnSystemResumed;
+        _focusPolicy.PolicyChanged += OnFocusPolicyChanged;
         _localization.LanguageChanged += OnLanguageChanged;
+        _themeService.ThemeEnvironmentChanged += OnThemeEnvironmentChanged;
+        DockInteractionSession.ActivityChanged += OnDockInteractionActivityChanged;
         Closed += OnClosed;
         _fullscreen.Start();
         _fullscreenState = _fullscreen.Current;
@@ -172,8 +181,9 @@ public sealed partial class OverlayWindow : Window
     public void SelectNextModuleFromShortcut()
     {
         _manuallyHidden = false;
-        _viewModel.Island.SelectNextModule();
-        RegisterDockActivity();
+        TryRunDockAction(
+            _viewModel.Island.SelectNextModule,
+            "shortcut-next-module");
         ApplyEnvironment();
     }
 
@@ -204,16 +214,38 @@ public sealed partial class OverlayWindow : Window
             return;
         }
 
-        if (delta > 0)
+        args.Handled = true;
+        var now = Environment.TickCount64;
+        if (_lastWheelNavigationTimestamp != 0 &&
+            now - _lastWheelNavigationTimestamp < WheelNavigationThrottleMilliseconds)
         {
-            _viewModel.Island.SelectPreviousModule();
-        }
-        else
-        {
-            _viewModel.Island.SelectNextModule();
+            RegisterDockActivity();
+            return;
         }
 
-        args.Handled = true;
+        _lastWheelNavigationTimestamp = now;
+        try
+        {
+            if (delta > 0)
+            {
+                _viewModel.Island.SelectPreviousModule();
+            }
+            else
+            {
+                _viewModel.Island.SelectNextModule();
+            }
+        }
+        catch (Exception exception)
+        {
+            _log.Write(
+                TechnicalLogLevel.Error,
+                TechnicalEventIds.ModuleNavigationFailed,
+                "Overlay",
+                "Dock module navigation failed.",
+                exception,
+                new Dictionary<string, object?> { ["input"] = "wheel" });
+        }
+
         RegisterDockActivity();
     }
 
@@ -255,7 +287,8 @@ public sealed partial class OverlayWindow : Window
 
     private void OnOutsidePointerPressed(object? sender, EventArgs args)
     {
-        if (_viewModel.Island.CurrentState != IslandVisualState.ExpandedModule)
+        if (DockInteractionSession.IsActive ||
+            _viewModel.Island.CurrentState != IslandVisualState.ExpandedModule)
         {
             return;
         }
@@ -269,30 +302,65 @@ public sealed partial class OverlayWindow : Window
     private void OnIslandKeyDown(object sender, KeyRoutedEventArgs args) =>
         RegisterDockActivity();
 
-    private void OnSettingsClick(object sender, RoutedEventArgs args) => _settingsWindow.Show();
+    private void OnSettingsClick(object sender, RoutedEventArgs args) =>
+        TryRunDockAction(_settingsWindow.Show, "open-settings");
 
     private void OnPreviousModuleRequested(object? sender, EventArgs args)
     {
-        _viewModel.Island.SelectPreviousModule();
-        RegisterDockActivity();
+        TryRunDockAction(
+            _viewModel.Island.SelectPreviousModule,
+            "previous-module");
     }
 
     private void OnNextModuleRequested(object? sender, EventArgs args)
     {
-        _viewModel.Island.SelectNextModule();
-        RegisterDockActivity();
+        TryRunDockAction(
+            _viewModel.Island.SelectNextModule,
+            "next-module");
     }
 
     private void OnDefaultModuleRequested(object? sender, EventArgs args)
     {
-        _viewModel.Island.SelectDefault();
-        RegisterDockActivity();
+        TryRunDockAction(
+            _viewModel.Island.SelectDefault,
+            "default-module");
     }
 
     private void OnModuleSelected(object? sender, Controls.ModuleSelectedEventArgs args)
     {
-        _viewModel.Island.SelectModule(args.ModuleId);
-        RegisterDockActivity();
+        TryRunDockAction(
+            () => _viewModel.Island.SelectModule(args.ModuleId),
+            $"select-module:{args.ModuleId}");
+    }
+
+    private void OnModuleViewLoadFailed(
+        object? sender,
+        Controls.ModuleViewLoadFailedEventArgs args) =>
+        _log.Write(
+            TechnicalLogLevel.Error,
+            TechnicalEventIds.ModuleNavigationFailed,
+            "Overlay",
+            "A dock module view failed to load; a safe fallback was shown.",
+            args.Exception,
+            new Dictionary<string, object?> { ["viewKey"] = args.ViewKey });
+
+    private void TryRunDockAction(Action action, string operation)
+    {
+        try
+        {
+            action();
+            RegisterDockActivity();
+        }
+        catch (Exception exception)
+        {
+            _log.Write(
+                TechnicalLogLevel.Error,
+                TechnicalEventIds.ModuleNavigationFailed,
+                "Overlay",
+                "A dock interaction failed safely.",
+                exception,
+                new Dictionary<string, object?> { ["operation"] = operation });
+        }
     }
 
     private void RegisterDockActivity()
@@ -351,8 +419,10 @@ public sealed partial class OverlayWindow : Window
 
     private void OnTransitionRequested(object? sender, IslandTransition transition)
     {
+        var isExpanded = transition.CurrentState == IslandVisualState.ExpandedModule;
+        _windowController.SetInputActivationEnabled(isExpanded);
         _windowController.SetOutsideClickMonitoring(
-            transition.CurrentState == IslandVisualState.ExpandedModule);
+            isExpanded && !DockInteractionSession.IsActive);
 
         if (transition.CurrentState == IslandVisualState.ModuleNotification)
         {
@@ -361,6 +431,33 @@ public sealed partial class OverlayWindow : Window
 
         Island.ApplyTransition(transition);
         _autoCollapse.ObserveTransition(transition);
+    }
+
+    private void OnDockInteractionActivityChanged(object? sender, bool isActive)
+    {
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            ApplyDockInteractionActivity(isActive);
+        }
+        else
+        {
+            DispatcherQueue.TryEnqueue(() => ApplyDockInteractionActivity(isActive));
+        }
+    }
+
+    private void ApplyDockInteractionActivity(bool isActive)
+    {
+        if (isActive)
+        {
+            _autoCollapse.SuspendTransientInteraction();
+            _windowController.SetOutsideClickMonitoring(false);
+            return;
+        }
+
+        var state = _viewModel.Island.CurrentState;
+        _autoCollapse.ResumeTransientInteraction(state);
+        _windowController.SetOutsideClickMonitoring(
+            state == IslandVisualState.ExpandedModule);
     }
 
     private void OnAutoCollapseElapsed(object? sender, IslandTrigger trigger)
@@ -402,7 +499,10 @@ public sealed partial class OverlayWindow : Window
         _moduleRegistry.ModuleEventOccurred -= OnModuleEventOccurred;
         _sessionLockState.LockStateChanged -= OnSessionLockStateChanged;
         _systemResume.Resumed -= OnSystemResumed;
+        _focusPolicy.PolicyChanged -= OnFocusPolicyChanged;
         _localization.LanguageChanged -= OnLanguageChanged;
+        _themeService.ThemeEnvironmentChanged -= OnThemeEnvironmentChanged;
+        DockInteractionSession.ActivityChanged -= OnDockInteractionActivityChanged;
         _windowController.OutsidePointerPressed -= OnOutsidePointerPressed;
         _fullscreen.Dispose();
         _mediaSelectionCancellation?.Cancel();
@@ -477,7 +577,8 @@ public sealed partial class OverlayWindow : Window
         var themeChanged = isFirstApplication || _appliedAppearance!.Theme != appearance.Theme;
         var paletteChanged = themeChanged ||
                              _appliedAppearance!.BackgroundColor != appearance.BackgroundColor ||
-                             _appliedAppearance.AccentColor != appearance.AccentColor;
+                             _appliedAppearance.AccentColor != appearance.AccentColor ||
+                             _appliedAppearance.Opacity != appearance.Opacity;
         var layoutChanged = _appliedLayoutOptions != layoutOptions;
         var motionChanged = _appliedMotionOptions != motionOptions;
 
@@ -494,7 +595,8 @@ public sealed partial class OverlayWindow : Window
             Island.Theme = appearance.Theme.ToString();
             SystemBackdrop = null;
             ApplyOverlayBackdrop(appearance.Theme);
-            Root.RequestedTheme = appearance.Theme == ThemeStyle.BlurredGlass
+            Root.RequestedTheme = appearance.Theme.UsesColorlessGlass() ||
+                                  appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack
                 ? ElementTheme.Dark
                 : ElementTheme.Default;
             Root.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
@@ -531,7 +633,7 @@ public sealed partial class OverlayWindow : Window
 
     private static uint ToLayeredSurfaceArgb(AppearanceSettings appearance)
     {
-        if (appearance.Theme == ThemeStyle.BlurredGlass)
+        if (appearance.Theme.UsesColorlessGlass())
         {
             // The layered helper only paints the anti-aliased outer feather.
             // A faint neutral stroke keeps that edge smooth without placing a
@@ -603,8 +705,16 @@ public sealed partial class OverlayWindow : Window
         ClearColorlessAcrylicBackdrop();
         Island.ClearSystemBackdrop();
 
-        if (theme == ThemeStyle.BlurredGlass && TryApplyColorlessAcrylicBackdrop())
+        if (theme.UsesColorlessGlass())
         {
+            if (TryApplyColorlessAcrylicBackdrop())
+            {
+                return;
+            }
+
+            // Keep the layered host transparent when Acrylic is unavailable.
+            // The subtle surface overlay remains visible without a black rectangle.
+            ApplyTransparentWindowBackdrop();
             return;
         }
 
@@ -635,7 +745,7 @@ public sealed partial class OverlayWindow : Window
             controller = new DesktopAcrylicController
             {
                 Kind = DesktopAcrylicKind.Thin,
-                FallbackColor = Color.FromArgb(255, 24, 24, 24),
+                FallbackColor = Color.FromArgb(0, 0, 0, 0),
                 TintColor = Color.FromArgb(255, 128, 128, 128),
                 TintOpacity = 0.02f,
                 LuminosityOpacity = 0.10f
@@ -670,6 +780,30 @@ public sealed partial class OverlayWindow : Window
         }
 
         _glassBackdropConfiguration = null;
+    }
+
+    private void OnThemeEnvironmentChanged(object? sender, EventArgs args)
+    {
+        void Refresh()
+        {
+            if (_settings.Current.Appearance.Theme != ThemeStyle.AdaptiveFluent)
+            {
+                return;
+            }
+
+            Root.RequestedTheme = ElementTheme.Default;
+            Island.ApplyAppearance(_settings.Current.Appearance);
+            _windowController.UpdateSurfaceColor(ToLayeredSurfaceArgb(_settings.Current.Appearance));
+        }
+
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            Refresh();
+        }
+        else
+        {
+            DispatcherQueue.TryEnqueue(Refresh);
+        }
     }
 
     private void OnFullscreenStateChanged(object? sender, FullscreenSnapshot snapshot)
@@ -713,15 +847,22 @@ public sealed partial class OverlayWindow : Window
 
     private void OnModuleEventOccurred(object? sender, ModuleEvent moduleEvent)
     {
+        if (!_focusPolicy.Current.AllowsEvent(moduleEvent) ||
+            moduleEvent.ExpiresAtUtc <= DateTimeOffset.UtcNow)
+        {
+            return;
+        }
+
         var settings = _settings.Current;
         var moduleAllowsFullscreen = !settings.Modules.TryGetValue(moduleEvent.ModuleId, out var moduleSettings) ||
                                      moduleSettings.ShowInFullscreen;
-        var fullscreenAllowsEvent = _settings.Current.Tray.EnableTemporaryNotifications &&
+        var fullscreenAllowsEvent = settings.Tray.EnableTemporaryNotifications &&
             (!_fullscreenState.IsFullscreen
-            || (_settings.Current.Fullscreen.Enabled &&
+            || (settings.Fullscreen.Enabled &&
+                _focusPolicy.Current.AllowFullscreenNotifications &&
                 moduleAllowsFullscreen &&
                 moduleEvent.IsFullscreenEligible &&
-                (moduleEvent.Kind != ModuleEventKind.TrackChanged || _settings.Current.Fullscreen.ShowTrackChanges))) &&
+                (moduleEvent.Kind != ModuleEventKind.TrackChanged || settings.Fullscreen.ShowTrackChanges))) &&
             _privacyPolicy.CanPresent(
                 moduleEvent.Presentation,
                 settings,
@@ -734,6 +875,7 @@ public sealed partial class OverlayWindow : Window
     private void ApplyEnvironment()
     {
         var settings = _settings.Current;
+        var focus = _focusPolicy.Current;
         var display = _fullscreenState.IsFullscreen && _fullscreenState.WindowHandle != 0
             ? _displayTopology.ResolveForWindow(_fullscreenState.WindowHandle)
             : _displayTopology.Resolve(settings.Monitor, _fullscreenState.WindowHandle);
@@ -741,10 +883,17 @@ public sealed partial class OverlayWindow : Window
             SettingsMapper.ToOverlayPosition(settings.General.Position),
             display.Id);
 
+        var normalVisibilityAllowsDock = focus.AllowsNormalDock(
+            settings.General.VisibilityMode == IslandVisibilityMode.Always);
+        var temporaryVisibilityAllowsDock =
+            _temporaryNotificationVisible &&
+            focus.AllowsTemporaryDock(_fullscreenState.IsFullscreen);
         var shouldShow = _fullscreenState.IsFullscreen
-            ? _temporaryNotificationVisible && settings.Fullscreen.Enabled
-            : (!_manuallyHidden && settings.General.VisibilityMode == IslandVisibilityMode.Always) ||
-              _temporaryNotificationVisible;
+            ? temporaryVisibilityAllowsDock &&
+              settings.Fullscreen.Enabled &&
+              focus.AllowFullscreenNotifications
+            : (!_manuallyHidden && normalVisibilityAllowsDock) ||
+              temporaryVisibilityAllowsDock;
         shouldShow &= _privacyPolicy.CanPresent(
             _viewModel.Island.ActiveModulePresentation,
             settings,
@@ -758,5 +907,38 @@ public sealed partial class OverlayWindow : Window
         {
             _windowController.Hide();
         }
+    }
+
+    private void OnFocusPolicyChanged(object? sender, EventArgs args)
+    {
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            ApplyFocusPolicyChange();
+        }
+        else
+        {
+            DispatcherQueue.TryEnqueue(ApplyFocusPolicyChange);
+        }
+    }
+
+    private void ApplyFocusPolicyChange()
+    {
+        var activeEvent = _viewModel.Island.LastModuleEvent;
+        var notificationIsNoLongerAllowed =
+            activeEvent is null ||
+            !_focusPolicy.Current.AllowsEvent(activeEvent) ||
+            (_fullscreenState.IsFullscreen &&
+             !_focusPolicy.Current.AllowFullscreenNotifications);
+        if (_temporaryNotificationVisible && notificationIsNoLongerAllowed)
+        {
+            _temporaryNotificationVisible = false;
+            if (_viewModel.Island.CurrentState == IslandVisualState.ModuleNotification &&
+                activeEvent is null)
+            {
+                _viewModel.Island.HandleNotificationElapsed();
+            }
+        }
+
+        ApplyEnvironment();
     }
 }

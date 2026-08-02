@@ -5,6 +5,7 @@
   <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#14141414" />
   <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#20FFFFFF" />
   <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FFFFFFFF" />
+  <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FF000000" />
   <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
   <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#28FFFFFF" />
   <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#42FFFFFF" />

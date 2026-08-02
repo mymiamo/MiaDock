@@ -4,42 +4,68 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:MiaDock.App.Controls">
 
-  <Grid Padding="16,8,16,12" ColumnSpacing="14" RowSpacing="7">
-    <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="96" />
-      <ColumnDefinition Width="*" />
-    </Grid.ColumnDefinitions>
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
+  <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding Current.Track.Title}">
+    <Border Style="{StaticResource DockSectionStyle}" Padding="12">
+      <Grid ColumnSpacing="14" RowSpacing="5">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="116" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="44" />
+        </Grid.RowDefinitions>
 
-    <controls:AlbumArtwork Grid.RowSpan="3" Width="96" Height="96" VerticalAlignment="Top" />
+        <Border Grid.RowSpan="3"
+                Width="116" Height="116"
+                CornerRadius="16"
+                BorderBrush="{ThemeResource DockSurfaceStrokeBrush}"
+                BorderThickness="1"
+                VerticalAlignment="Center">
+          <controls:AlbumArtwork Width="114" Height="114" />
+        </Border>
 
-    <Grid Grid.Column="1" ColumnSpacing="8">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-      </Grid.ColumnDefinitions>
-      <StackPanel Spacing="3">
-        <TextBlock MaxLines="1" Style="{StaticResource IslandTitleTextStyle}" Text="{Binding Current.Track.Title}" />
-        <TextBlock MaxLines="1" Style="{StaticResource IslandBodyTextStyle}" Text="{Binding Current.Track.Artist}" />
-        <TextBlock MaxLines="1" Style="{StaticResource IslandCaptionTextStyle}" Text="{Binding Current.Track.AlbumTitle}" />
-      </StackPanel>
-      <controls:SourceAppBadge Grid.Column="1" VerticalAlignment="Top" />
-    </Grid>
+        <Grid Grid.Column="1" ColumnSpacing="8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <StackPanel MinWidth="0" VerticalAlignment="Center" Spacing="2">
+            <TextBlock MaxLines="1"
+                       Style="{StaticResource DockTitleTextStyle}"
+                       TextTrimming="CharacterEllipsis"
+                       Text="{Binding Current.Track.Title}"
+                       ToolTipService.ToolTip="{Binding Current.Track.Title}" />
+            <TextBlock MaxLines="1"
+                       TextTrimming="CharacterEllipsis"
+                       Style="{StaticResource DockBodyTextStyle}"
+                       Text="{Binding Current.Track.Artist}"
+                       ToolTipService.ToolTip="{Binding Current.Track.Artist}" />
+            <TextBlock MaxLines="1"
+                       TextTrimming="CharacterEllipsis"
+                       Style="{StaticResource DockCaptionTextStyle}"
+                       Text="{Binding Current.Track.AlbumTitle}"
+                       ToolTipService.ToolTip="{Binding Current.Track.AlbumTitle}" />
+          </StackPanel>
+          <controls:SourceAppBadge Grid.Column="1" VerticalAlignment="Top" />
+        </Grid>
 
-    <controls:MediaTimeline Grid.Row="1" Grid.Column="1" />
+        <Grid Grid.Row="1" Grid.Column="1" ColumnSpacing="10">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <controls:MediaTimeline />
+          <controls:VolumeControl Grid.Column="1" VerticalAlignment="Center" />
+        </Grid>
 
-    <Grid Grid.Row="2" Grid.Column="1" ColumnSpacing="12">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="Auto" />
-        <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="Auto" />
-      </Grid.ColumnDefinitions>
-      <controls:MediaTransportControls x:Name="TransportControls" HorizontalAlignment="Left" />
-      <controls:VolumeControl Grid.Column="2" VerticalAlignment="Center" />
-    </Grid>
+        <controls:MediaTransportControls x:Name="TransportControls"
+                                         Grid.Row="2" Grid.Column="1"
+                                         HorizontalAlignment="Center"
+                                         VerticalAlignment="Center" />
+      </Grid>
+    </Border>
   </Grid>
 </UserControl>

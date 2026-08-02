@@ -26,4 +26,30 @@ public sealed class TrayMenuItemTests
         Assert.IsTrue(menu.Children![0].IsChecked);
         Assert.IsFalse(menu.Children[1].IsEnabled);
     }
+
+    [TestMethod]
+    public void MenuItems_CanCarryFluentIconGlyphs()
+    {
+        var item = new TrayMenuItem(
+            42,
+            "Settings",
+            IconGlyph: "\uE713");
+
+        Assert.AreEqual("\uE713", item.IconGlyph);
+    }
+
+    [TestMethod]
+    public void WindowsTrayMenu_UsesOwnerDrawnDarkSurface()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Tray",
+            "WindowsTrayIconService.cs"));
+
+        StringAssert.Contains(source, "OwnerDrawMenuItem");
+        StringAssert.Contains(source, "TryMeasureMenuItem");
+        StringAssert.Contains(source, "TryDrawMenuItem");
+        StringAssert.Contains(source, "ColorRef(45, 51, 61)");
+        StringAssert.Contains(source, "Segoe Fluent Icons");
+    }
 }

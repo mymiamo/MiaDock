@@ -11,6 +11,8 @@ public static class TechnicalEventIds
     public const string SettingsLoadFailed = "settings.load-failed";
     public const string SettingsSaveFailed = "settings.save-failed";
     public const string MediaSelectionFailed = "media.selection-failed";
+    public const string ModuleNavigationFailed = "dock.module-navigation-failed";
+    public const string MediaAudioMeterFailed = "media.audio-meter-failed";
     public const string SystemActivityReady = "system-activity.ready";
     public const string CameraWatcherUnavailable = "system-activity.camera-watcher-unavailable";
     public const string PowerStatusReady = "device-status.power-ready";
@@ -23,4 +25,6 @@ public static class TechnicalEventIds
     public const string LogExportFailed = "logs.export-failed";
     public const string StoreUpdateCheckCompleted = "store-update.check-completed";
     public const string StoreUpdateCheckFailed = "store-update.check-failed";
+    public const string StartupTaskChecked = "startup-task.checked";
+    public const string StartupTaskRepairFailed = "startup-task.repair-failed";
 }

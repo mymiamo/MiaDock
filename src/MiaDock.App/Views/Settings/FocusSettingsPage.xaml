@@ -1,0 +1,151 @@
+<UserControl
+    x:Class="MiaDock.App.Views.Settings.FocusSettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls">
+
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+    <controls:FocusColorBrushConverter x:Key="FocusColorBrushConverter" />
+  </UserControl.Resources>
+
+  <ScrollViewer Padding="28,20,28,40"
+                HorizontalScrollMode="Disabled"
+                HorizontalScrollBarVisibility="Disabled"
+                HorizontalContentAlignment="Stretch">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
+      <Grid ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Spacing="5">
+          <TextBlock Text="Odak"
+                     Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
+          <TextBlock Text="Hazır profilleri kişiselleştirin veya MiaDock davranışını yöneten kendi Odak profilinizi oluşturun."
+                     Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
+          <TextBlock Text="{Binding ProfileCountSummary}"
+                     Margin="0,4,0,0"
+                     FontSize="12"
+                     Opacity="0.65" />
+        </StackPanel>
+        <Button Grid.Column="1"
+                Content="Yeni profil"
+                MinHeight="38"
+                VerticalAlignment="Bottom"
+                IsEnabled="{Binding CanCreateProfile}"
+                Click="OnAddProfileClick"
+                AutomationProperties.Name="Yeni Odak profili oluştur" />
+      </Grid>
+
+      <InfoBar IsOpen="True"
+               IsClosable="False"
+               Severity="Informational"
+               Title="MiaDock davranışı"
+               Message="Odak profilleri Windows Rahatsız Etme ayarını değiştirmez; yalnız MiaDock modüllerini, olaylarını ve görünürlüğünü yönetir.">
+        <InfoBar.ActionButton>
+          <Button Content="Windows Odak ayarlarını aç"
+                  Command="{Binding OpenWindowsFocusSettingsCommand}"
+                  AutomationProperties.Name="Windows Odak ayarlarını aç" />
+        </InfoBar.ActionButton>
+      </InfoBar>
+
+      <InfoBar IsOpen="{Binding HasAutomationConflicts}"
+               IsClosable="False"
+               Severity="Warning"
+               Title="Otomasyon çakışması"
+               Message="{Binding AutomationConflictMessage}" />
+
+      <ItemsControl ItemsSource="{Binding Profiles}">
+        <ItemsControl.ItemTemplate>
+          <DataTemplate>
+            <Border Margin="0,0,0,10"
+                    Style="{StaticResource SettingsCardBorderStyle}">
+              <Grid ColumnSpacing="14">
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="46" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <VisualStateManager.VisualStateGroups>
+                  <VisualStateGroup>
+                    <VisualState x:Name="CompactProfileCard" />
+                    <VisualState x:Name="WideProfileCard">
+                      <VisualState.StateTriggers>
+                        <AdaptiveTrigger MinWindowWidth="720" />
+                      </VisualState.StateTriggers>
+                      <VisualState.Setters>
+                        <Setter Target="ActionPanel.(Grid.Row)" Value="0" />
+                        <Setter Target="ActionPanel.(Grid.Column)" Value="2" />
+                        <Setter Target="ActionPanel.Margin" Value="0" />
+                      </VisualState.Setters>
+                    </VisualState>
+                  </VisualStateGroup>
+                </VisualStateManager.VisualStateGroups>
+
+                <Border Width="42"
+                        Height="42"
+                        CornerRadius="21"
+                        BorderThickness="1"
+                        BorderBrush="{Binding Color, Converter={StaticResource FocusColorBrushConverter}}"
+                        Background="Transparent">
+                  <FontIcon Glyph="{Binding IconGlyph}"
+                            FontFamily="Segoe Fluent Icons"
+                            FontSize="17"
+                            Foreground="{Binding Color, Converter={StaticResource FocusColorBrushConverter}}" />
+                </Border>
+
+                <StackPanel Grid.Column="1" Spacing="3">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="{Binding DisplayName}"
+                               FontSize="15"
+                               FontWeight="SemiBold" />
+                    <Border Padding="7,2"
+                            CornerRadius="8"
+                            Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                            Visibility="{Binding IsActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                      <TextBlock Text="Etkin"
+                                 FontSize="10"
+                                 Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                    </Border>
+                  </StackPanel>
+                  <TextBlock Text="{Binding Summary}"
+                             FontSize="12"
+                             Opacity="0.68"
+                             TextWrapping="Wrap" />
+                </StackPanel>
+
+                <StackPanel x:Name="ActionPanel"
+                            Grid.Row="1"
+                            Grid.Column="1"
+                            Orientation="Horizontal"
+                            Spacing="7"
+                            Margin="0,10,0,0"
+                            VerticalAlignment="Center">
+                  <Button Content="Düzenle"
+                          Tag="{Binding Id}"
+                          MinHeight="36"
+                          Click="OnEditProfileClick" />
+                  <Button Content="Varsayılana döndür"
+                          Tag="{Binding Id}"
+                          MinHeight="36"
+                          Visibility="{Binding IsBuiltIn, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          Click="OnResetProfileClick" />
+                  <Button Content="Sil"
+                          Tag="{Binding Id}"
+                          MinHeight="36"
+                          Visibility="{Binding IsCustom, Converter={StaticResource BooleanToVisibilityConverter}}"
+                          Click="OnDeleteProfileClick" />
+                </StackPanel>
+              </Grid>
+            </Border>
+          </DataTemplate>
+        </ItemsControl.ItemTemplate>
+      </ItemsControl>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

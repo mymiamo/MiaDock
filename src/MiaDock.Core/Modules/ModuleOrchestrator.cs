@@ -1,3 +1,5 @@
+using MiaDock.Core.Focus;
+
 namespace MiaDock.Core.Modules;
 
 public sealed class ModuleOrchestrator : IModuleOrchestrator
@@ -9,6 +11,7 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
 
     private readonly IIslandModuleRegistry _registry;
     private readonly TimeProvider _timeProvider;
+    private readonly IFocusPolicyService? _focusPolicy;
     private readonly object _gate = new();
     private readonly List<ModuleEvent> _pendingEvents = [];
     private ModuleEvent? _activeEvent;
@@ -26,15 +29,21 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
     public ModuleOrchestrator(
         IIslandModuleRegistry registry,
         TimeProvider? timeProvider = null,
-        TimeSpan? temporarySelectionDuration = null)
+        TimeSpan? temporarySelectionDuration = null,
+        IFocusPolicyService? focusPolicy = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
         _registry = registry;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _focusPolicy = focusPolicy;
         _temporarySelectionDuration = temporarySelectionDuration ?? DefaultTemporarySelectionDuration;
         ValidateTemporarySelectionDuration(_temporarySelectionDuration);
         _registry.ActivePresentationChanged += OnActivePresentationChanged;
         _registry.ModuleEventOccurred += OnModuleEventOccurred;
+        if (_focusPolicy is not null)
+        {
+            _focusPolicy.PolicyChanged += OnFocusPolicyChanged;
+        }
     }
 
     public IReadOnlyList<ModuleDisplayState> AvailableModules
@@ -304,6 +313,45 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
 
         _registry.ActivePresentationChanged -= OnActivePresentationChanged;
         _registry.ModuleEventOccurred -= OnModuleEventOccurred;
+        if (_focusPolicy is not null)
+        {
+            _focusPolicy.PolicyChanged -= OnFocusPolicyChanged;
+        }
+    }
+
+    private void OnFocusPolicyChanged(object? sender, EventArgs args)
+    {
+        ModuleEvent? active;
+        ModuleDisplayState? display;
+        bool activeChanged;
+        lock (_gate)
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            var previousActive = _activeEvent;
+            RemoveDisallowedEvents();
+            if (_manuallySelectedModuleId is { } selectedId &&
+                !AllowsModule(selectedId))
+            {
+                _manuallySelectedModuleId = null;
+                _isDefaultManuallySelected = true;
+            }
+
+            RefreshTemporarySelectionExpiration(reset: false);
+            active = _activeEvent;
+            display = ResolveCurrentDisplay();
+            activeChanged = !ReferenceEquals(previousActive, active);
+        }
+
+        if (activeChanged)
+        {
+            ActiveEventChanged?.Invoke(this, active);
+        }
+
+        CurrentDisplayChanged?.Invoke(this, display);
     }
 
     private void OnActivePresentationChanged(object? sender, ModulePresentation? presentation)
@@ -342,6 +390,11 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
                 return;
             }
             _receivedEvents++;
+            if (!AllowsEvent(moduleEvent))
+            {
+                return;
+            }
+
             if (moduleEvent.ExpiresAtUtc <= GetUtcNow())
             {
                 _expiredEvents++;
@@ -440,6 +493,7 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
 
     private void RemoveExpiredEvents()
     {
+        RemoveDisallowedEvents();
         var now = GetUtcNow();
         if (_activeEvent?.ExpiresAtUtc <= now)
         {
@@ -562,7 +616,8 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
     private List<ModuleDisplayState> GetAvailableModules() => _registry.Modules
         .Where(module => module.IsEnabled &&
                          module.LifecycleState == ModuleLifecycleState.Active &&
-                         module.CurrentPresentation is not null)
+                         module.CurrentPresentation is not null &&
+                         AllowsModule(module.Descriptor.Id))
         .Select(module => new ModuleDisplayState(module.Descriptor, module.CurrentPresentation!))
         .OrderByDescending(item => item.Descriptor.PersistentPriority)
         .ThenBy(item => item.Descriptor.Id, StringComparer.Ordinal)
@@ -571,7 +626,28 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
     private IIslandModule? FindModule(string moduleId) => _registry.Modules.FirstOrDefault(
         module => module.Descriptor.Id.Equals(moduleId, StringComparison.Ordinal) &&
                   module.IsEnabled &&
-                  module.LifecycleState == ModuleLifecycleState.Active);
+                  module.LifecycleState == ModuleLifecycleState.Active &&
+                  AllowsModule(module.Descriptor.Id));
+
+    private void RemoveDisallowedEvents()
+    {
+        if (_activeEvent is not null && !AllowsEvent(_activeEvent))
+        {
+            _activeEvent = null;
+        }
+
+        _pendingEvents.RemoveAll(moduleEvent => !AllowsEvent(moduleEvent));
+        if (_activeEvent is null)
+        {
+            PromoteNextEvent();
+        }
+    }
+
+    private bool AllowsModule(string moduleId) =>
+        _focusPolicy?.Current.AllowsModule(moduleId) ?? true;
+
+    private bool AllowsEvent(ModuleEvent moduleEvent) =>
+        _focusPolicy?.Current.AllowsEvent(moduleEvent) ?? true;
 
     private DateTimeOffset GetUtcNow() => _timeProvider.GetUtcNow();
 

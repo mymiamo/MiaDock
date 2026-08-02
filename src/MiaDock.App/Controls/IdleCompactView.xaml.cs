@@ -18,7 +18,7 @@ using Windows.UI.ViewManagement;
 
 namespace MiaDock.App.Controls;
 
-public sealed partial class IdleCompactView : UserControl
+public sealed partial class IdleCompactView : UserControl, IModuleViewActivationAware
 {
     private DispatcherQueueTimer? _clockTimer;
     private readonly MusicModuleViewModel? _music;
@@ -32,12 +32,13 @@ public sealed partial class IdleCompactView : UserControl
         new SolidColorBrush(Color.FromArgb(255, 74, 222, 128));
     private bool _isLoaded;
     private bool _musicRefreshPending;
+    private bool _isPresentationActive;
 
-    public IdleCompactView() : this(null, null, null, null)
+    public IdleCompactView() : this(null, null, null, null, null)
     {
     }
 
-    public IdleCompactView(MusicModuleViewModel? music) : this(music, null, null, null)
+    public IdleCompactView(MusicModuleViewModel? music) : this(music, null, null, null, null)
     {
     }
 
@@ -45,13 +46,18 @@ public sealed partial class IdleCompactView : UserControl
         MusicModuleViewModel? music,
         SystemActivityViewModel? systemActivity,
         ILocalizationService? localization = null,
-        ISettingsService? settings = null)
+        ISettingsService? settings = null,
+        FocusDockViewModel? focus = null)
     {
         _music = music;
         _systemActivity = systemActivity;
         _localization = localization;
         _settings = settings;
         InitializeComponent();
+        if (focus is not null)
+        {
+            FocusStatus.Configure(focus);
+        }
     }
 
     private void OnLoaded(object sender, RoutedEventArgs e)
@@ -70,7 +76,6 @@ public sealed partial class IdleCompactView : UserControl
         if (_music is not null)
         {
             _music.PropertyChanged += OnMusicPropertyChanged;
-            _music.SetAudioMeterActive(this, true);
         }
 
         if (_systemActivity is not null)
@@ -90,10 +95,7 @@ public sealed partial class IdleCompactView : UserControl
         UpdateMusicActivity();
         UpdateCallActivity();
         UpdateActivityDot();
-        if (_uiSettings.AnimationsEnabled)
-        {
-            IdlePulseStoryboard.Begin();
-        }
+        UpdatePresentationActivity();
         ScheduleNextMinute();
     }
 
@@ -131,6 +133,28 @@ public sealed partial class IdleCompactView : UserControl
 
         IdlePulseStoryboard.Stop();
         StopTimer();
+    }
+
+    public void SetPresentationActive(bool isActive)
+    {
+        _isPresentationActive = isActive;
+        UpdatePresentationActivity();
+    }
+
+    private void UpdatePresentationActivity()
+    {
+        var shouldRun = _isLoaded && _isPresentationActive;
+        _music?.SetAudioMeterActive(this, shouldRun);
+        var hasActivity = _systemActivity?.Snapshot.MicrophoneUsage == MicrophoneUsageState.Active ||
+                          _music?.HasAudioActivity == true;
+        if (shouldRun && hasActivity && _uiSettings.AnimationsEnabled)
+        {
+            IdlePulseStoryboard.Begin();
+        }
+        else
+        {
+            IdlePulseStoryboard.Stop();
+        }
     }
 
     private void OnMusicPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -240,6 +264,7 @@ public sealed partial class IdleCompactView : UserControl
         }
         ToolTipService.SetToolTip(ActivityDot, status);
         AutomationProperties.SetName(ActivityDot, status);
+        UpdatePresentationActivity();
     }
 
     private void OnDashboardPropertyChanged(object? sender, PropertyChangedEventArgs e)

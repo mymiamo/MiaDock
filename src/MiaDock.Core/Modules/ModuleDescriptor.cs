@@ -16,7 +16,8 @@ public sealed record ModuleDescriptor
         bool isPersistent = true,
         string? hoverViewKey = null,
         string? iconGlyph = null,
-        string? displayNameKey = null)
+        string? displayNameKey = null,
+        double minimumExpandedHeight = 300)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(id);
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -32,6 +33,11 @@ public sealed record ModuleDescriptor
         if (defaultDisplayDuration <= TimeSpan.Zero)
         {
             throw new ArgumentOutOfRangeException(nameof(defaultDisplayDuration));
+        }
+
+        if (!double.IsFinite(minimumExpandedHeight) || minimumExpandedHeight is < 260 or > 420)
+        {
+            throw new ArgumentOutOfRangeException(nameof(minimumExpandedHeight));
         }
 
         Id = id;
@@ -52,6 +58,7 @@ public sealed record ModuleDescriptor
         DisplayNameKey = string.IsNullOrWhiteSpace(displayNameKey)
             ? $"Module.{id}.Name"
             : displayNameKey;
+        MinimumExpandedHeight = minimumExpandedHeight;
     }
 
     public string Id { get; }
@@ -81,4 +88,6 @@ public sealed record ModuleDescriptor
     public string HoverViewKey { get; }
 
     public string IconGlyph { get; }
+
+    public double MinimumExpandedHeight { get; }
 }

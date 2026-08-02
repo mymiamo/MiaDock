@@ -3,11 +3,19 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
-  <Grid Padding="14,0" ColumnSpacing="10">
+  <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding ConnectivityText}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-    <FontIcon x:Name="NetworkIcon" Glyph="{Binding NetworkGlyph}" FontSize="15"
+    <FontIcon x:Name="NetworkIcon" Glyph="{Binding NetworkGlyph}"
+              Style="{StaticResource DockModuleIconStyle}"
               AutomationProperties.Name="{Binding ConnectivityText}" />
-    <TextBlock Grid.Column="1" Text="{Binding ConnectivityText}" VerticalAlignment="Center" Style="{StaticResource IslandBodyTextStyle}" />
-    <TextBlock Grid.Column="2" Text="{Binding ConnectionText}" VerticalAlignment="Center" Style="{StaticResource IslandCaptionTextStyle}" />
+    <TextBlock Grid.Column="1" Text="{Binding ConnectivityText}" VerticalAlignment="Center"
+               MaxLines="1" TextTrimming="CharacterEllipsis"
+               Style="{StaticResource DockBodyTextStyle}"
+               ToolTipService.ToolTip="{Binding ConnectivityText}" />
+    <TextBlock Grid.Column="2" Text="{Binding ConnectionText}" VerticalAlignment="Center"
+               MaxLines="1" TextTrimming="CharacterEllipsis"
+               Style="{StaticResource DockCaptionTextStyle}"
+               ToolTipService.ToolTip="{Binding ConnectionText}" />
   </Grid>
 </UserControl>

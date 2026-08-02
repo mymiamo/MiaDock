@@ -58,6 +58,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
         return moduleId switch
         {
             "media" => FromMedia(_media.ServiceState),
+            "volume" => FromVolume(_systemActivity.Current),
             "system-activity" => FromSystemActivity(_systemActivity.Current.ServiceState),
             "battery" => FromBattery(_power.Current),
             "network" => FromDeviceState(_network.Current.State),
@@ -82,6 +83,16 @@ public sealed class ModuleSettingsCatalog : IDisposable
         SystemActivityServiceState.Faulted => new(ModuleAvailabilityState.TemporaryError),
         _ => new(ModuleAvailabilityState.Ready)
     };
+
+    private static ModuleAvailability FromVolume(SystemActivitySnapshot snapshot) =>
+        snapshot.ServiceState switch
+        {
+            SystemActivityServiceState.Unavailable => new(ModuleAvailabilityState.ApiUnavailable),
+            SystemActivityServiceState.Faulted => new(ModuleAvailabilityState.TemporaryError),
+            _ when !snapshot.IsMasterVolumeAvailable =>
+                new(ModuleAvailabilityState.NoCompatibleDevice),
+            _ => new(ModuleAvailabilityState.Ready)
+        };
 
     private static ModuleAvailability FromBattery(BatteryStatusSnapshot snapshot)
     {

@@ -8,40 +8,63 @@
              ManipulationMode="TranslateX"
              ManipulationCompleted="OnManipulationCompleted">
   <Border x:Name="SwitcherRoot"
-          Background="{ThemeResource IslandStyleControlBrush}"
-          BorderBrush="{ThemeResource IslandStrokeBrush}"
-          BorderThickness="1"
-          CornerRadius="18"
+          Height="48"
+          Style="{StaticResource DockSectionStyle}"
           Padding="2">
-    <ScrollViewer MaxWidth="420"
-                  HorizontalScrollMode="Enabled"
-                  HorizontalScrollBarVisibility="Hidden"
-                  VerticalScrollMode="Disabled"
-                  VerticalScrollBarVisibility="Disabled"
-                  HorizontalContentAlignment="Center">
-    <StackPanel Orientation="Horizontal" Spacing="2">
-      <Button Width="36" Height="36"
-              Style="{StaticResource IslandCompactIconButtonStyle}"
+    <Grid ColumnSpacing="4">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="44" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="44" />
+      </Grid.ColumnDefinitions>
+
+      <Button Width="44"
+              Height="44"
+              Style="{StaticResource DockIconButtonStyle}"
               Click="OnPreviousClick"
-              ToolTipService.ToolTip="Önceki modül" AutomationProperties.Name="Önceki modül">
-        <FontIcon Glyph="&#xE76B;" FontSize="10" />
+              ToolTipService.ToolTip="Önceki modül"
+              AutomationProperties.Name="Önceki modül">
+        <FontIcon Glyph="&#xE76B;" FontSize="14" />
       </Button>
-      <Button x:Name="DefaultButton"
-              Width="36" Height="36"
-              Style="{StaticResource IslandCompactIconButtonStyle}"
-              Click="OnDefaultClick"
-              ToolTipService.ToolTip="Ana dock"
-              AutomationProperties.Name="Ana dock">
-        <FontIcon Glyph="&#xE80F;" FontSize="12" />
-      </Button>
-      <StackPanel x:Name="ModuleButtons" Orientation="Horizontal" Spacing="2" />
-      <Button Width="36" Height="36"
-              Style="{StaticResource IslandCompactIconButtonStyle}"
+
+      <ScrollViewer Grid.Column="1"
+                    HorizontalScrollMode="Enabled"
+                    HorizontalScrollBarVisibility="Hidden"
+                    VerticalScrollMode="Disabled"
+                    VerticalScrollBarVisibility="Disabled"
+                    HorizontalContentAlignment="Center">
+        <StackPanel Orientation="Horizontal" Spacing="3">
+          <Button x:Name="DefaultButton"
+                  Width="44"
+                  Height="44"
+                  Style="{StaticResource DockIconButtonStyle}"
+                  Click="OnDefaultClick"
+                  ToolTipService.ToolTip="Ana dock"
+                  AutomationProperties.Name="Ana dock">
+            <Grid>
+              <FontIcon Glyph="&#xE80F;" FontSize="14" />
+              <Border x:Name="DefaultIndicator"
+                      Width="4" Height="2"
+                      Margin="0,0,0,2"
+                      CornerRadius="1"
+                      Background="{ThemeResource IslandStyleAccentBrush}"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Bottom" />
+            </Grid>
+          </Button>
+          <StackPanel x:Name="ModuleButtons" Orientation="Horizontal" Spacing="3" />
+        </StackPanel>
+      </ScrollViewer>
+
+      <Button Grid.Column="2"
+              Width="44"
+              Height="44"
+              Style="{StaticResource DockIconButtonStyle}"
               Click="OnNextClick"
-              ToolTipService.ToolTip="Sonraki modül" AutomationProperties.Name="Sonraki modül">
-        <FontIcon Glyph="&#xE76C;" FontSize="10" />
+              ToolTipService.ToolTip="Sonraki modül"
+              AutomationProperties.Name="Sonraki modül">
+        <FontIcon Glyph="&#xE76C;" FontSize="14" />
       </Button>
-    </StackPanel>
-    </ScrollViewer>
+    </Grid>
   </Border>
 </UserControl>
