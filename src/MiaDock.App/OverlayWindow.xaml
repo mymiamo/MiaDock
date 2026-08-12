@@ -15,19 +15,18 @@
                     PointerEntered="OnIslandPointerEntered"
                     PointerExited="OnIslandPointerExited"
                     PointerMoved="OnIslandPointerMoved"
+                    PointerPressed="OnIslandPointerPressed"
+                    PointerReleased="OnIslandPointerReleased"
+                    PointerCanceled="OnIslandPointerCanceled"
+                    PointerCaptureLost="OnIslandPointerCaptureLost"
                     PointerWheelChanged="OnIslandPointerWheelChanged"
+                    RightTapped="OnIslandRightTapped"
                     Tapped="OnIslandTapped"
                     KeyDown="OnIslandKeyDown"
                     PreviousModuleRequested="OnPreviousModuleRequested"
                     NextModuleRequested="OnNextModuleRequested"
                     DefaultModuleRequested="OnDefaultModuleRequested"
                     ModuleSelected="OnModuleSelected"
-                    ModuleViewLoadFailed="OnModuleViewLoadFailed">
-      <ui:IslandShell.ContextFlyout>
-        <MenuFlyout>
-          <MenuFlyoutItem x:Name="SettingsMenuItem" Text="Ayarlar" Click="OnSettingsClick" />
-        </MenuFlyout>
-      </ui:IslandShell.ContextFlyout>
-    </ui:IslandShell>
+                    ModuleViewLoadFailed="OnModuleViewLoadFailed" />
   </Grid>
 </Window>

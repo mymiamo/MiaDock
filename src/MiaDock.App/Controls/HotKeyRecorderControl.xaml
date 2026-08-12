@@ -1,16 +1,36 @@
 <UserControl
     x:Class="MiaDock.App.Controls.HotKeyRecorderControl"
+    x:Name="Root"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <StackPanel Orientation="Horizontal" Spacing="8">
-    <Button x:Name="RecorderButton"
-            MinWidth="190"
-            Click="OnRecorderClicked"
-            KeyDown="OnRecorderKeyDown"
-            LostFocus="OnRecorderLostFocus"
-            AutomationProperties.Name="Global kısayolu kaydet" />
-    <Button Content="Temizle"
-            Click="OnClearClicked"
-            AutomationProperties.Name="Kısayol atamasını temizle" />
+  <StackPanel Spacing="5">
+    <Grid ColumnSpacing="8" RowSpacing="8">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+      <Button x:Name="RecorderButton"
+              Grid.ColumnSpan="3"
+              HorizontalAlignment="Stretch"
+              Click="OnRecorderClicked"
+              KeyDown="OnRecorderKeyDown"
+              LostFocus="OnRecorderLostFocus"
+              AutomationProperties.Name="{Binding AccessibleName, ElementName=Root}"
+              AutomationProperties.HelpText="{Binding StatusText, ElementName=Root}" />
+      <Button Content="Temizle"
+              Grid.Row="1" Grid.Column="1"
+              Click="OnClearClicked"
+              AutomationProperties.Name="Kısayol atamasını temizle" />
+      <Button Content="Varsayılana döndür"
+              Grid.Row="1" Grid.Column="2"
+              Click="OnRestoreDefaultClicked"
+              AutomationProperties.Name="Kısayolu varsayılan atamaya döndür" />
+    </Grid>
+    <TextBlock Text="{Binding StatusText, ElementName=Root}"
+               Opacity="0.72"
+               AutomationProperties.Name="{Binding AccessibleName, ElementName=Root}"
+               AutomationProperties.LiveSetting="Polite" />
   </StackPanel>
 </UserControl>

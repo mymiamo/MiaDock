@@ -7,8 +7,12 @@ using MiaDock.Modules.Time.Services;
 
 namespace MiaDock.Modules.Time.ViewModels;
 
+public sealed record TimerPresetOption(int Minutes, string Label);
+
 public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 {
+    private static readonly TimeSpan MaximumTimerDuration = TimeSpan.FromHours(99);
+    private static readonly int[] PresetMinuteValues = [5, 10, 15, 25, 45];
     private readonly ITimeToolsService _service;
     private readonly IUiDispatcher _dispatcher;
     private readonly ILocalizationService? _localization;
@@ -28,6 +32,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
         _localization = localization;
         _current = service.Current;
         _pendingSnapshot = _current;
+        PresetDurations = CreatePresetDurations();
         _service.SnapshotChanged += OnSnapshotChanged;
         if (_localization is not null)
         {
@@ -35,39 +40,22 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
         }
     }
 
-    [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(TimerText))]
-    [NotifyPropertyChangedFor(nameof(TimerStatusText))]
-    [NotifyPropertyChangedFor(nameof(TimerProgressPercent))]
-    [NotifyPropertyChangedFor(nameof(TimerPrimaryText))]
-    [NotifyPropertyChangedFor(nameof(TimerSecondaryText))]
-    [NotifyPropertyChangedFor(nameof(TimerPrimaryGlyph))]
-    [NotifyPropertyChangedFor(nameof(StopwatchText))]
-    [NotifyPropertyChangedFor(nameof(StopwatchPrimaryText))]
-    [NotifyPropertyChangedFor(nameof(CompactTimeText))]
-    [NotifyPropertyChangedFor(nameof(CompactStatusText))]
-    [NotifyPropertyChangedFor(nameof(CompactPrimaryText))]
-    [NotifyPropertyChangedFor(nameof(CompactPrimaryGlyph))]
-    [NotifyPropertyChangedFor(nameof(CompactSecondaryText))]
-    [NotifyPropertyChangedFor(nameof(IsTimerCompleted))]
-    [NotifyPropertyChangedFor(nameof(IsTimerIdle))]
-    [NotifyPropertyChangedFor(nameof(HasTimerActivity))]
-    [NotifyPropertyChangedFor(nameof(HasStopwatchActivity))]
-    [NotifyCanExecuteChangedFor(nameof(TimerPrimaryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(CancelTimerCommand))]
-    [NotifyCanExecuteChangedFor(nameof(StopwatchPrimaryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(AddLapCommand))]
-    [NotifyCanExecuteChangedFor(nameof(ResetStopwatchCommand))]
-    [NotifyCanExecuteChangedFor(nameof(CompactPrimaryCommand))]
-    [NotifyCanExecuteChangedFor(nameof(CompactSecondaryCommand))]
     private TimeToolsSnapshot _current;
+    private int _selectedToolIndex;
+
+    public TimeToolsSnapshot Current => _current;
 
     [ObservableProperty] private double _customHours;
     [ObservableProperty] private double _customMinutes = 5;
     [ObservableProperty] private double _customSeconds;
-    [ObservableProperty] private int _selectedToolIndex;
 
-    public IReadOnlyList<int> PresetMinutes { get; } = [5, 10, 15, 25, 30, 45, 60];
+    public int SelectedToolIndex
+    {
+        get => _selectedToolIndex;
+        set => SetProperty(ref _selectedToolIndex, value == 1 ? 1 : 0);
+    }
+
+    public IReadOnlyList<TimerPresetOption> PresetDurations { get; private set; }
 
     public string TimerText => FormatDuration(Current.TimerRemaining);
 
@@ -148,12 +136,12 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
         .ToArray();
 
     [RelayCommand]
-    private void StartPreset(string minutes)
+    private void StartPreset(TimerPresetOption? preset)
     {
-        if (int.TryParse(minutes, out var value) && value is > 0 and <= 99 * 60)
+        if (preset is { Minutes: > 0 } && preset.Minutes <= 99 * 60)
         {
             SelectedToolIndex = 0;
-            _service.StartTimer(TimeSpan.FromMinutes(value));
+            _service.StartTimer(TimeSpan.FromMinutes(preset.Minutes));
         }
     }
 
@@ -170,16 +158,13 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
                 _service.ResumeTimer();
                 break;
             default:
-                var duration = TimeSpan.FromHours(Math.Clamp(CustomHours, 0, 99)) +
-                               TimeSpan.FromMinutes(Math.Clamp(CustomMinutes, 0, 59)) +
-                               TimeSpan.FromSeconds(Math.Clamp(CustomSeconds, 0, 59));
-                _service.StartTimer(duration);
+                _service.StartTimer(BuildCustomDuration());
                 break;
         }
     }
 
     private bool CanUseTimerPrimary() => Current.TimerState is TimerRunState.Running or TimerRunState.Paused ||
-                                         CustomHours > 0 || CustomMinutes > 0 || CustomSeconds > 0;
+                                          BuildCustomDuration() > TimeSpan.Zero;
 
     [RelayCommand(CanExecute = nameof(CanCancelTimer))]
     private void CancelTimer() => _service.CancelTimer();
@@ -302,8 +287,7 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 
         if (!_disposed)
         {
-            Current = snapshot;
-            OnPropertyChanged(nameof(LapTexts));
+            ApplySnapshot(snapshot);
         }
 
         Volatile.Write(ref _snapshotDispatchPending, 0);
@@ -318,6 +302,122 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
         QueueSnapshotDispatch();
     }
 
+    private void ApplySnapshot(TimeToolsSnapshot snapshot)
+    {
+        var previous = _current;
+        if (previous == snapshot)
+        {
+            return;
+        }
+
+        var previousHasStopwatchActivity = HasStopwatchActivityFor(previous);
+        var currentHasStopwatchActivity = HasStopwatchActivityFor(snapshot);
+        var timerStateChanged = previous.TimerState != snapshot.TimerState;
+        var stopwatchStateChanged = previous.IsStopwatchRunning != snapshot.IsStopwatchRunning;
+        var lapsChanged = !previous.Laps.SequenceEqual(snapshot.Laps);
+        var timerTextChanged = FormatDuration(previous.TimerRemaining) != FormatDuration(snapshot.TimerRemaining);
+        var stopwatchTextChanged = FormatStopwatch(previous.StopwatchElapsed) != FormatStopwatch(snapshot.StopwatchElapsed);
+        var compactTimeChanged = FormatCompactTime(previous) != FormatCompactTime(snapshot);
+
+        _current = snapshot;
+        OnPropertyChanged(nameof(Current));
+
+        if (timerTextChanged)
+        {
+            OnPropertyChanged(nameof(TimerText));
+        }
+
+        if (previous.TimerRemaining != snapshot.TimerRemaining ||
+            previous.TimerDuration != snapshot.TimerDuration)
+        {
+            OnPropertyChanged(nameof(TimerProgressPercent));
+        }
+
+        if (timerStateChanged)
+        {
+            OnPropertyChanged(nameof(TimerStatusText));
+            OnPropertyChanged(nameof(TimerPrimaryText));
+            OnPropertyChanged(nameof(TimerSecondaryText));
+            OnPropertyChanged(nameof(TimerPrimaryGlyph));
+            OnPropertyChanged(nameof(IsTimerCompleted));
+            OnPropertyChanged(nameof(IsTimerIdle));
+            OnPropertyChanged(nameof(HasTimerActivity));
+            TimerPrimaryCommand.NotifyCanExecuteChanged();
+            CancelTimerCommand.NotifyCanExecuteChanged();
+        }
+
+        if (stopwatchTextChanged)
+        {
+            OnPropertyChanged(nameof(StopwatchText));
+        }
+
+        if (stopwatchStateChanged)
+        {
+            OnPropertyChanged(nameof(StopwatchPrimaryText));
+            AddLapCommand.NotifyCanExecuteChanged();
+        }
+
+        if (previousHasStopwatchActivity != currentHasStopwatchActivity)
+        {
+            OnPropertyChanged(nameof(HasStopwatchActivity));
+        }
+
+        if (lapsChanged)
+        {
+            OnPropertyChanged(nameof(LapTexts));
+        }
+
+        if (compactTimeChanged)
+        {
+            OnPropertyChanged(nameof(CompactTimeText));
+        }
+
+        if (timerStateChanged || stopwatchStateChanged ||
+            previousHasStopwatchActivity != currentHasStopwatchActivity)
+        {
+            OnPropertyChanged(nameof(CompactStatusText));
+            OnPropertyChanged(nameof(CompactPrimaryText));
+            OnPropertyChanged(nameof(CompactPrimaryGlyph));
+            OnPropertyChanged(nameof(CompactSecondaryText));
+        }
+
+        if (stopwatchStateChanged || lapsChanged ||
+            previous.StopwatchElapsed != snapshot.StopwatchElapsed)
+        {
+            ResetStopwatchCommand.NotifyCanExecuteChanged();
+        }
+
+        if (timerStateChanged || stopwatchStateChanged ||
+            previousHasStopwatchActivity != currentHasStopwatchActivity)
+        {
+            CompactPrimaryCommand.NotifyCanExecuteChanged();
+            CompactSecondaryCommand.NotifyCanExecuteChanged();
+        }
+    }
+
+    private TimeSpan BuildCustomDuration()
+    {
+        var duration = TimeSpan.FromHours(NormalizeDurationPart(CustomHours, 99)) +
+                       TimeSpan.FromMinutes(NormalizeDurationPart(CustomMinutes, 59)) +
+                       TimeSpan.FromSeconds(NormalizeDurationPart(CustomSeconds, 59));
+        return duration > MaximumTimerDuration ? MaximumTimerDuration : duration;
+    }
+
+    private static double NormalizeDurationPart(double value, double maximum) =>
+        double.IsFinite(value) ? Math.Clamp(Math.Truncate(value), 0, maximum) : 0;
+
+    private static bool HasStopwatchActivityFor(TimeToolsSnapshot snapshot) =>
+        snapshot.IsStopwatchRunning || snapshot.StopwatchElapsed > TimeSpan.Zero || snapshot.Laps.Count > 0;
+
+    private static string FormatStopwatch(TimeSpan elapsed) => elapsed.ToString(@"hh\:mm\:ss\.f");
+
+    private static string FormatCompactTime(TimeToolsSnapshot snapshot) =>
+        snapshot.TimerState is TimerRunState.Running or TimerRunState.Paused
+            ? FormatDuration(snapshot.TimerRemaining)
+            : HasStopwatchActivityFor(snapshot)
+                ? snapshot.StopwatchElapsed.ToString(@"hh\:mm\:ss")
+                : "00:00";
+
     private static string FormatDuration(TimeSpan duration)
     {
         var value = duration < TimeSpan.Zero ? TimeSpan.Zero : duration;
@@ -326,6 +426,8 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
 
     private void OnLanguageChanged(object? sender, EventArgs args)
     {
+        PresetDurations = CreatePresetDurations();
+        OnPropertyChanged(nameof(PresetDurations));
         OnPropertyChanged(nameof(TimerStatusText));
         OnPropertyChanged(nameof(TimerPrimaryText));
         OnPropertyChanged(nameof(TimerSecondaryText));
@@ -334,6 +436,14 @@ public sealed partial class TimeToolsViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(CompactPrimaryText));
         OnPropertyChanged(nameof(CompactSecondaryText));
         OnPropertyChanged(nameof(LapTexts));
+    }
+
+    private IReadOnlyList<TimerPresetOption> CreatePresetDurations()
+    {
+        var unit = Text("Timer.MinuteShort", "dk");
+        return PresetMinuteValues
+            .Select(minutes => new TimerPresetOption(minutes, $"{minutes} {unit}"))
+            .ToArray();
     }
 
     private string Text(string key, string fallback, params object?[] arguments)

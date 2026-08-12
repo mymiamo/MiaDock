@@ -1,3 +1,5 @@
+using MiaDock.Core.Presentation;
+
 namespace MiaDock.Platform.Windows.Overlay;
 
 internal static class RoundedRectangleRasterizer
@@ -6,6 +8,19 @@ internal static class RoundedRectangleRasterizer
         int width,
         int height,
         double radius,
+        uint argb,
+        double edgeThickness = double.PositiveInfinity)
+        => RenderPremultipliedBgra(
+            width,
+            height,
+            DockCornerRadii.Uniform(radius),
+            argb,
+            edgeThickness);
+
+    internal static int[] RenderPremultipliedBgra(
+        int width,
+        int height,
+        DockCornerRadii radii,
         uint argb,
         double edgeThickness = double.PositiveInfinity)
     {
@@ -19,9 +34,12 @@ internal static class RoundedRectangleRasterizer
             throw new ArgumentOutOfRangeException(nameof(height));
         }
 
-        if (!double.IsFinite(radius) || radius < 0)
+        if (!double.IsFinite(radii.TopLeft) || radii.TopLeft < 0 ||
+            !double.IsFinite(radii.TopRight) || radii.TopRight < 0 ||
+            !double.IsFinite(radii.BottomRight) || radii.BottomRight < 0 ||
+            !double.IsFinite(radii.BottomLeft) || radii.BottomLeft < 0)
         {
-            throw new ArgumentOutOfRangeException(nameof(radius));
+            throw new ArgumentOutOfRangeException(nameof(radii));
         }
 
         if (double.IsNaN(edgeThickness) || edgeThickness <= 0)
@@ -29,7 +47,7 @@ internal static class RoundedRectangleRasterizer
             throw new ArgumentOutOfRangeException(nameof(edgeThickness));
         }
 
-        var clampedRadius = Math.Min(radius, Math.Min(width, height) / 2d);
+        var clampedRadii = radii.Clamp(0, Math.Min(width, height) / 2d);
         var baseAlpha = (byte)(argb >> 24);
         var red = (byte)(argb >> 16);
         var green = (byte)(argb >> 8);
@@ -39,7 +57,11 @@ internal static class RoundedRectangleRasterizer
                               edgeThickness < Math.Min(width, height) / 2d;
         var innerWidth = Math.Max(0, width - edgeThickness * 2);
         var innerHeight = Math.Max(0, height - edgeThickness * 2);
-        var innerRadius = Math.Max(0, clampedRadius - edgeThickness);
+        var innerRadii = new DockCornerRadii(
+            Math.Max(0, clampedRadii.TopLeft - edgeThickness),
+            Math.Max(0, clampedRadii.TopRight - edgeThickness),
+            Math.Max(0, clampedRadii.BottomRight - edgeThickness),
+            Math.Max(0, clampedRadii.BottomLeft - edgeThickness));
 
         for (var y = 0; y < height; y++)
         {
@@ -47,13 +69,13 @@ internal static class RoundedRectangleRasterizer
             for (var x = 0; x < width; x++)
             {
                 var pixelX = x + 0.5;
-                var coverage = Coverage(width, height, clampedRadius, pixelX, pixelY);
+                var coverage = Coverage(width, height, clampedRadii, pixelX, pixelY);
                 if (rendersEdgeOnly)
                 {
                     var innerCoverage = Coverage(
                         innerWidth,
                         innerHeight,
-                        innerRadius,
+                        innerRadii,
                         pixelX - edgeThickness,
                         pixelY - edgeThickness);
                     coverage = Math.Clamp(coverage - innerCoverage, 0, 1);
@@ -82,7 +104,7 @@ internal static class RoundedRectangleRasterizer
     private static double Coverage(
         double width,
         double height,
-        double radius,
+        DockCornerRadii radii,
         double pixelX,
         double pixelY)
     {
@@ -91,17 +113,28 @@ internal static class RoundedRectangleRasterizer
             return 0;
         }
 
-        var halfWidth = width / 2d;
-        var halfHeight = height / 2d;
-        var clampedRadius = Math.Min(radius, Math.Min(halfWidth, halfHeight));
-        var qx = Math.Abs(pixelX - halfWidth) - Math.Max(0, halfWidth - clampedRadius);
-        var qy = Math.Abs(pixelY - halfHeight) - Math.Max(0, halfHeight - clampedRadius);
-        var outsideX = Math.Max(qx, 0);
-        var outsideY = Math.Max(qy, 0);
-        var signedDistance =
-            Math.Sqrt(outsideX * outsideX + outsideY * outsideY) +
-            Math.Min(Math.Max(qx, qy), 0) -
-            clampedRadius;
-        return Math.Clamp(0.5 - signedDistance, 0, 1);
+        var normalized = radii.Clamp(0, Math.Min(width, height) / 2d);
+        var left = pixelX < width / 2d;
+        var top = pixelY < height / 2d;
+        var radius = left
+            ? top ? normalized.TopLeft : normalized.BottomLeft
+            : top ? normalized.TopRight : normalized.BottomRight;
+        if (radius <= 0)
+        {
+            return 1;
+        }
+
+        var centerX = left ? radius : width - radius;
+        var centerY = top ? radius : height - radius;
+        var inCornerSquare = left ? pixelX < radius : pixelX > width - radius;
+        inCornerSquare &= top ? pixelY < radius : pixelY > height - radius;
+        if (!inCornerSquare)
+        {
+            return 1;
+        }
+
+        var deltaX = pixelX - centerX;
+        var deltaY = pixelY - centerY;
+        return Math.Clamp(radius + 0.5 - Math.Sqrt(deltaX * deltaX + deltaY * deltaY), 0, 1);
     }
 }

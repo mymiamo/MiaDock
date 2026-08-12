@@ -38,17 +38,62 @@ public sealed class PerformanceGuardTests
     }
 
     [TestMethod]
-    public void ContentAnimationCancellation_ResetsVisualAndRejectsStaleCompletion()
+    public void AnimationCoordinator_UsesOneCancelableSessionAndRejectsStaleCompletion()
     {
         var coordinator = Read("Animations", "IslandAnimationCoordinator.cs");
-        var factory = Read("Animations", "CompositionAnimationFactory.cs");
+        var factory = Read("Animations", "ToolkitAnimationFactory.cs");
 
-        StringAssert.Contains(coordinator, "_contentSequence");
-        StringAssert.Contains(coordinator, "sequence == _contentSequence");
-        StringAssert.Contains(coordinator, "_contentAnimationTarget");
-        StringAssert.Contains(coordinator, "CompositionAnimationFactory.Reset");
-        StringAssert.Contains(factory, "catch (OperationCanceledException)");
-        StringAssert.Contains(factory, "Reset(visual);");
+        StringAssert.Contains(coordinator, "_transitionSequence");
+        StringAssert.Contains(coordinator, "_transitionCancellation");
+        StringAssert.Contains(coordinator, "RequestModuleTransition");
+        StringAssert.Contains(coordinator, "InvalidateActiveTransition");
+        Assert.DoesNotContain("_contentCancellation", coordinator, StringComparison.Ordinal);
+        Assert.DoesNotContain("_contentSequence", coordinator, StringComparison.Ordinal);
+        StringAssert.Contains(coordinator, "ToolkitAnimationFactory.Reset");
+        StringAssert.Contains(factory, "cancellationToken.IsCancellationRequested");
+        StringAssert.Contains(factory, "StartAsync(element, cancellationToken)");
+    }
+
+    [TestMethod]
+    public void BoundsAndShell_CoalesceLayoutWorkAndReuseCompositionClip()
+    {
+        var animator = Read("Animations", "IslandBoundsAnimator.cs");
+        var shell = Read("Controls", "IslandShell.xaml.cs");
+
+        StringAssert.Contains(animator, "MinimumFrameDelta");
+        StringAssert.Contains(animator, "HasMeaningfulDifference");
+        StringAssert.Contains(animator, "apply(to);");
+        StringAssert.Contains(animator, "BoundsEasingKind.SoftSpringOut");
+        StringAssert.Contains(animator, "EaseOutSoftSpring");
+        StringAssert.Contains(shell, "MetricsAreEquivalent");
+        StringAssert.Contains(shell, "ClearHardClips");
+        StringAssert.Contains(shell, "LayoutRoot.Clip = null;");
+        Assert.DoesNotContain("CreateGeometricClip", shell, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void StateMotion_UsesToolkitOpacityScaleAndTranslationWithReducedMotionGuard()
+    {
+        var coordinator = Read("Animations", "IslandAnimationCoordinator.cs");
+        var factory = Read("Animations", "ToolkitAnimationFactory.cs");
+        var profile = Read("Animations", "IslandAnimationProfile.cs");
+
+        StringAssert.Contains(coordinator, "_animationPreferences.AnimationsEnabled");
+        StringAssert.Contains(coordinator, "_options.Preset != MotionPreset.Off");
+        StringAssert.Contains(coordinator, "_toolkitAnimations");
+        StringAssert.Contains(factory, "AnimationBuilder.Create()");
+        StringAssert.Contains(factory, ".Opacity(");
+        StringAssert.Contains(factory, ".Scale(");
+        StringAssert.Contains(factory, "AnimateShellScaleAsync");
+        StringAssert.Contains(factory, "IslandAnimationKind.ScaleFade");
+        StringAssert.Contains(factory, "SetIsTranslationEnabled");
+        StringAssert.Contains(coordinator, "_options.AnimationKind");
+        StringAssert.Contains(coordinator, "AnimateShellScaleAsync");
+        StringAssert.Contains(profile, "IsEventMorph");
+        StringAssert.Contains(profile, "BoundsEasingFor");
+        StringAssert.Contains(coordinator, "isEventMorph");
+        StringAssert.Contains(coordinator, "RunDelayedContentTransitionAsync");
+        StringAssert.Contains(coordinator, "ContentDelay");
     }
 
     [TestMethod]
@@ -60,6 +105,33 @@ public sealed class PerformanceGuardTests
         StringAssert.Contains(source, "Interlocked.Exchange");
         StringAssert.Contains(source, "var styleChanged");
         StringAssert.Contains(source, "resources.Add(_customDictionary)");
+    }
+
+    [TestMethod]
+    public void ExpandedPointerWork_IsThrottledAndAudioListIsVirtualized()
+    {
+        var overlay = Read("Windows", "OverlayWindow.xaml.cs");
+        var shell = Read("Controls", "IslandShell.xaml.cs");
+        var volume = Read("Controls", "VolumeExpandedView.xaml");
+        var viewModel = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "ViewModels",
+            "VolumeModuleViewModel.cs"));
+
+        StringAssert.Contains(overlay, "PointerActivityThrottleMilliseconds");
+        StringAssert.Contains(shell, "ParallaxThrottleMilliseconds");
+        StringAssert.Contains(shell, "Vector3.DistanceSquared");
+        Assert.DoesNotContain("<ListView", volume, StringComparison.Ordinal);
+        Assert.DoesNotContain("<ScrollViewer", volume, StringComparison.Ordinal);
+        Assert.DoesNotContain("<ItemsControl", volume, StringComparison.Ordinal);
+        var coordinator = Read("Animations", "IslandAnimationCoordinator.cs");
+        StringAssert.Contains(coordinator, "StartContentTransition(element, direction, refresh: false)");
+        StringAssert.Contains(coordinator, "StartContentTransition(element, MotionDirection.None, refresh: true)");
+        StringAssert.Contains(coordinator, "element.InvalidateMeasure()");
+        StringAssert.Contains(coordinator, "PrepareViews(incoming, outgoing)");
+        StringAssert.Contains(coordinator, "_toolkitAnimations.AnimateTransitionAsync");
+        StringAssert.Contains(viewModel, "DispatchToUi");
+        StringAssert.Contains(viewModel, "_uiDispatcher.HasThreadAccess");
     }
 
     private static string Read(string directory, string fileName) =>

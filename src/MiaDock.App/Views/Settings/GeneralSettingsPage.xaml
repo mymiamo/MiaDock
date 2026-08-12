@@ -4,12 +4,10 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:controls="using:MiaDock.App.Controls">
 
-  <ScrollViewer Padding="28,24,28,48"
-                HorizontalScrollMode="Disabled"
-                HorizontalScrollBarVisibility="Disabled"
+  <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}"
                 HorizontalContentAlignment="Stretch">
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
-      <StackPanel Spacing="5" Margin="0,0,0,8">
+      <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
         <TextBlock Text="Genel"
                    Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Dock'un görünürlüğünü, etkileşimini, konumunu ve dilini yapılandırın."
@@ -34,9 +32,14 @@
         <VisualStateManager.VisualStateGroups>
           <VisualStateGroup>
             <VisualState x:Name="Narrow" />
-            <VisualState x:Name="Wide">
+            <VisualState x:Name="Medium">
               <VisualState.StateTriggers>
                 <AdaptiveTrigger MinWindowWidth="760" />
+              </VisualState.StateTriggers>
+            </VisualState>
+            <VisualState x:Name="Wide">
+              <VisualState.StateTriggers>
+                <AdaptiveTrigger MinWindowWidth="1000" />
               </VisualState.StateTriggers>
               <VisualState.Setters>
                 <Setter Target="SecondColumn.Width" Value="*" />
@@ -163,9 +166,9 @@
                         Foreground="{ThemeResource SettingsGeneralIconBrush}" />
             </Border>
             <StackPanel Grid.Column="1">
-              <TextBlock Text="Pasif modülden dönüş" FontWeight="SemiBold" />
+              <TextBlock Text="Pasif modülden dönüş" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
               <TextBlock Text="Etkin işi olmayan modülün ana dock'a dönme süresi"
-                         FontSize="12" Opacity="0.66" TextWrapping="Wrap" />
+                         Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
             </StackPanel>
             <NumberBox Grid.Column="2"
                        Minimum="3"
@@ -190,17 +193,17 @@
             </Border>
             <StackPanel Grid.Column="1" Spacing="10">
               <StackPanel>
-                <TextBlock Text="Saat ve tarih" FontWeight="SemiBold" />
+                <TextBlock Text="Saat ve tarih" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
                 <TextBlock Text="Ana dock'taki zaman bilgisinin görünümünü kişiselleştirin."
-                           FontSize="12" Opacity="0.66" TextWrapping="Wrap" />
+                           Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
               </StackPanel>
               <Grid ColumnSpacing="12" RowSpacing="9">
                 <Grid.ColumnDefinitions>
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="*" />
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
                   <RowDefinition Height="Auto" />
                 </Grid.RowDefinitions>
@@ -219,14 +222,12 @@
                                 OffContent="Gizle"
                                 AutomationProperties.Name="Saniyeleri göster" />
                 </StackPanel>
-                <StackPanel Grid.Column="2" Spacing="4">
+                <StackPanel Grid.Row="1" Spacing="4">
                   <TextBlock Text="Tarih" FontSize="12" />
                   <ToggleSwitch IsOn="{Binding ShowClockDate, Mode=TwoWay}"
-                                OnContent="Göster"
-                                OffContent="Gizle"
                                 AutomationProperties.Name="Tarihi göster" />
                 </StackPanel>
-                <StackPanel Grid.Row="1" Spacing="4">
+                <StackPanel Grid.Row="1" Grid.Column="1" Spacing="4">
                   <TextBlock Text="Tarih biçimi" FontSize="12" />
                   <ComboBox ItemsSource="{Binding ClockDateFormats}"
                             DisplayMemberPath="Label"
@@ -235,12 +236,10 @@
                             HorizontalAlignment="Stretch"
                             AutomationProperties.Name="Tarih biçimi" />
                 </StackPanel>
-                <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" Spacing="4">
+                <StackPanel Grid.Row="2" Grid.ColumnSpan="2" Spacing="4">
                   <TextBlock Text="Haftanın günü" FontSize="12" />
                   <ToggleSwitch IsOn="{Binding ShowClockWeekday, Mode=TwoWay}"
                                 IsEnabled="{Binding ShowClockDate}"
-                                OnContent="Göster"
-                                OffContent="Gizle"
                                 AutomationProperties.Name="Haftanın gününü göster" />
                 </StackPanel>
               </Grid>
@@ -262,9 +261,9 @@
                         Foreground="{ThemeResource SettingsNotificationIconBrush}" />
             </Border>
             <StackPanel Grid.Column="1">
-              <TextBlock Text="Otomatik güncelleme denetimi" FontWeight="SemiBold" />
+              <TextBlock Text="Otomatik güncelleme denetimi" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
               <TextBlock Text="MiaDock, Microsoft Store'daki yeni sürümleri dört saatte bir denetler."
-                         FontSize="12" Opacity="0.66" TextWrapping="Wrap" />
+                         Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
             </StackPanel>
             <ToggleSwitch Grid.Column="2"
                           IsOn="{Binding AutomaticUpdateChecksEnabled, Mode=TwoWay}"

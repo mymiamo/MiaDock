@@ -4,7 +4,13 @@ public sealed record FullscreenSettings(
     bool Enabled,
     double NotificationSeconds,
     FullscreenNotificationStyle Style,
-    bool ShowTrackChanges)
+    bool ShowTrackChanges,
+    FullscreenDockBehavior Behavior = FullscreenDockBehavior.NotificationsOnly)
 {
-    public static FullscreenSettings Default { get; } = new(true, 5, FullscreenNotificationStyle.Minimal, true);
+    public static FullscreenSettings Default { get; } = new(
+        true,
+        5,
+        FullscreenNotificationStyle.Minimal,
+        true,
+        FullscreenDockBehavior.NotificationsOnly);
 }

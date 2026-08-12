@@ -39,7 +39,20 @@ public sealed class TrayMenuItemTests
     }
 
     [TestMethod]
-    public void WindowsTrayMenu_UsesOwnerDrawnDarkSurface()
+    public void MenuItems_CanMarkRadioSelections()
+    {
+        var item = new TrayMenuItem(
+            7,
+            "Primary monitor",
+            IsChecked: true,
+            IsRadio: true);
+
+        Assert.IsTrue(item.IsRadio);
+        Assert.IsTrue(item.IsChecked);
+    }
+
+    [TestMethod]
+    public void WindowsTrayMenu_UsesThemeAwareOwnerDrawnSurface()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -49,7 +62,37 @@ public sealed class TrayMenuItemTests
         StringAssert.Contains(source, "OwnerDrawMenuItem");
         StringAssert.Contains(source, "TryMeasureMenuItem");
         StringAssert.Contains(source, "TryDrawMenuItem");
-        StringAssert.Contains(source, "ColorRef(45, 51, 61)");
+        StringAssert.Contains(source, "RefreshMenuChrome");
+        StringAssert.Contains(source, "AppsUseLightTheme");
+        StringAssert.Contains(source, "GetDpiForWindow");
+        StringAssert.Contains(source, "GetTextExtentPoint32W");
+        StringAssert.Contains(source, "MarkColumnWidth");
+        StringAssert.Contains(source, "IsRadio");
         StringAssert.Contains(source, "Segoe Fluent Icons");
+        StringAssert.Contains(source, "MenuChrome.Light");
+        StringAssert.Contains(source, "MenuChrome.Dark");
+        StringAssert.Contains(source, "InsertMenuItemW");
+        StringAssert.Contains(source, "MiimSubmenu");
+        StringAssert.Contains(source, "Do not DestroyWindow/UnregisterClass during teardown");
+    }
+
+    [TestMethod]
+    public void WindowsTrayCallbacks_DeferUiActionsUntilNativeCallbackUnwinds()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Tray",
+            "WindowsTrayIconService.cs"));
+
+        StringAssert.Contains(source, "TrayDispatchMessage");
+        StringAssert.Contains(source, "QueuePrimaryInvoke");
+        StringAssert.Contains(source, "PostMessageW");
+        StringAssert.Contains(source, "WindowProcedureCore");
+        StringAssert.Contains(source, "must never cross the reverse P/Invoke WndProc");
+        StringAssert.Contains(source, "notification is TrayNative.WmLButtonUp or TrayNative.NinSelect");
+        StringAssert.Contains(source, "_disposed = true;");
+        Assert.IsFalse(source.Contains(
+            "notification == TrayNative.WmLButtonDoubleClick)\r\n            {\r\n                PrimaryInvoked?.Invoke",
+            StringComparison.Ordinal));
     }
 }

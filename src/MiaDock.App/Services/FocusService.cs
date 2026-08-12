@@ -112,6 +112,10 @@ public sealed class FocusService : IFocusService
     private bool ActivateCore(string profileId, FocusActivationOptions options)
     {
         ThrowIfUnavailable();
+        if (!_settings.Current.Focus.IsEnabled)
+        {
+            return false;
+        }
         if (string.IsNullOrWhiteSpace(profileId))
         {
             return false;
@@ -191,6 +195,11 @@ public sealed class FocusService : IFocusService
     private void Reconcile(FocusSettings focus, FocusChangeReason reason)
     {
         var now = UtcNow();
+        if (!focus.IsEnabled)
+        {
+            PublishSnapshot(FocusSnapshot.Empty, reason, now);
+            return;
+        }
         if (focus.ActiveState?.EndsAtUtc is { } endsAtUtc && endsAtUtc <= now)
         {
             UpdateActiveState(null, FocusChangeReason.Expired);
@@ -205,6 +214,14 @@ public sealed class FocusService : IFocusService
             focus.Profiles,
             activeProfile,
             activeProfile is null ? null : focus.ActiveState);
+        PublishSnapshot(snapshot, reason, now);
+    }
+
+    private void PublishSnapshot(
+        FocusSnapshot snapshot,
+        FocusChangeReason reason,
+        DateTimeOffset now)
+    {
         FocusChangedEventArgs? eventArgs = null;
 
         lock (_gate)

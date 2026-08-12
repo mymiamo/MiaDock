@@ -19,31 +19,51 @@
       </Border>
       <StackPanel Grid.Column="1" Spacing="3">
         <StackPanel Orientation="Horizontal" Spacing="8">
-          <TextBlock Text="{Binding Title}" FontWeight="SemiBold" FontSize="15" />
+          <TextBlock Text="{Binding Title}" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
           <controls:ModuleAvailabilityBadge Text="{Binding AvailabilityText}"
                                             Glyph="{Binding AvailabilityGlyph}" />
         </StackPanel>
-        <TextBlock Text="{Binding Description}" TextWrapping="Wrap" FontSize="12" Opacity="0.68" />
+        <TextBlock Text="{Binding Description}" Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
       </StackPanel>
       <ToggleSwitch x:Name="EnabledToggle" Grid.Column="2" MinWidth="44" MinHeight="36"
                     IsOn="{Binding IsEnabled, Mode=OneWay}"
                     Toggled="OnEnabledToggled"
                     AutomationProperties.Name="{Binding Title}" />
 
-      <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" ColumnSpacing="18">
+      <Grid Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2" ColumnSpacing="18" RowSpacing="10">
         <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="180" />
-          <ColumnDefinition Width="190" />
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition x:Name="DurationColumn" Width="*" />
+          <ColumnDefinition x:Name="FullscreenColumn" Width="0" />
+          <ColumnDefinition x:Name="DetailsColumn" Width="0" />
         </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <VisualStateManager.VisualStateGroups>
+          <VisualStateGroup>
+            <VisualState x:Name="CompactModuleDetails" />
+            <VisualState x:Name="WideModuleDetails">
+              <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="720" /></VisualState.StateTriggers>
+              <VisualState.Setters>
+                <Setter Target="DurationColumn.Width" Value="180" />
+                <Setter Target="FullscreenColumn.Width" Value="190" />
+                <Setter Target="DetailsColumn.Width" Value="*" />
+                <Setter Target="FullscreenToggle.(Grid.Row)" Value="0" />
+                <Setter Target="FullscreenToggle.(Grid.Column)" Value="1" />
+                <Setter Target="DetailsButton.(Grid.Row)" Value="0" />
+                <Setter Target="DetailsButton.(Grid.Column)" Value="2" />
+                <Setter Target="DetailsButton.HorizontalAlignment" Value="Right" />
+              </VisualState.Setters>
+            </VisualState>
+          </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
         <NumberBox Header="Olay süresi (saniye)" Minimum="1" Maximum="60"
                    Value="{Binding EventDurationSeconds, Mode=TwoWay}"
-                   SpinButtonPlacementMode="Compact" />
-        <ToggleSwitch Grid.Column="1" Header="Tam ekranda göster"
+                   SpinButtonPlacementMode="Compact"
+                   AutomationProperties.Name="Olay süresi (saniye)" />
+        <ToggleSwitch x:Name="FullscreenToggle" Grid.Row="1" Header="Tam ekranda göster"
                       IsOn="{Binding ShowInFullscreen, Mode=TwoWay}"
-                      MinHeight="36" />
-        <Button Grid.Column="3" Content="Ayrıntılar" MinHeight="36"
+                      MinHeight="36" AutomationProperties.Name="Tam ekranda göster" />
+        <Button x:Name="DetailsButton" Grid.Row="2" Content="Ayrıntılar" MinHeight="36"
+                HorizontalAlignment="Left"
                 Click="OnDetailsClick"
                 AutomationProperties.Name="Modül ayrıntılarını aç" />
       </Grid>

@@ -14,6 +14,8 @@ public sealed class OverlayPlacementCalculatorTests
     [DataRow(OverlayPosition.BottomLeft, 12, 1008)]
     [DataRow(OverlayPosition.BottomCenter, 860, 1008)]
     [DataRow(OverlayPosition.BottomRight, 1708, 1008)]
+    [DataRow(OverlayPosition.LeftCenter, 12, 520)]
+    [DataRow(OverlayPosition.RightCenter, 1708, 520)]
     public void Calculate_AnchorsInsideWorkArea(OverlayPosition position, int expectedX, int expectedY)
     {
         var request = new OverlayLayoutRequest(
@@ -67,5 +69,33 @@ public sealed class OverlayPlacementCalculatorTests
             OverlayPosition.TopCenter);
 
         Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => _calculator.Calculate(request));
+    }
+
+    [TestMethod]
+    public void Calculate_ZeroMarginTouchesConfiguredEdge()
+    {
+        var result = _calculator.Calculate(new OverlayLayoutRequest(
+            new OverlayWorkArea(-1600, 40, 1600, 860),
+            new OverlaySize(200, 40),
+            144,
+            OverlayPosition.RightCenter,
+            0));
+
+        Assert.AreEqual(-300, result.X);
+        Assert.AreEqual(440, result.Y);
+    }
+
+    [TestMethod]
+    public void Calculate_ExcessiveMarginCannotMoveDockOutsideWorkArea()
+    {
+        var result = _calculator.Calculate(new OverlayLayoutRequest(
+            new OverlayWorkArea(100, 200, 800, 600),
+            new OverlaySize(200, 40),
+            96,
+            OverlayPosition.BottomRight,
+            5000));
+
+        Assert.AreEqual(100, result.X);
+        Assert.AreEqual(200, result.Y);
     }
 }

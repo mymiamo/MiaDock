@@ -1,0 +1,2641 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Literal XAML text overrides. The tr-TR value is the string authored in XAML; every other language translates it under the same name. -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <data name="XamlText.0001" xml:space="preserve">
+    <value>MiaDock Settings</value>
+    <comment>MiaDock Ayarları</comment>
+  </data>
+  <data name="XamlText.0002" xml:space="preserve">
+    <value>MiaDock Get Started</value>
+    <comment>MiaDock Başlarken</comment>
+  </data>
+  <data name="XamlText.0003" xml:space="preserve">
+    <value>Home</value>
+    <comment>Ana Sayfa</comment>
+  </data>
+  <data name="XamlText.0004" xml:space="preserve">
+    <value>Personalize</value>
+    <comment>Kişiselleştir</comment>
+  </data>
+  <data name="XamlText.0005" xml:space="preserve">
+    <value>Productivity</value>
+    <comment>Üretkenlik</comment>
+  </data>
+  <data name="XamlText.0006" xml:space="preserve">
+    <value>Notifications and Privacy</value>
+    <comment>Bildirim ve Gizlilik</comment>
+  </data>
+  <data name="XamlText.0007" xml:space="preserve">
+    <value>System</value>
+    <comment>Sistem</comment>
+  </data>
+  <data name="XamlText.0008" xml:space="preserve">
+    <value>Support</value>
+    <comment>Destek</comment>
+  </data>
+  <data name="XamlText.0009" xml:space="preserve">
+    <value>Settings subpages</value>
+    <comment>Alt ayar sayfaları</comment>
+  </data>
+  <data name="XamlText.0010" xml:space="preserve">
+    <value>Settings subpage</value>
+    <comment>Alt ayar sayfası</comment>
+  </data>
+  <data name="XamlText.0011" xml:space="preserve">
+    <value>Settings navigation</value>
+    <comment>Ayarlar gezinmesi</comment>
+  </data>
+  <data name="XamlText.0012" xml:space="preserve">
+    <value>Dock is ready</value>
+    <comment>Dock hazır</comment>
+  </data>
+  <data name="XamlText.0013" xml:space="preserve">
+    <value>Dock is ready, MiaDock is running</value>
+    <comment>Dock hazır, MiaDock çalışıyor</comment>
+  </data>
+  <data name="XamlText.0014" xml:space="preserve">
+    <value>MiaDock is running normally; your changes are saved automatically.</value>
+    <comment>MiaDock sorunsuz çalışıyor; değişiklikleriniz otomatik kaydedilir.</comment>
+  </data>
+  <data name="XamlText.0015" xml:space="preserve">
+    <value>Quick settings</value>
+    <comment>Hızlı ayarlar</comment>
+  </data>
+  <data name="XamlText.0016" xml:space="preserve">
+    <value>Choose when the dock is visible.</value>
+    <comment>Dock'un ne zaman görünür olacağını seçin.</comment>
+  </data>
+  <data name="XamlText.0017" xml:space="preserve">
+    <value>Choose the dock's pointer and click behavior.</value>
+    <comment>Dock'un fare ve tıklama davranışını belirleyin.</comment>
+  </data>
+  <data name="XamlText.0018" xml:space="preserve">
+    <value>Update</value>
+    <comment>Güncelleme</comment>
+  </data>
+  <data name="XamlText.0019" xml:space="preserve">
+    <value>Check</value>
+    <comment>Denetle</comment>
+  </data>
+  <data name="XamlText.0020" xml:space="preserve">
+    <value>Active modules</value>
+    <comment>Aktif modüller</comment>
+  </data>
+  <data name="XamlText.0021" xml:space="preserve">
+    <value>Permissions</value>
+    <comment>İzinler</comment>
+  </data>
+  <data name="XamlText.0022" xml:space="preserve">
+    <value>Requested only when needed</value>
+    <comment>Yalnız gerektiğinde sorulur</comment>
+  </data>
+  <data name="XamlText.0023" xml:space="preserve">
+    <value>Let's tailor your dock in a few calm steps.</value>
+    <comment>Dock'unuzu birkaç sakin adımda size göre hazırlayalım.</comment>
+  </data>
+  <data name="XamlText.0024" xml:space="preserve">
+    <value>Our privacy approach</value>
+    <comment>Gizlilik yaklaşımımız</comment>
+  </data>
+  <data name="XamlText.0025" xml:space="preserve">
+    <value>Local and offline</value>
+    <comment>Yerel ve çevrimdışı</comment>
+  </data>
+  <data name="XamlText.0026" xml:space="preserve">
+    <value>No account, telemetry, or automatic error reporting is used.</value>
+    <comment>Hesap, telemetri veya otomatik hata gönderimi kullanılmaz.</comment>
+  </data>
+  <data name="XamlText.0027" xml:space="preserve">
+    <value>You control permissions</value>
+    <comment>İzinler sizde</comment>
+  </data>
+  <data name="XamlText.0028" xml:space="preserve">
+    <value>Camera, microphone, and notification permissions are requested only when you first use the related feature.</value>
+    <comment>Kamera, mikrofon ve bildirim izni yalnız ilgili özelliği ilk kullandığınızda istenir.</comment>
+  </data>
+  <data name="XamlText.0029" xml:space="preserve">
+    <value>Personalize your dock</value>
+    <comment>Kişiselleştirin</comment>
+  </data>
+  <data name="XamlText.0030" xml:space="preserve">
+    <value>Choose how MiaDock looks and where it appears.</value>
+    <comment>MiaDock'un görünümünü ve ekrandaki yerini seçin.</comment>
+  </data>
+  <data name="XamlText.0031" xml:space="preserve">
+    <value>Theme changes are previewed immediately and restored if setup is canceled.</value>
+    <comment>Tema değişikliği anında önizlenir; kurulum iptal edilirse geri alınır.</comment>
+  </data>
+  <data name="XamlText.0032" xml:space="preserve">
+    <value>Usage</value>
+    <comment>Kullanım Şekli</comment>
+  </data>
+  <data name="XamlText.0033" xml:space="preserve">
+    <value>Choose the dock's interaction, startup, and fullscreen behavior.</value>
+    <comment>Dock'un etkileşim, başlangıç ve tam ekran davranışını belirleyin.</comment>
+  </data>
+  <data name="XamlText.0034" xml:space="preserve">
+    <value>Choose hover and click behavior.</value>
+    <comment>Hover ve tıklama davranışını seçin.</comment>
+  </data>
+  <data name="XamlText.0035" xml:space="preserve">
+    <value>The dock hides in games; selected events can appear briefly.</value>
+    <comment>Oyunlarda dock gizlenir; seçilen olaylar kısa süre gösterilebilir.</comment>
+  </data>
+  <data name="XamlText.0036" xml:space="preserve">
+    <value>Focus is preserved</value>
+    <comment>Odak korunur</comment>
+  </data>
+  <data name="XamlText.0037" xml:space="preserve">
+    <value>MiaDock does not take keyboard focus from the active game or app when opened by hover.</value>
+    <comment>MiaDock hover ile açılırken aktif oyunun veya uygulamanın klavye odağını almaz.</comment>
+  </data>
+  <data name="XamlText.0038" xml:space="preserve">
+    <value>Features and Privacy</value>
+    <comment>Özellikler ve Gizlilik</comment>
+  </data>
+  <data name="XamlText.0039" xml:space="preserve">
+    <value>Choose the modules you will use and the default media source.</value>
+    <comment>Kullanacağınız modülleri ve varsayılan medya kaynağını seçin.</comment>
+  </data>
+  <data name="XamlText.0040" xml:space="preserve">
+    <value>Permissions are deferred</value>
+    <comment>İzinler ertelenir</comment>
+  </data>
+  <data name="XamlText.0041" xml:space="preserve">
+    <value>Camera, microphone, and notification permissions are not enabled here; they are explained and requested in context when the related feature is first used.</value>
+    <comment>Kamera, mikrofon ve bildirim izinleri burada açılmaz; ilgili özellik ilk kullanıldığında bağlam içinde açıklanır ve istenir.</comment>
+  </data>
+  <data name="XamlText.0042" xml:space="preserve">
+    <value>Review your choices; they are saved together when you start MiaDock.</value>
+    <comment>Seçimlerinizi kontrol edin; MiaDock'u başlattığınızda hepsi tek seferde kaydedilir.</comment>
+  </data>
+  <data name="XamlText.0043" xml:space="preserve">
+    <value>Missing permissions are explained only when you use the related feature. You can change every choice later in Settings.</value>
+    <comment>Eksik izinler yalnız ilgili özelliği kullandığınızda açıklanır. Tüm seçimleri daha sonra Ayarlar'dan değiştirebilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0044" xml:space="preserve">
+    <value>Report a bug</value>
+    <comment>Hata bildir</comment>
+  </data>
+  <data name="XamlText.0045" xml:space="preserve">
+    <value>Open the MiaDock bug report page</value>
+    <comment>MiaDock hata bildirim sayfasını aç</comment>
+  </data>
+  <data name="XamlText.0046" xml:space="preserve">
+    <value>Search settings</value>
+    <comment>Ayarlarda ara</comment>
+  </data>
+  <data name="XamlText.0047" xml:space="preserve">
+    <value>Home page</value>
+    <comment>Ana sayfa</comment>
+  </data>
+  <data name="XamlText.0048" xml:space="preserve">
+    <value>General</value>
+    <comment>Genel</comment>
+  </data>
+  <data name="XamlText.0049" xml:space="preserve">
+    <value>Focus</value>
+    <comment>Odak</comment>
+  </data>
+  <data name="XamlText.0050" xml:space="preserve">
+    <value>Enable Focus features</value>
+    <comment>Odak özelliklerini etkinleştir</comment>
+  </data>
+  <data name="XamlText.0051" xml:space="preserve">
+    <value>When turned off, active profile and automation effects stop while your profiles are preserved. You choose a profile after turning it on again.</value>
+    <comment>Kapattığınızda aktif profil ve otomasyon etkileri durur; oluşturduğunuz profiller korunur. Tekrar açtığınızda profil seçimini siz yaparsınız.</comment>
+  </data>
+  <data name="XamlText.0052" xml:space="preserve">
+    <value>Turns Focus profiles and automations on or off across the app.</value>
+    <comment>Odak profillerini ve otomasyonlarını uygulama genelinde açar veya kapatır.</comment>
+  </data>
+  <data name="XamlText.0053" xml:space="preserve">
+    <value>Open Windows Focus settings</value>
+    <comment>Windows Odak ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0054" xml:space="preserve">
+    <value>Modules</value>
+    <comment>Modüller</comment>
+  </data>
+  <data name="XamlText.0055" xml:space="preserve">
+    <value>Windows master volume</value>
+    <comment>Windows ana sesi</comment>
+  </data>
+  <data name="XamlText.0056" xml:space="preserve">
+    <value>Shows volume changes and controls the Windows master volume.</value>
+    <comment>Ses değişikliklerini gösterir ve ana ses seviyesini denetler.</comment>
+  </data>
+  <data name="XamlText.0057" xml:space="preserve">
+    <value>Choose how the default output device appears on the volume card.</value>
+    <comment>Ses kartında varsayılan çıkış aygıtının nasıl gösterileceğini seçin.</comment>
+  </data>
+  <data name="XamlText.0058" xml:space="preserve">
+    <value>Show output device name</value>
+    <comment>Çıkış aygıtı adını göster</comment>
+  </data>
+  <data name="XamlText.0059" xml:space="preserve">
+    <value>Shows the speaker or headset name on the temporary volume card.</value>
+    <comment>Geçici ses kartında hoparlör veya kulaklık adını gösterir.</comment>
+  </data>
+  <data name="XamlText.0060" xml:space="preserve">
+    <value>Mute or unmute</value>
+    <comment>Sesi aç veya kapat</comment>
+  </data>
+  <data name="XamlText.0061" xml:space="preserve">
+    <value>Mute or unmute Windows master volume</value>
+    <comment>Windows ana sesini aç veya kapat</comment>
+  </data>
+  <data name="XamlText.0062" xml:space="preserve">
+    <value>Windows master volume level</value>
+    <comment>Windows ana ses seviyesi</comment>
+  </data>
+  <data name="XamlText.0063" xml:space="preserve">
+    <value>Master volume</value>
+    <comment>Ana ses</comment>
+  </data>
+  <data name="XamlText.0064" xml:space="preserve">
+    <value>Audio center</value>
+    <comment>Ses merkezi</comment>
+  </data>
+  <data name="XamlText.0065" xml:space="preserve">
+    <value>Open sound settings</value>
+    <comment>Ses ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0066" xml:space="preserve">
+    <value>Open Windows sound settings</value>
+    <comment>Windows ses ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0067" xml:space="preserve">
+    <value>Application audio</value>
+    <comment>Uygulama sesleri</comment>
+  </data>
+  <data name="XamlText.0068" xml:space="preserve">
+    <value>Live audio activity</value>
+    <comment>Gerçek ses etkinliği</comment>
+  </data>
+  <data name="XamlText.0069" xml:space="preserve">
+    <value>Mute or unmute application audio</value>
+    <comment>Uygulama sesini aç veya kapat</comment>
+  </data>
+  <data name="XamlText.0070" xml:space="preserve">
+    <value>Manage audio devices</value>
+    <comment>Ses aygıtlarını yönet</comment>
+  </data>
+  <data name="XamlText.0071" xml:space="preserve">
+    <value>Now Playing</value>
+    <comment>Şimdi Çalıyor</comment>
+  </data>
+  <data name="XamlText.0072" xml:space="preserve">
+    <value>No media is playing</value>
+    <comment>Şu an çalınan medya yok</comment>
+  </data>
+  <data name="XamlText.0073" xml:space="preserve">
+    <value>Play media in a supported app.</value>
+    <comment>Desteklenen bir uygulamada medya oynatın.</comment>
+  </data>
+  <data name="XamlText.0074" xml:space="preserve">
+    <value>Call activity</value>
+    <comment>Arama etkinliği</comment>
+  </data>
+  <data name="XamlText.0075" xml:space="preserve">
+    <value>Microphone</value>
+    <comment>Mikrofon</comment>
+  </data>
+  <data name="XamlText.0076" xml:space="preserve">
+    <value>Camera</value>
+    <comment>Kamera</comment>
+  </data>
+  <data name="XamlText.0077" xml:space="preserve">
+    <value>Call status</value>
+    <comment>Arama durumu</comment>
+  </data>
+  <data name="XamlText.0078" xml:space="preserve">
+    <value>Local inference</value>
+    <comment>Yerel çıkarım</comment>
+  </data>
+  <data name="XamlText.0079" xml:space="preserve">
+    <value>Open microphone privacy settings</value>
+    <comment>Mikrofon gizlilik ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0080" xml:space="preserve">
+    <value>Open camera privacy settings</value>
+    <comment>Kamera gizlilik ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0081" xml:space="preserve">
+    <value>Timer view</value>
+    <comment>Zamanlayıcı görünümü</comment>
+  </data>
+  <data name="XamlText.0082" xml:space="preserve">
+    <value>Stopwatch view</value>
+    <comment>Kronometre görünümü</comment>
+  </data>
+  <data name="XamlText.0083" xml:space="preserve">
+    <value>15 min</value>
+    <comment>15 dk</comment>
+  </data>
+  <data name="XamlText.0084" xml:space="preserve">
+    <value>Customize built-in profiles or create your own Focus profile to control MiaDock behavior.</value>
+    <comment>Hazır profilleri kişiselleştirin veya MiaDock davranışını yöneten kendi Odak profilinizi oluşturun.</comment>
+  </data>
+  <data name="XamlText.0085" xml:space="preserve">
+    <value>New profile</value>
+    <comment>Yeni profil</comment>
+  </data>
+  <data name="XamlText.0086" xml:space="preserve">
+    <value>Create a new Focus profile</value>
+    <comment>Yeni Odak profili oluştur</comment>
+  </data>
+  <data name="XamlText.0087" xml:space="preserve">
+    <value>MiaDock behavior</value>
+    <comment>MiaDock davranışı</comment>
+  </data>
+  <data name="XamlText.0088" xml:space="preserve">
+    <value>Automation conflict</value>
+    <comment>Otomasyon çakışması</comment>
+  </data>
+  <data name="XamlText.0089" xml:space="preserve">
+    <value>Focus profiles do not change Windows Do Not Disturb; they only control MiaDock modules, events, and visibility.</value>
+    <comment>Odak profilleri Windows Rahatsız Etme ayarını değiştirmez; yalnız MiaDock modüllerini, olaylarını ve görünürlüğünü yönetir.</comment>
+  </data>
+  <data name="XamlText.0090" xml:space="preserve">
+    <value>Active</value>
+    <comment>Etkin</comment>
+  </data>
+  <data name="XamlText.0091" xml:space="preserve">
+    <value>Edit</value>
+    <comment>Düzenle</comment>
+  </data>
+  <data name="XamlText.0092" xml:space="preserve">
+    <value>Reset to defaults</value>
+    <comment>Varsayılana döndür</comment>
+  </data>
+  <data name="XamlText.0093" xml:space="preserve">
+    <value>Delete</value>
+    <comment>Sil</comment>
+  </data>
+  <data name="XamlText.0094" xml:space="preserve">
+    <value>Profile name</value>
+    <comment>Profil adı</comment>
+  </data>
+  <data name="XamlText.0095" xml:space="preserve">
+    <value>Focus profile name</value>
+    <comment>Odak profili adı</comment>
+  </data>
+  <data name="XamlText.0096" xml:space="preserve">
+    <value>Icon</value>
+    <comment>Simge</comment>
+  </data>
+  <data name="XamlText.0097" xml:space="preserve">
+    <value>Focus profile icon</value>
+    <comment>Odak profili simgesi</comment>
+  </data>
+  <data name="XamlText.0098" xml:space="preserve">
+    <value>Profile color</value>
+    <comment>Profil rengi</comment>
+  </data>
+  <data name="XamlText.0099" xml:space="preserve">
+    <value>HEX color</value>
+    <comment>HEX renk</comment>
+  </data>
+  <data name="XamlText.0100" xml:space="preserve">
+    <value>Profile color HEX value</value>
+    <comment>Profil rengi HEX değeri</comment>
+  </data>
+  <data name="XamlText.0101" xml:space="preserve">
+    <value>Color is saved in #RRGGBB format.</value>
+    <comment>Renk #RRGGBB biçiminde kaydedilir.</comment>
+  </data>
+  <data name="XamlText.0102" xml:space="preserve">
+    <value>Default duration</value>
+    <comment>Varsayılan süre</comment>
+  </data>
+  <data name="XamlText.0103" xml:space="preserve">
+    <value>Until turned off</value>
+    <comment>Kapatılana kadar</comment>
+  </data>
+  <data name="XamlText.0104" xml:space="preserve">
+    <value>Use minutes</value>
+    <comment>Dakika kullan</comment>
+  </data>
+  <data name="XamlText.0105" xml:space="preserve">
+    <value>Dock visibility</value>
+    <comment>Dock görünürlüğü</comment>
+  </data>
+  <data name="XamlText.0106" xml:space="preserve">
+    <value>Minimum event priority</value>
+    <comment>Minimum olay önceliği</comment>
+  </data>
+  <data name="XamlText.0107" xml:space="preserve">
+    <value>Allow all modules</value>
+    <comment>Tüm modüllere izin ver</comment>
+  </data>
+  <data name="XamlText.0108" xml:space="preserve">
+    <value>When off, choose which modules may appear during this profile.</value>
+    <comment>Kapalıysa bu profil sırasında gösterilebilecek modülleri seçin.</comment>
+  </data>
+  <data name="XamlText.0109" xml:space="preserve">
+    <value>Fullscreen and privacy</value>
+    <comment>Tam ekran ve gizlilik</comment>
+  </data>
+  <data name="XamlText.0110" xml:space="preserve">
+    <value>Allow fullscreen notifications</value>
+    <comment>Tam ekran bildirimlerine izin ver</comment>
+  </data>
+  <data name="XamlText.0111" xml:space="preserve">
+    <value>Allow sensitive content in fullscreen</value>
+    <comment>Tam ekranda hassas içeriğe izin ver</comment>
+  </data>
+  <data name="XamlText.0112" xml:space="preserve">
+    <value>Allow sensitive content while Windows is locked</value>
+    <comment>Windows kilitliyken hassas içeriğe izin ver</comment>
+  </data>
+  <data name="XamlText.0113" xml:space="preserve">
+    <value>Profile permissions cannot enable global privacy settings; they can only make them stricter.</value>
+    <comment>Profil izinleri genel gizlilik ayarlarını açamaz; yalnızca daha sıkı hale getirebilir.</comment>
+  </data>
+  <data name="XamlText.0114" xml:space="preserve">
+    <value>Weekly schedules</value>
+    <comment>Haftalık programlar</comment>
+  </data>
+  <data name="XamlText.0115" xml:space="preserve">
+    <value>Choose the days and times when the profile becomes active.</value>
+    <comment>Profilin etkinleşeceği günleri ve saatleri seçin.</comment>
+  </data>
+  <data name="XamlText.0116" xml:space="preserve">
+    <value>Add schedule</value>
+    <comment>Program ekle</comment>
+  </data>
+  <data name="XamlText.0117" xml:space="preserve">
+    <value>Schedule enabled</value>
+    <comment>Program etkin</comment>
+  </data>
+  <data name="XamlText.0118" xml:space="preserve">
+    <value>Mon</value>
+    <comment>Pzt</comment>
+  </data>
+  <data name="XamlText.0119" xml:space="preserve">
+    <value>Tue</value>
+    <comment>Sal</comment>
+  </data>
+  <data name="XamlText.0120" xml:space="preserve">
+    <value>Wed</value>
+    <comment>Çar</comment>
+  </data>
+  <data name="XamlText.0121" xml:space="preserve">
+    <value>Thu</value>
+    <comment>Per</comment>
+  </data>
+  <data name="XamlText.0122" xml:space="preserve">
+    <value>Fri</value>
+    <comment>Cum</comment>
+  </data>
+  <data name="XamlText.0123" xml:space="preserve">
+    <value>Sat</value>
+    <comment>Cmt</comment>
+  </data>
+  <data name="XamlText.0124" xml:space="preserve">
+    <value>Sun</value>
+    <comment>Paz</comment>
+  </data>
+  <data name="XamlText.0125" xml:space="preserve">
+    <value>Start</value>
+    <comment>Başlangıç</comment>
+  </data>
+  <data name="XamlText.0126" xml:space="preserve">
+    <value>End</value>
+    <comment>Bitiş</comment>
+  </data>
+  <data name="XamlText.0127" xml:space="preserve">
+    <value>App automations</value>
+    <comment>Uygulama otomasyonları</comment>
+  </data>
+  <data name="XamlText.0128" xml:space="preserve">
+    <value>Activate the profile when an app starts, moves to the foreground, or becomes fullscreen.</value>
+    <comment>Bir uygulama açıldığında, öne geldiğinde veya tam ekran olduğunda profili etkinleştirin.</comment>
+  </data>
+  <data name="XamlText.0129" xml:space="preserve">
+    <value>Add rule</value>
+    <comment>Kural ekle</comment>
+  </data>
+  <data name="XamlText.0130" xml:space="preserve">
+    <value>Rule enabled</value>
+    <comment>Kural etkin</comment>
+  </data>
+  <data name="XamlText.0131" xml:space="preserve">
+    <value>Trigger</value>
+    <comment>Tetikleyici</comment>
+  </data>
+  <data name="XamlText.0132" xml:space="preserve">
+    <value>Application</value>
+    <comment>Uygulama</comment>
+  </data>
+  <data name="XamlText.0133" xml:space="preserve">
+    <value>Appearance</value>
+    <comment>Görünüm</comment>
+  </data>
+  <data name="XamlText.0134" xml:space="preserve">
+    <value>Media</value>
+    <comment>Medya</comment>
+  </data>
+  <data name="XamlText.0135" xml:space="preserve">
+    <value>Notifications</value>
+    <comment>Bildirimler</comment>
+  </data>
+  <data name="XamlText.0136" xml:space="preserve">
+    <value>Time and shortcuts</value>
+    <comment>Zaman ve kısayollar</comment>
+  </data>
+  <data name="XamlText.0137" xml:space="preserve">
+    <value>Fullscreen</value>
+    <comment>Tam ekran</comment>
+  </data>
+  <data name="XamlText.0138" xml:space="preserve">
+    <value>Monitor</value>
+    <comment>Monitör</comment>
+  </data>
+  <data name="XamlText.0139" xml:space="preserve">
+    <value>System tray</value>
+    <comment>Sistem tepsisi</comment>
+  </data>
+  <data name="XamlText.0140" xml:space="preserve">
+    <value>When the icon is clicked once</value>
+    <comment>Simgeye bir kez tıklayınca</comment>
+  </data>
+  <data name="XamlText.0141" xml:space="preserve">
+    <value>Tray single-click behavior</value>
+    <comment>Tray tek tık davranışı</comment>
+  </data>
+  <data name="XamlText.0142" xml:space="preserve">
+    <value>Open settings</value>
+    <comment>Ayarları aç</comment>
+  </data>
+  <data name="XamlText.0143" xml:space="preserve">
+    <value>Show or hide dock</value>
+    <comment>Dock'u göster veya gizle</comment>
+  </data>
+  <data name="XamlText.0144" xml:space="preserve">
+    <value>Camera in use</value>
+    <comment>Kamera kullanımda</comment>
+  </data>
+  <data name="XamlText.0145" xml:space="preserve">
+    <value>Startup and shutdown</value>
+    <comment>Başlangıç ve kapanış</comment>
+  </data>
+  <data name="XamlText.0146" xml:space="preserve">
+    <value>Diagnostics</value>
+    <comment>Tanılama</comment>
+  </data>
+  <data name="XamlText.0147" xml:space="preserve">
+    <value>About</value>
+    <comment>Hakkında</comment>
+  </data>
+  <data name="XamlText.0148" xml:space="preserve">
+    <value>See the dock's status and quickly reach frequently used settings.</value>
+    <comment>Dock'un temel durumunu görün ve sık kullanılan ayarlara hızla ulaşın.</comment>
+  </data>
+  <data name="XamlText.0149" xml:space="preserve">
+    <value>Quick dock settings</value>
+    <comment>Hızlı dock ayarları</comment>
+  </data>
+  <data name="XamlText.0150" xml:space="preserve">
+    <value>Change visibility and interaction behavior directly.</value>
+    <comment>Görünürlük ve etkileşim davranışını doğrudan değiştirin.</comment>
+  </data>
+  <data name="XamlText.0151" xml:space="preserve">
+    <value>Open General settings</value>
+    <comment>Genel ayarları aç</comment>
+  </data>
+  <data name="XamlText.0152" xml:space="preserve">
+    <value>Windows startup</value>
+    <comment>Windows başlangıcı</comment>
+  </data>
+  <data name="XamlText.0153" xml:space="preserve">
+    <value>Open startup settings</value>
+    <comment>Başlangıç ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0154" xml:space="preserve">
+    <value>Module status</value>
+    <comment>Modül durumu</comment>
+  </data>
+  <data name="XamlText.0155" xml:space="preserve">
+    <value>Manage</value>
+    <comment>Yönet</comment>
+  </data>
+  <data name="XamlText.0156" xml:space="preserve">
+    <value>Dock appearance</value>
+    <comment>Dock görünümü</comment>
+  </data>
+  <data name="XamlText.0157" xml:space="preserve">
+    <value>Open Appearance settings</value>
+    <comment>Görünüm ayarlarını aç</comment>
+  </data>
+  <data name="XamlText.0158" xml:space="preserve">
+    <value>Microsoft Store updates</value>
+    <comment>Microsoft Store güncellemeleri</comment>
+  </data>
+  <data name="XamlText.0159" xml:space="preserve">
+    <value>Check for updates</value>
+    <comment>Güncellemeleri denetle</comment>
+  </data>
+  <data name="XamlText.0160" xml:space="preserve">
+    <value>Open in Microsoft Store</value>
+    <comment>Microsoft Store'da aç</comment>
+  </data>
+  <data name="XamlText.0161" xml:space="preserve">
+    <value>Automatic update checks</value>
+    <comment>Otomatik güncelleme denetimi</comment>
+  </data>
+  <data name="XamlText.0162" xml:space="preserve">
+    <value>MiaDock checks Microsoft Store for new versions every four hours.</value>
+    <comment>MiaDock, Microsoft Store'daki yeni sürümleri dört saatte bir denetler.</comment>
+  </data>
+  <data name="XamlText.0163" xml:space="preserve">
+    <value>Configure the dock's visibility, interaction, position, and language.</value>
+    <comment>Dock'un görünürlüğünü, etkileşimini, konumunu ve dilini yapılandırın.</comment>
+  </data>
+  <data name="XamlText.0164" xml:space="preserve">
+    <value>Quickly configure the dock's core behavior.</value>
+    <comment>Dock'un temel davranışlarını hızlıca yapılandırın.</comment>
+  </data>
+  <data name="XamlText.0165" xml:space="preserve">
+    <value>Language</value>
+    <comment>Dil</comment>
+  </data>
+  <data name="XamlText.0166" xml:space="preserve">
+    <value>Choose the interface language</value>
+    <comment>Arayüz dilini seçin</comment>
+  </data>
+  <data name="XamlText.0167" xml:space="preserve">
+    <value>Visibility</value>
+    <comment>Görünürlük</comment>
+  </data>
+  <data name="XamlText.0168" xml:space="preserve">
+    <value>Interaction</value>
+    <comment>Etkileşim</comment>
+  </data>
+  <data name="XamlText.0169" xml:space="preserve">
+    <value>Return from inactive module</value>
+    <comment>Pasif modülden dönüş</comment>
+  </data>
+  <data name="XamlText.0170" xml:space="preserve">
+    <value>Time before a module with no active task returns to the home dock</value>
+    <comment>Etkin işi olmayan modülün ana dock'a dönme süresi</comment>
+  </data>
+  <data name="XamlText.0171" xml:space="preserve">
+    <value>Inactive module return time</value>
+    <comment>Pasif modülden dönüş süresi</comment>
+  </data>
+  <data name="XamlText.0172" xml:space="preserve">
+    <value>Time and date</value>
+    <comment>Saat ve tarih</comment>
+  </data>
+  <data name="XamlText.0173" xml:space="preserve">
+    <value>Customize how time information appears on the home dock.</value>
+    <comment>Ana dock'taki zaman bilgisinin görünümünü kişiselleştirin.</comment>
+  </data>
+  <data name="XamlText.0174" xml:space="preserve">
+    <value>Time format</value>
+    <comment>Saat biçimi</comment>
+  </data>
+  <data name="XamlText.0175" xml:space="preserve">
+    <value>Seconds</value>
+    <comment>Saniyeler</comment>
+  </data>
+  <data name="XamlText.0176" xml:space="preserve">
+    <value>Date</value>
+    <comment>Tarih</comment>
+  </data>
+  <data name="XamlText.0177" xml:space="preserve">
+    <value>Date format</value>
+    <comment>Tarih biçimi</comment>
+  </data>
+  <data name="XamlText.0178" xml:space="preserve">
+    <value>Day of the week</value>
+    <comment>Haftanın günü</comment>
+  </data>
+  <data name="XamlText.0179" xml:space="preserve">
+    <value>Show</value>
+    <comment>Göster</comment>
+  </data>
+  <data name="XamlText.0180" xml:space="preserve">
+    <value>Hide</value>
+    <comment>Gizle</comment>
+  </data>
+  <data name="XamlText.0181" xml:space="preserve">
+    <value>The alarm sounds up to 5 times when the timer ends.</value>
+    <comment>Süre dolduğunda alarm sesi en fazla 5 kez çalar.</comment>
+  </data>
+  <data name="XamlText.0182" xml:space="preserve">
+    <value>Preset durations</value>
+    <comment>Hazır süreler</comment>
+  </data>
+  <data name="XamlText.0183" xml:space="preserve">
+    <value>Custom duration</value>
+    <comment>Özel süre</comment>
+  </data>
+  <data name="XamlText.0184" xml:space="preserve">
+    <value>Show seconds</value>
+    <comment>Saniyeleri göster</comment>
+  </data>
+  <data name="XamlText.0185" xml:space="preserve">
+    <value>Show date</value>
+    <comment>Tarihi göster</comment>
+  </data>
+  <data name="XamlText.0186" xml:space="preserve">
+    <value>Show day of the week</value>
+    <comment>Haftanın gününü göster</comment>
+  </data>
+  <data name="XamlText.0187" xml:space="preserve">
+    <value>System modules</value>
+    <comment>Sistem modülleri</comment>
+  </data>
+  <data name="XamlText.0188" xml:space="preserve">
+    <value>Battery, network, Bluetooth and time tools are enabled</value>
+    <comment>Pil, ağ, Bluetooth ve zaman araçları etkin</comment>
+  </data>
+  <data name="XamlText.0189" xml:space="preserve">
+    <value>Battery alerts</value>
+    <comment>Pil uyarıları</comment>
+  </data>
+  <data name="XamlText.0190" xml:space="preserve">
+    <value>Set the percentages for low, critical and emergency battery alerts.</value>
+    <comment>Düşük, kritik ve acil pil bildirimlerinin gösterileceği yüzdeleri belirleyin.</comment>
+  </data>
+  <data name="XamlText.0191" xml:space="preserve">
+    <value>Low</value>
+    <comment>Düşük</comment>
+  </data>
+  <data name="XamlText.0192" xml:space="preserve">
+    <value>Critical</value>
+    <comment>Kritik</comment>
+  </data>
+  <data name="XamlText.0193" xml:space="preserve">
+    <value>Emergency</value>
+    <comment>Acil</comment>
+  </data>
+  <data name="XamlText.0194" xml:space="preserve">
+    <value>Changes are previewed on the dock immediately.</value>
+    <comment>Değişiklikler dock üzerinde anında önizlenir.</comment>
+  </data>
+  <data name="XamlText.0195" xml:space="preserve">
+    <value>Theme, size and motion settings are previewed on the dock immediately.</value>
+    <comment>Tema, boyut ve hareket ayarları dock üzerinde anında önizlenir.</comment>
+  </data>
+  <data name="XamlText.0196" xml:space="preserve">
+    <value>Theme</value>
+    <comment>Tema</comment>
+  </data>
+  <data name="XamlText.0197" xml:space="preserve">
+    <value>Surface style</value>
+    <comment>Yüzey stili</comment>
+  </data>
+  <data name="XamlText.0198" xml:space="preserve">
+    <value>Transparent Blurred Glass</value>
+    <comment>Saydam Bulanık Cam</comment>
+  </data>
+  <data name="XamlText.0199" xml:space="preserve">
+    <value>This theme uses no fixed background color; it blurs the desktop with real Windows Acrylic. Opacity changes only the intensity of the thin glass layer.</value>
+    <comment>Bu tema sabit bir arka plan rengi kullanmaz; masaüstünü gerçek Windows Acrylic ile bulanık gösterir. Opaklık, yalnızca ince cam katmanının yoğunluğunu değiştirir.</comment>
+  </data>
+  <data name="XamlText.0200" xml:space="preserve">
+    <value>Live dock preview</value>
+    <comment>Canlı dock önizlemesi</comment>
+  </data>
+  <data name="XamlText.0201" xml:space="preserve">
+    <value>Today</value>
+    <comment>Bugün</comment>
+  </data>
+  <data name="XamlText.0202" xml:space="preserve">
+    <value>Playing track</value>
+    <comment>Çalan Parça</comment>
+  </data>
+  <data name="XamlText.0203" xml:space="preserve">
+    <value>Artist</value>
+    <comment>Sanatçı</comment>
+  </data>
+  <data name="XamlText.0204" xml:space="preserve">
+    <value>Active center</value>
+    <comment>Aktif merkez</comment>
+  </data>
+  <data name="XamlText.0205" xml:space="preserve">
+    <value>Playing track · Artist</value>
+    <comment>Çalan Parça · Sanatçı</comment>
+  </data>
+  <data name="XamlText.0206" xml:space="preserve">
+    <value>Compact</value>
+    <comment>Compact</comment>
+  </data>
+  <data name="XamlText.0207" xml:space="preserve">
+    <value>Hover</value>
+    <comment>Hover</comment>
+  </data>
+  <data name="XamlText.0208" xml:space="preserve">
+    <value>Expanded</value>
+    <comment>Genişletilmiş</comment>
+  </data>
+  <data name="XamlText.0209" xml:space="preserve">
+    <value>Compact preview</value>
+    <comment>Compact önizleme</comment>
+  </data>
+  <data name="XamlText.0210" xml:space="preserve">
+    <value>Hover preview</value>
+    <comment>Hover önizleme</comment>
+  </data>
+  <data name="XamlText.0211" xml:space="preserve">
+    <value>Expanded preview</value>
+    <comment>Genişletilmiş önizleme</comment>
+  </data>
+  <data name="XamlText.0212" xml:space="preserve">
+    <value>Test animation</value>
+    <comment>Animasyonu dene</comment>
+  </data>
+  <data name="XamlText.0213" xml:space="preserve">
+    <value>Test dock animation</value>
+    <comment>Dock animasyonunu dene</comment>
+  </data>
+  <data name="XamlText.0214" xml:space="preserve">
+    <value>Dock dimensions</value>
+    <comment>Dock boyutları</comment>
+  </data>
+  <data name="XamlText.0215" xml:space="preserve">
+    <value>Surface and color</value>
+    <comment>Yüzey ve renk</comment>
+  </data>
+  <data name="XamlText.0216" xml:space="preserve">
+    <value>Glass / surface intensity</value>
+    <comment>Cam / yüzey yoğunluğu</comment>
+  </data>
+  <data name="XamlText.0217" xml:space="preserve">
+    <value>Glass or surface intensity</value>
+    <comment>Cam veya yüzey yoğunluğu</comment>
+  </data>
+  <data name="XamlText.0218" xml:space="preserve">
+    <value>Motion</value>
+    <comment>Hareket</comment>
+  </data>
+  <data name="XamlText.0219" xml:space="preserve">
+    <value>Collapsed width</value>
+    <comment>Kapalı genişlik</comment>
+  </data>
+  <data name="XamlText.0220" xml:space="preserve">
+    <value>Collapsed height</value>
+    <comment>Kapalı yükseklik</comment>
+  </data>
+  <data name="XamlText.0221" xml:space="preserve">
+    <value>Hover width</value>
+    <comment>Hover genişliği</comment>
+  </data>
+  <data name="XamlText.0222" xml:space="preserve">
+    <value>Hover height</value>
+    <comment>Hover yüksekliği</comment>
+  </data>
+  <data name="XamlText.0223" xml:space="preserve">
+    <value>Expanded width</value>
+    <comment>Genişletilmiş genişlik</comment>
+  </data>
+  <data name="XamlText.0224" xml:space="preserve">
+    <value>Expanded height</value>
+    <comment>Genişletilmiş yükseklik</comment>
+  </data>
+  <data name="XamlText.0225" xml:space="preserve">
+    <value>Notification width</value>
+    <comment>Bildirim genişliği</comment>
+  </data>
+  <data name="XamlText.0226" xml:space="preserve">
+    <value>Notification height</value>
+    <comment>Bildirim yüksekliği</comment>
+  </data>
+  <data name="XamlText.0227" xml:space="preserve">
+    <value>Corner radius</value>
+    <comment>Köşe yuvarlaklığı</comment>
+  </data>
+  <data name="XamlText.0228" xml:space="preserve">
+    <value>Screen edge spacing</value>
+    <comment>Ekran kenarı mesafesi</comment>
+  </data>
+  <data name="XamlText.0229" xml:space="preserve">
+    <value>Screen placement</value>
+    <comment>Ekran yerleşimi</comment>
+  </data>
+  <data name="XamlText.0230" xml:space="preserve">
+    <value>Attach to the top screen edge</value>
+    <comment>Ekranın üst kenarına yapıştır</comment>
+  </data>
+  <data name="XamlText.0231" xml:space="preserve">
+    <value>With spacing</value>
+    <comment>Boşluklu</comment>
+  </data>
+  <data name="XamlText.0232" xml:space="preserve">
+    <value>Attached</value>
+    <comment>Yapışık</comment>
+  </data>
+  <data name="XamlText.0233" xml:space="preserve">
+    <value>Attach the dock to the top screen edge</value>
+    <comment>Dock'u ekranın üst kenarına yapıştır</comment>
+  </data>
+  <data name="XamlText.0234" xml:space="preserve">
+    <value>When enabled, no gap is left between the dock and the top screen edge.</value>
+    <comment>Açıkken dock ile ekranın üst kenarı arasında boşluk bırakılmaz.</comment>
+  </data>
+  <data name="XamlText.0235" xml:space="preserve">
+    <value>Attached mode sets the gap to 0. In spacing mode, you can choose the distance in pixels.</value>
+    <comment>Yapışık mod boşluğu 0 yapar. Boşluklu modda mesafeyi piksel olarak seçebilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0236" xml:space="preserve">
+    <value>Top edge spacing (pixels)</value>
+    <comment>Üst kenar boşluğu (piksel)</comment>
+  </data>
+  <data name="XamlText.0237" xml:space="preserve">
+    <value>Dock screen edge spacing</value>
+    <comment>Dock ekran kenarı mesafesi</comment>
+  </data>
+  <data name="XamlText.0238" xml:space="preserve">
+    <value>A value of 0 places the dock directly against the screen edge.</value>
+    <comment>0 değeri dock'u ekran kenarına tamamen yapıştırır.</comment>
+  </data>
+  <data name="XamlText.0239" xml:space="preserve">
+    <value>A value of zero places the dock directly against the screen edge.</value>
+    <comment>Sıfır değeri dock'u ekran kenarına tamamen yapıştırır.</comment>
+  </data>
+  <data name="XamlText.0240" xml:space="preserve">
+    <value>Link corner radii</value>
+    <comment>Köşeleri birbirine bağla</comment>
+  </data>
+  <data name="XamlText.0241" xml:space="preserve">
+    <value>Adjust all corners together</value>
+    <comment>Tüm köşeleri birlikte ayarla</comment>
+  </data>
+  <data name="XamlText.0242" xml:space="preserve">
+    <value>All corners</value>
+    <comment>Tüm köşeler</comment>
+  </data>
+  <data name="XamlText.0243" xml:space="preserve">
+    <value>Radius of all dock corners</value>
+    <comment>Tüm dock köşelerinin yuvarlaklığı</comment>
+  </data>
+  <data name="XamlText.0244" xml:space="preserve">
+    <value>Link dock corner radii</value>
+    <comment>Dock köşelerini birbirine bağla</comment>
+  </data>
+  <data name="XamlText.0245" xml:space="preserve">
+    <value>When enabled, changing any corner updates all four corners.</value>
+    <comment>Açıkken herhangi bir köşe değişikliği dört köşeye uygulanır.</comment>
+  </data>
+  <data name="XamlText.0246" xml:space="preserve">
+    <value>Top-left corner</value>
+    <comment>Sol üst köşe</comment>
+  </data>
+  <data name="XamlText.0247" xml:space="preserve">
+    <value>Top-right corner</value>
+    <comment>Sağ üst köşe</comment>
+  </data>
+  <data name="XamlText.0248" xml:space="preserve">
+    <value>Bottom-right corner</value>
+    <comment>Sağ alt köşe</comment>
+  </data>
+  <data name="XamlText.0249" xml:space="preserve">
+    <value>Bottom-left corner</value>
+    <comment>Sol alt köşe</comment>
+  </data>
+  <data name="XamlText.0250" xml:space="preserve">
+    <value>Dock top-left corner radius</value>
+    <comment>Dock sol üst köşe yuvarlaklığı</comment>
+  </data>
+  <data name="XamlText.0251" xml:space="preserve">
+    <value>Dock top-right corner radius</value>
+    <comment>Dock sağ üst köşe yuvarlaklığı</comment>
+  </data>
+  <data name="XamlText.0252" xml:space="preserve">
+    <value>Dock bottom-right corner radius</value>
+    <comment>Dock sağ alt köşe yuvarlaklığı</comment>
+  </data>
+  <data name="XamlText.0253" xml:space="preserve">
+    <value>Dock bottom-left corner radius</value>
+    <comment>Dock sol alt köşe yuvarlaklığı</comment>
+  </data>
+  <data name="XamlText.0254" xml:space="preserve">
+    <value>Radius slider for all dock corners</value>
+    <comment>Tüm dock köşelerinin yuvarlaklığı kaydırıcısı</comment>
+  </data>
+  <data name="XamlText.0255" xml:space="preserve">
+    <value>Dock top-left corner radius slider</value>
+    <comment>Dock sol üst köşe yuvarlaklığı kaydırıcısı</comment>
+  </data>
+  <data name="XamlText.0256" xml:space="preserve">
+    <value>Dock top-right corner radius slider</value>
+    <comment>Dock sağ üst köşe yuvarlaklığı kaydırıcısı</comment>
+  </data>
+  <data name="XamlText.0257" xml:space="preserve">
+    <value>Dock bottom-right corner radius slider</value>
+    <comment>Dock sağ alt köşe yuvarlaklığı kaydırıcısı</comment>
+  </data>
+  <data name="XamlText.0258" xml:space="preserve">
+    <value>Dock bottom-left corner radius slider</value>
+    <comment>Dock sol alt köşe yuvarlaklığı kaydırıcısı</comment>
+  </data>
+  <data name="XamlText.0259" xml:space="preserve">
+    <value>Enter the corner radius in pixels.</value>
+    <comment>Köşe yuvarlaklığını piksel olarak girin.</comment>
+  </data>
+  <data name="XamlText.0260" xml:space="preserve">
+    <value>0 is square and 48 is the roundest. The live dock applies at most half of its height.</value>
+    <comment>0 dik, 48 maksimum yuvarlaklık. Canlı dock yüksekliğinin yarısına kadar uygulanır.</comment>
+  </data>
+  <data name="XamlText.0261" xml:space="preserve">
+    <value>Background color</value>
+    <comment>Arka plan rengi</comment>
+  </data>
+  <data name="XamlText.0262" xml:space="preserve">
+    <value>Accent color</value>
+    <comment>Vurgu rengi</comment>
+  </data>
+  <data name="XamlText.0263" xml:space="preserve">
+    <value>Opacity</value>
+    <comment>Opaklık</comment>
+  </data>
+  <data name="XamlText.0264" xml:space="preserve">
+    <value>Shadow intensity</value>
+    <comment>Gölge yoğunluğu</comment>
+  </data>
+  <data name="XamlText.0265" xml:space="preserve">
+    <value>Animation type</value>
+    <comment>Animasyon türü</comment>
+  </data>
+  <data name="XamlText.0266" xml:space="preserve">
+    <value>Animation speed</value>
+    <comment>Animasyon hızı</comment>
+  </data>
+  <data name="XamlText.0267" xml:space="preserve">
+    <value>Motion profile</value>
+    <comment>Hareket profili</comment>
+  </data>
+  <data name="XamlText.0268" xml:space="preserve">
+    <value>Motion intensity</value>
+    <comment>Hareket yoğunluğu</comment>
+  </data>
+  <data name="XamlText.0269" xml:space="preserve">
+    <value>Springiness</value>
+    <comment>Yaylanma</comment>
+  </data>
+  <data name="XamlText.0270" xml:space="preserve">
+    <value>Content delay (ms)</value>
+    <comment>İçerik gecikmesi (ms)</comment>
+  </data>
+  <data name="XamlText.0271" xml:space="preserve">
+    <value>Content animation delay</value>
+    <comment>İçerik animasyonu gecikmesi</comment>
+  </data>
+  <data name="XamlText.0272" xml:space="preserve">
+    <value>Subtle parallax</value>
+    <comment>Hafif parallax</comment>
+  </data>
+  <data name="XamlText.0273" xml:space="preserve">
+    <value>Transient glass emphasis</value>
+    <comment>Geçici cam vurgusu</comment>
+  </data>
+  <data name="XamlText.0274" xml:space="preserve">
+    <value>On</value>
+    <comment>Açık</comment>
+  </data>
+  <data name="XamlText.0275" xml:space="preserve">
+    <value>These settings are automatically disabled when Reduce animations is enabled in Windows.</value>
+    <comment>Windows'ta animasyonları azalt seçeneği açıksa bu ayarlar otomatik olarak devre dışı bırakılır.</comment>
+  </data>
+  <data name="XamlText.0276" xml:space="preserve">
+    <value>Reset all settings</value>
+    <comment>Tüm ayarları varsayılana döndür</comment>
+  </data>
+  <data name="XamlText.0277" xml:space="preserve">
+    <value>Reset appearance settings</value>
+    <comment>Görünüm ayarlarını varsayılana döndür</comment>
+  </data>
+  <data name="XamlText.0278" xml:space="preserve">
+    <value>Choose the Windows media source and control behavior.</value>
+    <comment>Windows medya oturumlarından kullanılacak kaynağı ve kontrol davranışını seçin.</comment>
+  </data>
+  <data name="XamlText.0279" xml:space="preserve">
+    <value>Default media app</value>
+    <comment>Varsayılan medya uygulaması</comment>
+  </data>
+  <data name="XamlText.0280" xml:space="preserve">
+    <value>The dock can follow only the selected source</value>
+    <comment>Dock yalnız seçtiğiniz kaynağı izleyebilir</comment>
+  </data>
+  <data name="XamlText.0281" xml:space="preserve">
+    <value>System session</value>
+    <comment>Sistem oturumu</comment>
+  </data>
+  <data name="XamlText.0282" xml:space="preserve">
+    <value>When the source is unavailable</value>
+    <comment>Kaynak kullanılamadığında</comment>
+  </data>
+  <data name="XamlText.0283" xml:space="preserve">
+    <value>Controls whether another active session is used</value>
+    <comment>Başka bir aktif oturuma geçilip geçilmeyeceğini belirler</comment>
+  </data>
+  <data name="XamlText.0284" xml:space="preserve">
+    <value>Volume control target</value>
+    <comment>Ses denetimi hedefi</comment>
+  </data>
+  <data name="XamlText.0285" xml:space="preserve">
+    <value>Controls master volume or the matching app session</value>
+    <comment>Ana sesi veya eşleşen uygulama oturumunu kontrol eder</comment>
+  </data>
+  <data name="XamlText.0286" xml:space="preserve">
+    <value>Configure temporary media alerts shown over fullscreen apps.</value>
+    <comment>Tam ekran uygulamalarda gösterilecek geçici medya bildirimlerini yapılandırın.</comment>
+  </data>
+  <data name="XamlText.0287" xml:space="preserve">
+    <value>Configure temporary module alerts shown over fullscreen apps.</value>
+    <comment>Tam ekran uygulamalarda gösterilecek geçici modül bildirimlerini yapılandırın.</comment>
+  </data>
+  <data name="XamlText.0288" xml:space="preserve">
+    <value>Configure dock visibility and temporary notifications for fullscreen apps.</value>
+    <comment>Tam ekran uygulamalarda dock görünürlüğünü ve geçici bildirimleri yapılandırın.</comment>
+  </data>
+  <data name="XamlText.0289" xml:space="preserve">
+    <value>Fullscreen notifications</value>
+    <comment>Tam ekran bildirimleri</comment>
+  </data>
+  <data name="XamlText.0290" xml:space="preserve">
+    <value>Dock while fullscreen</value>
+    <comment>Tam ekran sırasında dock</comment>
+  </data>
+  <data name="XamlText.0291" xml:space="preserve">
+    <value>Fullscreen dock behavior</value>
+    <comment>Tam ekran dock davranışı</comment>
+  </data>
+  <data name="XamlText.0292" xml:space="preserve">
+    <value>Selects how the dock behaves when it shares a display with a fullscreen app.</value>
+    <comment>Dock'un tam ekran uygulama ile aynı monitörde nasıl davranacağını seçer.</comment>
+  </data>
+  <data name="XamlText.0293" xml:space="preserve">
+    <value>The behavior applies only when the dock and fullscreen window share a display. Edge reveal uses a low-frequency pointer check only while needed.</value>
+    <comment>Davranış yalnız dock ile tam ekran pencere aynı monitörde olduğunda uygulanır. Kenarda gizleme, yalnız gerekli sırada düşük sıklıklı fare denetimi kullanır.</comment>
+  </data>
+  <data name="XamlText.0294" xml:space="preserve">
+    <value>Hide completely</value>
+    <comment>Tamamen gizle</comment>
+  </data>
+  <data name="XamlText.0295" xml:space="preserve">
+    <value>Show notifications only</value>
+    <comment>Yalnızca bildirimleri göster</comment>
+  </data>
+  <data name="XamlText.0296" xml:space="preserve">
+    <value>Hide at edge, reveal with pointer</value>
+    <comment>Kenarda gizle, fareyle göster</comment>
+  </data>
+  <data name="XamlText.0297" xml:space="preserve">
+    <value>Keep visible normally</value>
+    <comment>Normal şekilde görünür kal</comment>
+  </data>
+  <data name="XamlText.0298" xml:space="preserve">
+    <value>Show track changes</value>
+    <comment>Şarkı değişikliklerini göster</comment>
+  </data>
+  <data name="XamlText.0299" xml:space="preserve">
+    <value>Notification style</value>
+    <comment>Bildirim görünümü</comment>
+  </data>
+  <data name="XamlText.0300" xml:space="preserve">
+    <value>Display duration (seconds)</value>
+    <comment>Görünme süresi (saniye)</comment>
+  </data>
+  <data name="XamlText.0301" xml:space="preserve">
+    <value>Fullscreen behavior</value>
+    <comment>Tam ekran davranışı</comment>
+  </data>
+  <data name="XamlText.0302" xml:space="preserve">
+    <value>The normal dock is hidden; selected module events appear temporarily.</value>
+    <comment>Normal dock gizlenir; seçtiğiniz modül olayları geçici olarak gösterilir.</comment>
+  </data>
+  <data name="XamlText.0303" xml:space="preserve">
+    <value>The normal dock is hidden; critical timer, battery and other allowed module events appear temporarily. Track changes do not expand the dock automatically.</value>
+    <comment>Normal dock gizlenir; kritik zamanlayıcı, pil ve izin verdiğiniz diğer modül olayları geçici olarak gösterilir. Şarkı değişimi dock'u kendiliğinden genişletmez.</comment>
+  </data>
+  <data name="XamlText.0304" xml:space="preserve">
+    <value>Hide completely suppresses the dock and all events. Notifications only hides the normal dock. Edge reveal opens the dock when the pointer reaches the correct display edge. Keep visible preserves normal behavior.</value>
+    <comment>Tamamen gizle hiçbir olay göstermeden dock'u kapatır. Yalnız bildirimler normal dock'u gizler. Kenarda gizle fareyi doğru ekran kenarına götürdüğünüzde dock'u açar. Normal görünür seçeneği mevcut davranışı korur.</comment>
+  </data>
+  <data name="XamlText.0305" xml:space="preserve">
+    <value>Stopwatch running</value>
+    <comment>Kronometre çalışıyor</comment>
+  </data>
+  <data name="XamlText.0306" xml:space="preserve">
+    <value>Stopwatch paused</value>
+    <comment>Kronometre duraklatıldı</comment>
+  </data>
+  <data name="XamlText.0307" xml:space="preserve">
+    <value>Reset stopwatch</value>
+    <comment>Kronometreyi sıfırla</comment>
+  </data>
+  <data name="XamlText.0308" xml:space="preserve">
+    <value>Choose which display shows the dock.</value>
+    <comment>Dock'un hangi ekranda gösterileceğini seçin.</comment>
+  </data>
+  <data name="XamlText.0309" xml:space="preserve">
+    <value>Monitor behavior</value>
+    <comment>Monitör davranışı</comment>
+  </data>
+  <data name="XamlText.0310" xml:space="preserve">
+    <value>Fixed monitor</value>
+    <comment>Sabit monitör</comment>
+  </data>
+  <data name="XamlText.0311" xml:space="preserve">
+    <value>Select a monitor</value>
+    <comment>Bir monitör seçin</comment>
+  </data>
+  <data name="XamlText.0312" xml:space="preserve">
+    <value>Safe fallback</value>
+    <comment>Güvenli geçiş</comment>
+  </data>
+  <data name="XamlText.0313" xml:space="preserve">
+    <value>If the selected display disconnects, the dock moves to the primary display.</value>
+    <comment>Seçilen monitör bağlantısı kesilirse dock otomatik olarak ana monitöre taşınır.</comment>
+  </data>
+  <data name="XamlText.0314" xml:space="preserve">
+    <value>Choose the behaviors available from the system tray icon.</value>
+    <comment>Sistem tepsisi simgesinde sunulacak davranışları seçin.</comment>
+  </data>
+  <data name="XamlText.0315" xml:space="preserve">
+    <value>Show system tray icon</value>
+    <comment>Sistem tepsisi simgesini göster</comment>
+  </data>
+  <data name="XamlText.0316" xml:space="preserve">
+    <value>Show media controls in the menu</value>
+    <comment>Medya kontrollerini menüde göster</comment>
+  </data>
+  <data name="XamlText.0317" xml:space="preserve">
+    <value>Enable temporary notifications</value>
+    <comment>Geçici bildirimleri etkinleştir</comment>
+  </data>
+  <data name="XamlText.0318" xml:space="preserve">
+    <value>Access</value>
+    <comment>Erişim</comment>
+  </data>
+  <data name="XamlText.0319" xml:space="preserve">
+    <value>If you hide the icon, open Settings from the dock's context menu.</value>
+    <comment>Simgeyi kapatırsanız Ayarlara dock üzerindeki sağ tık menüsünden ulaşabilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0320" xml:space="preserve">
+    <value>Choose how MiaDock behaves with Windows and when its window closes.</value>
+    <comment>MiaDock'un Windows ile ve pencere kapatıldığında nasıl davranacağını seçin.</comment>
+  </data>
+  <data name="XamlText.0321" xml:space="preserve">
+    <value>Start with Windows</value>
+    <comment>Windows açılışında başlat</comment>
+  </data>
+  <data name="XamlText.0322" xml:space="preserve">
+    <value>When the app starts</value>
+    <comment>Uygulama açıldığında</comment>
+  </data>
+  <data name="XamlText.0323" xml:space="preserve">
+    <value>When the window closes</value>
+    <comment>Pencere kapatıldığında</comment>
+  </data>
+  <data name="XamlText.0324" xml:space="preserve">
+    <value>Safe startup</value>
+    <comment>Güvenli başlangıç</comment>
+  </data>
+  <data name="XamlText.0325" xml:space="preserve">
+    <value>MiaDock uses the Microsoft Store-compatible StartupTask API instead of the registry.</value>
+    <comment>MiaDock, kayıt defteri yerine Microsoft Store uyumlu StartupTask API'sini kullanır.</comment>
+  </data>
+  <data name="XamlText.0326" xml:space="preserve">
+    <value>View and manage local technical logs.</value>
+    <comment>Yerel teknik logları görüntüleyin ve yönetin.</comment>
+  </data>
+  <data name="XamlText.0327" xml:space="preserve">
+    <value>Privacy</value>
+    <comment>Gizlilik</comment>
+  </data>
+  <data name="XamlText.0328" xml:space="preserve">
+    <value>Logs remain on this device. Tracks, artists, usernames, personal paths and media history are not recorded.</value>
+    <comment>Loglar yalnızca bu cihazda tutulur. Şarkı, sanatçı, kullanıcı adı, kişisel yol ve medya geçmişi kaydedilmez.</comment>
+  </data>
+  <data name="XamlText.0329" xml:space="preserve">
+    <value>Refresh</value>
+    <comment>Yenile</comment>
+  </data>
+  <data name="XamlText.0330" xml:space="preserve">
+    <value>Open log folder</value>
+    <comment>Log klasörünü aç</comment>
+  </data>
+  <data name="XamlText.0331" xml:space="preserve">
+    <value>Export as ZIP</value>
+    <comment>ZIP olarak dışa aktar</comment>
+  </data>
+  <data name="XamlText.0332" xml:space="preserve">
+    <value>Clear logs</value>
+    <comment>Logları temizle</comment>
+  </data>
+  <data name="XamlText.0333" xml:space="preserve">
+    <value>A modular system dock that integrates naturally with Windows 11.</value>
+    <comment>Windows 11 ile doğal şekilde bütünleşen modüler sistem dock'u.</comment>
+  </data>
+  <data name="XamlText.0334" xml:space="preserve">
+    <value>Version</value>
+    <comment>Sürüm</comment>
+  </data>
+  <data name="XamlText.0335" xml:space="preserve">
+    <value>Links</value>
+    <comment>Bağlantılar</comment>
+  </data>
+  <data name="XamlText.0336" xml:space="preserve">
+    <value>GitHub</value>
+    <comment>GitHub</comment>
+  </data>
+  <data name="XamlText.0337" xml:space="preserve">
+    <value>Instagram</value>
+    <comment>Instagram</comment>
+  </data>
+  <data name="XamlText.0338" xml:space="preserve">
+    <value>github.com/mymiamo/MiaDock</value>
+    <comment>github.com/mymiamo/MiaDock</comment>
+  </data>
+  <data name="XamlText.0339" xml:space="preserve">
+    <value>instagram.com/mymiamonet</value>
+    <comment>instagram.com/mymiamonet</comment>
+  </data>
+  <data name="XamlText.0340" xml:space="preserve">
+    <value>mymiamo.net</value>
+    <comment>mymiamo.net</comment>
+  </data>
+  <data name="XamlText.0341" xml:space="preserve">
+    <value>View the source code, releases, and project progress.</value>
+    <comment>Kaynak kodu, sürümleri ve proje gelişimini görüntüleyin.</comment>
+  </data>
+  <data name="XamlText.0342" xml:space="preserve">
+    <value>Follow MiaMo announcements and social posts.</value>
+    <comment>MiaMo'nun duyurularını ve sosyal paylaşımlarını takip edin.</comment>
+  </data>
+  <data name="XamlText.0343" xml:space="preserve">
+    <value>Website</value>
+    <comment>Web sitesi</comment>
+  </data>
+  <data name="XamlText.0344" xml:space="preserve">
+    <value>Discover MiaMo projects and the latest information.</value>
+    <comment>MiaMo projelerini ve güncel bilgileri keşfedin.</comment>
+  </data>
+  <data name="XamlText.0345" xml:space="preserve">
+    <value>Open the GitHub page in the default browser</value>
+    <comment>GitHub sayfasını varsayılan tarayıcıda aç</comment>
+  </data>
+  <data name="XamlText.0346" xml:space="preserve">
+    <value>Open the Instagram page in the default browser</value>
+    <comment>Instagram sayfasını varsayılan tarayıcıda aç</comment>
+  </data>
+  <data name="XamlText.0347" xml:space="preserve">
+    <value>Open the MiaMo website in the default browser</value>
+    <comment>MiaMo web sitesini varsayılan tarayıcıda aç</comment>
+  </data>
+  <data name="XamlText.0348" xml:space="preserve">
+    <value>Link could not be opened</value>
+    <comment>Bağlantı açılamadı</comment>
+  </data>
+  <data name="XamlText.0349" xml:space="preserve">
+    <value>Settings file</value>
+    <comment>Ayar dosyası</comment>
+  </data>
+  <data name="XamlText.0350" xml:space="preserve">
+    <value>Core features work offline. This release uses no telemetry, user account or external server connection.</value>
+    <comment>Temel özellikler çevrimdışı çalışır. İlk sürüm telemetri, kullanıcı hesabı veya harici sunucu bağlantısı kullanmaz.</comment>
+  </data>
+  <data name="XamlText.0351" xml:space="preserve">
+    <value>Core features work offline. MiaDock uses no telemetry, user account, or automatic error reporting.</value>
+    <comment>Temel özellikler çevrimdışı çalışır. MiaDock telemetri, kullanıcı hesabı veya otomatik hata gönderimi kullanmaz.</comment>
+  </data>
+  <data name="XamlText.0352" xml:space="preserve">
+    <value>Show Windows notifications on MiaDock within the permissions you grant.</value>
+    <comment>Windows bildirimlerini izin verdiğiniz kapsamda MiaDock üzerinde gösterin.</comment>
+  </data>
+  <data name="XamlText.0353" xml:space="preserve">
+    <value>Enable notification module</value>
+    <comment>Bildirim modülünü etkinleştir</comment>
+  </data>
+  <data name="XamlText.0354" xml:space="preserve">
+    <value>When allowed, the source app and notification title are shown.</value>
+    <comment>İzin verilirse kaynak uygulama ve bildirim başlığı gösterilir.</comment>
+  </data>
+  <data name="XamlText.0355" xml:space="preserve">
+    <value>Display duration</value>
+    <comment>Görünme süresi</comment>
+  </data>
+  <data name="XamlText.0356" xml:space="preserve">
+    <value>Sets how long the notification remains on the dock</value>
+    <comment>Bildirimin dock üzerinde kaç saniye kalacağını belirler</comment>
+  </data>
+  <data name="XamlText.0357" xml:space="preserve">
+    <value>Show in fullscreen</value>
+    <comment>Tam ekranda göster</comment>
+  </data>
+  <data name="XamlText.0358" xml:space="preserve">
+    <value>Sensitive content is off by default</value>
+    <comment>Hassas içerik varsayılan olarak kapalıdır</comment>
+  </data>
+  <data name="XamlText.0359" xml:space="preserve">
+    <value>Use allow list only</value>
+    <comment>Yalnızca izin listesini kullan</comment>
+  </data>
+  <data name="XamlText.0360" xml:space="preserve">
+    <value>Only apps enabled below are shown</value>
+    <comment>Açıkken yalnız aşağıda etkinleştirilen uygulamalar gösterilir</comment>
+  </data>
+  <data name="XamlText.0361" xml:space="preserve">
+    <value>Applications</value>
+    <comment>Uygulamalar</comment>
+  </data>
+  <data name="XamlText.0362" xml:space="preserve">
+    <value>Body</value>
+    <comment>Gövde</comment>
+  </data>
+  <data name="XamlText.0363" xml:space="preserve">
+    <value>Body text must be enabled per app. Notification content is never written to technical logs.</value>
+    <comment>Gövde metni her uygulama için ayrıca açılmalıdır. Bildirim içeriği teknik loglara yazılmaz.</comment>
+  </data>
+  <data name="XamlText.0364" xml:space="preserve">
+    <value>The app list appears after Windows notification access is granted.</value>
+    <comment>Uygulama listesi, Windows bildirim erişimi verildikten sonra dolacaktır.</comment>
+  </data>
+  <data name="XamlText.0365" xml:space="preserve">
+    <value>Global shortcuts</value>
+    <comment>Global kısayollar</comment>
+  </data>
+  <data name="XamlText.0366" xml:space="preserve">
+    <value>Enable global shortcuts</value>
+    <comment>Global kısayolları etkinleştir</comment>
+  </data>
+  <data name="XamlText.0367" xml:space="preserve">
+    <value>Show / hide dock</value>
+    <comment>Dock'u göster / gizle</comment>
+  </data>
+  <data name="XamlText.0368" xml:space="preserve">
+    <value>Expand / collapse dock</value>
+    <comment>Dock'u genişlet / küçült</comment>
+  </data>
+  <data name="XamlText.0369" xml:space="preserve">
+    <value>Next module</value>
+    <comment>Sonraki modül</comment>
+  </data>
+  <data name="XamlText.0370" xml:space="preserve">
+    <value>Play / pause media</value>
+    <comment>Medyayı oynat / duraklat</comment>
+  </data>
+  <data name="XamlText.0371" xml:space="preserve">
+    <value>Pause / resume timer</value>
+    <comment>Zamanlayıcıyı duraklat / sürdür</comment>
+  </data>
+  <data name="XamlText.0372" xml:space="preserve">
+    <value>Restore all default shortcuts</value>
+    <comment>Tüm kısayolları varsayılana döndür</comment>
+  </data>
+  <data name="XamlText.0373" xml:space="preserve">
+    <value>Restore all global shortcuts to their default assignments</value>
+    <comment>Tüm global kısayolları varsayılan atamalara döndür</comment>
+  </data>
+  <data name="XamlText.0374" xml:space="preserve">
+    <value>Restore shortcut to its default assignment</value>
+    <comment>Kısayolu varsayılan atamaya döndür</comment>
+  </data>
+  <data name="XamlText.0375" xml:space="preserve">
+    <value>Manage the features, event durations and fullscreen behavior used by the dock.</value>
+    <comment>Dock'ta çalışacak özellikleri, olay sürelerini ve tam ekran davranışını yönetin.</comment>
+  </data>
+  <data name="XamlText.0376" xml:space="preserve">
+    <value>Service use is shown clearly</value>
+    <comment>Servis kullanımı açıkça gösterilir</comment>
+  </data>
+  <data name="XamlText.0377" xml:space="preserve">
+    <value>Before a module is enabled, the Windows API or local service it uses is explained and your consent is requested.</value>
+    <comment>Bir modülü açmadan önce kullanılan Windows API'si veya yerel servis açıklanır ve onayınız istenir.</comment>
+  </data>
+  <data name="XamlText.0378" xml:space="preserve">
+    <value>View services and permissions</value>
+    <comment>Servisleri ve izinleri görüntüle</comment>
+  </data>
+  <data name="XamlText.0379" xml:space="preserve">
+    <value>View all module services and permissions</value>
+    <comment>Tüm modül servislerini ve izinlerini görüntüle</comment>
+  </data>
+  <data name="XamlText.0380" xml:space="preserve">
+    <value>Event duration (seconds)</value>
+    <comment>Olay süresi (saniye)</comment>
+  </data>
+  <data name="XamlText.0381" xml:space="preserve">
+    <value>Details</value>
+    <comment>Ayrıntılar</comment>
+  </data>
+  <data name="XamlText.0382" xml:space="preserve">
+    <value>Sensitive content</value>
+    <comment>Hassas içerik</comment>
+  </data>
+  <data name="XamlText.0383" xml:space="preserve">
+    <value>Both protections are off by default for sensitive content such as notifications and transfers.</value>
+    <comment>Bildirim ve aktarım gibi hassas içerikler için iki koruma da varsayılan olarak kapalıdır.</comment>
+  </data>
+  <data name="XamlText.0384" xml:space="preserve">
+    <value>Show sensitive content in fullscreen</value>
+    <comment>Hassas içeriği tam ekranda göster</comment>
+  </data>
+  <data name="XamlText.0385" xml:space="preserve">
+    <value>Allows sensitive content over games or fullscreen apps.</value>
+    <comment>Oyun veya tam ekran uygulama üzerinde bildirim içeriğine izin verir.</comment>
+  </data>
+  <data name="XamlText.0386" xml:space="preserve">
+    <value>Show sensitive content while Windows is locked</value>
+    <comment>Hassas içeriği Windows kilitliyken göster</comment>
+  </data>
+  <data name="XamlText.0387" xml:space="preserve">
+    <value>Allows sensitive module content while the Windows session is locked.</value>
+    <comment>Windows oturumu kilitliyken hassas modül içeriğine izin verir.</comment>
+  </data>
+  <data name="XamlText.0388" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Hazır</comment>
+  </data>
+  <data name="XamlText.0389" xml:space="preserve">
+    <value>Disabled</value>
+    <comment>Kapalı</comment>
+  </data>
+  <data name="XamlText.0390" xml:space="preserve">
+    <value>Permission required</value>
+    <comment>İzin gerekli</comment>
+  </data>
+  <data name="XamlText.0391" xml:space="preserve">
+    <value>Permission denied</value>
+    <comment>İzin reddedildi</comment>
+  </data>
+  <data name="XamlText.0392" xml:space="preserve">
+    <value>Windows API unavailable</value>
+    <comment>Windows API kullanılamıyor</comment>
+  </data>
+  <data name="XamlText.0393" xml:space="preserve">
+    <value>No compatible device</value>
+    <comment>Uyumlu cihaz bulunamadı</comment>
+  </data>
+  <data name="XamlText.0394" xml:space="preserve">
+    <value>Temporary error</value>
+    <comment>Geçici hata</comment>
+  </data>
+  <data name="XamlText.0395" xml:space="preserve">
+    <value>Album artwork</value>
+    <comment>Albüm kapağı</comment>
+  </data>
+  <data name="XamlText.0396" xml:space="preserve">
+    <value>Home dock</value>
+    <comment>Ana dock</comment>
+  </data>
+  <data name="XamlText.0397" xml:space="preserve">
+    <value>Use the icons above or scroll to switch modules.</value>
+    <comment>Bir modüle geçmek için üstteki simgeleri veya kaydırmayı kullanın.</comment>
+  </data>
+  <data name="XamlText.0398" xml:space="preserve">
+    <value>Use the icons below or scroll to switch modules.</value>
+    <comment>Bir modüle geçmek için alttaki simgeleri veya kaydırmayı kullanın.</comment>
+  </data>
+  <data name="XamlText.0399" xml:space="preserve">
+    <value>Mute or unmute master volume</value>
+    <comment>Ana sesi aç veya kapat</comment>
+  </data>
+  <data name="XamlText.0400" xml:space="preserve">
+    <value>Transfer progress</value>
+    <comment>Aktarım ilerlemesi</comment>
+  </data>
+  <data name="XamlText.0401" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Ayarlar</comment>
+  </data>
+  <data name="XamlText.0402" xml:space="preserve">
+    <value>Connected Bluetooth devices</value>
+    <comment>Bağlı Bluetooth cihazları</comment>
+  </data>
+  <data name="XamlText.0403" xml:space="preserve">
+    <value>Bluetooth</value>
+    <comment>Bluetooth</comment>
+  </data>
+  <data name="XamlText.0404" xml:space="preserve">
+    <value>Connection status</value>
+    <comment>Bağlantı durumu</comment>
+  </data>
+  <data name="XamlText.0405" xml:space="preserve">
+    <value>Minutes</value>
+    <comment>Dakika</comment>
+  </data>
+  <data name="XamlText.0406" xml:space="preserve">
+    <value>1 min</value>
+    <comment>1 dk</comment>
+  </data>
+  <data name="XamlText.0407" xml:space="preserve">
+    <value>5 min</value>
+    <comment>5 dk</comment>
+  </data>
+  <data name="XamlText.0408" xml:space="preserve">
+    <value>10 min</value>
+    <comment>10 dk</comment>
+  </data>
+  <data name="XamlText.0409" xml:space="preserve">
+    <value>25 min</value>
+    <comment>25 dk</comment>
+  </data>
+  <data name="XamlText.0410" xml:space="preserve">
+    <value>45 min</value>
+    <comment>45 dk</comment>
+  </data>
+  <data name="XamlText.0411" xml:space="preserve">
+    <value>Start a 1-minute timer</value>
+    <comment>1 dakikalık zamanlayıcıyı başlat</comment>
+  </data>
+  <data name="XamlText.0412" xml:space="preserve">
+    <value>Start a 5-minute timer</value>
+    <comment>5 dakikalık zamanlayıcıyı başlat</comment>
+  </data>
+  <data name="XamlText.0413" xml:space="preserve">
+    <value>Start a 10-minute timer</value>
+    <comment>10 dakikalık zamanlayıcıyı başlat</comment>
+  </data>
+  <data name="XamlText.0414" xml:space="preserve">
+    <value>Start a 25-minute timer</value>
+    <comment>25 dakikalık zamanlayıcıyı başlat</comment>
+  </data>
+  <data name="XamlText.0415" xml:space="preserve">
+    <value>Start a 45-minute timer</value>
+    <comment>45 dakikalık zamanlayıcıyı başlat</comment>
+  </data>
+  <data name="XamlText.0416" xml:space="preserve">
+    <value>Time tools</value>
+    <comment>Zaman araçları</comment>
+  </data>
+  <data name="XamlText.0417" xml:space="preserve">
+    <value>An alarm sounds when the timer ends.</value>
+    <comment>Süre dolduğunda alarm sesi çalar.</comment>
+  </data>
+  <data name="XamlText.0418" xml:space="preserve">
+    <value>Hours : minutes : seconds</value>
+    <comment>Saat : dakika : saniye</comment>
+  </data>
+  <data name="XamlText.0419" xml:space="preserve">
+    <value>Laps</value>
+    <comment>Turlar</comment>
+  </data>
+  <data name="XamlText.0420" xml:space="preserve">
+    <value>Newest lap first</value>
+    <comment>En yeni tur üstte</comment>
+  </data>
+  <data name="XamlText.0421" xml:space="preserve">
+    <value>Dock interaction behavior</value>
+    <comment>Dock etkileşim davranışı</comment>
+  </data>
+  <data name="XamlText.0422" xml:space="preserve">
+    <value>Dock position</value>
+    <comment>Dock konumu</comment>
+  </data>
+  <data name="XamlText.0423" xml:space="preserve">
+    <value>Dock theme</value>
+    <comment>Dock teması</comment>
+  </data>
+  <data name="XamlText.0424" xml:space="preserve">
+    <value>Choose the monitor and screen area where the dock appears.</value>
+    <comment>Dock'un hangi monitörde ve ekranın hangi bölümünde gösterileceğini seçin.</comment>
+  </data>
+  <data name="XamlText.0425" xml:space="preserve">
+    <value>Choose when the dock expands. Keyboard and click access remain available.</value>
+    <comment>Dock'un ne zaman genişleyeceğini seçin. Klavye ve tıklama erişimi her durumda kullanılabilir.</comment>
+  </data>
+  <data name="XamlText.0426" xml:space="preserve">
+    <value>Low battery threshold</value>
+    <comment>Düşük pil eşiği</comment>
+  </data>
+  <data name="XamlText.0427" xml:space="preserve">
+    <value>Critical battery threshold</value>
+    <comment>Kritik pil eşiği</comment>
+  </data>
+  <data name="XamlText.0428" xml:space="preserve">
+    <value>Emergency battery threshold</value>
+    <comment>Acil pil eşiği</comment>
+  </data>
+  <data name="XamlText.0429" xml:space="preserve">
+    <value>Interaction behavior</value>
+    <comment>Etkileşim davranışı</comment>
+  </data>
+  <data name="XamlText.0430" xml:space="preserve">
+    <value>Record global shortcut</value>
+    <comment>Global kısayolu kaydet</comment>
+  </data>
+  <data name="XamlText.0431" xml:space="preserve">
+    <value>Show sensitive content on the lock screen</value>
+    <comment>Hassas içeriği kilit ekranında göster</comment>
+  </data>
+  <data name="XamlText.0432" xml:space="preserve">
+    <value>Speed is measured only while this view is open.</value>
+    <comment>Hız, yalnızca bu görünüm açıkken ölçülür.</comment>
+  </data>
+  <data name="XamlText.0433" xml:space="preserve">
+    <value>MiaDock does not take keyboard focus from the active app when opened by hover.</value>
+    <comment>Hover ile açılırken MiaDock aktif uygulamanın klavye odağını almaz.</comment>
+  </data>
+  <data name="XamlText.0434" xml:space="preserve">
+    <value>Download</value>
+    <comment>İndirme</comment>
+  </data>
+  <data name="XamlText.0435" xml:space="preserve">
+    <value>Download speed</value>
+    <comment>İndirme hızı</comment>
+  </data>
+  <data name="XamlText.0436" xml:space="preserve">
+    <value>Upload</value>
+    <comment>Yükleme</comment>
+  </data>
+  <data name="XamlText.0437" xml:space="preserve">
+    <value>Upload speed</value>
+    <comment>Yükleme hızı</comment>
+  </data>
+  <data name="XamlText.0438" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>İptal</comment>
+  </data>
+  <data name="XamlText.0439" xml:space="preserve">
+    <value>Choose what happens when you select the close button.</value>
+    <comment>Kapat düğmesine bastığınızda ne yapılacağını seçin.</comment>
+  </data>
+  <data name="XamlText.0440" xml:space="preserve">
+    <value>Source not listed?</value>
+    <comment>Kaynak görünmüyor mu?</comment>
+  </data>
+  <data name="XamlText.0441" xml:space="preserve">
+    <value>Clear shortcut assignment</value>
+    <comment>Kısayol atamasını temizle</comment>
+  </data>
+  <data name="XamlText.0442" xml:space="preserve">
+    <value>Stopwatch</value>
+    <comment>Kronometre</comment>
+  </data>
+  <data name="XamlText.0443" xml:space="preserve">
+    <value>Stopwatch laps</value>
+    <comment>Kronometre turları</comment>
+  </data>
+  <data name="XamlText.0444" xml:space="preserve">
+    <value>Setup steps</value>
+    <comment>Kurulum adımları</comment>
+  </data>
+  <data name="XamlText.0445" xml:space="preserve">
+    <value>Media app</value>
+    <comment>Medya uygulaması</comment>
+  </data>
+  <data name="XamlText.0446" xml:space="preserve">
+    <value>MiaDock Setup</value>
+    <comment>MiaDock İlk Kurulum</comment>
+  </data>
+  <data name="XamlText.0447" xml:space="preserve">
+    <value>Close MiaDock?</value>
+    <comment>MiaDock kapatılsın mı?</comment>
+  </data>
+  <data name="XamlText.0448" xml:space="preserve">
+    <value>MiaDock logo</value>
+    <comment>MiaDock logosu</comment>
+  </data>
+  <data name="XamlText.0449" xml:space="preserve">
+    <value>Open module details</value>
+    <comment>Modül ayrıntılarını aç</comment>
+  </data>
+  <data name="XamlText.0450" xml:space="preserve">
+    <value>Switch between modules</value>
+    <comment>Modüller arasında geçiş</comment>
+  </data>
+  <data name="XamlText.0451" xml:space="preserve">
+    <value>New activity will appear here.</value>
+    <comment>Yeni bir etkinlik olduğunda burada görünecek.</comment>
+  </data>
+  <data name="XamlText.0452" xml:space="preserve">
+    <value>No active event</value>
+    <comment>Etkin olay yok</comment>
+  </data>
+  <data name="XamlText.0453" xml:space="preserve">
+    <value>No active timer</value>
+    <comment>Etkin zamanlayıcı yok</comment>
+  </data>
+  <data name="XamlText.0454" xml:space="preserve">
+    <value>No Bluetooth device connected</value>
+    <comment>Bluetooth cihazı bağlı değil</comment>
+  </data>
+  <data name="XamlText.0455" xml:space="preserve">
+    <value>No transfer found</value>
+    <comment>Aktarım bulunmuyor</comment>
+  </data>
+  <data name="XamlText.0456" xml:space="preserve">
+    <value>Progress</value>
+    <comment>İlerleme</comment>
+  </data>
+  <data name="XamlText.0457" xml:space="preserve">
+    <value>Skips to the previous track</value>
+    <comment>Önceki parçaya geçer</comment>
+  </data>
+  <data name="XamlText.0458" xml:space="preserve">
+    <value>Skips to the previous track; unavailable when the source does not support it.</value>
+    <comment>Önceki parçaya geçer; kaynak desteklemiyorsa kullanılamaz.</comment>
+  </data>
+  <data name="XamlText.0459" xml:space="preserve">
+    <value>Plays or pauses the current track</value>
+    <comment>Geçerli parçayı oynatır veya duraklatır</comment>
+  </data>
+  <data name="XamlText.0460" xml:space="preserve">
+    <value>Plays or pauses the current media.</value>
+    <comment>Geçerli medyayı oynatır veya duraklatır.</comment>
+  </data>
+  <data name="XamlText.0461" xml:space="preserve">
+    <value>Skips to the next track</value>
+    <comment>Sonraki parçaya geçer</comment>
+  </data>
+  <data name="XamlText.0462" xml:space="preserve">
+    <value>Skips to the next track; unavailable when the source does not support it.</value>
+    <comment>Sonraki parçaya geçer; kaynak desteklemiyorsa kullanılamaz.</comment>
+  </data>
+  <data name="XamlText.0463" xml:space="preserve">
+    <value>Monitor and position</value>
+    <comment>Monitör ve konum</comment>
+  </data>
+  <data name="XamlText.0464" xml:space="preserve">
+    <value>Music activity</value>
+    <comment>Müzik etkinliği</comment>
+  </data>
+  <data name="XamlText.0465" xml:space="preserve">
+    <value>Music</value>
+    <comment>Müzik</comment>
+  </data>
+  <data name="XamlText.0466" xml:space="preserve">
+    <value>Possible call activity</value>
+    <comment>Olası arama etkinliği</comment>
+  </data>
+  <data name="XamlText.0467" xml:space="preserve">
+    <value>Next track</value>
+    <comment>Sonraki parça</comment>
+  </data>
+  <data name="XamlText.0468" xml:space="preserve">
+    <value>Play or pause</value>
+    <comment>Oynat veya duraklat</comment>
+  </data>
+  <data name="XamlText.0469" xml:space="preserve">
+    <value>Previous track</value>
+    <comment>Önceki parça</comment>
+  </data>
+  <data name="XamlText.0470" xml:space="preserve">
+    <value>Now playing</value>
+    <comment>Şimdi çalıyor</comment>
+  </data>
+  <data name="XamlText.0471" xml:space="preserve">
+    <value>Focus behavior</value>
+    <comment>Odak davranışı</comment>
+  </data>
+  <data name="XamlText.0472" xml:space="preserve">
+    <value>Previous setup step</value>
+    <comment>Önceki kurulum adımı</comment>
+  </data>
+  <data name="XamlText.0473" xml:space="preserve">
+    <value>Previous module</value>
+    <comment>Önceki modül</comment>
+  </data>
+  <data name="XamlText.0474" xml:space="preserve">
+    <value>Preview</value>
+    <comment>Önizleme</comment>
+  </data>
+  <data name="XamlText.0475" xml:space="preserve">
+    <value>Battery level</value>
+    <comment>Pil seviyesi</comment>
+  </data>
+  <data name="XamlText.0476" xml:space="preserve">
+    <value>Hours</value>
+    <comment>Saat</comment>
+  </data>
+  <data name="XamlText.0477" xml:space="preserve">
+    <value>Second</value>
+    <comment>Saniye</comment>
+  </data>
+  <data name="XamlText.0478" xml:space="preserve">
+    <value>Selected media app volume</value>
+    <comment>Seçili medya uygulamasının ses seviyesi</comment>
+  </data>
+  <data name="XamlText.0479" xml:space="preserve">
+    <value>Mute or unmute the selected app</value>
+    <comment>Seçili uygulamanın sesini aç veya kapat</comment>
+  </data>
+  <data name="XamlText.0480" xml:space="preserve">
+    <value>Remember my choice</value>
+    <comment>Seçimimi hatırla</comment>
+  </data>
+  <data name="XamlText.0481" xml:space="preserve">
+    <value>Reset</value>
+    <comment>Sıfırla</comment>
+  </data>
+  <data name="XamlText.0482" xml:space="preserve">
+    <value>System audio</value>
+    <comment>Sistem sesi</comment>
+  </data>
+  <data name="XamlText.0483" xml:space="preserve">
+    <value>System activity</value>
+    <comment>Sistem etkinliği</comment>
+  </data>
+  <data name="XamlText.0484" xml:space="preserve">
+    <value>Changes the mute state of Windows master audio.</value>
+    <comment>Windows ana sesinin sessiz durumunu değiştirir.</comment>
+  </data>
+  <data name="XamlText.0485" xml:space="preserve">
+    <value>Minimize to system tray</value>
+    <comment>Sistem tepsisine küçült</comment>
+  </data>
+  <data name="XamlText.0486" xml:space="preserve">
+    <value>Recent technical log entries</value>
+    <comment>Son teknik log kayıtları</comment>
+  </data>
+  <data name="XamlText.0487" xml:space="preserve">
+    <value>Next setup step</value>
+    <comment>Sonraki kurulum adımı</comment>
+  </data>
+  <data name="XamlText.0488" xml:space="preserve">
+    <value>Time is up</value>
+    <comment>Süre doldu</comment>
+  </data>
+  <data name="XamlText.0489" xml:space="preserve">
+    <value>Fullscreen notification style</value>
+    <comment>Tam ekran bildirim görünümü</comment>
+  </data>
+  <data name="XamlText.0490" xml:space="preserve">
+    <value>Show media events in fullscreen</value>
+    <comment>Tam ekranda medya olaylarını göster</comment>
+  </data>
+  <data name="XamlText.0491" xml:space="preserve">
+    <value>Choose a theme</value>
+    <comment>Tema seçin</comment>
+  </data>
+  <data name="XamlText.0492" xml:space="preserve">
+    <value>Clear</value>
+    <comment>Temizle</comment>
+  </data>
+  <data name="XamlText.0493" xml:space="preserve">
+    <value>Track position</value>
+    <comment>Parça konumu</comment>
+  </data>
+  <data name="XamlText.0494" xml:space="preserve">
+    <value>Lap</value>
+    <comment>Tur</comment>
+  </data>
+  <data name="XamlText.0495" xml:space="preserve">
+    <value>Apply</value>
+    <comment>Uygula</comment>
+  </data>
+  <data name="XamlText.0496" xml:space="preserve">
+    <value>Exit application</value>
+    <comment>Uygulamadan tamamen çık</comment>
+  </data>
+  <data name="XamlText.0497" xml:space="preserve">
+    <value>Volume</value>
+    <comment>Ses seviyesi</comment>
+  </data>
+  <data name="XamlText.0498" xml:space="preserve">
+    <value>Start MiaDock with Windows</value>
+    <comment>Windows açılışında MiaDock'u başlat</comment>
+  </data>
+  <data name="XamlText.0499" xml:space="preserve">
+    <value>Run at Windows startup</value>
+    <comment>Windows başlangıcında çalıştır</comment>
+  </data>
+  <data name="XamlText.0500" xml:space="preserve">
+    <value>Timer</value>
+    <comment>Zamanlayıcı</comment>
+  </data>
+  <data name="XamlText.0501" xml:space="preserve">
+    <value>Timer progress</value>
+    <comment>Zamanlayıcı ilerlemesi</comment>
+  </data>
+  <data name="XamlText.0502" xml:space="preserve">
+    <value>Timer completed</value>
+    <comment>Zamanlayıcı tamamlandı</comment>
+  </data>
+  <data name="XamlText.0503" xml:space="preserve">
+    <value>Cancel timer</value>
+    <comment>Zamanlayıcıyı iptal et</comment>
+  </data>
+  <data name="XamlText.0504" xml:space="preserve">
+    <value>You can change all of these choices later in Settings.</value>
+    <comment>Bu seçimlerin tümünü daha sonra Ayarlar penceresinden değiştirebilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0505" xml:space="preserve">
+    <value>The media module is available initially. Battery, microphone, timer, and other modules can use the same architecture.</value>
+    <comment>İlk sürümde medya modülü kullanılabilir. Pil, mikrofon, zamanlayıcı ve diğer modüller daha sonra aynı altyapıya eklenebilir.</comment>
+  </data>
+  <data name="XamlText.0506" xml:space="preserve">
+    <value>Select the record button and press a combination containing Ctrl, Alt, or Shift. The Windows key and F12 are unavailable.</value>
+    <comment>Kısayol kaydetmek için düğmeye tıklayın ve Ctrl, Alt veya Shift içeren kombinasyona basın. Windows tuşu ve F12 kullanılamaz.</comment>
+  </data>
+  <data name="XamlText.0507" xml:space="preserve">
+    <value>MiaDock works offline and uses no account, server connection, telemetry, or automatic error reporting.</value>
+    <comment>MiaDock çevrimdışı çalışır; hesap, sunucu bağlantısı, telemetri veya otomatik hata gönderimi kullanmaz.</comment>
+  </data>
+  <data name="XamlText.0508" xml:space="preserve">
+    <value>MiaDock is ready</value>
+    <comment>MiaDock hazır</comment>
+  </data>
+  <data name="XamlText.0509" xml:space="preserve">
+    <value>Choose the default media source MiaDock follows. The list updates as Windows media sessions change.</value>
+    <comment>MiaDock'un takip edeceği varsayılan medya kaynağını seçin. Liste, Windows medya oturumları değiştikçe güncellenir.</comment>
+  </data>
+  <data name="XamlText.0510" xml:space="preserve">
+    <value>Choose whether MiaDock starts automatically when you sign in to Windows.</value>
+    <comment>MiaDock'un Windows oturumu açıldığında otomatik başlamasını seçebilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0511" xml:space="preserve">
+    <value>The normal dock is hidden in fullscreen. Selected events appear for five seconds by default.</value>
+    <comment>Normal dock tam ekran sırasında gizlenir. Seçilen olaylar varsayılan olarak beş saniye görünür.</comment>
+  </data>
+  <data name="XamlText.0512" xml:space="preserve">
+    <value>Playback indicator</value>
+    <comment>Oynatma göstergesi</comment>
+  </data>
+  <data name="XamlText.0513" xml:space="preserve">
+    <value>Start media in Spotify, Apple Music, or a browser. You can continue setup without selecting a source.</value>
+    <comment>Spotify, Apple Music veya tarayıcıda bir medya başlatabilirsiniz. Kaynak seçmeden de kuruluma devam edebilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0514" xml:space="preserve">
+    <value>Theme changes are previewed immediately. The previous theme is restored if setup is canceled.</value>
+    <comment>Tema değişikliği anında önizlenir. Kurulum iptal edilirse önceki tema geri yüklenir.</comment>
+  </data>
+  <data name="XamlText.0515" xml:space="preserve">
+    <value>Manage the timer and stopwatch from the Time module in the expanded dock. Use the mouse wheel to move between the default view and modules.</value>
+    <comment>Zamanlayıcı ve kronometreyi genişletilmiş dock içindeki Zaman modülünden yönetin. Fare tekeriyle varsayılan görünüm ve modüller arasında geçebilirsiniz.</comment>
+  </data>
+  <data name="XamlText.0516" xml:space="preserve">
+    <value>Phase 1 interface preview</value>
+    <comment>Faz 1 arayüz önizlemesi</comment>
+  </data>
+  <data name="XamlText.0517" xml:space="preserve">
+    <value>Local mock data</value>
+    <comment>Yerel sahte veri</comment>
+  </data>
+  <data name="XamlText.0518" xml:space="preserve">
+    <value>Theme style</value>
+    <comment>Tema stili</comment>
+  </data>
+  <data name="XamlText.0519" xml:space="preserve">
+    <value>Dock state</value>
+    <comment>Dock durumu</comment>
+  </data>
+  <data name="XamlText.0520" xml:space="preserve">
+    <value>Expanded music</value>
+    <comment>Genişletilmiş müzik</comment>
+  </data>
+  <data name="XamlText.0521" xml:space="preserve">
+    <value>Track notification</value>
+    <comment>Parça bildirimi</comment>
+  </data>
+  <data name="XamlText.0522" xml:space="preserve">
+    <value>This window is a development preview. The dock uses live Windows media sessions; persistence and animations are added in later phases.</value>
+    <comment>Bu pencere geliştirme önizlemesidir. Dock canlı Windows medya oturumlarını kullanır; kalıcılık ve animasyonlar sonraki fazlarda eklenir.</comment>
+  </data>
+  <data name="XamlText.0523" xml:space="preserve">
+    <value>MiaDock Preview</value>
+    <comment>MiaDock Önizleme</comment>
+  </data>
+  <data name="XamlText.0524" xml:space="preserve">
+    <value>Setup</value>
+    <comment>İlk kurulum</comment>
+  </data>
+  <data name="XamlText.0525" xml:space="preserve">
+    <value>Back</value>
+    <comment>Geri</comment>
+  </data>
+  <data name="XamlText.0526" xml:space="preserve">
+    <value>Next</value>
+    <comment>İleri</comment>
+  </data>
+  <data name="XamlText.0527" xml:space="preserve">
+    <value>Welcome to MiaDock</value>
+    <comment>MiaDock'a hoş geldiniz</comment>
+  </data>
+  <data name="XamlText.0528" xml:space="preserve">
+    <value>Let's set up your modular, interactive dock that works naturally with Windows 11.</value>
+    <comment>Windows 11 ile doğal biçimde çalışan, modüler ve etkileşimli dock'unuzu birkaç adımda hazırlayalım.</comment>
+  </data>
+  <data name="XamlText.0529" xml:space="preserve">
+    <value>Choose your modules</value>
+    <comment>Modüllerinizi seçin</comment>
+  </data>
+  <data name="XamlText.0530" xml:space="preserve">
+    <value>Choose the features you want in the dock. When you select Next, the services used are explained and your consent is requested.</value>
+    <comment>Dock'ta kullanmak istediğiniz özellikleri seçin. İleri dediğinizde kullanılan servisler açıklanır ve onayınız istenir.</comment>
+  </data>
+  <data name="XamlText.0531" xml:space="preserve">
+    <value>Setup summary</value>
+    <comment>Kurulum özeti</comment>
+  </data>
+  <data name="XamlText.0532" xml:space="preserve">
+    <value>Review your choices. Settings are saved together when you select Finish.</value>
+    <comment>Seçimlerinizi kontrol edin. Tamamla düğmesine bastığınızda ayarlar tek seferde kaydedilecektir.</comment>
+  </data>
+  <data name="XamlText.0533" xml:space="preserve">
+    <value>12-hour</value>
+  </data>
+  <data name="XamlText.0534" xml:space="preserve">
+    <value>24-hour</value>
+  </data>
+  <data name="XamlText.0535" xml:space="preserve">
+    <value>Active window display</value>
+  </data>
+  <data name="XamlText.0536" xml:space="preserve">
+    <value>Fluid</value>
+  </data>
+  <data name="XamlText.0537" xml:space="preserve">
+    <value>Bottom center</value>
+  </data>
+  <data name="XamlText.0538" xml:space="preserve">
+    <value>Bottom right</value>
+  </data>
+  <data name="XamlText.0539" xml:space="preserve">
+    <value>Bottom left</value>
+  </data>
+  <data name="XamlText.0540" xml:space="preserve">
+    <value>Primary display</value>
+  </data>
+  <data name="XamlText.0541" xml:space="preserve">
+    <value>Apple-like</value>
+  </data>
+  <data name="XamlText.0542" xml:space="preserve">
+    <value>Colorless transparent glass that reveals and blurs the desktop behind it.</value>
+  </data>
+  <data name="XamlText.0543" xml:space="preserve">
+    <value>Assigned global shortcuts are active.</value>
+  </data>
+  <data name="XamlText.0544" xml:space="preserve">
+    <value>Network</value>
+  </data>
+  <data name="XamlText.0545" xml:space="preserve">
+    <value>Reads connection type and, only while the expanded view is open, measures current speed from adapter byte counters. Traffic content is never read.</value>
+  </data>
+  <data name="XamlText.0546" xml:space="preserve">
+    <value>The startup setting could not be changed. Check Windows Startup Apps settings.</value>
+  </data>
+  <data name="XamlText.0547" xml:space="preserve">
+    <value>The startup task is unavailable in this run.</value>
+  </data>
+  <data name="XamlText.0548" xml:space="preserve">
+    <value>The startup task is blocked by system policy.</value>
+  </data>
+  <data name="XamlText.0549" xml:space="preserve">
+    <value>The startup task is enabled by system policy.</value>
+  </data>
+  <data name="XamlText.0550" xml:space="preserve">
+    <value>Startup and Shutdown</value>
+  </data>
+  <data name="XamlText.0551" xml:space="preserve">
+    <value>The notification listener requires the development MSIX package.</value>
+  </data>
+  <data name="XamlText.0552" xml:space="preserve">
+    <value>Notification access could not be initialized.</value>
+  </data>
+  <data name="XamlText.0553" xml:space="preserve">
+    <value>Notification access and privacy</value>
+  </data>
+  <data name="XamlText.0554" xml:space="preserve">
+    <value>Windows permission will be requested when you enable the notification module.</value>
+  </data>
+  <data name="XamlText.0555" xml:space="preserve">
+    <value>The notification listener is unavailable on this Windows version.</value>
+  </data>
+  <data name="XamlText.0556" xml:space="preserve">
+    <value>This module will also open the Windows permission prompt.</value>
+  </data>
+  <data name="XamlText.0557" xml:space="preserve">
+    <value>This module's state is processed only on this device.</value>
+  </data>
+  <data name="XamlText.0558" xml:space="preserve">
+    <value>This option is available when the MSIX package is installed.</value>
+  </data>
+  <data name="XamlText.0559" xml:space="preserve">
+    <value>Blurred Glass</value>
+  </data>
+  <data name="XamlText.0560" xml:space="preserve">
+    <value>A lighter, more transparent Windows Acrylic surface.</value>
+  </data>
+  <data name="XamlText.0561" xml:space="preserve">
+    <value>A more layered and pronounced Mica appearance.</value>
+  </data>
+  <data name="XamlText.0562" xml:space="preserve">
+    <value>Balanced</value>
+  </data>
+  <data name="XamlText.0563" xml:space="preserve">
+    <value>Turned off</value>
+  </data>
+  <data name="XamlText.0564" xml:space="preserve">
+    <value>Dynamic</value>
+  </data>
+  <data name="XamlText.0565" xml:space="preserve">
+    <value>Dock appearance and placement</value>
+  </data>
+  <data name="XamlText.0566" xml:space="preserve">
+    <value>Expand or collapse dock</value>
+  </data>
+  <data name="XamlText.0567" xml:space="preserve">
+    <value>File transfers</value>
+  </data>
+  <data name="XamlText.0568" xml:space="preserve">
+    <value>Start the dock</value>
+  </data>
+  <data name="XamlText.0569" xml:space="preserve">
+    <value>Status and quick actions</value>
+  </data>
+  <data name="XamlText.0570" xml:space="preserve">
+    <value>Status, updates and quick settings</value>
+  </data>
+  <data name="XamlText.0571" xml:space="preserve">
+    <value>Display selection, DPI and positioning</value>
+  </data>
+  <data name="XamlText.0572" xml:space="preserve">
+    <value>Display and positioning</value>
+  </data>
+  <data name="XamlText.0573" xml:space="preserve">
+    <value>At least one shortcut is already used by another app.</value>
+  </data>
+  <data name="XamlText.0574" xml:space="preserve">
+    <value>At least one shortcut is invalid and could not be activated.</value>
+  </data>
+  <data name="XamlText.0575" xml:space="preserve">
+    <value>Access was denied. Enable notification access in Windows Settings.</value>
+  </data>
+  <data name="XamlText.0576" xml:space="preserve">
+    <value>Processes the active media session's track, artist, artwork, and playback state on this device; sends playback commands to the selected app.</value>
+  </data>
+  <data name="XamlText.0577" xml:space="preserve">
+    <value>Enable, disable, profiles and automation</value>
+  </data>
+  <data name="XamlText.0578" xml:space="preserve">
+    <value>Locally monitors connection state for paired Bluetooth devices; it does not pair or manage connections.</value>
+  </data>
+  <data name="XamlText.0579" xml:space="preserve">
+    <value>Hover and click</value>
+  </data>
+  <data name="XamlText.0580" xml:space="preserve">
+    <value>On pointer hover</value>
+  </data>
+  <data name="XamlText.0581" xml:space="preserve">
+    <value>Invalid</value>
+  </data>
+  <data name="XamlText.0582" xml:space="preserve">
+    <value>The invalid combination was not saved. Use a supported key with Ctrl, Alt, or Shift.</value>
+  </data>
+  <data name="XamlText.0583" xml:space="preserve">
+    <value>Global shortcuts are disabled.</value>
+  </data>
+  <data name="XamlText.0584" xml:space="preserve">
+    <value>Visibility, interaction and language</value>
+  </data>
+  <data name="XamlText.0585" xml:space="preserve">
+    <value>Visibility, interaction, language, clock and dock position</value>
+  </data>
+  <data name="XamlText.0586" xml:space="preserve">
+    <value>Always visible</value>
+  </data>
+  <data name="XamlText.0587" xml:space="preserve">
+    <value>Quick settings, status and updates</value>
+  </data>
+  <data name="XamlText.0588" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="XamlText.0589" xml:space="preserve">
+    <value>Slide and fade</value>
+  </data>
+  <data name="XamlText.0590" xml:space="preserve">
+    <value>Source app, playback and volume controls</value>
+  </data>
+  <data name="XamlText.0591" xml:space="preserve">
+    <value>With controls</value>
+  </data>
+  <data name="XamlText.0592" xml:space="preserve">
+    <value>A dark-tinted Windows Acrylic surface.</value>
+  </data>
+  <data name="XamlText.0593" xml:space="preserve">
+    <value>Assign keys to the actions you want to use.</value>
+  </data>
+  <data name="XamlText.0594" xml:space="preserve">
+    <value>User-scoped MiaDock named-pipe service</value>
+  </data>
+  <data name="XamlText.0595" xml:space="preserve">
+    <value>Short</value>
+  </data>
+  <data name="XamlText.0596" xml:space="preserve">
+    <value>Media source and playback</value>
+  </data>
+  <data name="XamlText.0597" xml:space="preserve">
+    <value>Play or pause media</value>
+  </data>
+  <data name="XamlText.0598" xml:space="preserve">
+    <value>MiaDock will not start with Windows.</value>
+  </data>
+  <data name="XamlText.0599" xml:space="preserve">
+    <value>MiaDock will start when you sign in to Windows.</value>
+  </data>
+  <data name="XamlText.0600" xml:space="preserve">
+    <value>MiaDock will use the following Windows APIs or device-local services for the features you selected. Data is not sent to a server.</value>
+  </data>
+  <data name="XamlText.0601" xml:space="preserve">
+    <value>MiaDock local module service</value>
+  </data>
+  <data name="XamlText.0602" xml:space="preserve">
+    <value>MiaDock local time service and alarm player</value>
+  </data>
+  <data name="XamlText.0603" xml:space="preserve">
+    <value>Processes microphone audio-session activity, camera device/access status, and limited local call inference. Call content is never read.</value>
+  </data>
+  <data name="XamlText.0604" xml:space="preserve">
+    <value>Microphone, camera and calls</value>
+  </data>
+  <data name="XamlText.0605" xml:space="preserve">
+    <value>Module services and permissions</value>
+  </data>
+  <data name="XamlText.0606" xml:space="preserve">
+    <value>Modules and Permissions</value>
+  </data>
+  <data name="XamlText.0607" xml:space="preserve">
+    <value>Neutral Frosted Glass</value>
+  </data>
+  <data name="XamlText.0608" xml:space="preserve">
+    <value>Focus profiles and automation</value>
+  </data>
+  <data name="XamlText.0609" xml:space="preserve">
+    <value>Focus, time and shortcuts</value>
+  </data>
+  <data name="XamlText.0610" xml:space="preserve">
+    <value>Games and fullscreen notification behavior</value>
+  </data>
+  <data name="XamlText.0611" xml:space="preserve">
+    <value>Game and fullscreen behavior</value>
+  </data>
+  <data name="XamlText.0612" xml:space="preserve">
+    <value>Battery</value>
+  </data>
+  <data name="XamlText.0613" xml:space="preserve">
+    <value>Monitors battery percentage, power source, and energy-saver state on this device.</value>
+  </data>
+  <data name="XamlText.0614" xml:space="preserve">
+    <value>Neutral frosted glass that reveals the desktop without a color tint.</value>
+  </data>
+  <data name="XamlText.0615" xml:space="preserve">
+    <value>Minimal</value>
+  </data>
+  <data name="XamlText.0616" xml:space="preserve">
+    <value>Pure black, shadow-free surface optimized for OLED displays.</value>
+  </data>
+  <data name="XamlText.0617" xml:space="preserve">
+    <value>Right center</value>
+  </data>
+  <data name="XamlText.0618" xml:space="preserve">
+    <value>Selected app volume</value>
+  </data>
+  <data name="XamlText.0619" xml:space="preserve">
+    <value>Use another active session</value>
+  </data>
+  <data name="XamlText.0620" xml:space="preserve">
+    <value>A solid surface using your selected background and accent colors.</value>
+  </data>
+  <data name="XamlText.0621" xml:space="preserve">
+    <value>System Tray</value>
+  </data>
+  <data name="XamlText.0622" xml:space="preserve">
+    <value>Start silently in system tray</value>
+  </data>
+  <data name="XamlText.0623" xml:space="preserve">
+    <value>Left center</value>
+  </data>
+  <data name="XamlText.0624" xml:space="preserve">
+    <value>Version and links</value>
+  </data>
+  <data name="XamlText.0625" xml:space="preserve">
+    <value>Version, Microsoft Store and social links</value>
+  </data>
+  <data name="XamlText.0626" xml:space="preserve">
+    <value>Fullscreen</value>
+  </data>
+  <data name="XamlText.0627" xml:space="preserve">
+    <value>Pure black, minimal, high-contrast dock.</value>
+  </data>
+  <data name="XamlText.0628" xml:space="preserve">
+    <value>Diagnostics and product information</value>
+  </data>
+  <data name="XamlText.0629" xml:space="preserve">
+    <value>Theme, size and surface</value>
+  </data>
+  <data name="XamlText.0630" xml:space="preserve">
+    <value>Theme, size, color, opacity, radius and animation</value>
+  </data>
+  <data name="XamlText.0631" xml:space="preserve">
+    <value>Tray icon and single-click behavior</value>
+  </data>
+  <data name="XamlText.0632" xml:space="preserve">
+    <value>Tray icon and click behavior</value>
+  </data>
+  <data name="XamlText.0633" xml:space="preserve">
+    <value>Tray, startup and shutdown</value>
+  </data>
+  <data name="XamlText.0634" xml:space="preserve">
+    <value>On click</value>
+  </data>
+  <data name="XamlText.0635" xml:space="preserve">
+    <value>Exit the app</value>
+  </data>
+  <data name="XamlText.0636" xml:space="preserve">
+    <value>Long</value>
+  </data>
+  <data name="XamlText.0637" xml:space="preserve">
+    <value>Reads the default output device's volume and mute state on this device and changes it only on user command.</value>
+  </data>
+  <data name="XamlText.0638" xml:space="preserve">
+    <value>Not now</value>
+  </data>
+  <data name="XamlText.0639" xml:space="preserve">
+    <value>A soft Mica surface that matches Windows 11.</value>
+  </data>
+  <data name="XamlText.0640" xml:space="preserve">
+    <value>Automatically follows the Windows light/dark mode and accent color.</value>
+  </data>
+  <data name="XamlText.0641" xml:space="preserve">
+    <value>Windows startup and close behavior</value>
+  </data>
+  <data name="XamlText.0642" xml:space="preserve">
+    <value>Windows startup and window close</value>
+  </data>
+  <data name="XamlText.0643" xml:space="preserve">
+    <value>Windows notification access is allowed.</value>
+  </data>
+  <data name="XamlText.0644" xml:space="preserve">
+    <value>Windows notifications</value>
+  </data>
+  <data name="XamlText.0645" xml:space="preserve">
+    <value>Windows disabled this task. Re-enable it from Startup Apps settings.</value>
+  </data>
+  <data name="XamlText.0646" xml:space="preserve">
+    <value>Windows access, app filters and privacy</value>
+  </data>
+  <data name="XamlText.0647" xml:space="preserve">
+    <value>Events only</value>
+  </data>
+  <data name="XamlText.0648" xml:space="preserve">
+    <value>Selected app only</value>
+  </data>
+  <data name="XamlText.0649" xml:space="preserve">
+    <value>Spring</value>
+  </data>
+  <data name="XamlText.0650" xml:space="preserve">
+    <value>Springy</value>
+  </data>
+  <data name="XamlText.0651" xml:space="preserve">
+    <value>Local logs and bug report</value>
+  </data>
+  <data name="XamlText.0652" xml:space="preserve">
+    <value>Local logs, cleanup and ZIP export</value>
+  </data>
+  <data name="XamlText.0653" xml:space="preserve">
+    <value>Processes transfer ID, state, and byte progress sent by local providers. File paths are optional and are never logged.</value>
+  </data>
+  <data name="XamlText.0654" xml:space="preserve">
+    <value>The duplicate combination was not saved. Choose a different shortcut for each action.</value>
+  </data>
+  <data name="XamlText.0655" xml:space="preserve">
+    <value>Time and Shortcuts</value>
+  </data>
+  <data name="XamlText.0656" xml:space="preserve">
+    <value>Timer and stopwatch</value>
+  </data>
+  <data name="XamlText.0657" xml:space="preserve">
+    <value>Stores timer and stopwatch state in local settings and plays the local alarm sound when time expires.</value>
+  </data>
+  <data name="XamlText.0658" xml:space="preserve">
+    <value>Timer, stopwatch and global shortcuts</value>
+  </data>
+  <data name="XamlText.0659" xml:space="preserve">
+    <value>Timer, stopwatch, alarm and global shortcuts</value>
+  </data>
+  <data name="XamlText.0660" xml:space="preserve">
+    <value>Pause or resume timer</value>
+  </data>
+  <data name="XamlText.0661" xml:space="preserve">
+    <value>Conflicting</value>
+  </data>
+  <data name="XamlText.0662" xml:space="preserve">
+    <value>Scale and fade</value>
+  </data>
+  <data name="XamlText.0663" xml:space="preserve">
+    <value>Custom solid color</value>
+  </data>
+  <data name="XamlText.0664" xml:space="preserve">
+    <value>Features and their Windows services</value>
+  </data>
+  <data name="XamlText.0665" xml:space="preserve">
+    <value>Features, Windows services and permissions</value>
+  </data>
+  <data name="XamlText.0666" xml:space="preserve">
+    <value>Top center</value>
+  </data>
+  <data name="XamlText.0667" xml:space="preserve">
+    <value>Top right</value>
+  </data>
+  <data name="XamlText.0668" xml:space="preserve">
+    <value>Top left</value>
+  </data>
+  <data name="XamlText.0669" xml:space="preserve">
+    <value>Allow</value>
+  </data>
+  <data name="XamlText.0670" xml:space="preserve">
+    <value>Processes the source app and notification title for allowed apps on this device. Body text is not read unless separately enabled; content is not logged.</value>
+  </data>
+  <data name="XamlText.0671" xml:space="preserve">
+    <value>Permissions and sensitive content</value>
+  </data>
+  <data name="Klavye kilitleri" xml:space="preserve">
+    <value>Keyboard locks</value>
+  </data>
+  <data name="Caps Lock, Num Lock veya Scroll Lock tuşuna basıldığında dock üzerinde açık/kapalı olayını gösterir." xml:space="preserve">
+    <value>Shows an on/off event on the dock when Caps Lock, Num Lock, or Scroll Lock is pressed.</value>
+  </data>
+  <data name="Kilit tuşu olaylarını göster" xml:space="preserve">
+    <value>Show lock key events</value>
+  </data>
+  <data name="Yenilikler" xml:space="preserve">
+    <value>What's New</value>
+  </data>
+  <data name="Bu sürümde ve önceki sürümlerde neler değişti." xml:space="preserve">
+    <value>What changed in this and earlier releases.</value>
+  </data>
+  <data name="XamlText.0672" xml:space="preserve">
+    <value>Call</value>
+    <comment>Arama</comment>
+  </data>
+  <data name="XamlText.0673" xml:space="preserve">
+    <value>Scale and fade, slide and fade, or spring. Applied while the dock grows and shrinks.</value>
+    <comment>Ölçek ve solma, kayma ve solma veya yay. Dock büyüyüp küçülürken uygulanır.</comment>
+  </data>
+  <data name="XamlText.0674" xml:space="preserve">
+    <value>Dock appearance, placement and fullscreen</value>
+  </data>
+  <data name="XamlText.0675" xml:space="preserve">
+    <value>Dock and module global shortcuts</value>
+  </data>
+  <data name="XamlText.0676" xml:space="preserve">
+    <value>Overview</value>
+  </data>
+  <data name="XamlText.0677" xml:space="preserve">
+    <value>Global keyboard shortcuts</value>
+  </data>
+  <data name="XamlText.0678" xml:space="preserve">
+    <value>Keyboard locks and helper features</value>
+  </data>
+  <data name="XamlText.0679" xml:space="preserve">
+    <value>Shortcuts</value>
+  </data>
+  <data name="XamlText.0680" xml:space="preserve">
+    <value>Infers limited local call activity from microphone and communication audio sessions. Call content is never read.</value>
+  </data>
+  <data name="XamlText.0681" xml:space="preserve">
+    <value>Locally shows which apps are using the microphone and camera. Audio or video content is never read and nothing is sent off-device.</value>
+  </data>
+  <data name="XamlText.0682" xml:space="preserve">
+    <value>Release notes and change list</value>
+  </data>
+  <data name="XamlText.0683" xml:space="preserve">
+    <value>Release notes and changes</value>
+  </data>
+  <data name="XamlText.0684" xml:space="preserve">
+    <value>Features, media and notifications</value>
+  </data>
+  <data name="XamlText.0685" xml:space="preserve">
+    <value>Optional</value>
+  </data>
+  <data name="İsteğe bağlı modüller" xml:space="preserve">
+    <value>Optional modules</value>
+  </data>
+  <data name="Ana dock deneyimini tamamlayan isteğe bağlı olay ve yardımcı özellikler." xml:space="preserve">
+    <value>Optional events and helper features that complement the main dock experience.</value>
+  </data>
+  <data name="Dock ve modüller için global klavye kısayollarını yönetin." xml:space="preserve">
+    <value>Manage global keyboard shortcuts for the dock and modules.</value>
+  </data>
+  <data name="USB cihazları" xml:space="preserve">
+    <value>USB devices</value>
+  </data>
+  <data name="USB bellek takıldığında veya çıkarıldığında dock üzerinde olay gösterir." xml:space="preserve">
+    <value>Shows an event on the dock when a USB drive is connected or removed.</value>
+  </data>
+  <data name="USB tak/çıkar olaylarını göster" xml:space="preserve">
+    <value>Show USB connect/remove events</value>
+  </data>
+  <data name="XamlText.0686" xml:space="preserve">
+    <value>Keyboard locks, USB and helper features</value>
+  </data>
+</root>

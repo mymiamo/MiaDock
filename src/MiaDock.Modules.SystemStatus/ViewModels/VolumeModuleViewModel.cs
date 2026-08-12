@@ -5,6 +5,7 @@ using MiaDock.Core.Localization;
 using MiaDock.Modules.SystemStatus.Models;
 using MiaDock.Modules.SystemStatus.Services;
 using MiaDock.Modules.SystemStatus.Settings;
+using MiaDock.Core.Threading;
 
 namespace MiaDock.Modules.SystemStatus.ViewModels;
 
@@ -15,6 +16,8 @@ public sealed partial class VolumeModuleViewModel : ObservableObject, IDisposabl
     private readonly IVolumeModuleSettings _settings;
     private readonly ILocalizationService? _localization;
     private readonly IAudioMixerService? _mixer;
+    private readonly IUiDispatcher? _uiDispatcher;
+    private AudioMixerSnapshot _latestMixerSnapshot;
     private bool _mixerActive;
     private bool _disposed;
 
@@ -23,15 +26,18 @@ public sealed partial class VolumeModuleViewModel : ObservableObject, IDisposabl
         IAudioSettingsLauncher settingsLauncher,
         IVolumeModuleSettings settings,
         ILocalizationService? localization = null,
-        IAudioMixerService? mixer = null)
+        IAudioMixerService? mixer = null,
+        IUiDispatcher? uiDispatcher = null)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _settingsLauncher = settingsLauncher ?? throw new ArgumentNullException(nameof(settingsLauncher));
         _settings = settings ?? throw new ArgumentNullException(nameof(settings));
         _localization = localization;
         _mixer = mixer;
+        _uiDispatcher = uiDispatcher;
         Snapshot = service.Current;
         MixerSnapshot = mixer?.CurrentMixer ?? AudioMixerSnapshot.Default;
+        _latestMixerSnapshot = MixerSnapshot;
         Options = settings.Current;
         service.SnapshotChanged += OnSnapshotChanged;
         settings.Changed += OnSettingsChanged;
@@ -123,29 +129,39 @@ public sealed partial class VolumeModuleViewModel : ObservableObject, IDisposabl
     }
 
     private void OnSnapshotChanged(object? sender, SystemActivitySnapshot snapshot)
-    {
-        if (!_disposed)
+        => DispatchToUi(() =>
         {
-            Snapshot = snapshot;
-        }
-    }
+            if (!_disposed)
+            {
+                Snapshot = snapshot;
+            }
+        });
 
     private void OnSettingsChanged(object? sender, VolumeModuleOptions options)
-    {
-        if (!_disposed)
+        => DispatchToUi(() =>
         {
-            Options = options;
-        }
-    }
+            if (!_disposed)
+            {
+                Options = options;
+            }
+        });
 
     private void OnMixerChanged(object? sender, AudioMixerSnapshot snapshot)
+        => DispatchToUi(() => ApplyMixerSnapshot(snapshot));
+
+    private void ApplyMixerSnapshot(AudioMixerSnapshot snapshot)
     {
         if (_disposed)
         {
             return;
         }
 
-        MixerSnapshot = snapshot;
+        _latestMixerSnapshot = snapshot;
+        if (!MixerDetailsEqual(MixerSnapshot, snapshot))
+        {
+            MixerSnapshot = snapshot;
+        }
+
         ReconcileMixerSessions(snapshot);
     }
 
@@ -194,6 +210,9 @@ public sealed partial class VolumeModuleViewModel : ObservableObject, IDisposabl
     }
 
     private void OnLanguageChanged(object? sender, EventArgs args)
+        => DispatchToUi(ApplyLanguageChange);
+
+    private void ApplyLanguageChange()
     {
         if (_disposed)
         {
@@ -203,7 +222,40 @@ public sealed partial class VolumeModuleViewModel : ObservableObject, IDisposabl
         OnPropertyChanged(nameof(VolumeText));
         OnPropertyChanged(nameof(TitleText));
         OnPropertyChanged(nameof(OutputDeviceText));
-        ReconcileMixerSessions(MixerSnapshot, languageChanged: true);
+        ReconcileMixerSessions(_latestMixerSnapshot, languageChanged: true);
+    }
+
+    private static bool MixerDetailsEqual(
+        AudioMixerSnapshot left,
+        AudioMixerSnapshot right)
+    {
+        if (left.ServiceState != right.ServiceState ||
+            left.OutputDeviceId != right.OutputDeviceId ||
+            left.OutputDeviceName != right.OutputDeviceName ||
+            left.IsMeteringEnabled != right.IsMeteringEnabled ||
+            left.Sessions.Count != right.Sessions.Count)
+        {
+            return false;
+        }
+
+        return left.Sessions.All(session =>
+            right.Sessions.Any(candidate =>
+                string.Equals(
+                    session.SessionKey,
+                    candidate.SessionKey,
+                    StringComparison.Ordinal) &&
+                session with { PeakLevel = 0 } == candidate with { PeakLevel = 0 }));
+    }
+
+    private void DispatchToUi(Action callback)
+    {
+        if (_uiDispatcher is null || _uiDispatcher.HasThreadAccess)
+        {
+            callback();
+            return;
+        }
+
+        _uiDispatcher.TryEnqueue(callback);
     }
 
     private string Text(string key, string fallback, params object?[] arguments)

@@ -19,6 +19,7 @@ public sealed partial class AudioMixerSessionViewModel : ObservableObject
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _localization = localization;
         Snapshot = snapshot ?? throw new ArgumentNullException(nameof(snapshot));
+        PeakLevel = Math.Clamp(snapshot.PeakLevel, 0, 1);
     }
 
     [ObservableProperty]
@@ -31,6 +32,9 @@ public sealed partial class AudioMixerSessionViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(MuteAutomationName))]
     [NotifyPropertyChangedFor(nameof(MuteToolTip))]
     public partial AudioMixerSessionSnapshot Snapshot { get; set; }
+
+    [ObservableProperty]
+    public partial double PeakLevel { get; set; }
 
     public string SessionKey => Snapshot.SessionKey;
 
@@ -93,8 +97,13 @@ public sealed partial class AudioMixerSessionViewModel : ObservableObject
         AudioMixerSessionSnapshot snapshot,
         bool languageChanged = false)
     {
-        Snapshot = snapshot;
-        ToggleMuteCommand.NotifyCanExecuteChanged();
+        PeakLevel = Math.Clamp(snapshot.PeakLevel, 0, 1);
+        if (!SessionDetailsEqual(Snapshot, snapshot))
+        {
+            Snapshot = snapshot;
+            ToggleMuteCommand.NotifyCanExecuteChanged();
+        }
+
         if (languageChanged)
         {
             OnPropertyChanged(nameof(DisplayName));
@@ -104,6 +113,11 @@ public sealed partial class AudioMixerSessionViewModel : ObservableObject
             OnPropertyChanged(nameof(MuteToolTip));
         }
     }
+
+    private static bool SessionDetailsEqual(
+        AudioMixerSessionSnapshot left,
+        AudioMixerSessionSnapshot right) =>
+        left with { PeakLevel = 0 } == right with { PeakLevel = 0 };
 
     private string Text(string key, string fallback, params object?[] arguments)
     {

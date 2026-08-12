@@ -15,6 +15,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
 {
     private readonly MusicModuleViewModel _media;
     private readonly ISystemActivityService _systemActivity;
+    private readonly IPrivacyUsageService _privacy;
     private readonly IPowerStatusService _power;
     private readonly INetworkStatusService _network;
     private readonly IBluetoothStatusService _bluetooth;
@@ -24,6 +25,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
     public ModuleSettingsCatalog(
         MusicModuleViewModel media,
         ISystemActivityService systemActivity,
+        IPrivacyUsageService privacy,
         IPowerStatusService power,
         INetworkStatusService network,
         IBluetoothStatusService bluetooth,
@@ -32,6 +34,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
     {
         _media = media;
         _systemActivity = systemActivity;
+        _privacy = privacy;
         _power = power;
         _network = network;
         _bluetooth = bluetooth;
@@ -39,6 +42,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
         _transfers = transfers;
         _media.PropertyChanged += OnMediaPropertyChanged;
         _systemActivity.SnapshotChanged += OnSnapshotChanged;
+        _privacy.StateChanged += OnPrivacyStateChanged;
         _power.SnapshotChanged += OnSnapshotChanged;
         _network.SnapshotChanged += OnSnapshotChanged;
         _bluetooth.SnapshotChanged += OnSnapshotChanged;
@@ -59,6 +63,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
         {
             "media" => FromMedia(_media.ServiceState),
             "volume" => FromVolume(_systemActivity.Current),
+            "privacy" => new(ModuleAvailabilityState.Ready),
             "system-activity" => FromSystemActivity(_systemActivity.Current.ServiceState),
             "battery" => FromBattery(_power.Current),
             "network" => FromDeviceState(_network.Current.State),
@@ -131,6 +136,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
     {
         _media.PropertyChanged -= OnMediaPropertyChanged;
         _systemActivity.SnapshotChanged -= OnSnapshotChanged;
+        _privacy.StateChanged -= OnPrivacyStateChanged;
         _power.SnapshotChanged -= OnSnapshotChanged;
         _network.SnapshotChanged -= OnSnapshotChanged;
         _bluetooth.SnapshotChanged -= OnSnapshotChanged;
@@ -144,6 +150,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
     }
 
     private void OnSnapshotChanged<T>(object? sender, T snapshot) => Changed?.Invoke(this, EventArgs.Empty);
+    private void OnPrivacyStateChanged(object? sender, PrivacyState state) => Changed?.Invoke(this, EventArgs.Empty);
     private void OnNotificationAccessChanged(object? sender, NotificationAccessState state) => Changed?.Invoke(this, EventArgs.Empty);
     private void OnTransferStateChanged(object? sender, TransferProviderState state) => Changed?.Invoke(this, EventArgs.Empty);
 }

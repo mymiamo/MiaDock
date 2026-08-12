@@ -1,104 +1,84 @@
 <UserControl x:Class="MiaDock.App.Controls.VolumeExpandedView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:controls="using:MiaDock.App.Controls"
              Unloaded="OnUnloaded">
-  <UserControl.Resources>
-    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
-  </UserControl.Resources>
   <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}"
         AutomationProperties.Name="Ses merkezi">
-    <Grid.RowDefinitions>
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="Auto" />
-      <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
-    </Grid.RowDefinitions>
-
-    <Border Style="{StaticResource DockSectionStyle}" Padding="12,8">
-      <Grid RowSpacing="5">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-        <Grid ColumnSpacing="10">
-          <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
-          <StackPanel Spacing="1">
-            <TextBlock Text="Ana ses" Style="{StaticResource DockModuleHeaderTextStyle}" />
-            <TextBlock Text="{Binding OutputDeviceText}" MaxLines="1" TextTrimming="CharacterEllipsis"
-                       Style="{StaticResource DockCaptionTextStyle}" ToolTipService.ToolTip="{Binding OutputDeviceText}" />
-          </StackPanel>
-          <TextBlock Grid.Column="1" Text="{Binding VolumeText}" Style="{StaticResource DockMetricTextStyle}" VerticalAlignment="Center" />
-        </Grid>
-        <Grid Grid.Row="1" ColumnSpacing="10">
-          <Grid.ColumnDefinitions><ColumnDefinition Width="44"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-          <Button Width="44" Height="44" Style="{StaticResource DockIconButtonStyle}"
-                  Command="{Binding ToggleMuteCommand}"
-                  ToolTipService.ToolTip="Sesi aç veya kapat"
-                  AutomationProperties.Name="Windows ana sesini aç veya kapat">
-            <FontIcon Glyph="{Binding VolumeGlyph}" FontSize="15" />
-          </Button>
-          <Slider Grid.Column="1" Minimum="0" Maximum="100"
-                  Value="{Binding Snapshot.MasterVolumePercent, Mode=OneWay}"
-                  IsEnabled="{Binding Snapshot.IsMasterVolumeAvailable}"
-                  ValueChanged="OnMasterVolumeChanged"
-                  AutomationProperties.Name="Windows ana ses seviyesi" />
-        </Grid>
-      </Grid>
-    </Border>
-
-    <Grid Grid.Row="1" Margin="3,2,3,0">
-      <TextBlock Text="Uygulama sesleri" Style="{StaticResource DockModuleHeaderTextStyle}" />
-      <TextBlock HorizontalAlignment="Right" Text="{Binding MixerStatusText}"
-                 AutomationProperties.LiveSetting="Polite" Style="{StaticResource DockCaptionTextStyle}" />
-    </Grid>
-
-    <Border Grid.Row="2" Style="{StaticResource DockSectionStyle}" Padding="6" MinHeight="82">
-      <Grid>
-        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="4"
-                    Visibility="{Binding HasNoMixerSessions, Converter={StaticResource BooleanToVisibility}}">
-          <FontIcon Glyph="&#xE74F;" FontSize="18" Foreground="{ThemeResource IslandTextSecondaryBrush}" />
-          <TextBlock Text="{Binding MixerStatusText}" Style="{StaticResource DockCaptionTextStyle}" />
+    <StackPanel Spacing="8">
+      <Border Style="{StaticResource DockSectionStyle}" Padding="12,10">
+        <StackPanel Spacing="8">
+          <Grid ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="1">
+              <TextBlock Text="Ana ses"
+                         Style="{StaticResource DockModuleHeaderTextStyle}" />
+              <TextBlock Text="{Binding OutputDeviceText}"
+                         MaxLines="1"
+                         TextTrimming="CharacterEllipsis"
+                         Style="{StaticResource DockCaptionTextStyle}"
+                         ToolTipService.ToolTip="{Binding OutputDeviceText}" />
+            </StackPanel>
+            <TextBlock Grid.Column="1"
+                       Text="{Binding VolumeText}"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource DockMetricTextStyle}" />
+          </Grid>
+          <Grid ColumnSpacing="10">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="44" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Button Width="44" Height="44"
+                    Style="{StaticResource DockIconButtonStyle}"
+                    Command="{Binding ToggleMuteCommand}"
+                    ToolTipService.ToolTip="Sesi aç veya kapat"
+                    AutomationProperties.Name="Windows ana sesini aç veya kapat">
+              <FontIcon Glyph="{Binding VolumeGlyph}" FontSize="15" />
+            </Button>
+            <Slider Grid.Column="1"
+                    Minimum="0" Maximum="100"
+                    Value="{Binding Snapshot.MasterVolumePercent, Mode=OneWay}"
+                    IsEnabled="{Binding Snapshot.IsMasterVolumeAvailable}"
+                    ValueChanged="OnMasterVolumeChanged"
+                    AutomationProperties.Name="Windows ana ses seviyesi" />
+          </Grid>
         </StackPanel>
-        <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled"
-                      Visibility="{Binding HasMixerSessions, Converter={StaticResource BooleanToVisibility}}">
-          <ItemsControl ItemsSource="{Binding MixerSessions}">
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Grid MinHeight="56" Padding="7,3" ColumnSpacing="9" AutomationProperties.Name="{Binding DisplayName}">
-                  <Grid.ColumnDefinitions><ColumnDefinition Width="32"/><ColumnDefinition Width="92"/><ColumnDefinition Width="*"/><ColumnDefinition Width="38"/><ColumnDefinition Width="44"/></Grid.ColumnDefinitions>
-                  <controls:AudioSessionIconView Width="30" Height="30" />
-                  <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                    <TextBlock Text="{Binding DisplayName}" MaxLines="1" TextTrimming="CharacterEllipsis" Style="{StaticResource DockBodyTextStyle}" FontWeight="SemiBold" ToolTipService.ToolTip="{Binding DisplayName}" />
-                    <TextBlock Text="{Binding SupportText}" MaxLines="1" TextTrimming="CharacterEllipsis" Style="{StaticResource DockCaptionTextStyle}" />
-                  </StackPanel>
-                  <Grid Grid.Column="2" VerticalAlignment="Center">
-                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
-                    <Slider Minimum="0" Maximum="100" Value="{Binding Snapshot.VolumePercent, Mode=OneWay}"
-                            IsEnabled="{Binding Snapshot.CanControlVolume}" ValueChanged="OnSessionVolumeChanged"
-                            AutomationProperties.Name="{Binding VolumeAutomationName}" />
-                    <ProgressBar Grid.Row="1" Margin="7,-5,7,0" Height="2" Minimum="0" Maximum="1"
-                                 Value="{Binding Snapshot.PeakLevel}" IsHitTestVisible="False"
-                                 Foreground="{ThemeResource IslandStyleAccentBrush}" AutomationProperties.AccessibilityView="Raw" />
-                  </Grid>
-                  <TextBlock Grid.Column="3" Text="{Binding VolumeText}" VerticalAlignment="Center" HorizontalAlignment="Right" Style="{StaticResource DockCaptionTextStyle}" />
-                  <Button Grid.Column="4" Width="44" Height="44" Style="{StaticResource DockIconButtonStyle}"
-                          Command="{Binding ToggleMuteCommand}" ToolTipService.ToolTip="{Binding MuteToolTip}"
-                          AutomationProperties.Name="{Binding MuteAutomationName}">
-                    <FontIcon Glyph="{Binding MuteGlyph}" FontSize="13" />
-                  </Button>
-                </Grid>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-        </ScrollViewer>
-      </Grid>
-    </Border>
+      </Border>
 
-    <Button Grid.Row="3" HorizontalAlignment="Left" MinHeight="44" Padding="11,0"
-            Style="{StaticResource DockInlineButtonStyle}" Command="{Binding OpenSoundSettingsFromUiCommand}"
-            ToolTipService.ToolTip="Windows ses ayarlarını aç" AutomationProperties.Name="Windows ses ayarlarını aç">
-      <StackPanel Orientation="Horizontal" Spacing="7">
-        <FontIcon Glyph="&#xE713;" FontSize="12" />
-        <TextBlock Text="Ses aygıtlarını yönet" VerticalAlignment="Center" Style="{StaticResource DockBodyTextStyle}" />
-      </StackPanel>
-    </Button>
+      <Border Style="{StaticResource DockSectionStyle}" Padding="12,9">
+        <Grid ColumnSpacing="10">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+          </Grid.ColumnDefinitions>
+          <FontIcon Glyph="&#xE995;" FontSize="15"
+                    Foreground="{ThemeResource IslandStyleAccentBrush}" />
+          <StackPanel Grid.Column="1" Spacing="1">
+            <TextBlock Text="Uygulama sesleri"
+                       Style="{StaticResource DockBodyTextStyle}" />
+            <TextBlock Text="{Binding MixerStatusText}"
+                       Style="{StaticResource DockCaptionTextStyle}"
+                       AutomationProperties.LiveSetting="Polite" />
+          </StackPanel>
+        </Grid>
+      </Border>
+
+      <Button HorizontalAlignment="Left"
+              MinHeight="44" Padding="11,0"
+              Style="{StaticResource DockInlineButtonStyle}"
+              Command="{Binding OpenSoundSettingsFromUiCommand}"
+              ToolTipService.ToolTip="Windows ses ayarlarını aç"
+              AutomationProperties.Name="Windows ses ayarlarını aç">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+          <FontIcon Glyph="&#xE713;" FontSize="12" />
+          <TextBlock Text="Ses aygıtlarını yönet"
+                     VerticalAlignment="Center"
+                     Style="{StaticResource DockBodyTextStyle}" />
+        </StackPanel>
+      </Button>
+    </StackPanel>
   </Grid>
 </UserControl>

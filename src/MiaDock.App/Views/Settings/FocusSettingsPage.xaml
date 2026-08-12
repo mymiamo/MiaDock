@@ -9,17 +9,31 @@
     <controls:FocusColorBrushConverter x:Key="FocusColorBrushConverter" />
   </UserControl.Resources>
 
-  <ScrollViewer Padding="28,20,28,40"
-                HorizontalScrollMode="Disabled"
-                HorizontalScrollBarVisibility="Disabled"
+  <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}"
                 HorizontalContentAlignment="Stretch">
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
-      <Grid ColumnSpacing="16">
+      <Grid ColumnSpacing="16" RowSpacing="12">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition x:Name="HeaderActionColumn" Width="0" />
         </Grid.ColumnDefinitions>
-        <StackPanel Spacing="5">
+        <VisualStateManager.VisualStateGroups>
+          <VisualStateGroup>
+            <VisualState x:Name="CompactHeader" />
+            <VisualState x:Name="WideHeader">
+              <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="720" /></VisualState.StateTriggers>
+              <VisualState.Setters>
+                <Setter Target="HeaderActionColumn.Width" Value="Auto" />
+                <Setter Target="AddProfileButton.(Grid.Row)" Value="0" />
+                <Setter Target="AddProfileButton.(Grid.Column)" Value="1" />
+                <Setter Target="AddProfileButton.HorizontalAlignment" Value="Right" />
+                <Setter Target="AddProfileButton.VerticalAlignment" Value="Bottom" />
+              </VisualState.Setters>
+            </VisualState>
+          </VisualStateGroup>
+        </VisualStateManager.VisualStateGroups>
+        <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
           <TextBlock Text="Odak"
                      Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
           <TextBlock Text="Hazır profilleri kişiselleştirin veya MiaDock davranışını yöneten kendi Odak profilinizi oluşturun."
@@ -29,16 +43,40 @@
                      FontSize="12"
                      Opacity="0.65" />
         </StackPanel>
-        <Button Grid.Column="1"
+        <Button x:Name="AddProfileButton" Grid.Row="1"
                 Content="Yeni profil"
                 MinHeight="38"
-                VerticalAlignment="Bottom"
+                HorizontalAlignment="Left"
                 IsEnabled="{Binding CanCreateProfile}"
                 Click="OnAddProfileClick"
                 AutomationProperties.Name="Yeni Odak profili oluştur" />
       </Grid>
 
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <Border Style="{StaticResource SettingsIconTileBorderStyle}">
+            <FontIcon Glyph="&#xE728;" Foreground="{ThemeResource SettingsSystemIconBrush}" />
+          </Border>
+          <StackPanel Grid.Column="1" Spacing="3">
+            <TextBlock Text="Odak özelliklerini etkinleştir" FontWeight="SemiBold" />
+            <TextBlock Text="Kapattığınızda aktif profil ve otomasyon etkileri durur; oluşturduğunuz profiller korunur. Tekrar açtığınızda profil seçimini siz yaparsınız."
+                       TextWrapping="Wrap"
+                       Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="2"
+                        IsOn="{Binding IsFocusEnabled, Mode=TwoWay}"
+                        AutomationProperties.Name="Odak özelliklerini etkinleştir"
+                        AutomationProperties.HelpText="Odak profillerini ve otomasyonlarını uygulama genelinde açar veya kapatır." />
+        </Grid>
+      </Border>
+
       <InfoBar IsOpen="True"
+               IsEnabled="{Binding AreFocusDetailsEnabled}"
                IsClosable="False"
                Severity="Informational"
                Title="MiaDock davranışı"
@@ -51,12 +89,14 @@
       </InfoBar>
 
       <InfoBar IsOpen="{Binding HasAutomationConflicts}"
+               IsEnabled="{Binding AreFocusDetailsEnabled}"
                IsClosable="False"
                Severity="Warning"
                Title="Otomasyon çakışması"
                Message="{Binding AutomationConflictMessage}" />
 
-      <ItemsControl ItemsSource="{Binding Profiles}">
+      <ItemsControl ItemsSource="{Binding Profiles}"
+                    IsEnabled="{Binding AreFocusDetailsEnabled}">
         <ItemsControl.ItemTemplate>
           <DataTemplate>
             <Border Margin="0,0,0,10"
@@ -82,6 +122,7 @@
                         <Setter Target="ActionPanel.(Grid.Row)" Value="0" />
                         <Setter Target="ActionPanel.(Grid.Column)" Value="2" />
                         <Setter Target="ActionPanel.Margin" Value="0" />
+                        <Setter Target="ActionPanel.Orientation" Value="Horizontal" />
                       </VisualState.Setters>
                     </VisualState>
                   </VisualStateGroup>
@@ -122,7 +163,7 @@
                 <StackPanel x:Name="ActionPanel"
                             Grid.Row="1"
                             Grid.Column="1"
-                            Orientation="Horizontal"
+                            Orientation="Vertical"
                             Spacing="7"
                             Margin="0,10,0,0"
                             VerticalAlignment="Center">

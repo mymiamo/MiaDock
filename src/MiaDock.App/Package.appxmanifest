@@ -10,7 +10,7 @@
 
   <Identity Name="mymiamo.net.MiaDock"
             Publisher="CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA"
-            Version="1.2.1.0" />
+            Version="1.4.0.0" />
   <Properties>
     <DisplayName>MiaDock</DisplayName>
     <PublisherDisplayName>Eray Durupınar (mymiamo.net)</PublisherDisplayName>
@@ -22,6 +22,10 @@
   <Resources>
     <Resource Language="tr-tr" />
     <Resource Language="en-us" />
+    <Resource Language="az-latn-az" />
+    <Resource Language="es-es" />
+    <Resource Language="es-mx" />
+    <Resource Language="pt-br" />
   </Resources>
   <Applications>
     <Application Id="App"
@@ -54,5 +58,6 @@
   <Capabilities>
     <rescap:Capability Name="runFullTrust" />
     <uap3:Capability Name="userNotificationListener" />
+    <DeviceCapability Name="radios" />
   </Capabilities>
 </Package>

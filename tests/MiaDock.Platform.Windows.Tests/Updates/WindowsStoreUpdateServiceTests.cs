@@ -27,19 +27,20 @@ public sealed class WindowsStoreUpdateServiceTests
     }
 
     [TestMethod]
-    public async Task CheckAsync_Offline_DoesNotQueryStore()
+    public async Task CheckAsync_OfflineFailure_IsReportedAfterStoreQuery()
     {
         var client = new FakeClient
         {
             HasPackageIdentity = true,
-            HasInternetAccess = false
+            HasInternetAccess = false,
+            QueryFailure = new InvalidOperationException()
         };
         var service = new WindowsStoreUpdateService(client);
 
         var result = await service.CheckAsync();
 
         Assert.AreEqual(StoreUpdateStatus.Offline, result.Status);
-        Assert.AreEqual(0, client.QueryCount);
+        Assert.AreEqual(1, client.QueryCount);
         Assert.IsNotNull(result.CheckedAtUtc);
     }
 
@@ -70,6 +71,26 @@ public sealed class WindowsStoreUpdateServiceTests
         CollectionAssert.AreEqual(
             new[] { StoreUpdateStatus.Checking, StoreUpdateStatus.UpdateAvailable },
             statuses);
+    }
+
+    [TestMethod]
+    public async Task CheckAsync_BackgroundCaller_QueuesStoreApiOnUiThread()
+    {
+        var client = new FakeClient
+        {
+            HasPackageIdentity = true,
+            HasInternetAccess = true
+        };
+        var dispatcher = new RecordingDispatcher();
+        var service = new WindowsStoreUpdateService(
+            client,
+            dispatcher: dispatcher);
+
+        var result = await service.CheckAsync();
+
+        Assert.AreEqual(StoreUpdateStatus.UpToDate, result.Status);
+        Assert.AreEqual(1, dispatcher.EnqueueCount);
+        Assert.AreEqual(1, client.QueryCount);
     }
 
     [TestMethod]
@@ -145,6 +166,19 @@ public sealed class WindowsStoreUpdateServiceTests
         {
             OpenCount++;
             return Task.FromResult(OpenResult);
+        }
+    }
+
+    private sealed class RecordingDispatcher : MiaDock.Core.Threading.IUiDispatcher
+    {
+        public bool HasThreadAccess => false;
+        public int EnqueueCount { get; private set; }
+
+        public bool TryEnqueue(Action callback)
+        {
+            EnqueueCount++;
+            callback();
+            return true;
         }
     }
 }

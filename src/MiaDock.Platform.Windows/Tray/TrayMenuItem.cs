@@ -7,7 +7,8 @@ public sealed record TrayMenuItem(
     bool IsChecked = false,
     IReadOnlyList<TrayMenuItem>? Children = null,
     bool IsSeparator = false,
-    string? IconGlyph = null)
+    string? IconGlyph = null,
+    bool IsRadio = false)
 {
     public static TrayMenuItem Separator { get; } = new(0, string.Empty, IsSeparator: true);
 }

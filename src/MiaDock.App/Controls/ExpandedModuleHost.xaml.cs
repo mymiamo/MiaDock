@@ -179,9 +179,15 @@ public sealed partial class ExpandedModuleHost : UserControl
             return;
         }
 
+        var motionTarget = ViewHost.Content as FrameworkElement ?? ViewHost;
+        motionTarget.Visibility = Visibility.Visible;
+        motionTarget.Opacity = 1;
+        motionTarget.IsHitTestVisible = true;
+        motionTarget.InvalidateMeasure();
+        motionTarget.InvalidateArrange();
         ContentMotionRequested?.Invoke(
             this,
-            new ContentMotionRequestedEventArgs(ViewHost, direction));
+            new ContentMotionRequestedEventArgs(motionTarget, direction));
     }
 
     private void OnPreviousRequested(object? sender, EventArgs args)

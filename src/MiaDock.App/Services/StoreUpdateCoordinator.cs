@@ -9,7 +9,7 @@ public sealed class StoreUpdateCoordinator : IStoreUpdateCoordinator
 {
     internal static readonly TimeSpan InitialCheckDelay = TimeSpan.FromSeconds(30);
     internal static readonly TimeSpan AutomaticCheckInterval = TimeSpan.FromHours(4);
-    internal static readonly TimeSpan MinimumQueryInterval = TimeSpan.FromMinutes(3);
+    internal static readonly TimeSpan MinimumQueryInterval = TimeSpan.FromMinutes(30);
 
     private readonly IStoreUpdateService _storeUpdates;
     private readonly ISettingsService _settings;
@@ -188,8 +188,11 @@ public sealed class StoreUpdateCoordinator : IStoreUpdateCoordinator
         try
         {
             var lastCheck = _settings.Current.StoreUpdates.LastCheckUtc;
-            if (lastCheck is { } timestamp &&
-                DateTimeOffset.UtcNow - timestamp < MinimumQueryInterval)
+            if (!ignoreAutomaticPreference &&
+                lastCheck is { } timestamp &&
+                DateTimeOffset.UtcNow - timestamp is { } elapsed &&
+                elapsed >= TimeSpan.Zero &&
+                elapsed < MinimumQueryInterval)
             {
                 return Current;
             }
@@ -242,8 +245,13 @@ public sealed class StoreUpdateCoordinator : IStoreUpdateCoordinator
             return InitialCheckDelay;
         }
 
-        var minimumRemaining =
-            MinimumQueryInterval - (DateTimeOffset.UtcNow - lastCheck);
+        var elapsed = DateTimeOffset.UtcNow - lastCheck;
+        if (elapsed < TimeSpan.Zero)
+        {
+            return InitialCheckDelay;
+        }
+
+        var minimumRemaining = MinimumQueryInterval - elapsed;
         return minimumRemaining > InitialCheckDelay
             ? minimumRemaining
             : InitialCheckDelay;

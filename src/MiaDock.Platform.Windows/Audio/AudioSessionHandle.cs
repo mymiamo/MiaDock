@@ -19,6 +19,8 @@ internal sealed class AudioSessionHandle : IDisposable
     {
         _control = control;
         Flow = flow;
+        RefreshRequested = refreshRequested;
+        RebindRequested = rebindRequested;
         Control2 = (IAudioSessionControl2)control;
         CoreAudioNative.ThrowIfFailed(Control2.GetProcessId(out var processId));
         ProcessId = processId;
@@ -34,7 +36,7 @@ internal sealed class AudioSessionHandle : IDisposable
                 : $"session:{SessionId}";
         _volume = TryCast<ISimpleAudioVolume>(control);
         _meter = TryCast<IAudioMeterInformation>(control);
-        _events = new AudioSessionEventsCallback(refreshRequested, rebindRequested);
+        _events = new AudioSessionEventsCallback(this);
         CoreAudioNative.ThrowIfFailed(_control.RegisterAudioSessionNotification(_events));
         Refresh();
     }
@@ -55,64 +57,131 @@ internal sealed class AudioSessionHandle : IDisposable
     public bool IsMuted { get; private set; }
     public float PeakLevel { get; private set; }
 
+    private Action RefreshRequested { get; }
+    private Action RebindRequested { get; }
+
     public void Refresh()
     {
-        if (Control2.GetState(out var state) >= 0)
+        if (_disposed)
         {
-            State = state;
+            return;
         }
 
-        if (_control.GetDisplayName(out var displayName) >= 0)
+        try
         {
-            DisplayName = displayName ?? string.Empty;
-        }
+            if (Control2.GetState(out var state) >= 0)
+            {
+                State = state;
+            }
 
-        if (_control.GetIconPath(out var iconPath) >= 0)
-        {
-            IconPath = !string.IsNullOrWhiteSpace(iconPath)
-                ? iconPath
-                : ProcessExecutablePath;
-        }
+            if (_control.GetDisplayName(out var displayName) >= 0)
+            {
+                DisplayName = displayName ?? string.Empty;
+            }
 
-        if (_volume is not null && _volume.GetMasterVolume(out var volume) >= 0)
-        {
-            VolumeLevel = volume;
-        }
+            if (_control.GetIconPath(out var iconPath) >= 0)
+            {
+                IconPath = !string.IsNullOrWhiteSpace(iconPath)
+                    ? iconPath
+                    : ProcessExecutablePath;
+            }
 
-        if (_volume is not null && _volume.GetMute(out var muted) >= 0)
+            if (_volume is not null && _volume.GetMasterVolume(out var volume) >= 0)
+            {
+                VolumeLevel = volume;
+            }
+
+            if (_volume is not null && _volume.GetMute(out var muted) >= 0)
+            {
+                IsMuted = muted;
+            }
+        }
+        catch (Exception exception) when (exception is COMException or InvalidComObjectException)
         {
-            IsMuted = muted;
+            // Session can disappear while the mixer is sampling it.
         }
     }
 
-    public bool SetVolume(float volume, ref Guid eventContext) =>
-        _volume is not null &&
-        _volume.SetMasterVolume(Math.Clamp(volume, 0, 1), ref eventContext) >= 0;
-
-    public bool ToggleMute(ref Guid eventContext)
+    public bool SetVolume(float volume, ref Guid eventContext)
     {
-        if (_volume is null || _volume.GetMute(out var muted) < 0)
+        if (_disposed || _volume is null)
         {
             return false;
         }
 
-        return _volume.SetMute(!muted, ref eventContext) >= 0;
+        try
+        {
+            return _volume.SetMasterVolume(Math.Clamp(volume, 0, 1), ref eventContext) >= 0;
+        }
+        catch (Exception exception) when (exception is COMException or InvalidComObjectException)
+        {
+            return false;
+        }
     }
 
-    public bool SetMute(bool muted, ref Guid eventContext) =>
-        _volume is not null &&
-        _volume.SetMute(muted, ref eventContext) >= 0;
+    public bool ToggleMute(ref Guid eventContext)
+    {
+        if (_disposed || _volume is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (_volume.GetMute(out var muted) < 0)
+            {
+                return false;
+            }
+
+            return _volume.SetMute(!muted, ref eventContext) >= 0;
+        }
+        catch (Exception exception) when (exception is COMException or InvalidComObjectException)
+        {
+            return false;
+        }
+    }
+
+    public bool SetMute(bool muted, ref Guid eventContext)
+    {
+        if (_disposed || _volume is null)
+        {
+            return false;
+        }
+
+        try
+        {
+            return _volume.SetMute(muted, ref eventContext) >= 0;
+        }
+        catch (Exception exception) when (exception is COMException or InvalidComObjectException)
+        {
+            return false;
+        }
+    }
 
     public float SamplePeak()
     {
-        if (_meter is null || _meter.GetPeakValue(out var peak) < 0)
+        if (_disposed || _meter is null)
         {
             PeakLevel = 0;
             return PeakLevel;
         }
 
-        PeakLevel = Math.Clamp(peak, 0, 1);
-        return PeakLevel;
+        try
+        {
+            if (_meter.GetPeakValue(out var peak) < 0)
+            {
+                PeakLevel = 0;
+                return PeakLevel;
+            }
+
+            PeakLevel = Math.Clamp(peak, 0, 1);
+            return PeakLevel;
+        }
+        catch (Exception exception) when (exception is COMException or InvalidComObjectException)
+        {
+            PeakLevel = 0;
+            return PeakLevel;
+        }
     }
 
     public void ResetPeak() => PeakLevel = 0;
@@ -129,14 +198,13 @@ internal sealed class AudioSessionHandle : IDisposable
         {
             _control.UnregisterAudioSessionNotification(_events);
         }
-        catch (COMException)
+        catch (Exception exception) when (exception is COMException or InvalidComObjectException)
         {
         }
 
-        if (Marshal.IsComObject(_control))
-        {
-            Marshal.FinalReleaseComObject(_control);
-        }
+        // Do not force-release the RCW. Core Audio can still be unwinding a
+        // callback when a session is replaced; the runtime releases it once all
+        // managed references and callback frames are gone.
     }
 
     private string ResolveSessionId()
@@ -197,25 +265,35 @@ internal sealed class AudioSessionHandle : IDisposable
     }
 
     [ComVisible(true)]
-    private sealed class AudioSessionEventsCallback(
-        Action refreshRequested,
-        Action rebindRequested) : IAudioSessionEvents
+    private sealed class AudioSessionEventsCallback(AudioSessionHandle owner) : IAudioSessionEvents
     {
         public int OnDisplayNameChanged(string displayName, ref Guid eventContext)
         {
-            refreshRequested();
+            if (!owner._disposed)
+            {
+                owner.RefreshRequested();
+            }
+
             return 0;
         }
 
         public int OnIconPathChanged(string iconPath, ref Guid eventContext)
         {
-            refreshRequested();
+            if (!owner._disposed)
+            {
+                owner.RefreshRequested();
+            }
+
             return 0;
         }
 
         public int OnSimpleVolumeChanged(float volume, bool isMuted, ref Guid eventContext)
         {
-            refreshRequested();
+            if (!owner._disposed)
+            {
+                owner.RefreshRequested();
+            }
+
             return 0;
         }
 
@@ -224,13 +302,21 @@ internal sealed class AudioSessionHandle : IDisposable
 
         public int OnStateChanged(AudioSessionState state)
         {
-            rebindRequested();
+            if (!owner._disposed)
+            {
+                owner.RebindRequested();
+            }
+
             return 0;
         }
 
         public int OnSessionDisconnected(AudioSessionDisconnectReason reason)
         {
-            rebindRequested();
+            if (!owner._disposed)
+            {
+                owner.RebindRequested();
+            }
+
             return 0;
         }
     }

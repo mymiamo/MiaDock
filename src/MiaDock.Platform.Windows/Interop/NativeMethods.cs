@@ -60,6 +60,10 @@ internal static class NativeMethods
     internal static extern bool ClientToScreen(nint windowHandle, ref NativePoint point);
 
     [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    internal static extern bool GetCursorPos(out NativePoint point);
+
+    [DllImport("user32.dll")]
     internal static extern uint GetWindowThreadProcessId(nint windowHandle, out uint processId);
 
     [DllImport("user32.dll")]
@@ -153,6 +157,13 @@ internal static class NativeMethods
         int bottom,
         int ellipseWidth,
         int ellipseHeight);
+
+    [DllImport("gdi32.dll", SetLastError = true)]
+    internal static extern int CombineRgn(
+        nint destination,
+        nint source1,
+        nint source2,
+        int combineMode);
 
     [DllImport("gdi32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]

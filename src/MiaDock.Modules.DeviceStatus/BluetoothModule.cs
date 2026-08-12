@@ -70,7 +70,11 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
         _previous = current;
         if (LifecycleState != ModuleLifecycleState.Active) return;
         PresentationChanged?.Invoke(this, CurrentPresentation);
-        if (previous is null || !previous.IsEnumerationComplete || !current.IsEnumerationComplete) return;
+        if (previous is null ||
+            previous.RadioState != BluetoothRadioState.On ||
+            current.RadioState != BluetoothRadioState.On ||
+            !previous.IsEnumerationComplete ||
+            !current.IsEnumerationComplete) return;
 
         var previousById = previous.Devices.ToDictionary(device => device.Id, StringComparer.Ordinal);
         var currentById = current.Devices.ToDictionary(device => device.Id, StringComparer.Ordinal);

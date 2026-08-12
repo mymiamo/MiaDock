@@ -29,6 +29,7 @@ public sealed class FocusSettingsViewModel : ObservableObject, IDisposable
     private readonly IReadOnlyList<(string Id, string DisplayNameKey)> _moduleDefinitions;
     private readonly IApplicationActivityService? _applications;
     private readonly IFocusSettingsLauncher? _focusSettingsLauncher;
+    private bool _isFocusEnabled;
     private bool _disposed;
 
     public FocusSettingsViewModel(
@@ -65,7 +66,32 @@ public sealed class FocusSettingsViewModel : ObservableObject, IDisposable
 
     public IAsyncRelayCommand OpenWindowsFocusSettingsCommand { get; }
 
+    public bool IsFocusEnabled
+    {
+        get => _isFocusEnabled;
+        set
+        {
+            if (!SetProperty(ref _isFocusEnabled, value))
+            {
+                return;
+            }
+            OnPropertyChanged(nameof(AreFocusDetailsEnabled));
+            OnPropertyChanged(nameof(CanCreateProfile));
+            _settings.Update(settings => settings with
+            {
+                Focus = settings.Focus with
+                {
+                    IsEnabled = value,
+                    ActiveState = value ? settings.Focus.ActiveState : null
+                }
+            });
+        }
+    }
+
+    public bool AreFocusDetailsEnabled => IsFocusEnabled;
+
     public bool CanCreateProfile =>
+        IsFocusEnabled &&
         Profiles.Count < MaximumProfiles &&
         Profiles.Count(item => item.IsCustom) < MaximumCustomProfiles;
 
@@ -289,6 +315,10 @@ public sealed class FocusSettingsViewModel : ObservableObject, IDisposable
 
     private void Refresh(MiaDock.Core.Settings.FocusSettings settings)
     {
+        if (SetProperty(ref _isFocusEnabled, settings.IsEnabled, nameof(IsFocusEnabled)))
+        {
+            OnPropertyChanged(nameof(AreFocusDetailsEnabled));
+        }
         var existing = Profiles.ToDictionary(item => item.Id, StringComparer.Ordinal);
         var activeId = settings.ActiveState?.ProfileId;
         var ordered = new List<FocusSettingsProfileItemViewModel>(

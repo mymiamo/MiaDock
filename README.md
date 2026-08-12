@@ -11,7 +11,7 @@
 [![CI](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml/badge.svg)](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/github/license/mymiamo/MiaDock)](LICENSE)
 
-[Version **1.2.1.0** · Releases](https://github.com/mymiamo/MiaDock/releases)
+[Version **1.4.0.0** · Releases](https://github.com/mymiamo/MiaDock/releases)
 
 <a href="https://get.microsoft.com/installer/download/9pml784d0fdk?referrer=appbadge" target="_self">
   <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Download MiaDock from the Microsoft Store" />
@@ -24,8 +24,9 @@ MiaDock is a lightweight, always-on-top Windows 11 overlay built with C#, .NET, 
 
 The application works locally without an account, server connection, telemetry, or a custom updater. Updates are distributed through Microsoft Store.
 
-The current 1.2.1 release adds local Focus profiles, a Windows-style
-volume module, and per-application audio mixing. Remaining release validation is
+The current 1.3 release improves dock geometry customization, fullscreen
+interaction, battery and Bluetooth reliability, media-session safety, and the
+ability to disable Focus features globally. Release validation details are
 tracked in the [product roadmap](ROADMAP.md).
 
 ## Features
@@ -38,7 +39,7 @@ tracked in the [product roadmap](ROADMAP.md).
 - Windows master volume controls and a visibility-scoped per-application audio mixer
 - Opt-in Windows notification listener with privacy controls
 - Versioned named-pipe API for transfer progress providers
-- Multi-monitor positioning, per-monitor DPI handling, and fullscreen behavior
+- Multi-monitor positioning, per-monitor DPI handling, configurable fullscreen behavior, edge reveal, and independent dock corner radii
 - System tray controls, optional global shortcuts, startup task, and onboarding
 - Turkish and English interface
 - Apple-like, Mica, Mica Alt, Acrylic, Acrylic Thin, transparent blurred glass, and custom solid-color themes

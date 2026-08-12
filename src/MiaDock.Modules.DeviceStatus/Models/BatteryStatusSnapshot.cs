@@ -6,7 +6,9 @@ public sealed record BatteryStatusSnapshot(
     int ChargePercent,
     bool IsCharging,
     bool IsEnergySaverOn,
-    string PowerSource)
+    string PowerSource,
+    BatteryAvailabilityState Availability = BatteryAvailabilityState.Unknown,
+    DateTimeOffset? LastSuccessfulReadAtUtc = null)
 {
     public static BatteryStatusSnapshot Default { get; } = new(
         DeviceServiceState.Stopped,
@@ -14,5 +16,7 @@ public sealed record BatteryStatusSnapshot(
         0,
         false,
         false,
-        "Bilinmiyor");
+        "Bilinmiyor",
+        BatteryAvailabilityState.Unknown,
+        null);
 }

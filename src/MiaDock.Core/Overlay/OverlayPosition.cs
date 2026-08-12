@@ -7,5 +7,7 @@ public enum OverlayPosition
     TopRight,
     BottomCenter,
     BottomLeft,
-    BottomRight
+    BottomRight,
+    LeftCenter,
+    RightCenter
 }

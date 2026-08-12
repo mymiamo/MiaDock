@@ -3,7 +3,32 @@
 Bu yol haritası mevcut geliştirme durumunu ve yayın öncesi kalan doğrulamaları
 gösterir. Sürüm numaraları yalnız proje sahibi tarafından kesinleştirilir.
 
-## 1.2.1.0 — Yayın Adayı Kapsamı
+## 1.4.0.0 — Dock Community Toolkit Animations
+
+- `CommunityToolkit.WinUI.Animations` ile dock içerik opacity / scale / translation.
+- Island bounds animasyonu mevcut Composition + `IslandBoundsAnimator` ile kalır.
+- Durum geçişlerinde Toolkit crossfade; modül ve içerik yenilemede slide / pulse.
+- Ayarlar SettingsControls migrasyonu bu sürümde yok (sonraki aday).
+
+## 1.3.0.0 — Tamamlanan Geliştirme Kapsamı
+
+- Dock’un bağlı olduğu ekran kenarı için canlı uygulanabilen mesafe ayarı.
+- Dört köşe için bağımsız yuvarlaklık ve köşeleri bağlama seçeneği.
+- Tam ekranda tamamen gizle, yalnız bildirim, kenarda gizle ve görünür tut davranışları.
+- Sağ tık menüsü ve hızlı dock etkileşimlerinde güvenli açık kalma/kapanma yaşam döngüsü.
+- Pil varlığını güç besleme durumundan ayıran güvenilir algılama ve uyku/uyanma yenilemesi.
+- Bluetooth radyo aç/kapat durumunu izleyen, eski cihaz önbelleğini temizleyen watcher yaşam döngüsü.
+- Hızlı Canva/WebView2 medya değişimlerinde eski oturum erişimini iptal eden ve sıralayan güvenli medya hattı.
+- Profilleri koruyarak Odak etkilerini, otomasyonlarını ve zamanlayıcılarını tamamen durduran ana ayar.
+- Ayar şeması 19, Türkçe/İngilizce metinler ve erişilebilirlik iyileştirmeleri.
+
+### Kalan yayın doğrulamaları
+
+- Gerçek Canva/WebView2, Bluetooth donanımı, pil ve uyku/uyanma manuel matrisi.
+- 30 dakikalık yoğun etkileşim ve uzun boşta çalışma gözlemi.
+- WACK ve özel Microsoft Store flight doğrulaması.
+
+## 1.2.1.0 — Önceki Yayın Kapsamı
 
 ### Tamamlanan ürün çalışmaları
 
@@ -25,7 +50,7 @@ gösterir. Sürüm numaraları yalnız proje sahibi tarafından kesinleştirilir
 MiaDock, belgelenmemiş yöntemlerle Windows Rahatsız Etmeyin durumunu
 değiştirmez. Odak profilleri yalnızca MiaDock davranışını yönetir.
 
-### Yayından önce kalan doğrulamalar
+### Önceki sürümden devreden doğrulamalar
 
 - Paketli uygulamada Windows başlangıcı, tamamen çıkış ve Store güncelleme kontrolü.
 - Spotify, Apple Music, YouTube ve birden fazla medya oturumuyla regresyon testi.
@@ -33,7 +58,7 @@ değiştirmez. Odak profilleri yalnızca MiaDock davranışını yönetir.
 - Uyku/uyanma, Explorer yeniden başlatma, çoklu monitör ve farklı DPI senaryoları.
 - Türkçe–İngilizce, yüksek kontrast ve bütün temalarda görsel kontrol.
 - 30 dakikalık yoğun olay ve gerçek 8 saatlik boşta çalışma testleri.
-- Temiz 1.2.1.0 MSIX upload üretimi, WACK ve özel Store flight.
+- Temiz MSIX upload üretimi, WACK ve özel Store flight.
 
 ## 1.2 Sonrası Aday Çalışmalar
 

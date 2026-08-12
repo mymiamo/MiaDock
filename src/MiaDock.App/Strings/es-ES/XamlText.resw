@@ -1,0 +1,2109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Literal XAML text overrides. The tr-TR value is the string authored in XAML; every other language translates it under the same name. -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <data name="XamlText.0001" xml:space="preserve">
+    <value>MiaDock Configuración</value>
+  </data>
+  <data name="XamlText.0002" xml:space="preserve">
+    <value>MiaDock Empezar</value>
+  </data>
+  <data name="XamlText.0003" xml:space="preserve">
+    <value>Hogar</value>
+  </data>
+  <data name="XamlText.0004" xml:space="preserve">
+    <value>Personalizar</value>
+  </data>
+  <data name="XamlText.0005" xml:space="preserve">
+    <value>Productividad</value>
+  </data>
+  <data name="XamlText.0006" xml:space="preserve">
+    <value>Notificaciones y Privacidad</value>
+  </data>
+  <data name="XamlText.0007" xml:space="preserve">
+    <value>Sistema</value>
+  </data>
+  <data name="XamlText.0008" xml:space="preserve">
+    <value>Apoyo</value>
+  </data>
+  <data name="XamlText.0009" xml:space="preserve">
+    <value>Subpáginas de configuración</value>
+  </data>
+  <data name="XamlText.0010" xml:space="preserve">
+    <value>Subpágina de configuración</value>
+  </data>
+  <data name="XamlText.0011" xml:space="preserve">
+    <value>Navegación de configuración</value>
+  </data>
+  <data name="XamlText.0012" xml:space="preserve">
+    <value>El muelle está listo</value>
+  </data>
+  <data name="XamlText.0013" xml:space="preserve">
+    <value>El muelle está listo, MiaDock se está ejecutando</value>
+  </data>
+  <data name="XamlText.0014" xml:space="preserve">
+    <value>MiaDock se está ejecutando normalmente; sus cambios se guardan automáticamente.</value>
+  </data>
+  <data name="XamlText.0015" xml:space="preserve">
+    <value>Configuraciones rápidas</value>
+  </data>
+  <data name="XamlText.0016" xml:space="preserve">
+    <value>Elija cuándo el muelle está visible.</value>
+  </data>
+  <data name="XamlText.0017" xml:space="preserve">
+    <value>Elija el puntero del muelle y haga clic en el comportamiento.</value>
+  </data>
+  <data name="XamlText.0018" xml:space="preserve">
+    <value>Actualizar</value>
+  </data>
+  <data name="XamlText.0019" xml:space="preserve">
+    <value>Controlar</value>
+  </data>
+  <data name="XamlText.0020" xml:space="preserve">
+    <value>Módulos activos</value>
+  </data>
+  <data name="XamlText.0021" xml:space="preserve">
+    <value>Permisos</value>
+  </data>
+  <data name="XamlText.0022" xml:space="preserve">
+    <value>Solicitado solo cuando es necesario</value>
+  </data>
+  <data name="XamlText.0023" xml:space="preserve">
+    <value>Personalicemos su muelle en unos pocos y tranquilos pasos.</value>
+  </data>
+  <data name="XamlText.0024" xml:space="preserve">
+    <value>Nuestro enfoque de privacidad</value>
+  </data>
+  <data name="XamlText.0025" xml:space="preserve">
+    <value>Local y fuera de línea</value>
+  </data>
+  <data name="XamlText.0026" xml:space="preserve">
+    <value>No se utiliza ninguna cuenta, telemetría ni informes automáticos de errores.</value>
+  </data>
+  <data name="XamlText.0027" xml:space="preserve">
+    <value>Tu controlas los permisos</value>
+  </data>
+  <data name="XamlText.0028" xml:space="preserve">
+    <value>Los permisos de cámara, micrófono y notificación se solicitan solo cuando utiliza la función relacionada por primera vez.</value>
+  </data>
+  <data name="XamlText.0029" xml:space="preserve">
+    <value>Personaliza tu muelle</value>
+  </data>
+  <data name="XamlText.0030" xml:space="preserve">
+    <value>Elige cómo se ve MiaDock y dónde aparece.</value>
+  </data>
+  <data name="XamlText.0031" xml:space="preserve">
+    <value>Los cambios en el tema se obtienen una vista previa inmediatamente y se restauran si se cancela la configuración.</value>
+  </data>
+  <data name="XamlText.0032" xml:space="preserve">
+    <value>Uso</value>
+  </data>
+  <data name="XamlText.0033" xml:space="preserve">
+    <value>Elija la interacción, el inicio y el comportamiento de pantalla completa del Dock.</value>
+  </data>
+  <data name="XamlText.0034" xml:space="preserve">
+    <value>Elija el comportamiento de pasar el mouse y hacer clic.</value>
+  </data>
+  <data name="XamlText.0035" xml:space="preserve">
+    <value>El muelle se esconde en los juegos; Los eventos seleccionados pueden aparecer brevemente.</value>
+  </data>
+  <data name="XamlText.0036" xml:space="preserve">
+    <value>Se conserva el enfoque</value>
+  </data>
+  <data name="XamlText.0037" xml:space="preserve">
+    <value>MiaDock no quita el foco del teclado del juego o aplicación activa cuando se abre al pasar el mouse.</value>
+  </data>
+  <data name="XamlText.0038" xml:space="preserve">
+    <value>Funciones y privacidad</value>
+  </data>
+  <data name="XamlText.0039" xml:space="preserve">
+    <value>Elija los módulos que utilizará y la fuente de medios predeterminada.</value>
+  </data>
+  <data name="XamlText.0040" xml:space="preserve">
+    <value>Los permisos se aplazan</value>
+  </data>
+  <data name="XamlText.0041" xml:space="preserve">
+    <value>Los permisos de cámara, micrófono y notificaciones no están habilitados aquí; se explican y solicitan en contexto cuando se utiliza por primera vez la función relacionada.</value>
+  </data>
+  <data name="XamlText.0042" xml:space="preserve">
+    <value>Revise sus opciones; se guardan juntos cuando inicias MiaDock.</value>
+  </data>
+  <data name="XamlText.0043" xml:space="preserve">
+    <value>Los permisos faltantes se explican solo cuando utiliza la función relacionada. Puedes cambiar cada opción más adelante en Configuración.</value>
+  </data>
+  <data name="XamlText.0044" xml:space="preserve">
+    <value>Informar un error</value>
+  </data>
+  <data name="XamlText.0045" xml:space="preserve">
+    <value>Abra la página de informe de errores MiaDock</value>
+  </data>
+  <data name="XamlText.0046" xml:space="preserve">
+    <value>Configuración de búsqueda</value>
+  </data>
+  <data name="XamlText.0047" xml:space="preserve">
+    <value>pagina de inicio</value>
+  </data>
+  <data name="XamlText.0048" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="XamlText.0049" xml:space="preserve">
+    <value>Enfocar</value>
+  </data>
+  <data name="XamlText.0050" xml:space="preserve">
+    <value>Habilitar funciones de enfoque</value>
+  </data>
+  <data name="XamlText.0051" xml:space="preserve">
+    <value>Cuando está desactivado, el perfil activo y los efectos de automatización se detienen mientras se conservan sus perfiles. Eliges un perfil después de volver a activarlo.</value>
+  </data>
+  <data name="XamlText.0052" xml:space="preserve">
+    <value>Activa o desactiva los perfiles de Focus y las automatizaciones en toda la aplicación.</value>
+  </data>
+  <data name="XamlText.0053" xml:space="preserve">
+    <value>Abra Windows Configuración de enfoque</value>
+  </data>
+  <data name="XamlText.0054" xml:space="preserve">
+    <value>Módulos</value>
+  </data>
+  <data name="XamlText.0055" xml:space="preserve">
+    <value>Windows volumen maestro</value>
+  </data>
+  <data name="XamlText.0056" xml:space="preserve">
+    <value>Muestra cambios de volumen y controla el volumen maestro Windows.</value>
+  </data>
+  <data name="XamlText.0057" xml:space="preserve">
+    <value>Elija cómo aparece el dispositivo de salida predeterminado en la tarjeta de volumen.</value>
+  </data>
+  <data name="XamlText.0058" xml:space="preserve">
+    <value>Mostrar el nombre del dispositivo de salida</value>
+  </data>
+  <data name="XamlText.0059" xml:space="preserve">
+    <value>Muestra el nombre del altavoz o del auricular en la tarjeta de volumen temporal.</value>
+  </data>
+  <data name="XamlText.0060" xml:space="preserve">
+    <value>Silenciar o reactivar</value>
+  </data>
+  <data name="XamlText.0061" xml:space="preserve">
+    <value>Silenciar o reactivar el volumen principal Windows</value>
+  </data>
+  <data name="XamlText.0062" xml:space="preserve">
+    <value>Windows nivel de volumen maestro</value>
+  </data>
+  <data name="XamlText.0063" xml:space="preserve">
+    <value>volumen maestro</value>
+  </data>
+  <data name="XamlText.0064" xml:space="preserve">
+    <value>centro de audio</value>
+  </data>
+  <data name="XamlText.0065" xml:space="preserve">
+    <value>Abrir configuración de sonido</value>
+  </data>
+  <data name="XamlText.0066" xml:space="preserve">
+    <value>Abra la configuración de sonido Windows</value>
+  </data>
+  <data name="XamlText.0067" xml:space="preserve">
+    <value>audio de la aplicación</value>
+  </data>
+  <data name="XamlText.0068" xml:space="preserve">
+    <value>Actividad de audio en vivo</value>
+  </data>
+  <data name="XamlText.0069" xml:space="preserve">
+    <value>Silenciar o reactivar el audio de la aplicación</value>
+  </data>
+  <data name="XamlText.0070" xml:space="preserve">
+    <value>Administrar dispositivos de audio</value>
+  </data>
+  <data name="XamlText.0071" xml:space="preserve">
+    <value>Ahora jugando</value>
+  </data>
+  <data name="XamlText.0072" xml:space="preserve">
+    <value>No se reproduce ningún medio</value>
+  </data>
+  <data name="XamlText.0073" xml:space="preserve">
+    <value>Reproduzca medios en una aplicación compatible.</value>
+  </data>
+  <data name="XamlText.0074" xml:space="preserve">
+    <value>Actividad de llamadas</value>
+  <comment>Arama etkinliği</comment></data>
+  <data name="XamlText.0075" xml:space="preserve">
+    <value>Micrófono</value>
+  </data>
+  <data name="XamlText.0076" xml:space="preserve">
+    <value>Cámara</value>
+  </data>
+  <data name="XamlText.0077" xml:space="preserve">
+    <value>Estado de la llamada</value>
+  </data>
+  <data name="XamlText.0078" xml:space="preserve">
+    <value>inferencia local</value>
+  </data>
+  <data name="XamlText.0079" xml:space="preserve">
+    <value>Abrir la configuración de privacidad del micrófono</value>
+  </data>
+  <data name="XamlText.0080" xml:space="preserve">
+    <value>Abrir la configuración de privacidad de la cámara</value>
+  </data>
+  <data name="XamlText.0081" xml:space="preserve">
+    <value>Vista del temporizador</value>
+  </data>
+  <data name="XamlText.0082" xml:space="preserve">
+    <value>Vista de cronómetro</value>
+  </data>
+  <data name="XamlText.0083" xml:space="preserve">
+    <value>15 minutos</value>
+  </data>
+  <data name="XamlText.0084" xml:space="preserve">
+    <value>Personalice los perfiles integrados o cree su propio perfil de Focus para controlar el comportamiento de MiaDock.</value>
+  </data>
+  <data name="XamlText.0085" xml:space="preserve">
+    <value>Nuevo perfil</value>
+  </data>
+  <data name="XamlText.0086" xml:space="preserve">
+    <value>Crear un nuevo perfil de enfoque</value>
+  </data>
+  <data name="XamlText.0087" xml:space="preserve">
+    <value>MiaDock comportamiento</value>
+  </data>
+  <data name="XamlText.0088" xml:space="preserve">
+    <value>Conflicto de automatización</value>
+  </data>
+  <data name="XamlText.0089" xml:space="preserve">
+    <value>Los perfiles de enfoque no cambian Windows No molestar; solo controlan MiaDock módulos, eventos y visibilidad.</value>
+  </data>
+  <data name="XamlText.0090" xml:space="preserve">
+    <value>Activo</value>
+  </data>
+  <data name="XamlText.0091" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="XamlText.0092" xml:space="preserve">
+    <value>Restablecer los valores predeterminados</value>
+  </data>
+  <data name="XamlText.0093" xml:space="preserve">
+    <value>Borrar</value>
+  </data>
+  <data name="XamlText.0094" xml:space="preserve">
+    <value>Nombre del perfil</value>
+  </data>
+  <data name="XamlText.0095" xml:space="preserve">
+    <value>Nombre del perfil de enfoque</value>
+  </data>
+  <data name="XamlText.0096" xml:space="preserve">
+    <value>Icono</value>
+  </data>
+  <data name="XamlText.0097" xml:space="preserve">
+    <value>Icono de perfil de enfoque</value>
+  </data>
+  <data name="XamlText.0098" xml:space="preserve">
+    <value>Color de perfil</value>
+  </data>
+  <data name="XamlText.0099" xml:space="preserve">
+    <value>color hexagonal</value>
+  </data>
+  <data name="XamlText.0100" xml:space="preserve">
+    <value>Valor HEX del color del perfil</value>
+  </data>
+  <data name="XamlText.0101" xml:space="preserve">
+    <value>El color se guarda en formato #RRGGBB.</value>
+  </data>
+  <data name="XamlText.0102" xml:space="preserve">
+    <value>Duración predeterminada</value>
+  </data>
+  <data name="XamlText.0103" xml:space="preserve">
+    <value>hasta que se apague</value>
+  </data>
+  <data name="XamlText.0104" xml:space="preserve">
+    <value>Usar minutos</value>
+  </data>
+  <data name="XamlText.0105" xml:space="preserve">
+    <value>Visibilidad del muelle</value>
+  </data>
+  <data name="XamlText.0106" xml:space="preserve">
+    <value>Prioridad mínima del evento</value>
+  </data>
+  <data name="XamlText.0107" xml:space="preserve">
+    <value>Permitir todos los módulos</value>
+  </data>
+  <data name="XamlText.0108" xml:space="preserve">
+    <value>Cuando esté desactivado, elija qué módulos pueden aparecer durante este perfil.</value>
+  </data>
+  <data name="XamlText.0109" xml:space="preserve">
+    <value>Pantalla completa y privacidad</value>
+  </data>
+  <data name="XamlText.0110" xml:space="preserve">
+    <value>Permitir notificaciones en pantalla completa</value>
+  </data>
+  <data name="XamlText.0111" xml:space="preserve">
+    <value>Permitir contenido sensible en pantalla completa</value>
+  </data>
+  <data name="XamlText.0112" xml:space="preserve">
+    <value>Permitir contenido confidencial mientras Windows está bloqueado</value>
+  </data>
+  <data name="XamlText.0113" xml:space="preserve">
+    <value>Los permisos de perfil no pueden habilitar la configuración de privacidad global; sólo pueden hacerlos más estrictos.</value>
+  </data>
+  <data name="XamlText.0114" xml:space="preserve">
+    <value>Horarios semanales</value>
+  </data>
+  <data name="XamlText.0115" xml:space="preserve">
+    <value>Elija los días y horas en que el perfil se activa.</value>
+  </data>
+  <data name="XamlText.0116" xml:space="preserve">
+    <value>Agregar horario</value>
+  </data>
+  <data name="XamlText.0117" xml:space="preserve">
+    <value>Horario habilitado</value>
+  </data>
+  <data name="XamlText.0118" xml:space="preserve">
+    <value>Lun</value>
+  </data>
+  <data name="XamlText.0119" xml:space="preserve">
+    <value>Mar</value>
+  </data>
+  <data name="XamlText.0120" xml:space="preserve">
+    <value>Casarse</value>
+  </data>
+  <data name="XamlText.0121" xml:space="preserve">
+    <value>Jue</value>
+  </data>
+  <data name="XamlText.0122" xml:space="preserve">
+    <value>Vie</value>
+  </data>
+  <data name="XamlText.0123" xml:space="preserve">
+    <value>Se sentó</value>
+  </data>
+  <data name="XamlText.0124" xml:space="preserve">
+    <value>Sol</value>
+  </data>
+  <data name="XamlText.0125" xml:space="preserve">
+    <value>Comenzar</value>
+  </data>
+  <data name="XamlText.0126" xml:space="preserve">
+    <value>Fin</value>
+  </data>
+  <data name="XamlText.0127" xml:space="preserve">
+    <value>Automatizaciones de aplicaciones</value>
+  </data>
+  <data name="XamlText.0128" xml:space="preserve">
+    <value>Active el perfil cuando una aplicación se inicia, pasa al primer plano o pasa a pantalla completa.</value>
+  </data>
+  <data name="XamlText.0129" xml:space="preserve">
+    <value>Agregar regla</value>
+  </data>
+  <data name="XamlText.0130" xml:space="preserve">
+    <value>Regla habilitada</value>
+  </data>
+  <data name="XamlText.0131" xml:space="preserve">
+    <value>Desencadenar</value>
+  </data>
+  <data name="XamlText.0132" xml:space="preserve">
+    <value>Solicitud</value>
+  </data>
+  <data name="XamlText.0133" xml:space="preserve">
+    <value>Apariencia</value>
+  </data>
+  <data name="XamlText.0134" xml:space="preserve">
+    <value>Medios de comunicación</value>
+  </data>
+  <data name="XamlText.0135" xml:space="preserve">
+    <value>Notificaciones</value>
+  </data>
+  <data name="XamlText.0136" xml:space="preserve">
+    <value>Tiempo y atajos</value>
+  </data>
+  <data name="XamlText.0137" xml:space="preserve">
+    <value>Pantalla completa</value>
+  </data>
+  <data name="XamlText.0138" xml:space="preserve">
+    <value>Monitor</value>
+  </data>
+  <data name="XamlText.0139" xml:space="preserve">
+    <value>bandeja del sistema</value>
+  </data>
+  <data name="XamlText.0140" xml:space="preserve">
+    <value>Cuando se hace clic en el icono una vez</value>
+  </data>
+  <data name="XamlText.0141" xml:space="preserve">
+    <value>Comportamiento de un solo clic en la bandeja</value>
+  </data>
+  <data name="XamlText.0142" xml:space="preserve">
+    <value>Abrir configuración</value>
+  </data>
+  <data name="XamlText.0143" xml:space="preserve">
+    <value>Mostrar u ocultar muelle</value>
+  </data>
+  <data name="XamlText.0144" xml:space="preserve">
+    <value>cámara en uso</value>
+  </data>
+  <data name="XamlText.0145" xml:space="preserve">
+    <value>Inicio y apagado</value>
+  </data>
+  <data name="XamlText.0146" xml:space="preserve">
+    <value>Diagnóstico</value>
+  </data>
+  <data name="XamlText.0147" xml:space="preserve">
+    <value>Acerca de</value>
+  </data>
+  <data name="XamlText.0148" xml:space="preserve">
+    <value>Vea el estado de la base y acceda rápidamente a las configuraciones utilizadas con frecuencia.</value>
+  </data>
+  <data name="XamlText.0149" xml:space="preserve">
+    <value>Configuración de acoplamiento rápido</value>
+  </data>
+  <data name="XamlText.0150" xml:space="preserve">
+    <value>Cambie el comportamiento de visibilidad e interacción directamente.</value>
+  </data>
+  <data name="XamlText.0151" xml:space="preserve">
+    <value>Abrir configuración general</value>
+  </data>
+  <data name="XamlText.0152" xml:space="preserve">
+    <value>Windows inicio</value>
+  </data>
+  <data name="XamlText.0153" xml:space="preserve">
+    <value>Abrir configuración de inicio</value>
+  </data>
+  <data name="XamlText.0154" xml:space="preserve">
+    <value>Estado del módulo</value>
+  </data>
+  <data name="XamlText.0155" xml:space="preserve">
+    <value>Administrar</value>
+  </data>
+  <data name="XamlText.0156" xml:space="preserve">
+    <value>Apariencia del muelle</value>
+  </data>
+  <data name="XamlText.0157" xml:space="preserve">
+    <value>Abrir configuración de apariencia</value>
+  </data>
+  <data name="XamlText.0158" xml:space="preserve">
+    <value>Actualizaciones de la tienda de Microsoft</value>
+  </data>
+  <data name="XamlText.0159" xml:space="preserve">
+    <value>Buscar actualizaciones</value>
+  </data>
+  <data name="XamlText.0160" xml:space="preserve">
+    <value>Abrir en Microsoft Store</value>
+  </data>
+  <data name="XamlText.0161" xml:space="preserve">
+    <value>Comprobaciones de actualización automática</value>
+  </data>
+  <data name="XamlText.0162" xml:space="preserve">
+    <value>MiaDock busca nuevas versiones en Microsoft Store cada cuatro horas.</value>
+  </data>
+  <data name="XamlText.0163" xml:space="preserve">
+    <value>Configure la visibilidad, interacción, posición e idioma del muelle.</value>
+  </data>
+  <data name="XamlText.0164" xml:space="preserve">
+    <value>Configure rápidamente el comportamiento principal del muelle.</value>
+  </data>
+  <data name="XamlText.0165" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="XamlText.0166" xml:space="preserve">
+    <value>Elige el idioma de la interfaz</value>
+  </data>
+  <data name="XamlText.0167" xml:space="preserve">
+    <value>Visibilidad</value>
+  </data>
+  <data name="XamlText.0168" xml:space="preserve">
+    <value>Interacción</value>
+  </data>
+  <data name="XamlText.0169" xml:space="preserve">
+    <value>Regreso del módulo inactivo</value>
+  </data>
+  <data name="XamlText.0170" xml:space="preserve">
+    <value>Tiempo antes de que un módulo sin tarea activa regrese a la base de inicio</value>
+  </data>
+  <data name="XamlText.0171" xml:space="preserve">
+    <value>Tiempo de retorno del módulo inactivo</value>
+  </data>
+  <data name="XamlText.0172" xml:space="preserve">
+    <value>Hora y fecha</value>
+  </data>
+  <data name="XamlText.0173" xml:space="preserve">
+    <value>Personalice cómo aparece la información de la hora en la base de inicio.</value>
+  </data>
+  <data name="XamlText.0174" xml:space="preserve">
+    <value>Formato de hora</value>
+  </data>
+  <data name="XamlText.0175" xml:space="preserve">
+    <value>Artículos de segunda clase</value>
+  </data>
+  <data name="XamlText.0176" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="XamlText.0177" xml:space="preserve">
+    <value>Formato de fecha</value>
+  </data>
+  <data name="XamlText.0178" xml:space="preserve">
+    <value>Día de la semana</value>
+  </data>
+  <data name="XamlText.0179" xml:space="preserve">
+    <value>Espectáculo</value>
+  </data>
+  <data name="XamlText.0180" xml:space="preserve">
+    <value>Esconder</value>
+  </data>
+  <data name="XamlText.0181" xml:space="preserve">
+    <value>La alarma suena hasta 5 veces cuando finaliza el cronómetro.</value>
+  </data>
+  <data name="XamlText.0182" xml:space="preserve">
+    <value>Duraciones preestablecidas</value>
+  </data>
+  <data name="XamlText.0183" xml:space="preserve">
+    <value>Duración personalizada</value>
+  </data>
+  <data name="XamlText.0184" xml:space="preserve">
+    <value>Mostrar segundos</value>
+  </data>
+  <data name="XamlText.0185" xml:space="preserve">
+    <value>Mostrar fecha</value>
+  </data>
+  <data name="XamlText.0186" xml:space="preserve">
+    <value>Mostrar día de la semana</value>
+  </data>
+  <data name="XamlText.0187" xml:space="preserve">
+    <value>Módulos del sistema</value>
+  </data>
+  <data name="XamlText.0188" xml:space="preserve">
+    <value>Las herramientas de batería, red, Bluetooth y tiempo están habilitadas.</value>
+  </data>
+  <data name="XamlText.0189" xml:space="preserve">
+    <value>Alertas de batería</value>
+  </data>
+  <data name="XamlText.0190" xml:space="preserve">
+    <value>Establezca los porcentajes para alertas de batería baja, crítica y de emergencia.</value>
+  </data>
+  <data name="XamlText.0191" xml:space="preserve">
+    <value>Bajo</value>
+  </data>
+  <data name="XamlText.0192" xml:space="preserve">
+    <value>Crítico</value>
+  </data>
+  <data name="XamlText.0193" xml:space="preserve">
+    <value>Emergencia</value>
+  </data>
+  <data name="XamlText.0194" xml:space="preserve">
+    <value>Los cambios se previsualizan inmediatamente en el Dock.</value>
+  </data>
+  <data name="XamlText.0195" xml:space="preserve">
+    <value>Las configuraciones de tema, tamaño y movimiento se previsualizan inmediatamente en el Dock.</value>
+  </data>
+  <data name="XamlText.0196" xml:space="preserve">
+    <value>Tema</value>
+  </data>
+  <data name="XamlText.0197" xml:space="preserve">
+    <value>Estilo de superficie</value>
+  </data>
+  <data name="XamlText.0198" xml:space="preserve">
+    <value>Vidrio transparente borroso</value>
+  </data>
+  <data name="XamlText.0199" xml:space="preserve">
+    <value>Este tema no utiliza ningún color de fondo fijo; difumina el escritorio con Windows Acrylic real. La opacidad cambia sólo la intensidad de la fina capa de vidrio.</value>
+  </data>
+  <data name="XamlText.0200" xml:space="preserve">
+    <value>Vista previa del muelle en vivo</value>
+  </data>
+  <data name="XamlText.0201" xml:space="preserve">
+    <value>Hoy</value>
+  </data>
+  <data name="XamlText.0202" xml:space="preserve">
+    <value>Reproduciendo pista</value>
+  </data>
+  <data name="XamlText.0203" xml:space="preserve">
+    <value>Artista</value>
+  </data>
+  <data name="XamlText.0204" xml:space="preserve">
+    <value>Centro activo</value>
+  </data>
+  <data name="XamlText.0205" xml:space="preserve">
+    <value>Pista en reproducción · Artista</value>
+  </data>
+  <data name="XamlText.0206" xml:space="preserve">
+    <value>Compacto</value>
+  </data>
+  <data name="XamlText.0207" xml:space="preserve">
+    <value>Flotar</value>
+  </data>
+  <data name="XamlText.0208" xml:space="preserve">
+    <value>Expandido</value>
+  </data>
+  <data name="XamlText.0209" xml:space="preserve">
+    <value>Vista previa compacta</value>
+  </data>
+  <data name="XamlText.0210" xml:space="preserve">
+    <value>Vista previa al pasar el mouse</value>
+  </data>
+  <data name="XamlText.0211" xml:space="preserve">
+    <value>Vista previa ampliada</value>
+  </data>
+  <data name="XamlText.0212" xml:space="preserve">
+    <value>Animación de prueba</value>
+  </data>
+  <data name="XamlText.0213" xml:space="preserve">
+    <value>Animación del muelle de prueba</value>
+  </data>
+  <data name="XamlText.0214" xml:space="preserve">
+    <value>Dimensiones del muelle</value>
+  </data>
+  <data name="XamlText.0215" xml:space="preserve">
+    <value>Superficie y color</value>
+  </data>
+  <data name="XamlText.0216" xml:space="preserve">
+    <value>Intensidad del vidrio/superficie</value>
+  </data>
+  <data name="XamlText.0217" xml:space="preserve">
+    <value>Intensidad del vidrio o de la superficie</value>
+  </data>
+  <data name="XamlText.0218" xml:space="preserve">
+    <value>Movimiento</value>
+  </data>
+  <data name="XamlText.0219" xml:space="preserve">
+    <value>Ancho contraído</value>
+  </data>
+  <data name="XamlText.0220" xml:space="preserve">
+    <value>Altura colapsada</value>
+  </data>
+  <data name="XamlText.0221" xml:space="preserve">
+    <value>Ancho de desplazamiento</value>
+  </data>
+  <data name="XamlText.0222" xml:space="preserve">
+    <value>altura de desplazamiento</value>
+  </data>
+  <data name="XamlText.0223" xml:space="preserve">
+    <value>Ancho ampliado</value>
+  </data>
+  <data name="XamlText.0224" xml:space="preserve">
+    <value>Altura ampliada</value>
+  </data>
+  <data name="XamlText.0225" xml:space="preserve">
+    <value>Ancho de notificación</value>
+  </data>
+  <data name="XamlText.0226" xml:space="preserve">
+    <value>Altura de notificación</value>
+  </data>
+  <data name="XamlText.0227" xml:space="preserve">
+    <value>Radio de esquina</value>
+  </data>
+  <data name="XamlText.0228" xml:space="preserve">
+    <value>Espaciado de los bordes de la pantalla</value>
+  </data>
+  <data name="XamlText.0229" xml:space="preserve">
+    <value>Ubicación de la pantalla</value>
+  </data>
+  <data name="XamlText.0230" xml:space="preserve">
+    <value>Adjuntar al borde superior de la pantalla</value>
+  </data>
+  <data name="XamlText.0231" xml:space="preserve">
+    <value>con espaciado</value>
+  </data>
+  <data name="XamlText.0232" xml:space="preserve">
+    <value>Adjunto</value>
+  </data>
+  <data name="XamlText.0233" xml:space="preserve">
+    <value>Conecte la base al borde superior de la pantalla</value>
+  </data>
+  <data name="XamlText.0234" xml:space="preserve">
+    <value>Cuando está habilitado, no queda espacio entre la base y el borde superior de la pantalla.</value>
+  </data>
+  <data name="XamlText.0235" xml:space="preserve">
+    <value>El modo adjunto establece el espacio en 0. En el modo de espaciado, puede elegir la distancia en píxeles.</value>
+  </data>
+  <data name="XamlText.0236" xml:space="preserve">
+    <value>Espaciado del borde superior (píxeles)</value>
+  </data>
+  <data name="XamlText.0237" xml:space="preserve">
+    <value>Espaciado de los bordes de la pantalla del muelle</value>
+  </data>
+  <data name="XamlText.0238" xml:space="preserve">
+    <value>Un valor de 0 coloca la base directamente contra el borde de la pantalla.</value>
+  </data>
+  <data name="XamlText.0239" xml:space="preserve">
+    <value>Un valor de cero coloca la base directamente contra el borde de la pantalla.</value>
+  </data>
+  <data name="XamlText.0240" xml:space="preserve">
+    <value>Radios de esquina de enlace</value>
+  </data>
+  <data name="XamlText.0241" xml:space="preserve">
+    <value>Ajustar todas las esquinas juntas</value>
+  </data>
+  <data name="XamlText.0242" xml:space="preserve">
+    <value>Todos los rincones</value>
+  </data>
+  <data name="XamlText.0243" xml:space="preserve">
+    <value>Radio de todas las esquinas del muelle</value>
+  </data>
+  <data name="XamlText.0244" xml:space="preserve">
+    <value>Radios de esquina del muelle de enlace</value>
+  </data>
+  <data name="XamlText.0245" xml:space="preserve">
+    <value>Cuando está habilitado, cambiar cualquier esquina actualiza las cuatro esquinas.</value>
+  </data>
+  <data name="XamlText.0246" xml:space="preserve">
+    <value>Esquina superior izquierda</value>
+  </data>
+  <data name="XamlText.0247" xml:space="preserve">
+    <value>Esquina superior derecha</value>
+  </data>
+  <data name="XamlText.0248" xml:space="preserve">
+    <value>Esquina inferior derecha</value>
+  </data>
+  <data name="XamlText.0249" xml:space="preserve">
+    <value>Esquina inferior izquierda</value>
+  </data>
+  <data name="XamlText.0250" xml:space="preserve">
+    <value>Radio de la esquina superior izquierda del muelle</value>
+  </data>
+  <data name="XamlText.0251" xml:space="preserve">
+    <value>Radio de la esquina superior derecha del muelle</value>
+  </data>
+  <data name="XamlText.0252" xml:space="preserve">
+    <value>Radio de la esquina inferior derecha del muelle</value>
+  </data>
+  <data name="XamlText.0253" xml:space="preserve">
+    <value>Radio de la esquina inferior izquierda del muelle</value>
+  </data>
+  <data name="XamlText.0254" xml:space="preserve">
+    <value>Control deslizante de radio para todas las esquinas del muelle</value>
+  </data>
+  <data name="XamlText.0255" xml:space="preserve">
+    <value>Acoplar el control deslizante del radio de la esquina superior izquierda</value>
+  </data>
+  <data name="XamlText.0256" xml:space="preserve">
+    <value>Acoplar el control deslizante del radio de la esquina superior derecha</value>
+  </data>
+  <data name="XamlText.0257" xml:space="preserve">
+    <value>Acoplar el control deslizante del radio de la esquina inferior derecha</value>
+  </data>
+  <data name="XamlText.0258" xml:space="preserve">
+    <value>Acoplar el control deslizante del radio de la esquina inferior izquierda</value>
+  </data>
+  <data name="XamlText.0259" xml:space="preserve">
+    <value>Introduzca el radio de la esquina en píxeles.</value>
+  </data>
+  <data name="XamlText.0260" xml:space="preserve">
+    <value>0 es cuadrado y 48 es el más redondo. El muelle vivo aplica como máximo la mitad de su altura.</value>
+  </data>
+  <data name="XamlText.0261" xml:space="preserve">
+    <value>Color de fondo</value>
+  </data>
+  <data name="XamlText.0262" xml:space="preserve">
+    <value>Color de acento</value>
+  </data>
+  <data name="XamlText.0263" xml:space="preserve">
+    <value>Opacidad</value>
+  </data>
+  <data name="XamlText.0264" xml:space="preserve">
+    <value>Intensidad de la sombra</value>
+  </data>
+  <data name="XamlText.0265" xml:space="preserve">
+    <value>Tipo de animación</value>
+  </data>
+  <data name="XamlText.0266" xml:space="preserve">
+    <value>Velocidad de animación</value>
+  </data>
+  <data name="XamlText.0267" xml:space="preserve">
+    <value>Perfil de movimiento</value>
+  </data>
+  <data name="XamlText.0268" xml:space="preserve">
+    <value>Intensidad del movimiento</value>
+  </data>
+  <data name="XamlText.0269" xml:space="preserve">
+    <value>Elasticidad</value>
+  </data>
+  <data name="XamlText.0270" xml:space="preserve">
+    <value>Retraso de contenido (ms)</value>
+  </data>
+  <data name="XamlText.0271" xml:space="preserve">
+    <value>Retraso en la animación del contenido.</value>
+  </data>
+  <data name="XamlText.0272" xml:space="preserve">
+    <value>Paralaje sutil</value>
+  </data>
+  <data name="XamlText.0273" xml:space="preserve">
+    <value>Énfasis de vidrio transitorio</value>
+  </data>
+  <data name="XamlText.0274" xml:space="preserve">
+    <value>En</value>
+  </data>
+  <data name="XamlText.0275" xml:space="preserve">
+    <value>Estas configuraciones se desactivan automáticamente cuando Reducir animaciones está habilitado en Windows.</value>
+  </data>
+  <data name="XamlText.0276" xml:space="preserve">
+    <value>Restablecer todas las configuraciones</value>
+  </data>
+  <data name="XamlText.0277" xml:space="preserve">
+    <value>Restablecer la configuración de apariencia</value>
+  </data>
+  <data name="XamlText.0278" xml:space="preserve">
+    <value>Elija la fuente de medios Windows y controle el comportamiento.</value>
+  </data>
+  <data name="XamlText.0279" xml:space="preserve">
+    <value>Aplicación multimedia predeterminada</value>
+  </data>
+  <data name="XamlText.0280" xml:space="preserve">
+    <value>El muelle solo puede seguir la fuente seleccionada</value>
+  </data>
+  <data name="XamlText.0281" xml:space="preserve">
+    <value>Sesión del sistema</value>
+  </data>
+  <data name="XamlText.0282" xml:space="preserve">
+    <value>Cuando la fuente no está disponible</value>
+  </data>
+  <data name="XamlText.0283" xml:space="preserve">
+    <value>Controla si se utiliza otra sesión activa</value>
+  </data>
+  <data name="XamlText.0284" xml:space="preserve">
+    <value>Objetivo de control de volumen</value>
+  </data>
+  <data name="XamlText.0285" xml:space="preserve">
+    <value>Controla el volumen maestro o la sesión de la aplicación correspondiente</value>
+  </data>
+  <data name="XamlText.0286" xml:space="preserve">
+    <value>Configure alertas multimedia temporales que se muestran en aplicaciones de pantalla completa.</value>
+  </data>
+  <data name="XamlText.0287" xml:space="preserve">
+    <value>Configure alertas de módulos temporales que se muestran en aplicaciones de pantalla completa.</value>
+  </data>
+  <data name="XamlText.0288" xml:space="preserve">
+    <value>Configure la visibilidad del muelle y las notificaciones temporales para aplicaciones de pantalla completa.</value>
+  </data>
+  <data name="XamlText.0289" xml:space="preserve">
+    <value>Notificaciones en pantalla completa</value>
+  </data>
+  <data name="XamlText.0290" xml:space="preserve">
+    <value>Acoplar en pantalla completa</value>
+  </data>
+  <data name="XamlText.0291" xml:space="preserve">
+    <value>Comportamiento del muelle en pantalla completa</value>
+  </data>
+  <data name="XamlText.0292" xml:space="preserve">
+    <value>Selecciona cómo se comporta la base cuando comparte una pantalla con una aplicación de pantalla completa.</value>
+  </data>
+  <data name="XamlText.0293" xml:space="preserve">
+    <value>El comportamiento se aplica solo cuando el muelle y la ventana de pantalla completa comparten una pantalla. La revelación de bordes utiliza una verificación de puntero de baja frecuencia solo cuando es necesario.</value>
+  </data>
+  <data name="XamlText.0294" xml:space="preserve">
+    <value>Ocultar completamente</value>
+  </data>
+  <data name="XamlText.0295" xml:space="preserve">
+    <value>Mostrar solo notificaciones</value>
+  </data>
+  <data name="XamlText.0296" xml:space="preserve">
+    <value>Ocultar en el borde, revelar con puntero</value>
+  </data>
+  <data name="XamlText.0297" xml:space="preserve">
+    <value>Mantener visible normalmente</value>
+  </data>
+  <data name="XamlText.0298" xml:space="preserve">
+    <value>Mostrar seguimiento de cambios</value>
+  </data>
+  <data name="XamlText.0299" xml:space="preserve">
+    <value>Estilo de notificación</value>
+  </data>
+  <data name="XamlText.0300" xml:space="preserve">
+    <value>Duración de la visualización (segundos)</value>
+  </data>
+  <data name="XamlText.0301" xml:space="preserve">
+    <value>Comportamiento de pantalla completa</value>
+  </data>
+  <data name="XamlText.0302" xml:space="preserve">
+    <value>El muelle normal está oculto; Los eventos del módulo seleccionado aparecen temporalmente.</value>
+  </data>
+  <data name="XamlText.0303" xml:space="preserve">
+    <value>El muelle normal está oculto; El temporizador crítico, la batería y otros eventos permitidos del módulo aparecen temporalmente. El seguimiento de cambios no expande el muelle automáticamente.</value>
+  </data>
+  <data name="XamlText.0304" xml:space="preserve">
+    <value>Hide suprime por completo el muelle y todos los eventos. Las notificaciones solo ocultan el muelle normal. La revelación de bordes abre el muelle cuando el puntero alcanza el borde correcto de la pantalla. Mantener visible preserva el comportamiento normal.</value>
+  </data>
+  <data name="XamlText.0305" xml:space="preserve">
+    <value>Cronómetro funcionando</value>
+  </data>
+  <data name="XamlText.0306" xml:space="preserve">
+    <value>Cronómetro en pausa</value>
+  </data>
+  <data name="XamlText.0307" xml:space="preserve">
+    <value>Reiniciar cronómetro</value>
+  </data>
+  <data name="XamlText.0308" xml:space="preserve">
+    <value>Elija qué pantalla muestra el muelle.</value>
+  </data>
+  <data name="XamlText.0309" xml:space="preserve">
+    <value>Monitorear el comportamiento</value>
+  </data>
+  <data name="XamlText.0310" xml:space="preserve">
+    <value>monitor fijo</value>
+  </data>
+  <data name="XamlText.0311" xml:space="preserve">
+    <value>Seleccione un monitor</value>
+  </data>
+  <data name="XamlText.0312" xml:space="preserve">
+    <value>Respaldo seguro</value>
+  </data>
+  <data name="XamlText.0313" xml:space="preserve">
+    <value>Si la pantalla seleccionada se desconecta, la base se mueve a la pantalla principal.</value>
+  </data>
+  <data name="XamlText.0314" xml:space="preserve">
+    <value>Elija los comportamientos disponibles en el icono de la bandeja del sistema.</value>
+  </data>
+  <data name="XamlText.0315" xml:space="preserve">
+    <value>Mostrar icono de la bandeja del sistema</value>
+  </data>
+  <data name="XamlText.0316" xml:space="preserve">
+    <value>Mostrar controles multimedia en el menú</value>
+  </data>
+  <data name="XamlText.0317" xml:space="preserve">
+    <value>Habilitar notificaciones temporales</value>
+  </data>
+  <data name="XamlText.0318" xml:space="preserve">
+    <value>Acceso</value>
+  </data>
+  <data name="XamlText.0319" xml:space="preserve">
+    <value>Si oculta el ícono, abra Configuración desde el menú contextual del Dock.</value>
+  </data>
+  <data name="XamlText.0320" xml:space="preserve">
+    <value>Elija cómo se comporta MiaDock con Windows y cuándo se cierra su ventana.</value>
+  </data>
+  <data name="XamlText.0321" xml:space="preserve">
+    <value>Comience con Windows</value>
+  </data>
+  <data name="XamlText.0322" xml:space="preserve">
+    <value>Cuando se inicia la aplicación</value>
+  </data>
+  <data name="XamlText.0323" xml:space="preserve">
+    <value>Cuando la ventana se cierra</value>
+  </data>
+  <data name="XamlText.0324" xml:space="preserve">
+    <value>Inicio seguro</value>
+  </data>
+  <data name="XamlText.0325" xml:space="preserve">
+    <value>MiaDock utiliza la API StartupTask compatible con Microsoft Store en lugar del registro.</value>
+  </data>
+  <data name="XamlText.0326" xml:space="preserve">
+    <value>Ver y administrar registros técnicos locales.</value>
+  </data>
+  <data name="XamlText.0327" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="XamlText.0328" xml:space="preserve">
+    <value>Los registros permanecen en este dispositivo. No se registran pistas, artistas, nombres de usuario, rutas personales ni historial multimedia.</value>
+  </data>
+  <data name="XamlText.0329" xml:space="preserve">
+    <value>Refrescar</value>
+  </data>
+  <data name="XamlText.0330" xml:space="preserve">
+    <value>Abrir carpeta de registro</value>
+  </data>
+  <data name="XamlText.0331" xml:space="preserve">
+    <value>Exportar como ZIP</value>
+  </data>
+  <data name="XamlText.0332" xml:space="preserve">
+    <value>Borrar registros</value>
+  </data>
+  <data name="XamlText.0333" xml:space="preserve">
+    <value>Un muelle de sistema modular que se integra naturalmente con Windows 11.</value>
+  </data>
+  <data name="XamlText.0334" xml:space="preserve">
+    <value>Versión</value>
+  </data>
+  <data name="XamlText.0335" xml:space="preserve">
+    <value>Campo de golf</value>
+  </data>
+  <data name="XamlText.0336" xml:space="preserve">
+    <value>GitHub</value>
+  </data>
+  <data name="XamlText.0337" xml:space="preserve">
+    <value>Instagram</value>
+  </data>
+  <data name="XamlText.0338" xml:space="preserve">
+    <value>github.com/mymiamo/MiaDock</value>
+  </data>
+  <data name="XamlText.0339" xml:space="preserve">
+    <value>instagram.com/mymiamonet</value>
+  </data>
+  <data name="XamlText.0340" xml:space="preserve">
+    <value>mymiamo.net</value>
+  </data>
+  <data name="XamlText.0341" xml:space="preserve">
+    <value>Vea el código fuente, los lanzamientos y el progreso del proyecto.</value>
+  </data>
+  <data name="XamlText.0342" xml:space="preserve">
+    <value>Siga los anuncios y publicaciones sociales de MiaMo.</value>
+  </data>
+  <data name="XamlText.0343" xml:space="preserve">
+    <value>Sitio web</value>
+  </data>
+  <data name="XamlText.0344" xml:space="preserve">
+    <value>Descubra los proyectos de MiaMo y la información más reciente.</value>
+  </data>
+  <data name="XamlText.0345" xml:space="preserve">
+    <value>Abra la página de GitHub en el navegador predeterminado</value>
+  </data>
+  <data name="XamlText.0346" xml:space="preserve">
+    <value>Abra la página de Instagram en el navegador predeterminado</value>
+  </data>
+  <data name="XamlText.0347" xml:space="preserve">
+    <value>Abra el sitio web de MiaMo en el navegador predeterminado</value>
+  </data>
+  <data name="XamlText.0348" xml:space="preserve">
+    <value>No se pudo abrir el enlace</value>
+  </data>
+  <data name="XamlText.0349" xml:space="preserve">
+    <value>Archivo de configuración</value>
+  </data>
+  <data name="XamlText.0350" xml:space="preserve">
+    <value>Las funciones principales funcionan sin conexión. Esta versión no utiliza telemetría, cuenta de usuario ni conexión de servidor externo.</value>
+  </data>
+  <data name="XamlText.0351" xml:space="preserve">
+    <value>Las funciones principales funcionan sin conexión. MiaDock no utiliza telemetría, cuenta de usuario ni informes automáticos de errores.</value>
+  </data>
+  <data name="XamlText.0352" xml:space="preserve">
+    <value>Muestra notificaciones de Windows en MiaDock dentro de los permisos que otorgas.</value>
+  </data>
+  <data name="XamlText.0353" xml:space="preserve">
+    <value>Habilitar módulo de notificación</value>
+  </data>
+  <data name="XamlText.0354" xml:space="preserve">
+    <value>Cuando está permitido, se muestran la aplicación de origen y el título de la notificación.</value>
+  </data>
+  <data name="XamlText.0355" xml:space="preserve">
+    <value>Duración de la visualización</value>
+  </data>
+  <data name="XamlText.0356" xml:space="preserve">
+    <value>Establece cuánto tiempo permanece la notificación en el muelle</value>
+  </data>
+  <data name="XamlText.0357" xml:space="preserve">
+    <value>Mostrar en pantalla completa</value>
+  </data>
+  <data name="XamlText.0358" xml:space="preserve">
+    <value>El contenido sensible está desactivado de forma predeterminada</value>
+  </data>
+  <data name="XamlText.0359" xml:space="preserve">
+    <value>Usar solo la lista de permitidos</value>
+  </data>
+  <data name="XamlText.0360" xml:space="preserve">
+    <value>Solo se muestran las aplicaciones habilitadas a continuación</value>
+  </data>
+  <data name="XamlText.0361" xml:space="preserve">
+    <value>Aplicaciones</value>
+  </data>
+  <data name="XamlText.0362" xml:space="preserve">
+    <value>Cuerpo</value>
+  </data>
+  <data name="XamlText.0363" xml:space="preserve">
+    <value>El texto del cuerpo debe estar habilitado por aplicación. El contenido de las notificaciones nunca se escribe en registros técnicos.</value>
+  </data>
+  <data name="XamlText.0364" xml:space="preserve">
+    <value>La lista de aplicaciones aparece después de que se concede el acceso a la notificación Windows.</value>
+  </data>
+  <data name="XamlText.0365" xml:space="preserve">
+    <value>Atajos globales</value>
+  </data>
+  <data name="XamlText.0366" xml:space="preserve">
+    <value>Habilitar atajos globales</value>
+  </data>
+  <data name="XamlText.0367" xml:space="preserve">
+    <value>Mostrar/ocultar muelle</value>
+  </data>
+  <data name="XamlText.0368" xml:space="preserve">
+    <value>Expandir/contraer muelle</value>
+  </data>
+  <data name="XamlText.0369" xml:space="preserve">
+    <value>Siguiente módulo</value>
+  </data>
+  <data name="XamlText.0370" xml:space="preserve">
+    <value>Reproducir/pausar medios</value>
+  </data>
+  <data name="XamlText.0371" xml:space="preserve">
+    <value>Pausar/reanudar el temporizador</value>
+  </data>
+  <data name="XamlText.0372" xml:space="preserve">
+    <value>Restaurar todos los atajos predeterminados</value>
+  </data>
+  <data name="XamlText.0373" xml:space="preserve">
+    <value>Restaurar todos los accesos directos globales a sus asignaciones predeterminadas</value>
+  </data>
+  <data name="XamlText.0374" xml:space="preserve">
+    <value>Restaurar el acceso directo a su asignación predeterminada</value>
+  </data>
+  <data name="XamlText.0375" xml:space="preserve">
+    <value>Administre las funciones, la duración de los eventos y el comportamiento de pantalla completa utilizado por el muelle.</value>
+  </data>
+  <data name="XamlText.0376" xml:space="preserve">
+    <value>El uso del servicio se muestra claramente.</value>
+  </data>
+  <data name="XamlText.0377" xml:space="preserve">
+    <value>Antes de habilitar un módulo, se explica la API Windows o servicio local que utiliza y se solicita su consentimiento.</value>
+  </data>
+  <data name="XamlText.0378" xml:space="preserve">
+    <value>Ver servicios y permisos</value>
+  </data>
+  <data name="XamlText.0379" xml:space="preserve">
+    <value>Ver todos los servicios y permisos del módulo</value>
+  </data>
+  <data name="XamlText.0380" xml:space="preserve">
+    <value>Duración del evento (segundos)</value>
+  </data>
+  <data name="XamlText.0381" xml:space="preserve">
+    <value>Detalles</value>
+  </data>
+  <data name="XamlText.0382" xml:space="preserve">
+    <value>Contenido sensible</value>
+  </data>
+  <data name="XamlText.0383" xml:space="preserve">
+    <value>Ambas protecciones están desactivadas de forma predeterminada para contenido confidencial, como notificaciones y transferencias.</value>
+  </data>
+  <data name="XamlText.0384" xml:space="preserve">
+    <value>Mostrar contenido sensible en pantalla completa</value>
+  </data>
+  <data name="XamlText.0385" xml:space="preserve">
+    <value>Permite contenido confidencial en juegos o aplicaciones de pantalla completa.</value>
+  </data>
+  <data name="XamlText.0386" xml:space="preserve">
+    <value>Mostrar contenido confidencial mientras Windows está bloqueado</value>
+  </data>
+  <data name="XamlText.0387" xml:space="preserve">
+    <value>Permite contenido confidencial del módulo mientras la sesión Windows está bloqueada.</value>
+  </data>
+  <data name="XamlText.0388" xml:space="preserve">
+    <value>Listo</value>
+  </data>
+  <data name="XamlText.0389" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="XamlText.0390" xml:space="preserve">
+    <value>Permiso requerido</value>
+  </data>
+  <data name="XamlText.0391" xml:space="preserve">
+    <value>Permiso denegado</value>
+  </data>
+  <data name="XamlText.0392" xml:space="preserve">
+    <value>Windows API no disponible</value>
+  </data>
+  <data name="XamlText.0393" xml:space="preserve">
+    <value>Ningún dispositivo compatible</value>
+  </data>
+  <data name="XamlText.0394" xml:space="preserve">
+    <value>error temporal</value>
+  </data>
+  <data name="XamlText.0395" xml:space="preserve">
+    <value>Carátula del álbum</value>
+  </data>
+  <data name="XamlText.0396" xml:space="preserve">
+    <value>Muelle de inicio</value>
+  </data>
+  <data name="XamlText.0397" xml:space="preserve">
+    <value>Utilice los iconos de arriba o desplácese para cambiar de módulo.</value>
+  </data>
+  <data name="XamlText.0398" xml:space="preserve">
+    <value>Utilice los iconos a continuación o desplácese para cambiar de módulo.</value>
+  </data>
+  <data name="XamlText.0399" xml:space="preserve">
+    <value>Silenciar o reactivar el volumen principal</value>
+  </data>
+  <data name="XamlText.0400" xml:space="preserve">
+    <value>Progreso de la transferencia</value>
+  </data>
+  <data name="XamlText.0401" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="XamlText.0402" xml:space="preserve">
+    <value>Dispositivos Bluetooth conectados</value>
+  </data>
+  <data name="XamlText.0403" xml:space="preserve">
+    <value>bluetooth</value>
+  </data>
+  <data name="XamlText.0404" xml:space="preserve">
+    <value>Estado de conexión</value>
+  </data>
+  <data name="XamlText.0405" xml:space="preserve">
+    <value>Minutos</value>
+  </data>
+  <data name="XamlText.0406" xml:space="preserve">
+    <value>1 minuto</value>
+  </data>
+  <data name="XamlText.0407" xml:space="preserve">
+    <value>5 minutos</value>
+  </data>
+  <data name="XamlText.0408" xml:space="preserve">
+    <value>10 minutos</value>
+  </data>
+  <data name="XamlText.0409" xml:space="preserve">
+    <value>25 minutos</value>
+  </data>
+  <data name="XamlText.0410" xml:space="preserve">
+    <value>45 minutos</value>
+  </data>
+  <data name="XamlText.0411" xml:space="preserve">
+    <value>Iniciar un cronómetro de 1 minuto</value>
+  </data>
+  <data name="XamlText.0412" xml:space="preserve">
+    <value>Iniciar un cronómetro de 5 minutos</value>
+  </data>
+  <data name="XamlText.0413" xml:space="preserve">
+    <value>Iniciar un cronómetro de 10 minutos</value>
+  </data>
+  <data name="XamlText.0414" xml:space="preserve">
+    <value>Iniciar un cronómetro de 25 minutos</value>
+  </data>
+  <data name="XamlText.0415" xml:space="preserve">
+    <value>Iniciar un cronómetro de 45 minutos</value>
+  </data>
+  <data name="XamlText.0416" xml:space="preserve">
+    <value>herramientas de tiempo</value>
+  </data>
+  <data name="XamlText.0417" xml:space="preserve">
+    <value>Suena una alarma cuando termina el cronómetro.</value>
+  </data>
+  <data name="XamlText.0418" xml:space="preserve">
+    <value>Horas: minutos: segundos</value>
+  </data>
+  <data name="XamlText.0419" xml:space="preserve">
+    <value>Vueltas</value>
+  </data>
+  <data name="XamlText.0420" xml:space="preserve">
+    <value>La vuelta más nueva primero</value>
+  </data>
+  <data name="XamlText.0421" xml:space="preserve">
+    <value>Comportamiento de interacción del muelle</value>
+  </data>
+  <data name="XamlText.0422" xml:space="preserve">
+    <value>Posición del muelle</value>
+  </data>
+  <data name="XamlText.0423" xml:space="preserve">
+    <value>Tema del muelle</value>
+  </data>
+  <data name="XamlText.0424" xml:space="preserve">
+    <value>Elija el monitor y el área de la pantalla donde aparece la base.</value>
+  </data>
+  <data name="XamlText.0425" xml:space="preserve">
+    <value>Elija cuándo se expande el muelle. El acceso por teclado y clic sigue estando disponible.</value>
+  </data>
+  <data name="XamlText.0426" xml:space="preserve">
+    <value>Umbral de batería baja</value>
+  </data>
+  <data name="XamlText.0427" xml:space="preserve">
+    <value>Umbral crítico de batería</value>
+  </data>
+  <data name="XamlText.0428" xml:space="preserve">
+    <value>Umbral de batería de emergencia</value>
+  </data>
+  <data name="XamlText.0429" xml:space="preserve">
+    <value>Comportamiento de interacción</value>
+  </data>
+  <data name="XamlText.0430" xml:space="preserve">
+    <value>Grabar acceso directo global</value>
+  </data>
+  <data name="XamlText.0431" xml:space="preserve">
+    <value>Mostrar contenido sensible en la pantalla de bloqueo</value>
+  </data>
+  <data name="XamlText.0432" xml:space="preserve">
+    <value>La velocidad se mide sólo mientras esta vista está abierta.</value>
+  </data>
+  <data name="XamlText.0433" xml:space="preserve">
+    <value>MiaDock no quita el foco del teclado de la aplicación activa cuando se abre al pasar el cursor.</value>
+  </data>
+  <data name="XamlText.0434" xml:space="preserve">
+    <value>Descargar</value>
+  </data>
+  <data name="XamlText.0435" xml:space="preserve">
+    <value>Velocidad de descarga</value>
+  </data>
+  <data name="XamlText.0436" xml:space="preserve">
+    <value>Subir</value>
+  </data>
+  <data name="XamlText.0437" xml:space="preserve">
+    <value>Velocidad de carga</value>
+  </data>
+  <data name="XamlText.0438" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="XamlText.0439" xml:space="preserve">
+    <value>Elija qué sucede cuando selecciona el botón cerrar.</value>
+  </data>
+  <data name="XamlText.0440" xml:space="preserve">
+    <value>¿La fuente no figura en la lista?</value>
+  </data>
+  <data name="XamlText.0441" xml:space="preserve">
+    <value>Borrar asignación de acceso directo</value>
+  </data>
+  <data name="XamlText.0442" xml:space="preserve">
+    <value>Cronógrafo</value>
+  </data>
+  <data name="XamlText.0443" xml:space="preserve">
+    <value>Vueltas del cronómetro</value>
+  </data>
+  <data name="XamlText.0444" xml:space="preserve">
+    <value>Pasos de configuración</value>
+  </data>
+  <data name="XamlText.0445" xml:space="preserve">
+    <value>Aplicación multimedia</value>
+  </data>
+  <data name="XamlText.0446" xml:space="preserve">
+    <value>MiaDock Configuración</value>
+  </data>
+  <data name="XamlText.0447" xml:space="preserve">
+    <value>¿Cerrar MiaDock?</value>
+  </data>
+  <data name="XamlText.0448" xml:space="preserve">
+    <value>Logotipo MiaDock</value>
+  </data>
+  <data name="XamlText.0449" xml:space="preserve">
+    <value>Abrir detalles del módulo</value>
+  </data>
+  <data name="XamlText.0450" xml:space="preserve">
+    <value>Cambiar entre módulos</value>
+  </data>
+  <data name="XamlText.0451" xml:space="preserve">
+    <value>La nueva actividad aparecerá aquí.</value>
+  </data>
+  <data name="XamlText.0452" xml:space="preserve">
+    <value>Ningún evento activo</value>
+  </data>
+  <data name="XamlText.0453" xml:space="preserve">
+    <value>Sin temporizador activo</value>
+  </data>
+  <data name="XamlText.0454" xml:space="preserve">
+    <value>No hay ningún dispositivo Bluetooth conectado</value>
+  </data>
+  <data name="XamlText.0455" xml:space="preserve">
+    <value>No se encontró ninguna transferencia</value>
+  </data>
+  <data name="XamlText.0456" xml:space="preserve">
+    <value>Progreso</value>
+  </data>
+  <data name="XamlText.0457" xml:space="preserve">
+    <value>Salta a la pista anterior</value>
+  </data>
+  <data name="XamlText.0458" xml:space="preserve">
+    <value>Salta a la pista anterior; no disponible cuando la fuente no lo admite.</value>
+  </data>
+  <data name="XamlText.0459" xml:space="preserve">
+    <value>Reproduce o pausa la pista actual</value>
+  </data>
+  <data name="XamlText.0460" xml:space="preserve">
+    <value>Reproduce o pausa los medios actuales.</value>
+  </data>
+  <data name="XamlText.0461" xml:space="preserve">
+    <value>Salta a la siguiente pista</value>
+  </data>
+  <data name="XamlText.0462" xml:space="preserve">
+    <value>Salta a la siguiente pista; no disponible cuando la fuente no lo admite.</value>
+  </data>
+  <data name="XamlText.0463" xml:space="preserve">
+    <value>Monitorear y posicionar</value>
+  </data>
+  <data name="XamlText.0464" xml:space="preserve">
+    <value>Actividad musical</value>
+  </data>
+  <data name="XamlText.0465" xml:space="preserve">
+    <value>Música</value>
+  </data>
+  <data name="XamlText.0466" xml:space="preserve">
+    <value>Posible actividad de llamada</value>
+  </data>
+  <data name="XamlText.0467" xml:space="preserve">
+    <value>Siguiente pista</value>
+  </data>
+  <data name="XamlText.0468" xml:space="preserve">
+    <value>Reproducir o pausar</value>
+  </data>
+  <data name="XamlText.0469" xml:space="preserve">
+    <value>Pista anterior</value>
+  </data>
+  <data name="XamlText.0470" xml:space="preserve">
+    <value>Ahora jugando</value>
+  </data>
+  <data name="XamlText.0471" xml:space="preserve">
+    <value>Comportamiento de enfoque</value>
+  </data>
+  <data name="XamlText.0472" xml:space="preserve">
+    <value>Paso de configuración anterior</value>
+  </data>
+  <data name="XamlText.0473" xml:space="preserve">
+    <value>Módulo anterior</value>
+  </data>
+  <data name="XamlText.0474" xml:space="preserve">
+    <value>Avance</value>
+  </data>
+  <data name="XamlText.0475" xml:space="preserve">
+    <value>Nivel de batería</value>
+  </data>
+  <data name="XamlText.0476" xml:space="preserve">
+    <value>Horas</value>
+  </data>
+  <data name="XamlText.0477" xml:space="preserve">
+    <value>Segundo</value>
+  </data>
+  <data name="XamlText.0478" xml:space="preserve">
+    <value>Volumen de la aplicación multimedia seleccionada</value>
+  </data>
+  <data name="XamlText.0479" xml:space="preserve">
+    <value>Silenciar o activar el silencio de la aplicación seleccionada</value>
+  </data>
+  <data name="XamlText.0480" xml:space="preserve">
+    <value>Recuerda mi elección</value>
+  </data>
+  <data name="XamlText.0481" xml:space="preserve">
+    <value>Reiniciar</value>
+  </data>
+  <data name="XamlText.0482" xml:space="preserve">
+    <value>audio del sistema</value>
+  </data>
+  <data name="XamlText.0483" xml:space="preserve">
+    <value>Actividad del sistema</value>
+  </data>
+  <data name="XamlText.0484" xml:space="preserve">
+    <value>Cambia el estado de silencio del audio maestro Windows.</value>
+  </data>
+  <data name="XamlText.0485" xml:space="preserve">
+    <value>Minimizar a la bandeja del sistema</value>
+  </data>
+  <data name="XamlText.0486" xml:space="preserve">
+    <value>Entradas recientes del registro técnico</value>
+  </data>
+  <data name="XamlText.0487" xml:space="preserve">
+    <value>Siguiente paso de configuración</value>
+  </data>
+  <data name="XamlText.0488" xml:space="preserve">
+    <value>El tiempo ha terminado</value>
+  </data>
+  <data name="XamlText.0489" xml:space="preserve">
+    <value>Estilo de notificación de pantalla completa</value>
+  </data>
+  <data name="XamlText.0490" xml:space="preserve">
+    <value>Mostrar eventos multimedia en pantalla completa</value>
+  </data>
+  <data name="XamlText.0491" xml:space="preserve">
+    <value>Elige un tema</value>
+  </data>
+  <data name="XamlText.0492" xml:space="preserve">
+    <value>Claro</value>
+  </data>
+  <data name="XamlText.0493" xml:space="preserve">
+    <value>Posición de la pista</value>
+  </data>
+  <data name="XamlText.0494" xml:space="preserve">
+    <value>Regazo</value>
+  </data>
+  <data name="XamlText.0495" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="XamlText.0496" xml:space="preserve">
+    <value>Salir de la aplicación</value>
+  </data>
+  <data name="XamlText.0497" xml:space="preserve">
+    <value>Volumen</value>
+  </data>
+  <data name="XamlText.0498" xml:space="preserve">
+    <value>Comience MiaDock con Windows</value>
+  </data>
+  <data name="XamlText.0499" xml:space="preserve">
+    <value>Ejecutar al inicio Windows</value>
+  </data>
+  <data name="XamlText.0500" xml:space="preserve">
+    <value>Minutero</value>
+  </data>
+  <data name="XamlText.0501" xml:space="preserve">
+    <value>Progreso del temporizador</value>
+  </data>
+  <data name="XamlText.0502" xml:space="preserve">
+    <value>Temporizador completado</value>
+  </data>
+  <data name="XamlText.0503" xml:space="preserve">
+    <value>Cancelar temporizador</value>
+  </data>
+  <data name="XamlText.0504" xml:space="preserve">
+    <value>Puede cambiar todas estas opciones más adelante en Configuración.</value>
+  </data>
+  <data name="XamlText.0505" xml:space="preserve">
+    <value>El módulo multimedia está disponible inicialmente. La batería, el micrófono, el temporizador y otros módulos pueden utilizar la misma arquitectura.</value>
+  </data>
+  <data name="XamlText.0506" xml:space="preserve">
+    <value>Seleccione el botón de grabación y presione una combinación que contenga Ctrl, Alt o Shift. La tecla Windows y F12 no están disponibles.</value>
+  </data>
+  <data name="XamlText.0507" xml:space="preserve">
+    <value>MiaDock funciona sin conexión y no utiliza cuenta, conexión de servidor, telemetría ni informes automáticos de errores.</value>
+  </data>
+  <data name="XamlText.0508" xml:space="preserve">
+    <value>MiaDock está listo</value>
+  </data>
+  <data name="XamlText.0509" xml:space="preserve">
+    <value>Elija la fuente de medios predeterminada MiaDock a continuación. La lista se actualiza a medida que cambian las sesiones de medios de Windows.</value>
+  </data>
+  <data name="XamlText.0510" xml:space="preserve">
+    <value>Elija si MiaDock se inicia automáticamente cuando inicia sesión en Windows.</value>
+  </data>
+  <data name="XamlText.0511" xml:space="preserve">
+    <value>El muelle normal está oculto en pantalla completa. Los eventos seleccionados aparecen durante cinco segundos de forma predeterminada.</value>
+  </data>
+  <data name="XamlText.0512" xml:space="preserve">
+    <value>Indicador de reproducción</value>
+  </data>
+  <data name="XamlText.0513" xml:space="preserve">
+    <value>Inicie medios en Spotify, Apple Music o un navegador. Puede continuar con la configuración sin seleccionar una fuente.</value>
+  </data>
+  <data name="XamlText.0514" xml:space="preserve">
+    <value>Los cambios de tema se obtienen una vista previa de inmediato. El tema anterior se restaura si se cancela la instalación.</value>
+  </data>
+  <data name="XamlText.0515" xml:space="preserve">
+    <value>Administre el cronómetro y el cronómetro desde el módulo Hora en el muelle expandido. Utilice la rueda del mouse para moverse entre la vista predeterminada y los módulos.</value>
+  </data>
+  <data name="XamlText.0516" xml:space="preserve">
+    <value>Vista previa de la interfaz de la fase 1</value>
+  </data>
+  <data name="XamlText.0517" xml:space="preserve">
+    <value>Datos simulados locales</value>
+  </data>
+  <data name="XamlText.0518" xml:space="preserve">
+    <value>Estilo del tema</value>
+  </data>
+  <data name="XamlText.0519" xml:space="preserve">
+    <value>Estado del muelle</value>
+  </data>
+  <data name="XamlText.0520" xml:space="preserve">
+    <value>musica expandida</value>
+  </data>
+  <data name="XamlText.0521" xml:space="preserve">
+    <value>Seguimiento de notificación</value>
+  </data>
+  <data name="XamlText.0522" xml:space="preserve">
+    <value>Esta ventana es una vista previa del desarrollo. El muelle utiliza sesiones multimedia Windows en vivo; La persistencia y las animaciones se agregan en fases posteriores.</value>
+  </data>
+  <data name="XamlText.0523" xml:space="preserve">
+    <value>MiaDock Vista previa</value>
+  </data>
+  <data name="XamlText.0524" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="XamlText.0525" xml:space="preserve">
+    <value>Atrás</value>
+  </data>
+  <data name="XamlText.0526" xml:space="preserve">
+    <value>Próximo</value>
+  </data>
+  <data name="XamlText.0527" xml:space="preserve">
+    <value>Bienvenido a MiaDock</value>
+  </data>
+  <data name="XamlText.0528" xml:space="preserve">
+    <value>Configuremos su base interactiva modular que funcione naturalmente con Windows 11.</value>
+  </data>
+  <data name="XamlText.0529" xml:space="preserve">
+    <value>Elige tus módulos</value>
+  </data>
+  <data name="XamlText.0530" xml:space="preserve">
+    <value>Elija las funciones que desee en el muelle. Al seleccionar Siguiente se explican los servicios utilizados y se solicita su consentimiento.</value>
+  </data>
+  <data name="XamlText.0531" xml:space="preserve">
+    <value>Resumen de configuración</value>
+  </data>
+  <data name="XamlText.0532" xml:space="preserve">
+    <value>Revise sus opciones. Las configuraciones se guardan juntas cuando selecciona Finalizar.</value>
+  </data>
+  <data name="XamlText.0533" xml:space="preserve">
+    <value>12 horas</value>
+  </data>
+  <data name="XamlText.0534" xml:space="preserve">
+    <value>24 horas</value>
+  </data>
+  <data name="XamlText.0535" xml:space="preserve">
+    <value>Visualización de ventana activa</value>
+  </data>
+  <data name="XamlText.0536" xml:space="preserve">
+    <value>Líquido</value>
+  </data>
+  <data name="XamlText.0537" xml:space="preserve">
+    <value>Centro inferior</value>
+  </data>
+  <data name="XamlText.0538" xml:space="preserve">
+    <value>Abajo a la derecha</value>
+  </data>
+  <data name="XamlText.0539" xml:space="preserve">
+    <value>Abajo a la izquierda</value>
+  </data>
+  <data name="XamlText.0540" xml:space="preserve">
+    <value>Pantalla principal</value>
+  </data>
+  <data name="XamlText.0541" xml:space="preserve">
+    <value>parecido a una manzana</value>
+  </data>
+  <data name="XamlText.0542" xml:space="preserve">
+    <value>Vidrio transparente incoloro que deja ver y difumina el escritorio que hay detrás.</value>
+  </data>
+  <data name="XamlText.0543" xml:space="preserve">
+    <value>Los atajos globales asignados están activos.</value>
+  </data>
+  <data name="XamlText.0544" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="XamlText.0545" xml:space="preserve">
+    <value>Lee el tipo de conexión y, solo mientras la vista ampliada está abierta, mide la velocidad actual a partir de los contadores de bytes del adaptador. El contenido del tráfico nunca se lee.</value>
+  </data>
+  <data name="XamlText.0546" xml:space="preserve">
+    <value>No se pudo cambiar la configuración de inicio. Verifique Windows Configuración de aplicaciones de inicio.</value>
+  </data>
+  <data name="XamlText.0547" xml:space="preserve">
+    <value>La tarea de inicio no está disponible en esta ejecución.</value>
+  </data>
+  <data name="XamlText.0548" xml:space="preserve">
+    <value>La tarea de inicio está bloqueada por la política del sistema.</value>
+  </data>
+  <data name="XamlText.0549" xml:space="preserve">
+    <value>La tarea de inicio está habilitada por la política del sistema.</value>
+  </data>
+  <data name="XamlText.0550" xml:space="preserve">
+    <value>Inicio y apagado</value>
+  </data>
+  <data name="XamlText.0551" xml:space="preserve">
+    <value>El detector de notificaciones requiere el paquete MSIX de desarrollo.</value>
+  </data>
+  <data name="XamlText.0552" xml:space="preserve">
+    <value>No se pudo inicializar el acceso a las notificaciones.</value>
+  </data>
+  <data name="XamlText.0553" xml:space="preserve">
+    <value>Acceso a notificaciones y privacidad</value>
+  </data>
+  <data name="XamlText.0554" xml:space="preserve">
+    <value>Se solicitará el permiso Windows cuando habilite el módulo de notificación.</value>
+  </data>
+  <data name="XamlText.0555" xml:space="preserve">
+    <value>El detector de notificaciones no está disponible en esta versión Windows.</value>
+  </data>
+  <data name="XamlText.0556" xml:space="preserve">
+    <value>Este módulo también abrirá el mensaje de permiso Windows.</value>
+  </data>
+  <data name="XamlText.0557" xml:space="preserve">
+    <value>El estado de este módulo se procesa solo en este dispositivo.</value>
+  </data>
+  <data name="XamlText.0558" xml:space="preserve">
+    <value>Esta opción está disponible cuando el paquete MSIX está instalado.</value>
+  </data>
+  <data name="XamlText.0559" xml:space="preserve">
+    <value>Vidrio borroso</value>
+  </data>
+  <data name="XamlText.0560" xml:space="preserve">
+    <value>Una superficie Windows Acrylic más clara y transparente.</value>
+  </data>
+  <data name="XamlText.0561" xml:space="preserve">
+    <value>Una apariencia Mica más estratificada y pronunciada.</value>
+  </data>
+  <data name="XamlText.0562" xml:space="preserve">
+    <value>Equilibrado</value>
+  </data>
+  <data name="XamlText.0563" xml:space="preserve">
+    <value>Apagado</value>
+  </data>
+  <data name="XamlText.0564" xml:space="preserve">
+    <value>Dinámica</value>
+  </data>
+  <data name="XamlText.0565" xml:space="preserve">
+    <value>Apariencia y ubicación del muelle</value>
+  </data>
+  <data name="XamlText.0566" xml:space="preserve">
+    <value>Expandir o contraer muelle</value>
+  </data>
+  <data name="XamlText.0567" xml:space="preserve">
+    <value>Transferencias de archivos</value>
+  </data>
+  <data name="XamlText.0568" xml:space="preserve">
+    <value>iniciar el muelle</value>
+  </data>
+  <data name="XamlText.0569" xml:space="preserve">
+    <value>Estado y acciones rápidas</value>
+  </data>
+  <data name="XamlText.0570" xml:space="preserve">
+    <value>Estado, actualizaciones y configuraciones rápidas</value>
+  </data>
+  <data name="XamlText.0571" xml:space="preserve">
+    <value>Selección de pantalla, DPI y posicionamiento.</value>
+  </data>
+  <data name="XamlText.0572" xml:space="preserve">
+    <value>Visualización y posicionamiento</value>
+  </data>
+  <data name="XamlText.0573" xml:space="preserve">
+    <value>Otra aplicación ya utiliza al menos un acceso directo.</value>
+  </data>
+  <data name="XamlText.0574" xml:space="preserve">
+    <value>Al menos un acceso directo no es válido y no se pudo activar.</value>
+  </data>
+  <data name="XamlText.0575" xml:space="preserve">
+    <value>Se negó el acceso. Habilite el acceso a notificaciones en Windows Configuración.</value>
+  </data>
+  <data name="XamlText.0576" xml:space="preserve">
+    <value>Procesa la pista, el artista, la obra de arte y el estado de reproducción de la sesión multimedia activa en este dispositivo; envía comandos de reproducción a la aplicación seleccionada.</value>
+  </data>
+  <data name="XamlText.0577" xml:space="preserve">
+    <value>Activar, desactivar, perfiles y automatización.</value>
+  </data>
+  <data name="XamlText.0578" xml:space="preserve">
+    <value>Supervisa localmente el estado de conexión de los dispositivos Bluetooth emparejados; no empareja ni gestiona conexiones.</value>
+  </data>
+  <data name="XamlText.0579" xml:space="preserve">
+    <value>Coloca el cursor y haz clic</value>
+  </data>
+  <data name="XamlText.0580" xml:space="preserve">
+    <value>Al pasar el puntero</value>
+  </data>
+  <data name="XamlText.0581" xml:space="preserve">
+    <value>Inválido</value>
+  </data>
+  <data name="XamlText.0582" xml:space="preserve">
+    <value>La combinación no válida no se guardó. Utilice una tecla compatible con Ctrl, Alt o Shift.</value>
+  </data>
+  <data name="XamlText.0583" xml:space="preserve">
+    <value>Los atajos globales están deshabilitados.</value>
+  </data>
+  <data name="XamlText.0584" xml:space="preserve">
+    <value>Visibilidad, interacción y lenguaje.</value>
+  </data>
+  <data name="XamlText.0585" xml:space="preserve">
+    <value>Visibilidad, interacción, idioma, reloj y posición del muelle.</value>
+  </data>
+  <data name="XamlText.0586" xml:space="preserve">
+    <value>Siempre visible</value>
+  </data>
+  <data name="XamlText.0587" xml:space="preserve">
+    <value>Configuración rápida, estado y actualizaciones</value>
+  </data>
+  <data name="XamlText.0588" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="XamlText.0589" xml:space="preserve">
+    <value>Deslizarse y desvanecerse</value>
+  </data>
+  <data name="XamlText.0590" xml:space="preserve">
+    <value>Controles de volumen, reproducción y aplicación fuente</value>
+  </data>
+  <data name="XamlText.0591" xml:space="preserve">
+    <value>Con controles</value>
+  </data>
+  <data name="XamlText.0592" xml:space="preserve">
+    <value>Una superficie Windows Acrylic teñida de oscuro.</value>
+  </data>
+  <data name="XamlText.0593" xml:space="preserve">
+    <value>Asigne claves a las acciones que desee utilizar.</value>
+  </data>
+  <data name="XamlText.0594" xml:space="preserve">
+    <value>Servicio de canalización con nombre MiaDock con ámbito de usuario</value>
+  </data>
+  <data name="XamlText.0595" xml:space="preserve">
+    <value>Corto</value>
+  </data>
+  <data name="XamlText.0596" xml:space="preserve">
+    <value>Fuente de medios y reproducción</value>
+  </data>
+  <data name="XamlText.0597" xml:space="preserve">
+    <value>Reproducir o pausar medios</value>
+  </data>
+  <data name="XamlText.0598" xml:space="preserve">
+    <value>MiaDock no comenzará con Windows.</value>
+  </data>
+  <data name="XamlText.0599" xml:space="preserve">
+    <value>MiaDock comenzará cuando inicie sesión en Windows.</value>
+  </data>
+  <data name="XamlText.0600" xml:space="preserve">
+    <value>MiaDock utilizará las siguientes API Windows o servicios locales del dispositivo para las funciones que seleccionó. Los datos no se envían a un servidor.</value>
+  </data>
+  <data name="XamlText.0601" xml:space="preserve">
+    <value>MiaDock servicio de módulo local</value>
+  </data>
+  <data name="XamlText.0602" xml:space="preserve">
+    <value>MiaDock servicio de hora local y reproductor de alarma</value>
+  </data>
+  <data name="XamlText.0603" xml:space="preserve">
+    <value>Procesa la actividad de la sesión de audio del micrófono, el estado de acceso/dispositivo de la cámara y la inferencia limitada de llamadas locales. El contenido de la llamada nunca se lee.</value>
+  </data>
+  <data name="XamlText.0604" xml:space="preserve">
+    <value>Micrófono, cámara y llamadas.</value>
+  </data>
+  <data name="XamlText.0605" xml:space="preserve">
+    <value>Servicios y permisos del módulo.</value>
+  </data>
+  <data name="XamlText.0606" xml:space="preserve">
+    <value>Módulos y permisos</value>
+  </data>
+  <data name="XamlText.0607" xml:space="preserve">
+    <value>Vidrio esmerilado neutro</value>
+  </data>
+  <data name="XamlText.0608" xml:space="preserve">
+    <value>Perfiles de enfoque y automatización.</value>
+  </data>
+  <data name="XamlText.0609" xml:space="preserve">
+    <value>Enfoque, tiempo y atajos</value>
+  </data>
+  <data name="XamlText.0610" xml:space="preserve">
+    <value>Juegos y comportamiento de notificación en pantalla completa</value>
+  </data>
+  <data name="XamlText.0611" xml:space="preserve">
+    <value>Comportamiento en juego y pantalla completa</value>
+  </data>
+  <data name="XamlText.0612" xml:space="preserve">
+    <value>Batería</value>
+  </data>
+  <data name="XamlText.0613" xml:space="preserve">
+    <value>Supervisa el porcentaje de batería, la fuente de alimentación y el estado de ahorro de energía en este dispositivo.</value>
+  </data>
+  <data name="XamlText.0614" xml:space="preserve">
+    <value>Vidrio esmerilado neutro que deja ver el escritorio sin tinte de color.</value>
+  </data>
+  <data name="XamlText.0615" xml:space="preserve">
+    <value>Mínimo</value>
+  </data>
+  <data name="XamlText.0616" xml:space="preserve">
+    <value>Superficie negra pura y sin sombras optimizada para pantallas OLED.</value>
+  </data>
+  <data name="XamlText.0617" xml:space="preserve">
+    <value>centro derecho</value>
+  </data>
+  <data name="XamlText.0618" xml:space="preserve">
+    <value>Volumen de la aplicación seleccionada</value>
+  </data>
+  <data name="XamlText.0619" xml:space="preserve">
+    <value>Usar otra sesión activa</value>
+  </data>
+  <data name="XamlText.0620" xml:space="preserve">
+    <value>Una superficie sólida con el fondo seleccionado y los colores de acento.</value>
+  </data>
+  <data name="XamlText.0621" xml:space="preserve">
+    <value>Bandeja del sistema</value>
+  </data>
+  <data name="XamlText.0622" xml:space="preserve">
+    <value>Iniciar silenciosamente en la bandeja del sistema</value>
+  </data>
+  <data name="XamlText.0623" xml:space="preserve">
+    <value>centro izquierda</value>
+  </data>
+  <data name="XamlText.0624" xml:space="preserve">
+    <value>Versión y enlaces</value>
+  </data>
+  <data name="XamlText.0625" xml:space="preserve">
+    <value>Versión, Microsoft Store y enlaces sociales</value>
+  </data>
+  <data name="XamlText.0626" xml:space="preserve">
+    <value>Pantalla completa</value>
+  </data>
+  <data name="XamlText.0627" xml:space="preserve">
+    <value>Muelle negro puro, minimalista y de alto contraste.</value>
+  </data>
+  <data name="XamlText.0628" xml:space="preserve">
+    <value>Diagnóstico e información del producto.</value>
+  </data>
+  <data name="XamlText.0629" xml:space="preserve">
+    <value>Tema, tamaño y superficie.</value>
+  </data>
+  <data name="XamlText.0630" xml:space="preserve">
+    <value>Tema, tamaño, color, opacidad, radio y animación.</value>
+  </data>
+  <data name="XamlText.0631" xml:space="preserve">
+    <value>Icono de bandeja y comportamiento de un solo clic</value>
+  </data>
+  <data name="XamlText.0632" xml:space="preserve">
+    <value>Icono de bandeja y comportamiento de clic</value>
+  </data>
+  <data name="XamlText.0633" xml:space="preserve">
+    <value>Bandeja, inicio y apagado</value>
+  </data>
+  <data name="XamlText.0634" xml:space="preserve">
+    <value>Al hacer clic</value>
+  </data>
+  <data name="XamlText.0635" xml:space="preserve">
+    <value>Sal de la aplicación</value>
+  </data>
+  <data name="XamlText.0636" xml:space="preserve">
+    <value>Largo</value>
+  </data>
+  <data name="XamlText.0637" xml:space="preserve">
+    <value>Lee el volumen y el estado de silencio del dispositivo de salida predeterminado en este dispositivo y lo cambia solo según el comando del usuario.</value>
+  </data>
+  <data name="XamlText.0638" xml:space="preserve">
+    <value>Ahora no</value>
+  </data>
+  <data name="XamlText.0639" xml:space="preserve">
+    <value>Una superficie suave Mica que coincida con Windows 11.</value>
+  </data>
+  <data name="XamlText.0640" xml:space="preserve">
+    <value>Sigue automáticamente el modo claro/oscuro Windows y el color de acento.</value>
+  </data>
+  <data name="XamlText.0641" xml:space="preserve">
+    <value>Windows comportamiento de inicio y cierre</value>
+  </data>
+  <data name="XamlText.0642" xml:space="preserve">
+    <value>Windows inicio y cierre de ventana</value>
+  </data>
+  <data name="XamlText.0643" xml:space="preserve">
+    <value>Windows se permite el acceso a notificaciones.</value>
+  </data>
+  <data name="XamlText.0644" xml:space="preserve">
+    <value>Windows notificaciones</value>
+  </data>
+  <data name="XamlText.0645" xml:space="preserve">
+    <value>Windows deshabilitó esta tarea. Vuelva a habilitarlo desde la configuración de Aplicaciones de inicio.</value>
+  </data>
+  <data name="XamlText.0646" xml:space="preserve">
+    <value>Windows acceso, filtros de aplicaciones y privacidad</value>
+  </data>
+  <data name="XamlText.0647" xml:space="preserve">
+    <value>Solo eventos</value>
+  </data>
+  <data name="XamlText.0648" xml:space="preserve">
+    <value>Solo aplicación seleccionada</value>
+  </data>
+  <data name="XamlText.0649" xml:space="preserve">
+    <value>Primavera</value>
+  </data>
+  <data name="XamlText.0650" xml:space="preserve">
+    <value>Elástico</value>
+  </data>
+  <data name="XamlText.0651" xml:space="preserve">
+    <value>Registros locales e informe de errores</value>
+  </data>
+  <data name="XamlText.0652" xml:space="preserve">
+    <value>Registros locales, limpieza y exportación ZIP</value>
+  </data>
+  <data name="XamlText.0653" xml:space="preserve">
+    <value>Los procesos transfieren ID, estado y progreso de bytes enviados por proveedores locales. Las rutas de los archivos son opcionales y nunca se registran.</value>
+  </data>
+  <data name="XamlText.0654" xml:space="preserve">
+    <value>La combinación duplicada no se guardó. Elija un atajo diferente para cada acción.</value>
+  </data>
+  <data name="XamlText.0655" xml:space="preserve">
+    <value>Tiempo y atajos</value>
+  </data>
+  <data name="XamlText.0656" xml:space="preserve">
+    <value>Temporizador y cronómetro</value>
+  </data>
+  <data name="XamlText.0657" xml:space="preserve">
+    <value>Almacena el estado del temporizador y el cronómetro en la configuración local y reproduce el sonido de la alarma local cuando expira el tiempo.</value>
+  </data>
+  <data name="XamlText.0658" xml:space="preserve">
+    <value>Temporizador, cronómetro y atajos globales</value>
+  </data>
+  <data name="XamlText.0659" xml:space="preserve">
+    <value>Temporizador, cronómetro, alarma y atajos globales</value>
+  </data>
+  <data name="XamlText.0660" xml:space="preserve">
+    <value>Pausar o reanudar el cronómetro</value>
+  </data>
+  <data name="XamlText.0661" xml:space="preserve">
+    <value>Contradictorio</value>
+  </data>
+  <data name="XamlText.0662" xml:space="preserve">
+    <value>Escalar y desvanecerse</value>
+  </data>
+  <data name="XamlText.0663" xml:space="preserve">
+    <value>Color sólido personalizado</value>
+  </data>
+  <data name="XamlText.0664" xml:space="preserve">
+    <value>Funciones y sus servicios Windows</value>
+  </data>
+  <data name="XamlText.0665" xml:space="preserve">
+    <value>Funciones, servicios Windows y permisos</value>
+  </data>
+  <data name="XamlText.0666" xml:space="preserve">
+    <value>Centro superior</value>
+  </data>
+  <data name="XamlText.0667" xml:space="preserve">
+    <value>Arriba a la derecha</value>
+  </data>
+  <data name="XamlText.0668" xml:space="preserve">
+    <value>Arriba a la izquierda</value>
+  </data>
+  <data name="XamlText.0669" xml:space="preserve">
+    <value>Permitir</value>
+  </data>
+  <data name="XamlText.0670" xml:space="preserve">
+    <value>Procesa la aplicación de origen y el título de notificación de las aplicaciones permitidas en este dispositivo. El texto del cuerpo no se lee a menos que se habilite por separado; el contenido no se registra.</value>
+  </data>
+  <data name="XamlText.0671" xml:space="preserve">
+    <value>Permisos y contenido sensible</value>
+  </data>
+  <data name="Klavye kilitleri" xml:space="preserve">
+    <value>Bloqueos de teclado</value>
+  </data>
+  <data name="Caps Lock, Num Lock veya Scroll Lock tuşuna basıldığında dock üzerinde açık/kapalı olayını gösterir." xml:space="preserve">
+    <value>Muestra un evento activado/desactivado en el dock al pulsar Bloq Mayús, Bloq Num o Bloq Despl.</value>
+  </data>
+  <data name="Kilit tuşu olaylarını göster" xml:space="preserve">
+    <value>Mostrar eventos de teclas de bloqueo</value>
+  </data>
+  <data name="Yenilikler" xml:space="preserve">
+    <value>Novedades</value>
+  </data>
+  <data name="Bu sürümde ve önceki sürümlerde neler değişti." xml:space="preserve">
+    <value>Qué cambió en esta y en versiones anteriores.</value>
+  </data>
+  <data name="XamlText.0672" xml:space="preserve">
+    <value>Llamada</value>
+    <comment>Arama</comment>
+  </data>
+  <data name="XamlText.0673" xml:space="preserve">
+    <value>Escala y fundido, deslizamiento y fundido, o resorte. Se aplica al crecer y reducir el dock.</value>
+    <comment>Ölçek ve solma, kayma ve solma veya yay. Dock büyüyüp küçülürken uygulanır.</comment>
+  </data>
+  <data name="İsteğe bağlı modüller" xml:space="preserve">
+    <value>Módulos opcionales</value>
+  </data>
+  <data name="Ana dock deneyimini tamamlayan isteğe bağlı olay ve yardımcı özellikler." xml:space="preserve">
+    <value>Eventos opcionales y funciones auxiliares que complementan la experiencia principal del dock.</value>
+  </data>
+  <data name="Dock ve modüller için global klavye kısayollarını yönetin." xml:space="preserve">
+    <value>Administra los atajos de teclado globales del dock y los módulos.</value>
+  </data>
+  <data name="XamlText.0674" xml:space="preserve">
+    <value>Apariencia, ubicación y pantalla completa del dock</value>
+  </data>
+  <data name="XamlText.0675" xml:space="preserve">
+    <value>Atajos globales del dock y módulos</value>
+  </data>
+  <data name="XamlText.0676" xml:space="preserve">
+    <value>Resumen</value>
+  </data>
+  <data name="XamlText.0677" xml:space="preserve">
+    <value>Atajos de teclado globales</value>
+  </data>
+  <data name="XamlText.0678" xml:space="preserve">
+    <value>Bloqueos de teclado y funciones auxiliares</value>
+  </data>
+  <data name="XamlText.0679" xml:space="preserve">
+    <value>Atajos</value>
+  </data>
+  <data name="XamlText.0680" xml:space="preserve">
+    <value>Infiere actividad de llamada local limitada a partir de sesiones de audio de micrófono y comunicación. El contenido de la llamada nunca se lee.</value>
+  </data>
+  <data name="XamlText.0681" xml:space="preserve">
+    <value>Muestra localmente qué aplicaciones usan el micrófono y la cámara. El contenido de audio o vídeo nunca se lee y no se envía nada fuera del dispositivo.</value>
+  </data>
+  <data name="XamlText.0682" xml:space="preserve">
+    <value>Notas de la versión y lista de cambios</value>
+  </data>
+  <data name="XamlText.0683" xml:space="preserve">
+    <value>Notas de la versión y cambios</value>
+  </data>
+  <data name="XamlText.0684" xml:space="preserve">
+    <value>Funciones, medios y notificaciones</value>
+  </data>
+  <data name="XamlText.0685" xml:space="preserve">
+    <value>Opcional</value>
+  </data>
+  <data name="USB cihazları" xml:space="preserve">
+    <value>Dispositivos USB</value>
+  </data>
+  <data name="USB bellek takıldığında veya çıkarıldığında dock üzerinde olay gösterir." xml:space="preserve">
+    <value>Muestra un evento en el dock cuando se conecta o desconecta una unidad USB.</value>
+  </data>
+  <data name="USB tak/çıkar olaylarını göster" xml:space="preserve">
+    <value>Mostrar eventos de conexión/desconexión USB</value>
+  </data>
+  <data name="XamlText.0686" xml:space="preserve">
+    <value>Bloqueos de teclado, USB y funciones auxiliares</value>
+  </data>
+</root>

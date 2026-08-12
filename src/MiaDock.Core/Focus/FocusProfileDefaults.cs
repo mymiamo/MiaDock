@@ -38,7 +38,7 @@ public static class FocusProfileDefaults
             "#8B5CF6",
             new FocusProfileBehavior(
                 FocusDockVisibility.EventsOnly,
-                ["battery", "timer", "media", "volume", "system-activity"],
+                ["battery", "timer", "media", "volume", "privacy", "system-activity"],
                 ModuleEventPriority.High,
                 true,
                 false,

@@ -51,7 +51,7 @@ public sealed class StoreUpdateCoordinatorTests
     }
 
     [TestMethod]
-    public async Task RecentPersistedCheck_ThrottlesManualStoreQuery()
+    public async Task RecentPersistedCheck_DoesNotThrottleManualStoreQuery()
     {
         var settings = new FakeSettingsService
         {
@@ -78,7 +78,7 @@ public sealed class StoreUpdateCoordinatorTests
 
         await coordinator.CheckNowAsync();
 
-        Assert.AreEqual(0, store.CheckCount);
+        Assert.AreEqual(1, store.CheckCount);
     }
 
     [TestMethod]
@@ -97,6 +97,38 @@ public sealed class StoreUpdateCoordinatorTests
         coordinator.SetAutomaticChecksEnabled(false);
 
         Assert.IsFalse(settings.Current.StoreUpdates.AutomaticChecksEnabled);
+    }
+
+    [TestMethod]
+    public void FuturePersistedCheck_DoesNotCreateAnUnboundedInitialDelay()
+    {
+        var settings = new FakeSettingsService
+        {
+            Current = MiaDockSettings.Default with
+            {
+                StoreUpdates = StoreUpdateSettings.Default with
+                {
+                    LastCheckUtc = DateTimeOffset.UtcNow.AddHours(12)
+                }
+            }
+        };
+        var store = new FakeStoreUpdateService();
+        var module = new StoreUpdateModule(store, Localizer());
+        var coordinator = new StoreUpdateCoordinator(
+            store,
+            settings,
+            module,
+            new ImmediateDispatcher(),
+            new NullLogService());
+
+        var delayMethod = typeof(StoreUpdateCoordinator).GetMethod(
+            "InitialDelayFromLastCheck",
+            System.Reflection.BindingFlags.Instance |
+            System.Reflection.BindingFlags.NonPublic);
+        var delay = (TimeSpan)delayMethod!.Invoke(coordinator, null)!;
+
+        Assert.AreEqual(StoreUpdateCoordinator.InitialCheckDelay, delay);
+        coordinator.DisposeAsync().AsTask().GetAwaiter().GetResult();
     }
 
     private static StoreUpdateSnapshot Available(string version) =>

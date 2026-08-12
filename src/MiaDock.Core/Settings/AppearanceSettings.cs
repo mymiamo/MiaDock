@@ -20,7 +20,10 @@ public sealed record AppearanceSettings(
     double ShadowIntensity,
     double AnimationSpeed,
     IslandAnimationKind AnimationKind,
-    MotionSettings? Motion = null)
+    MotionSettings? Motion = null,
+    double EdgeMargin = 12,
+    DockCornerRadii? CornerRadii = null,
+    bool LinkCornerRadii = true)
 {
     public static AppearanceSettings Default { get; } = new(
         ThemeStyle.AppleLike,
@@ -34,6 +37,12 @@ public sealed record AppearanceSettings(
         1,
         0,
         1,
-        IslandAnimationKind.Spring,
-        MotionSettings.Default);
+        IslandAnimationKind.ScaleFade,
+        MotionSettings.Default,
+        12,
+        DockCornerRadii.Uniform(23),
+        true);
+
+    public DockCornerRadii EffectiveCornerRadii =>
+        CornerRadii ?? DockCornerRadii.Uniform(CornerRadius);
 }

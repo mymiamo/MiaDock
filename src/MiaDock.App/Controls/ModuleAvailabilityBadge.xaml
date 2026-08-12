@@ -2,11 +2,11 @@
              x:Name="RootControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Border Style="{StaticResource DockStatusBadgeStyle}">
+  <Border Style="{StaticResource SettingsStatusBadgeBorderStyle}">
     <StackPanel Orientation="Horizontal" Spacing="6">
       <FontIcon Glyph="{Binding Glyph, ElementName=RootControl}" FontSize="11" />
       <TextBlock Text="{Binding Text, ElementName=RootControl}"
-                 Style="{StaticResource DockStatusTextStyle}"
+                 Style="{StaticResource SettingsStatusBadgeTextStyle}"
                  VerticalAlignment="Center"
                  MaxLines="1"
                  TextTrimming="CharacterEllipsis"

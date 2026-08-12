@@ -1,0 +1,1557 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Keyed UI strings resolved through ILocalizationService.Get(key). Add a new language by copying this folder and translating every value. -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <data name="Common.Available" xml:space="preserve">
+    <value>Available</value>
+    <comment>Kullanılabilir</comment>
+  </data>
+  <data name="Common.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+    <comment>Kullanılamıyor</comment>
+  </data>
+  <data name="Common.Unknown" xml:space="preserve">
+    <value>Unknown</value>
+    <comment>Bilinmiyor</comment>
+  </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancel</value>
+    <comment>İptal</comment>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Close</value>
+    <comment>Kapat</comment>
+  </data>
+  <data name="Dialog.Crash.Detected.Title" xml:space="preserve">
+    <value>Crash Detected</value>
+    <comment>Çökme Tespit Edildi</comment>
+  </data>
+  <data name="Dialog.Crash.Detected.Description" xml:space="preserve">
+    <value>MiaDock closed unexpectedly. You can create a crash report to submit, or close and continue normally.</value>
+    <comment>MiaDock beklenmedik şekilde kapandı. Çökme raporu oluşturup bildirebilir veya kapatıp çalışmaya devam edebilirsiniz.</comment>
+  </data>
+  <data name="Dialog.Crash.Report" xml:space="preserve">
+    <value>Report</value>
+    <comment>Bildir</comment>
+  </data>
+  <data name="Dialog.Crash.Redirect.Title" xml:space="preserve">
+    <value>Bug report</value>
+    <comment>Hata bildirimi</comment>
+  </data>
+  <data name="Dialog.Crash.Redirect.Description" xml:space="preserve">
+    <value>You will be redirected to mymiamo.net/bug to submit the report.</value>
+    <comment>Bildirmek için mymiamo.net/bug sayfasına yönlendirileceksiniz.</comment>
+  </data>
+  <data name="Dialog.Crash.Continue" xml:space="preserve">
+    <value>Continue</value>
+    <comment>Devam Et</comment>
+  </data>
+  <data name="Dialog.Link.OpenFailed.Title" xml:space="preserve">
+    <value>Couldn't open the link</value>
+    <comment>Bağlantı açılamadı</comment>
+  </data>
+  <data name="Dialog.BugReport.OpenFailed.Description" xml:space="preserve">
+    <value>The bug report page couldn't be opened. You can open mymiamo.net/bug in your browser.</value>
+    <comment>Hata bildirim sayfası açılamadı. mymiamo.net/bug adresini tarayıcınızda açabilirsiniz.</comment>
+  </data>
+  <data name="Focus.OpenWindowsSettings" xml:space="preserve">
+    <value>Open Windows Focus settings</value>
+    <comment>Windows Odak ayarlarını aç</comment>
+  </data>
+  <data name="Common.Start" xml:space="preserve">
+    <value>Start</value>
+    <comment>Başlat</comment>
+  </data>
+  <data name="Common.Pause" xml:space="preserve">
+    <value>Pause</value>
+    <comment>Duraklat</comment>
+  </data>
+  <data name="Common.Resume" xml:space="preserve">
+    <value>Resume</value>
+    <comment>Devam et</comment>
+  </data>
+  <data name="Common.Play" xml:space="preserve">
+    <value>Play</value>
+    <comment>Oynat</comment>
+  </data>
+  <data name="Common.Reset" xml:space="preserve">
+    <value>Reset</value>
+    <comment>Sıfırla</comment>
+  </data>
+  <data name="Common.Lap" xml:space="preserve">
+    <value>Lap</value>
+    <comment>Tur</comment>
+  </data>
+  <data name="Common.None" xml:space="preserve">
+    <value>None</value>
+    <comment>Yok</comment>
+  </data>
+  <data name="Common.Disabled" xml:space="preserve">
+    <value>Disabled</value>
+    <comment>Kapalı</comment>
+  </data>
+  <data name="Theme.AppleLike" xml:space="preserve">
+    <value>Apple-like</value>
+    <comment>Apple benzeri</comment>
+  </data>
+  <data name="Theme.OledBlack" xml:space="preserve">
+    <value>OLED Black</value>
+    <comment>OLED Siyah</comment>
+  </data>
+  <data name="Theme.Windows11Mica" xml:space="preserve">
+    <value>Windows 11 Mica</value>
+    <comment>Windows 11 Mica</comment>
+  </data>
+  <data name="Theme.Windows11MicaAlt" xml:space="preserve">
+    <value>Windows 11 Mica Alt</value>
+    <comment>Windows 11 Mica Alt</comment>
+  </data>
+  <data name="Theme.Windows11Acrylic" xml:space="preserve">
+    <value>Windows 11 Acrylic</value>
+    <comment>Windows 11 Acrylic</comment>
+  </data>
+  <data name="Theme.Windows11AcrylicThin" xml:space="preserve">
+    <value>Windows 11 Acrylic Thin</value>
+    <comment>Windows 11 Acrylic Thin</comment>
+  </data>
+  <data name="Theme.BlurredGlass" xml:space="preserve">
+    <value>Blurred Glass</value>
+    <comment>Bulanık Cam</comment>
+  </data>
+  <data name="Theme.NeutralFrostedGlass" xml:space="preserve">
+    <value>Neutral Frosted Glass</value>
+    <comment>Nötr Buzlu Cam</comment>
+  </data>
+  <data name="Theme.AdaptiveFluent" xml:space="preserve">
+    <value>Adaptive Fluent</value>
+    <comment>Uyarlanabilir Fluent</comment>
+  </data>
+  <data name="Theme.CustomSolidColor" xml:space="preserve">
+    <value>Custom solid color</value>
+    <comment>Özel Düz Renk</comment>
+  </data>
+  <data name="Module.media.Name" xml:space="preserve">
+    <value>Music</value>
+    <comment>Müzik</comment>
+  </data>
+  <data name="Module.volume.Name" xml:space="preserve">
+    <value>Volume</value>
+    <comment>Ses</comment>
+  </data>
+  <data name="Module.privacy.Name" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="Privacy_MicrophoneInUse" xml:space="preserve">
+    <value>Microphone in use</value>
+  </data>
+  <data name="Privacy_CameraInUse" xml:space="preserve">
+    <value>Camera in use</value>
+  </data>
+  <data name="Privacy_CameraAndMicrophoneInUse" xml:space="preserve">
+    <value>Camera and microphone in use</value>
+  </data>
+  <data name="Privacy_NoActiveDevices" xml:space="preserve">
+    <value>No active privacy usage</value>
+  </data>
+  <data name="Privacy_ActiveApplications" xml:space="preserve">
+    <value>Active applications</value>
+  </data>
+  <data name="System.Call.IdleDetail" xml:space="preserve">
+    <value>Local call inference</value>
+  </data>
+  <data name="Module.system-activity.Name" xml:space="preserve">
+    <value>Call</value>
+    <comment>Sistem</comment>
+  </data>
+  <data name="Module.battery.Name" xml:space="preserve">
+    <value>Battery</value>
+    <comment>Pil</comment>
+  </data>
+  <data name="Module.network.Name" xml:space="preserve">
+    <value>Network</value>
+    <comment>Ağ</comment>
+  </data>
+  <data name="Module.bluetooth.Name" xml:space="preserve">
+    <value>Bluetooth</value>
+    <comment>Bluetooth</comment>
+  </data>
+  <data name="Module.timer.Name" xml:space="preserve">
+    <value>Time</value>
+    <comment>Zaman</comment>
+  </data>
+  <data name="Module.notifications.Name" xml:space="preserve">
+    <value>Notifications</value>
+    <comment>Bildirimler</comment>
+  </data>
+  <data name="Module.transfers.Name" xml:space="preserve">
+    <value>Transfers</value>
+    <comment>Aktarımlar</comment>
+  </data>
+  <data name="Dock.Home" xml:space="preserve">
+    <value>Home dock</value>
+    <comment>Ana dock</comment>
+  </data>
+  <data name="Dock.Show" xml:space="preserve">
+    <value>Show dock</value>
+    <comment>Dock'u göster</comment>
+  </data>
+  <data name="Dock.Hide" xml:space="preserve">
+    <value>Hide dock</value>
+    <comment>Dock'u gizle</comment>
+  </data>
+  <data name="Dock.NoActiveEvent" xml:space="preserve">
+    <value>No active event</value>
+    <comment>Etkin olay yok</comment>
+  </data>
+  <data name="Dock.NoActiveEvent.Description" xml:space="preserve">
+    <value>New activity will appear here.</value>
+    <comment>Yeni bir etkinlik olduğunda burada görünecek.</comment>
+  </data>
+  <data name="Dock.ModuleUnavailable" xml:space="preserve">
+    <value>This section is currently unavailable</value>
+    <comment>Bu bölüm şu anda kullanılamıyor</comment>
+  </data>
+  <data name="Dock.NowPlaying" xml:space="preserve">
+    <value>Now playing</value>
+    <comment>Şimdi çalıyor</comment>
+  </data>
+  <data name="Dock.Music" xml:space="preserve">
+    <value>Music</value>
+    <comment>Müzik</comment>
+  </data>
+  <data name="Dock.PreviousTrack" xml:space="preserve">
+    <value>Previous track</value>
+    <comment>Önceki parça</comment>
+  </data>
+  <data name="Dock.PlayPause" xml:space="preserve">
+    <value>Play or pause</value>
+    <comment>Oynat veya duraklat</comment>
+  </data>
+  <data name="Dock.NextTrack" xml:space="preserve">
+    <value>Next track</value>
+    <comment>Sonraki parça</comment>
+  </data>
+  <data name="Dock.Settings" xml:space="preserve">
+    <value>Settings</value>
+    <comment>Ayarlar</comment>
+  </data>
+  <data name="Dock.SystemSession" xml:space="preserve">
+    <value>System audio</value>
+    <comment>Sistem sesi</comment>
+  </data>
+  <data name="Dock.CallPossible" xml:space="preserve">
+    <value>Possible call activity</value>
+    <comment>Olası arama etkinliği</comment>
+  </data>
+  <data name="Dock.Progress" xml:space="preserve">
+    <value>Progress</value>
+    <comment>İlerleme</comment>
+  </data>
+  <data name="Dock.PreviousModule" xml:space="preserve">
+    <value>Previous module</value>
+    <comment>Önceki modül</comment>
+  </data>
+  <data name="Dock.NextModule" xml:space="preserve">
+    <value>Next module</value>
+    <comment>Sonraki modül</comment>
+  </data>
+  <data name="Dock.SwitchModules" xml:space="preserve">
+    <value>Switch between modules</value>
+    <comment>Modüller arasında geçiş</comment>
+  </data>
+  <data name="Dock.Empty.Timer" xml:space="preserve">
+    <value>No active timer</value>
+    <comment>Etkin zamanlayıcı yok</comment>
+  </data>
+  <data name="Dock.Empty.Bluetooth" xml:space="preserve">
+    <value>No Bluetooth device connected</value>
+    <comment>Bluetooth cihazı bağlı değil</comment>
+  </data>
+  <data name="Dock.Empty.Transfers" xml:space="preserve">
+    <value>No transfer found</value>
+    <comment>Aktarım bulunmuyor</comment>
+  </data>
+  <data name="Dock.Clock" xml:space="preserve">
+    <value>Time {0}, {1}</value>
+    <comment>Saat {0}, {1}</comment>
+  </data>
+  <data name="Dock.Clock.Short" xml:space="preserve">
+    <value>Time {0}</value>
+    <comment>Saat {0}</comment>
+  </data>
+  <data name="Dock.Home.Automation" xml:space="preserve">
+    <value>Home dock, {0}</value>
+    <comment>Ana dock, {0}</comment>
+  </data>
+  <data name="Dock.MicrophoneInUse" xml:space="preserve">
+    <value>Microphone in use</value>
+    <comment>Mikrofon kullanılıyor</comment>
+  </data>
+  <data name="Dock.SpeakerInUse" xml:space="preserve">
+    <value>Speaker in use</value>
+    <comment>Hoparlör kullanılıyor</comment>
+  </data>
+  <data name="Dock.NoAudioActivity" xml:space="preserve">
+    <value>No audio activity</value>
+    <comment>Ses etkinliği yok</comment>
+  </data>
+  <data name="Dock.Media.Previous.Help" xml:space="preserve">
+    <value>Skips to the previous track</value>
+    <comment>Önceki parçaya geçer</comment>
+  </data>
+  <data name="Dock.Media.PlayPause.Help" xml:space="preserve">
+    <value>Plays or pauses the current track</value>
+    <comment>Geçerli parçayı oynatır veya duraklatır</comment>
+  </data>
+  <data name="Dock.Media.Next.Help" xml:space="preserve">
+    <value>Skips to the next track</value>
+    <comment>Sonraki parçaya geçer</comment>
+  </data>
+  <data name="Focus.Title" xml:space="preserve">
+    <value>Focus</value>
+    <comment>Odak</comment>
+  </data>
+  <data name="Focus.Profile.Work.Name" xml:space="preserve">
+    <value>Work</value>
+    <comment>Çalışma</comment>
+  </data>
+  <data name="Focus.Profile.Gaming.Name" xml:space="preserve">
+    <value>Gaming</value>
+    <comment>Oyun</comment>
+  </data>
+  <data name="Focus.Profile.Sleep.Name" xml:space="preserve">
+    <value>Sleep</value>
+    <comment>Uyku</comment>
+  </data>
+  <data name="Focus.Profile.DoNotDisturb.Name" xml:space="preserve">
+    <value>Do Not Disturb</value>
+    <comment>Rahatsız Etmeyin</comment>
+  </data>
+  <data name="Focus.Profile.Custom.Name" xml:space="preserve">
+    <value>Custom Focus</value>
+    <comment>Özel Odak</comment>
+  </data>
+  <data name="Focus.Status.Off" xml:space="preserve">
+    <value>Focus is off</value>
+    <comment>Odak kapalı</comment>
+  </data>
+  <data name="Focus.Status.Active" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} · {1}</comment>
+  </data>
+  <data name="Focus.Duration" xml:space="preserve">
+    <value>Change duration</value>
+    <comment>Süreyi değiştir</comment>
+  </data>
+  <data name="Focus.Duration.15Minutes" xml:space="preserve">
+    <value>15 minutes</value>
+    <comment>15 dakika</comment>
+  </data>
+  <data name="Focus.Duration.30Minutes" xml:space="preserve">
+    <value>30 minutes</value>
+    <comment>30 dakika</comment>
+  </data>
+  <data name="Focus.Duration.1Hour" xml:space="preserve">
+    <value>1 hour</value>
+    <comment>1 saat</comment>
+  </data>
+  <data name="Focus.Duration.2Hours" xml:space="preserve">
+    <value>2 hours</value>
+    <comment>2 saat</comment>
+  </data>
+  <data name="Focus.Duration.UntilTurnedOff" xml:space="preserve">
+    <value>Until turned off</value>
+    <comment>Kapatılana kadar</comment>
+  </data>
+  <data name="Focus.Duration.MinutesRemaining" xml:space="preserve">
+    <value>{0} min remaining</value>
+    <comment>{0} dk kaldı</comment>
+  </data>
+  <data name="Focus.TurnOff" xml:space="preserve">
+    <value>Turn off Focus</value>
+    <comment>Odağı kapat</comment>
+  </data>
+  <data name="Focus.Settings.ProfileCount" xml:space="preserve">
+    <value>{0} of {1} profiles</value>
+    <comment>{0} / {1} profil</comment>
+  </data>
+  <data name="Focus.Settings.ProfileSummary" xml:space="preserve">
+    <value>{0} · {1}</value>
+    <comment>{0} · {1}</comment>
+  </data>
+  <data name="Focus.Settings.ProfileSummary.OneAutomation" xml:space="preserve">
+    <value>{0} · {1} · 1 automation</value>
+    <comment>{0} · {1} · 1 otomasyon</comment>
+  </data>
+  <data name="Focus.Settings.ProfileSummary.Automated" xml:space="preserve">
+    <value>{0} · {1} · {2} automations</value>
+    <comment>{0} · {1} · {2} otomasyon</comment>
+  </data>
+  <data name="Focus.Settings.AutomationConflict" xml:space="preserve">
+    <value>{0} automation targets are assigned to multiple profiles. For equal priority, the first matching profile in the list is used.</value>
+    <comment>{0} otomasyon hedefi birden fazla profile atanmış. Aynı öncelikte profil listesindeki ilk eşleşme kullanılır.</comment>
+  </data>
+  <data name="Focus.Settings.Minutes" xml:space="preserve">
+    <value>{0} minutes</value>
+    <comment>{0} dakika</comment>
+  </data>
+  <data name="Focus.Visibility.Global" xml:space="preserve">
+    <value>Use global setting</value>
+    <comment>Genel ayarı kullan</comment>
+  </data>
+  <data name="Focus.Visibility.Always" xml:space="preserve">
+    <value>Always visible</value>
+    <comment>Sürekli görünür</comment>
+  </data>
+  <data name="Focus.Visibility.EventsOnly" xml:space="preserve">
+    <value>Events only</value>
+    <comment>Yalnız olaylarda</comment>
+  </data>
+  <data name="Focus.Visibility.Hidden" xml:space="preserve">
+    <value>Hidden</value>
+    <comment>Tamamen gizli</comment>
+  </data>
+  <data name="Focus.Priority.Low" xml:space="preserve">
+    <value>Low</value>
+    <comment>Düşük</comment>
+  </data>
+  <data name="Focus.Priority.Normal" xml:space="preserve">
+    <value>Normal</value>
+    <comment>Normal</comment>
+  </data>
+  <data name="Focus.Priority.Elevated" xml:space="preserve">
+    <value>Elevated</value>
+    <comment>Yükseltilmiş</comment>
+  </data>
+  <data name="Focus.Priority.High" xml:space="preserve">
+    <value>High</value>
+    <comment>Yüksek</comment>
+  </data>
+  <data name="Focus.Priority.Critical" xml:space="preserve">
+    <value>Critical</value>
+    <comment>Kritik</comment>
+  </data>
+  <data name="Focus.Icon.briefcase" xml:space="preserve">
+    <value>Work</value>
+    <comment>İş</comment>
+  </data>
+  <data name="Focus.Icon.game-controller" xml:space="preserve">
+    <value>Gaming</value>
+    <comment>Oyun</comment>
+  </data>
+  <data name="Focus.Icon.moon" xml:space="preserve">
+    <value>Moon</value>
+    <comment>Ay</comment>
+  </data>
+  <data name="Focus.Icon.do-not-disturb" xml:space="preserve">
+    <value>Do not disturb</value>
+    <comment>Rahatsız etme</comment>
+  </data>
+  <data name="Focus.Icon.star" xml:space="preserve">
+    <value>Star</value>
+    <comment>Yıldız</comment>
+  </data>
+  <data name="Focus.Icon.book" xml:space="preserve">
+    <value>Book</value>
+    <comment>Kitap</comment>
+  </data>
+  <data name="Focus.Icon.fitness" xml:space="preserve">
+    <value>Fitness</value>
+    <comment>Spor</comment>
+  </data>
+  <data name="Focus.Icon.leaf" xml:space="preserve">
+    <value>Leaf</value>
+    <comment>Yaprak</comment>
+  </data>
+  <data name="Focus.Settings.Editor.NewTitle" xml:space="preserve">
+    <value>New Focus profile</value>
+    <comment>Yeni Odak profili</comment>
+  </data>
+  <data name="Focus.Settings.Editor.EditTitle" xml:space="preserve">
+    <value>Edit Focus profile</value>
+    <comment>Odak profilini düzenle</comment>
+  </data>
+  <data name="Focus.Settings.Editor.Save" xml:space="preserve">
+    <value>Save</value>
+    <comment>Kaydet</comment>
+  </data>
+  <data name="Focus.Settings.Error.Name" xml:space="preserve">
+    <value>Profile name must be 1–40 characters.</value>
+    <comment>Profil adı 1–40 karakter olmalıdır.</comment>
+  </data>
+  <data name="Focus.Settings.Error.Color" xml:space="preserve">
+    <value>Color must use the #RRGGBB format.</value>
+    <comment>Renk #RRGGBB biçiminde olmalıdır.</comment>
+  </data>
+  <data name="Focus.Settings.Error.Duration" xml:space="preserve">
+    <value>Duration must be between 1 and 1440 minutes.</value>
+    <comment>Süre 1–1440 dakika arasında olmalıdır.</comment>
+  </data>
+  <data name="Focus.Settings.Error.Modules" xml:space="preserve">
+    <value>Allow all modules or select at least one module.</value>
+    <comment>Tüm modüllere izin verin veya en az bir modül seçin.</comment>
+  </data>
+  <data name="Focus.Settings.Error.ScheduleDays" xml:space="preserve">
+    <value>Select at least one day for every schedule.</value>
+    <comment>Her program için en az bir gün seçin.</comment>
+  </data>
+  <data name="Focus.Settings.Error.AutomationTarget" xml:space="preserve">
+    <value>Select an application for this automation.</value>
+    <comment>Bu otomasyon için bir uygulama seçin.</comment>
+  </data>
+  <data name="Focus.Settings.Error.DuplicateName" xml:space="preserve">
+    <value>A custom profile with this name already exists.</value>
+    <comment>Bu adda başka bir özel profil bulunuyor.</comment>
+  </data>
+  <data name="Focus.Settings.Error.Limit" xml:space="preserve">
+    <value>You can create up to 12 custom Focus profiles.</value>
+    <comment>En fazla 12 özel Odak profili oluşturabilirsiniz.</comment>
+  </data>
+  <data name="Focus.Settings.Error.Invalid" xml:space="preserve">
+    <value>The profile could not be saved. Review the fields.</value>
+    <comment>Profil kaydedilemedi. Alanları gözden geçirin.</comment>
+  </data>
+  <data name="Focus.Settings.Delete.Title" xml:space="preserve">
+    <value>Delete Focus profile?</value>
+    <comment>Odak profili silinsin mi?</comment>
+  </data>
+  <data name="Focus.Settings.Delete.Message" xml:space="preserve">
+    <value>This custom profile will be permanently deleted.</value>
+    <comment>Bu özel profil kalıcı olarak silinecek.</comment>
+  </data>
+  <data name="Focus.Settings.Delete.ActiveMessage" xml:space="preserve">
+    <value>This profile is currently active. Focus will turn off when it is deleted.</value>
+    <comment>Bu profil şu anda etkin. Silindiğinde Odak kapatılacak.</comment>
+  </data>
+  <data name="Focus.Settings.Delete.Action" xml:space="preserve">
+    <value>Delete profile</value>
+    <comment>Profili sil</comment>
+  </data>
+  <data name="Focus.Settings.Reset.Title" xml:space="preserve">
+    <value>Reset profile to defaults?</value>
+    <comment>Profil varsayılana döndürülsün mü?</comment>
+  </data>
+  <data name="Focus.Settings.Reset.Message" xml:space="preserve">
+    <value>Your color, duration and behavior changes for this built-in profile will be reset.</value>
+    <comment>Bu hazır profil için yaptığınız renk, süre ve davranış değişiklikleri sıfırlanacak.</comment>
+  </data>
+  <data name="Focus.Automation.Kind.Foreground" xml:space="preserve">
+    <value>When the app is in foreground</value>
+    <comment>Uygulama ön plandayken</comment>
+  </data>
+  <data name="Focus.Automation.Kind.Fullscreen" xml:space="preserve">
+    <value>When the app is fullscreen</value>
+    <comment>Uygulama tam ekrandayken</comment>
+  </data>
+  <data name="Focus.Automation.Kind.Running" xml:space="preserve">
+    <value>While the app is running</value>
+    <comment>Uygulama çalışırken</comment>
+  </data>
+  <data name="Focus.Automation.AnyApplication" xml:space="preserve">
+    <value>Any application</value>
+    <comment>Herhangi bir uygulama</comment>
+  </data>
+  <data name="Focus.Automation.ProcessUnavailable" xml:space="preserve">
+    <value>Running-app monitoring is unavailable on this device. Foreground and fullscreen rules continue to work.</value>
+    <comment>Çalışan uygulama izleme bu cihazda kullanılamıyor. Ön plan ve tam ekran kuralları çalışmaya devam eder.</comment>
+  </data>
+  <data name="Battery.None" xml:space="preserve">
+    <value>No battery</value>
+    <comment>Pil yok</comment>
+  </data>
+  <data name="Battery.NotPresent" xml:space="preserve">
+    <value>No battery present</value>
+    <comment>Pil bulunmuyor</comment>
+  </data>
+  <data name="Battery.NotDetected" xml:space="preserve">
+    <value>No battery was detected on this device</value>
+    <comment>Bu cihazda pil algılanmadı</comment>
+  </data>
+  <data name="Battery.Unknown" xml:space="preserve">
+    <value>Battery status is unknown</value>
+    <comment>Pil durumu bilinmiyor</comment>
+  </data>
+  <data name="Battery.Unavailable" xml:space="preserve">
+    <value>Battery information is unavailable</value>
+    <comment>Pil bilgisi kullanılamıyor</comment>
+  </data>
+  <data name="Battery.AccessDenied" xml:space="preserve">
+    <value>Battery information cannot be accessed</value>
+    <comment>Pil bilgisine erişilemiyor</comment>
+  </data>
+  <data name="Battery.TransientError" xml:space="preserve">
+    <value>Battery information could not be read temporarily</value>
+    <comment>Pil bilgisi geçici olarak okunamadı</comment>
+  </data>
+  <data name="Battery.Charging" xml:space="preserve">
+    <value>Charging</value>
+    <comment>Şarj oluyor</comment>
+  </data>
+  <data name="Battery.Charging.Title" xml:space="preserve">
+    <value>Battery charging</value>
+    <comment>Pil şarj oluyor</comment>
+  </data>
+  <data name="Battery.EnergySaver" xml:space="preserve">
+    <value>Energy saver is on</value>
+    <comment>Enerji tasarrufu açık</comment>
+  </data>
+  <data name="Battery.OnBattery" xml:space="preserve">
+    <value>On battery power</value>
+    <comment>Pilde çalışıyor</comment>
+  </data>
+  <data name="Battery.DesktopPower" xml:space="preserve">
+    <value>Desktop power</value>
+    <comment>Masaüstü güç sistemi</comment>
+  </data>
+  <data name="Battery.PowerSource.AC" xml:space="preserve">
+    <value>AC power</value>
+    <comment>Şebeke gücü</comment>
+  </data>
+  <data name="Battery.PowerSource.DC" xml:space="preserve">
+    <value>Battery power</value>
+    <comment>Pil gücü</comment>
+  </data>
+  <data name="Battery.PowerSource.USB" xml:space="preserve">
+    <value>USB power</value>
+    <comment>USB gücü</comment>
+  </data>
+  <data name="Battery.PowerSource.Unknown" xml:space="preserve">
+    <value>Unknown power source</value>
+    <comment>Güç kaynağı bilinmiyor</comment>
+  </data>
+  <data name="Battery.Level" xml:space="preserve">
+    <value>Battery level</value>
+    <comment>Pil seviyesi</comment>
+  </data>
+  <data name="Battery.Percent" xml:space="preserve">
+    <value>Battery {0}%</value>
+    <comment>Pil %{0}</comment>
+  </data>
+  <data name="Battery.Percent.Automation" xml:space="preserve">
+    <value>Battery {0} percent</value>
+    <comment>Pil yüzde {0}</comment>
+  </data>
+  <data name="Battery.Percent.Charging.Automation" xml:space="preserve">
+    <value>Battery {0} percent, charging</value>
+    <comment>Pil yüzde {0}, şarj oluyor</comment>
+  </data>
+  <data name="Battery.Percent.Saver.Automation" xml:space="preserve">
+    <value>Battery {0} percent, energy saver is on</value>
+    <comment>Pil yüzde {0}, enerji tasarrufu açık</comment>
+  </data>
+  <data name="Network.Internet" xml:space="preserve">
+    <value>Connected to the internet</value>
+    <comment>İnternete bağlı</comment>
+  </data>
+  <data name="Network.Constrained" xml:space="preserve">
+    <value>Limited internet</value>
+    <comment>Sınırlı internet</comment>
+  </data>
+  <data name="Network.Local" xml:space="preserve">
+    <value>Local network only</value>
+    <comment>Yalnızca yerel ağ</comment>
+  </data>
+  <data name="Network.Offline" xml:space="preserve">
+    <value>Offline</value>
+    <comment>Çevrimdışı</comment>
+  </data>
+  <data name="Network.Cellular" xml:space="preserve">
+    <value>Cellular</value>
+    <comment>Mobil ağ</comment>
+  </data>
+  <data name="Network.Other" xml:space="preserve">
+    <value>Other connection</value>
+    <comment>Diğer bağlantı</comment>
+  </data>
+  <data name="Network.None" xml:space="preserve">
+    <value>No connection</value>
+    <comment>Bağlantı yok</comment>
+  </data>
+  <data name="Network.Metered" xml:space="preserve">
+    <value>Metered connection</value>
+    <comment>Tarifeli bağlantı</comment>
+  </data>
+  <data name="Network.Unmetered" xml:space="preserve">
+    <value>Unmetered connection</value>
+    <comment>Tarifesiz bağlantı</comment>
+  </data>
+  <data name="Network.Download" xml:space="preserve">
+    <value>Download</value>
+    <comment>İndirme</comment>
+  </data>
+  <data name="Network.Upload" xml:space="preserve">
+    <value>Upload</value>
+    <comment>Yükleme</comment>
+  </data>
+  <data name="Network.Rate.Megabytes" xml:space="preserve">
+    <value>{0:0.0} MB/s</value>
+    <comment>{0:0.0} MB/sn</comment>
+  </data>
+  <data name="Network.Rate.Kilobytes" xml:space="preserve">
+    <value>{0:0} KB/s</value>
+    <comment>{0:0} KB/sn</comment>
+  </data>
+  <data name="Network.Throughput.Sampling" xml:space="preserve">
+    <value>Measuring…</value>
+    <comment>Ölçülüyor…</comment>
+  </data>
+  <data name="Network.Throughput.Ready" xml:space="preserve">
+    <value>Live speed</value>
+    <comment>Canlı hız</comment>
+  </data>
+  <data name="Network.Throughput.Unavailable" xml:space="preserve">
+    <value>Speed unavailable</value>
+    <comment>Hız kullanılamıyor</comment>
+  </data>
+  <data name="Network.Throughput.Inactive" xml:space="preserve">
+    <value>Measured while this view is open</value>
+    <comment>Görünüm açıldığında ölçülür</comment>
+  </data>
+  <data name="Network.WiFi.Connected" xml:space="preserve">
+    <value>Wi-Fi connected</value>
+    <comment>Wi-Fi bağlı</comment>
+  </data>
+  <data name="Network.WiFi.Metered" xml:space="preserve">
+    <value>Wi-Fi, metered connection</value>
+    <comment>Wi-Fi, tarifeli bağlantı</comment>
+  </data>
+  <data name="Network.Ethernet.Connected" xml:space="preserve">
+    <value>Ethernet connected</value>
+    <comment>Ethernet bağlı</comment>
+  </data>
+  <data name="Network.Ethernet.Metered" xml:space="preserve">
+    <value>Ethernet, metered connection</value>
+    <comment>Ethernet, tarifeli bağlantı</comment>
+  </data>
+  <data name="Network.Cellular.Connected" xml:space="preserve">
+    <value>Connected to cellular</value>
+    <comment>Mobil ağa bağlı</comment>
+  </data>
+  <data name="Network.Constrained.Full" xml:space="preserve">
+    <value>Limited internet connection</value>
+    <comment>Sınırlı internet bağlantısı</comment>
+  </data>
+  <data name="Network.Local.Full" xml:space="preserve">
+    <value>Local network connection only</value>
+    <comment>Yalnızca yerel ağ bağlantısı</comment>
+  </data>
+  <data name="Bluetooth.Unavailable" xml:space="preserve">
+    <value>Bluetooth unavailable</value>
+    <comment>Bluetooth kullanılamıyor</comment>
+  </data>
+  <data name="Bluetooth.Off" xml:space="preserve">
+    <value>Bluetooth is off</value>
+    <comment>Bluetooth kapalı</comment>
+  </data>
+  <data name="Bluetooth.Unknown" xml:space="preserve">
+    <value>Bluetooth status is unknown</value>
+    <comment>Bluetooth durumu bilinmiyor</comment>
+  </data>
+  <data name="Bluetooth.Faulted" xml:space="preserve">
+    <value>Bluetooth monitoring error</value>
+    <comment>Bluetooth izleme hatası</comment>
+  </data>
+  <data name="Bluetooth.Searching" xml:space="preserve">
+    <value>Searching for devices</value>
+    <comment>Cihazlar aranıyor</comment>
+  </data>
+  <data name="Bluetooth.None" xml:space="preserve">
+    <value>No connected devices</value>
+    <comment>Bağlı cihaz yok</comment>
+  </data>
+  <data name="Bluetooth.Count" xml:space="preserve">
+    <value>{0} devices connected</value>
+    <comment>{0} cihaz bağlı</comment>
+  </data>
+  <data name="Bluetooth.Connected" xml:space="preserve">
+    <value>Bluetooth device connected</value>
+    <comment>Bluetooth cihazı bağlandı</comment>
+  </data>
+  <data name="Bluetooth.Disconnected" xml:space="preserve">
+    <value>Bluetooth device disconnected</value>
+    <comment>Bluetooth cihazı ayrıldı</comment>
+  </data>
+  <data name="Bluetooth.None.Automation" xml:space="preserve">
+    <value>No connected Bluetooth devices</value>
+    <comment>Bağlı Bluetooth cihazı yok</comment>
+  </data>
+  <data name="Bluetooth.One.Automation" xml:space="preserve">
+    <value>One Bluetooth device connected</value>
+    <comment>Bir Bluetooth cihazı bağlı</comment>
+  </data>
+  <data name="Bluetooth.Many.Automation" xml:space="preserve">
+    <value>{0} Bluetooth devices connected</value>
+    <comment>{0} Bluetooth cihazı bağlı</comment>
+  </data>
+  <data name="System.Unavailable" xml:space="preserve">
+    <value>Unavailable</value>
+    <comment>Kullanılamıyor</comment>
+  </data>
+  <data name="System.NoApplication" xml:space="preserve">
+    <value>No application selected</value>
+    <comment>Uygulama seçilmedi</comment>
+  </data>
+  <data name="System.SessionNotFound" xml:space="preserve">
+    <value>Audio session not found</value>
+    <comment>Ses oturumu bulunamadı</comment>
+  </data>
+  <data name="System.Microphone.Active" xml:space="preserve">
+    <value>Microphone active</value>
+    <comment>Mikrofon etkin</comment>
+  </data>
+  <data name="System.Microphone.Idle" xml:space="preserve">
+    <value>Microphone idle</value>
+    <comment>Mikrofon boşta</comment>
+  </data>
+  <data name="System.Microphone.Unavailable" xml:space="preserve">
+    <value>Microphone unavailable</value>
+    <comment>Mikrofon kullanılamıyor</comment>
+  </data>
+  <data name="System.Camera.Unavailable" xml:space="preserve">
+    <value>Camera device status unavailable</value>
+    <comment>Kamera cihaz durumu kullanılamıyor</comment>
+  </data>
+  <data name="System.Camera.NotFound" xml:space="preserve">
+    <value>No camera found</value>
+    <comment>Kamera bulunamadı</comment>
+  </data>
+  <data name="System.Camera.Allowed" xml:space="preserve">
+    <value>Camera available · access allowed</value>
+    <comment>Kamera mevcut · erişim izinli</comment>
+  </data>
+  <data name="System.Camera.DeniedUser" xml:space="preserve">
+    <value>Camera available · blocked by user</value>
+    <comment>Kamera mevcut · kullanıcı engelledi</comment>
+  </data>
+  <data name="System.Camera.DeniedSystem" xml:space="preserve">
+    <value>Camera available · blocked by system</value>
+    <comment>Kamera mevcut · sistem engelledi</comment>
+  </data>
+  <data name="System.Camera.Prompt" xml:space="preserve">
+    <value>Camera available · permission not requested</value>
+    <comment>Kamera mevcut · izin istenmedi</comment>
+  </data>
+  <data name="System.Camera.NotDeclared" xml:space="preserve">
+    <value>Camera available · capability not declared</value>
+    <comment>Kamera mevcut · yetenek tanımlı değil</comment>
+  </data>
+  <data name="System.Camera.Unknown" xml:space="preserve">
+    <value>Camera available · access unknown</value>
+    <comment>Kamera mevcut · erişim bilinmiyor</comment>
+  </data>
+  <data name="System.Call.None" xml:space="preserve">
+    <value>No call detected</value>
+    <comment>Arama algılanmadı</comment>
+  </data>
+  <data name="System.Call.Ended" xml:space="preserve">
+    <value>Call activity ended</value>
+    <comment>Arama etkinliği sona erdi</comment>
+  </data>
+  <data name="System.Call.Detail" xml:space="preserve">
+    <value>Microphone and communication audio active</value>
+    <comment>Mikrofon ve iletişim sesi etkin</comment>
+  </data>
+  <data name="System.Privacy.None" xml:space="preserve">
+    <value>No privacy activity</value>
+    <comment>Gizlilik etkinliği yok</comment>
+  </data>
+  <data name="System.Privacy.Summary" xml:space="preserve">
+    <value>Microphone, camera, and call status</value>
+    <comment>Mikrofon, kamera ve arama durumu</comment>
+  </data>
+  <data name="System.AudioSession.State" xml:space="preserve">
+    <value>Windows audio session state</value>
+    <comment>Windows ses oturumu durumu</comment>
+  </data>
+  <data name="System.Audio.Muted" xml:space="preserve">
+    <value>Audio muted</value>
+    <comment>Ses kapalı</comment>
+  </data>
+  <data name="System.Audio.Master" xml:space="preserve">
+    <value>System audio</value>
+    <comment>Sistem sesi</comment>
+  </data>
+  <data name="System.Audio.Master.Down" xml:space="preserve">
+    <value>Decrease master volume</value>
+    <comment>Ana sesi azalt</comment>
+  </data>
+  <data name="System.Audio.Master.Toggle" xml:space="preserve">
+    <value>Mute or unmute master volume</value>
+    <comment>Ana sesi aç veya kapat</comment>
+  </data>
+  <data name="System.Audio.Master.Up" xml:space="preserve">
+    <value>Increase master volume</value>
+    <comment>Ana sesi artır</comment>
+  </data>
+  <data name="System.Audio.Application.Toggle" xml:space="preserve">
+    <value>Mute or unmute application volume</value>
+    <comment>Uygulama sesini aç veya kapat</comment>
+  </data>
+  <data name="System.Audio.Application.Muted" xml:space="preserve">
+    <value>Application audio muted</value>
+    <comment>Uygulama sesi kapalı</comment>
+  </data>
+  <data name="System.Audio.Application" xml:space="preserve">
+    <value>Application audio</value>
+    <comment>Uygulama sesi</comment>
+  </data>
+  <data name="System.Audio.SelectedMedia" xml:space="preserve">
+    <value>Selected media application</value>
+    <comment>Seçili medya uygulaması</comment>
+  </data>
+  <data name="Volume.Master" xml:space="preserve">
+    <value>Master volume</value>
+    <comment>Ana ses</comment>
+  </data>
+  <data name="Volume.Muted" xml:space="preserve">
+    <value>Muted</value>
+    <comment>Ses kapalı</comment>
+  </data>
+  <data name="Volume.WindowsAudio" xml:space="preserve">
+    <value>Windows master volume</value>
+    <comment>Windows ana sesi</comment>
+  </data>
+  <data name="Volume.ToggleMute" xml:space="preserve">
+    <value>Mute or unmute</value>
+    <comment>Sesi aç veya kapat</comment>
+  </data>
+  <data name="Volume.OpenSettings" xml:space="preserve">
+    <value>Open Windows sound settings</value>
+    <comment>Windows ses ayarlarını aç</comment>
+  </data>
+  <data name="Volume.OutputDevice.Unavailable" xml:space="preserve">
+    <value>Output device unavailable</value>
+    <comment>Çıkış aygıtı kullanılamıyor</comment>
+  </data>
+  <data name="Volume.OutputDevice.Changed" xml:space="preserve">
+    <value>Output device changed</value>
+    <comment>Çıkış aygıtı değişti</comment>
+  </data>
+  <data name="Mixer.SystemSounds" xml:space="preserve">
+    <value>System sounds</value>
+    <comment>Sistem sesleri</comment>
+  </data>
+  <data name="Mixer.UnknownSession" xml:space="preserve">
+    <value>Unknown audio session</value>
+    <comment>Bilinmeyen ses oturumu</comment>
+  </data>
+  <data name="Mixer.SessionControllable" xml:space="preserve">
+    <value>Volume control available</value>
+    <comment>Ses denetimi kullanılabilir</comment>
+  </data>
+  <data name="Mixer.SessionUnsupported" xml:space="preserve">
+    <value>This session cannot be controlled</value>
+    <comment>Bu oturum denetlenemiyor</comment>
+  </data>
+  <data name="Mixer.Unavailable" xml:space="preserve">
+    <value>Audio mixer unavailable</value>
+    <comment>Ses karıştırıcısı kullanılamıyor</comment>
+  </data>
+  <data name="Mixer.NoActiveSessions" xml:space="preserve">
+    <value>No active application audio</value>
+    <comment>Etkin uygulama sesi yok</comment>
+  </data>
+  <data name="Mixer.ActiveSessionCount" xml:space="preserve">
+    <value>{0} active audio apps</value>
+    <comment>{0} etkin ses uygulaması</comment>
+  </data>
+  <data name="Mixer.SessionVolumeAutomation" xml:space="preserve">
+    <value>{0} volume level</value>
+    <comment>{0} ses seviyesi</comment>
+  </data>
+  <data name="Mixer.SessionMuteAutomation" xml:space="preserve">
+    <value>Mute {0}</value>
+    <comment>{0} sesini kapat</comment>
+  </data>
+  <data name="Mixer.SessionUnmuteAutomation" xml:space="preserve">
+    <value>Unmute {0}</value>
+    <comment>{0} sesini aç</comment>
+  </data>
+  <data name="System.Camera.Changed" xml:space="preserve">
+    <value>Camera availability changed</value>
+    <comment>Kamera kullanılabilirliği değişti</comment>
+  </data>
+  <data name="Timer.Tools" xml:space="preserve">
+    <value>Time tools</value>
+    <comment>Zaman araçları</comment>
+  </data>
+  <data name="Timer.TimerAndStopwatch" xml:space="preserve">
+    <value>Timer and stopwatch</value>
+    <comment>Zamanlayıcı ve kronometre</comment>
+  </data>
+  <data name="Timer.Running" xml:space="preserve">
+    <value>Timer running</value>
+    <comment>Zamanlayıcı çalışıyor</comment>
+  </data>
+  <data name="Timer.Paused" xml:space="preserve">
+    <value>Timer paused</value>
+    <comment>Zamanlayıcı duraklatıldı</comment>
+  </data>
+  <data name="Timer.Completed" xml:space="preserve">
+    <value>Time is up</value>
+    <comment>Süre doldu</comment>
+  </data>
+  <data name="Timer.SelectDuration" xml:space="preserve">
+    <value>Choose a duration</value>
+    <comment>Bir süre seçin</comment>
+  </data>
+  <data name="Timer.Completed.Description" xml:space="preserve">
+    <value>Timer completed</value>
+    <comment>Zamanlayıcı tamamlandı</comment>
+  </data>
+  <data name="Timer.StopwatchRunning" xml:space="preserve">
+    <value>Stopwatch running</value>
+    <comment>Kronometre çalışıyor</comment>
+  </data>
+  <data name="Timer.StopwatchPaused" xml:space="preserve">
+    <value>Stopwatch paused</value>
+    <comment>Kronometre duraklatıldı</comment>
+  </data>
+  <data name="Timer.Cancel" xml:space="preserve">
+    <value>Cancel timer</value>
+    <comment>Zamanlayıcıyı iptal et</comment>
+  </data>
+  <data name="Timer.StopAlarm" xml:space="preserve">
+    <value>Silence alarm</value>
+    <comment>Alarmı sustur</comment>
+  </data>
+  <data name="Timer.AlarmRepeats" xml:space="preserve">
+    <value>The alarm sounds up to 5 times when the timer ends.</value>
+    <comment>Süre dolduğunda alarm sesi en fazla 5 kez çalar.</comment>
+  </data>
+  <data name="Timer.ResetStopwatch" xml:space="preserve">
+    <value>Reset stopwatch</value>
+    <comment>Kronometreyi sıfırla</comment>
+  </data>
+  <data name="Timer.PauseResume" xml:space="preserve">
+    <value>Pause or resume</value>
+    <comment>Duraklat veya devam et</comment>
+  </data>
+  <data name="Timer.Lap" xml:space="preserve">
+    <value>Lap {0}  {1}</value>
+    <comment>Tur {0}  {1}</comment>
+  </data>
+  <data name="Timer.MinuteShort" xml:space="preserve">
+    <value>min</value>
+    <comment>dk</comment>
+  </data>
+  <data name="Transfer.Title" xml:space="preserve">
+    <value>File transfers</value>
+    <comment>Dosya aktarımları</comment>
+  </data>
+  <data name="Transfer.None" xml:space="preserve">
+    <value>No active transfers</value>
+    <comment>Etkin aktarım yok</comment>
+  </data>
+  <data name="Transfer.Waiting" xml:space="preserve">
+    <value>Waiting for transfer</value>
+    <comment>Aktarım bekleniyor</comment>
+  </data>
+  <data name="Transfer.Active.One" xml:space="preserve">
+    <value>1 active transfer</value>
+    <comment>1 etkin aktarım</comment>
+  </data>
+  <data name="Transfer.Active.Many" xml:space="preserve">
+    <value>{0} active transfers</value>
+    <comment>{0} etkin aktarım</comment>
+  </data>
+  <data name="Transfer.Queued" xml:space="preserve">
+    <value>Queued</value>
+    <comment>Sırada</comment>
+  </data>
+  <data name="Transfer.Running" xml:space="preserve">
+    <value>Transferring</value>
+    <comment>Aktarılıyor</comment>
+  </data>
+  <data name="Transfer.Paused" xml:space="preserve">
+    <value>Paused</value>
+    <comment>Duraklatıldı</comment>
+  </data>
+  <data name="Transfer.ProviderWaiting" xml:space="preserve">
+    <value>Waiting for provider</value>
+    <comment>Sağlayıcı bekleniyor</comment>
+  </data>
+  <data name="Transfer.Completed" xml:space="preserve">
+    <value>Completed</value>
+    <comment>Tamamlandı</comment>
+  </data>
+  <data name="Transfer.Failed" xml:space="preserve">
+    <value>Failed</value>
+    <comment>Başarısız</comment>
+  </data>
+  <data name="Transfer.Cancelled" xml:space="preserve">
+    <value>Cancelled</value>
+    <comment>İptal edildi</comment>
+  </data>
+  <data name="Transfer.Disconnected" xml:space="preserve">
+    <value>Disconnected</value>
+    <comment>Bağlantı kesildi</comment>
+  </data>
+  <data name="Tray.Previous" xml:space="preserve">
+    <value>Previous</value>
+    <comment>Önceki</comment>
+  </data>
+  <data name="Tray.Next" xml:space="preserve">
+    <value>Next</value>
+    <comment>Sonraki</comment>
+  </data>
+  <data name="Tray.MediaNotFound" xml:space="preserve">
+    <value>No media app found</value>
+    <comment>Medya uygulaması bulunamadı</comment>
+  </data>
+  <data name="Tray.PrimaryMonitor" xml:space="preserve">
+    <value>Primary monitor</value>
+    <comment>Ana monitör</comment>
+  </data>
+  <data name="Tray.ActiveMonitor" xml:space="preserve">
+    <value>Active window monitor</value>
+    <comment>Aktif pencerenin monitörü</comment>
+  </data>
+  <data name="Tray.DefaultMedia" xml:space="preserve">
+    <value>Default media app</value>
+    <comment>Varsayılan medya uygulaması</comment>
+  </data>
+  <data name="Tray.StartWithWindows" xml:space="preserve">
+    <value>Run at Windows startup</value>
+    <comment>Windows başlangıcında çalıştır</comment>
+  </data>
+  <data name="Tray.FullscreenBehavior" xml:space="preserve">
+    <value>Fullscreen behavior</value>
+    <comment>Tam ekran davranışı</comment>
+  </data>
+  <data name="Tray.Fullscreen.Show" xml:space="preserve">
+    <value>Show notifications in fullscreen</value>
+    <comment>Tam ekranda bildirimleri göster</comment>
+  </data>
+  <data name="Tray.Fullscreen.Minimal" xml:space="preserve">
+    <value>Minimal view</value>
+    <comment>Sade görünüm</comment>
+  </data>
+  <data name="Tray.Fullscreen.Controls" xml:space="preserve">
+    <value>View with controls</value>
+    <comment>Kontrollü görünüm</comment>
+  </data>
+  <data name="Tray.SelectMonitor" xml:space="preserve">
+    <value>Select monitor</value>
+    <comment>Monitör seç</comment>
+  </data>
+  <data name="Tray.TemporaryNotifications" xml:space="preserve">
+    <value>Show temporary notifications</value>
+    <comment>Geçici bildirimleri göster</comment>
+  </data>
+  <data name="Tray.FocusTurnOff" xml:space="preserve">
+    <value>Turn off Focus · {0}</value>
+    <comment>Odağı kapat · {0}</comment>
+  </data>
+  <data name="Tray.Exit" xml:space="preserve">
+    <value>Exit</value>
+    <comment>Çıkış</comment>
+  </data>
+  <data name="Dialog.Close.Title" xml:space="preserve">
+    <value>Close MiaDock?</value>
+    <comment>MiaDock kapatılsın mı?</comment>
+  </data>
+  <data name="Dialog.Close.Description" xml:space="preserve">
+    <value>Choose what happens when you select the close button.</value>
+    <comment>Kapat düğmesine bastığınızda ne yapılacağını seçin.</comment>
+  </data>
+  <data name="Dialog.Close.Minimize" xml:space="preserve">
+    <value>Minimize to system tray</value>
+    <comment>Sistem tepsisine küçült</comment>
+  </data>
+  <data name="Dialog.Close.Exit" xml:space="preserve">
+    <value>Exit application</value>
+    <comment>Uygulamadan tamamen çık</comment>
+  </data>
+  <data name="Dialog.Close.Remember" xml:space="preserve">
+    <value>Remember my choice</value>
+    <comment>Seçimimi hatırla</comment>
+  </data>
+  <data name="Dialog.Apply" xml:space="preserve">
+    <value>Apply</value>
+    <comment>Uygula</comment>
+  </data>
+  <data name="Dialog.Permission.Notification.Title" xml:space="preserve">
+    <value>Allow notification access?</value>
+    <comment>Bildirim erişimine izin verilsin mi?</comment>
+  </data>
+  <data name="Dialog.Permission.Notification.Summary" xml:space="preserve">
+    <value>MiaDock will read the source application and notification title. Body text is hidden unless separately enabled, and content is never written to technical logs.</value>
+    <comment>MiaDock kaynak uygulama ve bildirim başlığını okuyacak. Gövde metni ayrıca açılmadıkça gösterilmez; içerik teknik loglara yazılmaz.</comment>
+  </data>
+  <data name="Dialog.Permission.Notification.Detail" xml:space="preserve">
+    <value>MiaDock will read application names and titles from Windows Notification Center. Body text is enabled per application; content is not logged, and notifications are never deleted or marked as read.</value>
+    <comment>MiaDock, Windows Bildirim Merkezi'ndeki uygulama adını ve başlığı okuyacak. Gövde metni yalnız uygulama bazında açılır; içerik loglanmaz ve bildirimler silinmez ya da okundu işaretlenmez.</comment>
+  </data>
+  <data name="Dialog.Permission.Request" xml:space="preserve">
+    <value>Request Windows permission</value>
+    <comment>Windows iznini iste</comment>
+  </data>
+  <data name="Dialog.Permission.Cancel" xml:space="preserve">
+    <value>Not now</value>
+    <comment>Vazgeç</comment>
+  </data>
+  <data name="Dialog.Logs.Clear.Title" xml:space="preserve">
+    <value>Clear local logs?</value>
+    <comment>Yerel loglar temizlensin mi?</comment>
+  </data>
+  <data name="Dialog.Logs.Clear.Description" xml:space="preserve">
+    <value>This permanently deletes the current technical log files.</value>
+    <comment>Bu işlem mevcut teknik log dosyalarını kalıcı olarak siler.</comment>
+  </data>
+  <data name="Dialog.Logs.Clear.Action" xml:space="preserve">
+    <value>Clear logs</value>
+    <comment>Logları temizle</comment>
+  </data>
+  <data name="Onboarding.Step.Welcome" xml:space="preserve">
+    <value>Welcome</value>
+    <comment>Hoş geldiniz</comment>
+  </data>
+  <data name="Onboarding.Step.Personalization" xml:space="preserve">
+    <value>Personalize your dock</value>
+    <comment>Kişiselleştirin</comment>
+  </data>
+  <data name="Onboarding.Step.Interaction" xml:space="preserve">
+    <value>Usage</value>
+    <comment>Kullanım Şekli</comment>
+  </data>
+  <data name="Onboarding.Step.FeaturesAndPrivacy" xml:space="preserve">
+    <value>Features and Privacy</value>
+    <comment>Özellikler ve Gizlilik</comment>
+  </data>
+  <data name="Onboarding.Step.Ready" xml:space="preserve">
+    <value>Ready</value>
+    <comment>Hazır</comment>
+  </data>
+  <data name="Onboarding.Option.Theme.Apple" xml:space="preserve">
+    <value>Apple-like</value>
+    <comment>Apple benzeri</comment>
+  </data>
+  <data name="Onboarding.Option.Theme.Glass" xml:space="preserve">
+    <value>Blurred Glass</value>
+    <comment>Bulanık Cam</comment>
+  </data>
+  <data name="Onboarding.Option.Theme.Solid" xml:space="preserve">
+    <value>Custom Solid Color</value>
+    <comment>Özel Düz Renk</comment>
+  </data>
+  <data name="Onboarding.Option.Monitor.Primary" xml:space="preserve">
+    <value>Primary monitor</value>
+    <comment>Ana monitör</comment>
+  </data>
+  <data name="Onboarding.Option.Monitor.Active" xml:space="preserve">
+    <value>Active window monitor</value>
+    <comment>Aktif pencerenin monitörü</comment>
+  </data>
+  <data name="Onboarding.Option.Monitor.Fixed" xml:space="preserve">
+    <value>Fixed monitor</value>
+    <comment>Sabit monitör</comment>
+  </data>
+  <data name="Onboarding.Option.Position.TopCenter" xml:space="preserve">
+    <value>Top center</value>
+    <comment>Üst orta</comment>
+  </data>
+  <data name="Onboarding.Option.Position.TopLeft" xml:space="preserve">
+    <value>Top left</value>
+    <comment>Üst sol</comment>
+  </data>
+  <data name="Onboarding.Option.Position.TopRight" xml:space="preserve">
+    <value>Top right</value>
+    <comment>Üst sağ</comment>
+  </data>
+  <data name="Onboarding.Option.Position.BottomCenter" xml:space="preserve">
+    <value>Bottom center</value>
+    <comment>Alt orta</comment>
+  </data>
+  <data name="Onboarding.Option.Position.BottomLeft" xml:space="preserve">
+    <value>Bottom left</value>
+    <comment>Alt sol</comment>
+  </data>
+  <data name="Onboarding.Option.Position.BottomRight" xml:space="preserve">
+    <value>Bottom right</value>
+    <comment>Alt sağ</comment>
+  </data>
+  <data name="Onboarding.Option.Interaction.Hover" xml:space="preserve">
+    <value>On pointer hover</value>
+    <comment>Fare üzerine gelince</comment>
+  </data>
+  <data name="Onboarding.Option.Interaction.Click" xml:space="preserve">
+    <value>On click</value>
+    <comment>Tıklayınca</comment>
+  </data>
+  <data name="Onboarding.Option.Interaction.Both" xml:space="preserve">
+    <value>Hover and click</value>
+    <comment>Fare ve tıklama</comment>
+  </data>
+  <data name="Onboarding.Option.Fullscreen.Minimal" xml:space="preserve">
+    <value>Minimal</value>
+    <comment>Sade</comment>
+  </data>
+  <data name="Onboarding.Option.Fullscreen.Controls" xml:space="preserve">
+    <value>With controls</value>
+    <comment>Kontrollü</comment>
+  </data>
+  <data name="Onboarding.Option.Media.Auto" xml:space="preserve">
+    <value>Automatic selection</value>
+    <comment>Otomatik seçim</comment>
+  </data>
+  <data name="Onboarding.Summary.Theme" xml:space="preserve">
+    <value>Theme: {0}</value>
+    <comment>Tema: {0}</comment>
+  </data>
+  <data name="Onboarding.Summary.Media" xml:space="preserve">
+    <value>Media: {0}</value>
+    <comment>Medya: {0}</comment>
+  </data>
+  <data name="Onboarding.Summary.Monitor" xml:space="preserve">
+    <value>Monitor: {0}</value>
+    <comment>Monitör: {0}</comment>
+  </data>
+  <data name="Onboarding.Summary.Position" xml:space="preserve">
+    <value>Position: {0}</value>
+    <comment>Konum: {0}</comment>
+  </data>
+  <data name="Onboarding.Summary.Interaction" xml:space="preserve">
+    <value>Interaction: {0}</value>
+    <comment>Etkileşim: {0}</comment>
+  </data>
+  <data name="Onboarding.Summary.Fullscreen" xml:space="preserve">
+    <value>Fullscreen: {0}</value>
+    <comment>Tam ekran: {0}</comment>
+  </data>
+  <data name="Onboarding.Summary.Modules" xml:space="preserve">
+    <value>Modules: {0}</value>
+    <comment>Modüller: {0}</comment>
+  </data>
+  <data name="Onboarding.Startup.Unavailable" xml:space="preserve">
+    <value>Start with Windows is available after installing the MSIX package.</value>
+    <comment>Windows ile başlatma, MSIX paketi kurulduğunda kullanılabilir.</comment>
+  </data>
+  <data name="Onboarding.Startup.Failed" xml:space="preserve">
+    <value>The startup setting could not be changed. Check Windows Startup Apps settings.</value>
+    <comment>Başlangıç ayarı değiştirilemedi. Windows Başlangıç Uygulamaları ayarını kontrol edin.</comment>
+  </data>
+  <data name="Onboarding.Startup.DisabledByUser" xml:space="preserve">
+    <value>Windows disabled this startup task.</value>
+    <comment>Windows bu başlangıç görevini devre dışı bıraktı.</comment>
+  </data>
+  <data name="Onboarding.Startup.DisabledByPolicy" xml:space="preserve">
+    <value>The startup task is blocked by system policy.</value>
+    <comment>Başlangıç görevi sistem ilkesi tarafından engelleniyor.</comment>
+  </data>
+  <data name="Onboarding.Startup.EnabledByPolicy" xml:space="preserve">
+    <value>The startup task is enabled by system policy.</value>
+    <comment>Başlangıç görevi sistem ilkesi tarafından etkinleştirildi.</comment>
+  </data>
+  <data name="Onboarding.Startup.Enabled" xml:space="preserve">
+    <value>MiaDock will start with Windows.</value>
+    <comment>MiaDock Windows ile başlayacak.</comment>
+  </data>
+  <data name="Onboarding.Startup.Disabled" xml:space="preserve">
+    <value>MiaDock will not start with Windows.</value>
+    <comment>MiaDock Windows ile başlamayacak.</comment>
+  </data>
+  <data name="Onboarding.Validation.FixedMonitor" xml:space="preserve">
+    <value>Select a connected display to use a fixed monitor.</value>
+    <comment>Sabit monitör kullanmak için bağlı bir monitör seçin.</comment>
+  </data>
+  <data name="Onboarding.Module.Media.Title" xml:space="preserve">
+    <value>Media</value>
+    <comment>Medya</comment>
+  </data>
+  <data name="Onboarding.Module.Media.Description" xml:space="preserve">
+    <value>Windows media sessions and playback controls.</value>
+    <comment>Windows medya oturumları ve oynatma kontrolleri.</comment>
+  </data>
+  <data name="Onboarding.Module.Volume.Title" xml:space="preserve">
+    <value>Windows master volume</value>
+    <comment>Windows ana sesi</comment>
+  </data>
+  <data name="Onboarding.Module.Volume.Description" xml:space="preserve">
+    <value>Shows volume changes and controls the master volume.</value>
+    <comment>Ses değişikliklerini gösterir ve ana ses seviyesini denetler.</comment>
+  </data>
+  <data name="Onboarding.Module.Privacy.Title" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="Onboarding.Module.Privacy.Description" xml:space="preserve">
+    <value>Shows which apps are using the microphone and camera.</value>
+  </data>
+  <data name="Onboarding.Module.System.Title" xml:space="preserve">
+    <value>Call activity</value>
+    <comment>Gizlilik göstergeleri</comment>
+  </data>
+  <data name="Onboarding.Module.System.Description" xml:space="preserve">
+    <value>Monitors local call inference; call content is never read.</value>
+    <comment>Mikrofon, kamera durumu ve yerel arama çıkarımı.</comment>
+  </data>
+  <data name="Onboarding.Module.Battery.Title" xml:space="preserve">
+    <value>Battery</value>
+    <comment>Pil</comment>
+  </data>
+  <data name="Onboarding.Module.Battery.Description" xml:space="preserve">
+    <value>Charging, energy saver, and low-battery events.</value>
+    <comment>Şarj, enerji tasarrufu ve düşük pil olayları.</comment>
+  </data>
+  <data name="Onboarding.Module.Network.Title" xml:space="preserve">
+    <value>Network</value>
+    <comment>Ağ</comment>
+  </data>
+  <data name="Onboarding.Module.Network.Description" xml:space="preserve">
+    <value>Connection type and optional throughput view.</value>
+    <comment>Bağlantı türü ve isteğe bağlı hız görünümü.</comment>
+  </data>
+  <data name="Onboarding.Module.Bluetooth.Title" xml:space="preserve">
+    <value>Bluetooth</value>
+    <comment>Bluetooth</comment>
+  </data>
+  <data name="Onboarding.Module.Bluetooth.Description" xml:space="preserve">
+    <value>Connection changes for paired devices.</value>
+    <comment>Eşleştirilmiş cihaz bağlantı değişiklikleri.</comment>
+  </data>
+  <data name="Onboarding.Module.Timer.Title" xml:space="preserve">
+    <value>Timer and stopwatch</value>
+    <comment>Zamanlayıcı ve kronometre</comment>
+  </data>
+  <data name="Onboarding.Module.Timer.Description" xml:space="preserve">
+    <value>Local time tools and completion events.</value>
+    <comment>Yerel zaman araçları ve tamamlanma olayları.</comment>
+  </data>
+  <data name="Onboarding.Module.Transfers.Title" xml:space="preserve">
+    <value>File transfers</value>
+    <comment>Dosya aktarımları</comment>
+  </data>
+  <data name="Onboarding.Module.Transfers.Description" xml:space="preserve">
+    <value>Transfer progress from local providers.</value>
+    <comment>Yerel sağlayıcılardan gelen aktarım ilerlemesi.</comment>
+  </data>
+  <data name="Onboarding.Module.Notifications.Title" xml:space="preserve">
+    <value>Windows notifications</value>
+    <comment>Windows bildirimleri</comment>
+  </data>
+  <data name="Onboarding.Module.Notifications.Description" xml:space="preserve">
+    <value>Because user permission is required, enable it from the Modules page after setup.</value>
+    <comment>Kullanıcı izni gerektiği için ilk kurulumdan sonra Modüller sayfasından açılır.</comment>
+  </data>
+  <data name="Onboarding.Button.Next" xml:space="preserve">
+    <value>Next</value>
+    <comment>İleri</comment>
+  </data>
+  <data name="Onboarding.Button.Finish" xml:space="preserve">
+    <value>Finish</value>
+    <comment>Tamamla</comment>
+  </data>
+  <data name="Onboarding.Button.Next.Automation" xml:space="preserve">
+    <value>Next setup step</value>
+    <comment>Sonraki kurulum adımı</comment>
+  </data>
+  <data name="Onboarding.Button.Finish.Automation" xml:space="preserve">
+    <value>Finish setup</value>
+    <comment>İlk kurulumu tamamla</comment>
+  </data>
+  <data name="Onboarding.Dialog.Incomplete.Title" xml:space="preserve">
+    <value>Setup is not complete</value>
+    <comment>Kurulum tamamlanmadı</comment>
+  </data>
+  <data name="Onboarding.Dialog.Incomplete.Description" xml:space="preserve">
+    <value>If you exit now, your choices are not saved, the live preview is restored, and setup appears again next time.</value>
+    <comment>Şimdi çıkarsanız seçimleriniz kaydedilmez, canlı önizleme geri alınır ve Başlarken sonraki açılışta yeniden gösterilir.</comment>
+  </data>
+  <data name="Onboarding.Dialog.Return" xml:space="preserve">
+    <value>Return to setup</value>
+    <comment>Kuruluma dön</comment>
+  </data>
+  <data name="Onboarding.Dialog.Exit" xml:space="preserve">
+    <value>Exit</value>
+    <comment>Çıkış</comment>
+  </data>
+  <data name="Update.Available" xml:space="preserve">
+    <value>A new version is available</value>
+    <comment>Yeni sürüm mevcut</comment>
+  </data>
+  <data name="Update.VersionPair" xml:space="preserve">
+    <value>MiaDock {0} → {1}</value>
+    <comment>MiaDock {0} → {1}</comment>
+  </data>
+  <data name="Update.OpenStore" xml:space="preserve">
+    <value>Open in Microsoft Store</value>
+    <comment>Microsoft Store'da aç</comment>
+  </data>
+  <data name="Update.Check" xml:space="preserve">
+    <value>Check for updates</value>
+    <comment>Güncellemeleri denetle</comment>
+  </data>
+  <data name="Update.Checking" xml:space="preserve">
+    <value>Checking for updates</value>
+    <comment>Güncellemeler denetleniyor</comment>
+  </data>
+  <data name="Update.UpToDate" xml:space="preserve">
+    <value>MiaDock is up to date</value>
+    <comment>MiaDock güncel</comment>
+  </data>
+  <data name="Update.StoreOnly" xml:space="preserve">
+    <value>Available only in the Microsoft Store version</value>
+    <comment>Yalnızca Microsoft Store sürümünde kullanılabilir</comment>
+  </data>
+  <data name="Update.Offline" xml:space="preserve">
+    <value>Could not check for updates: offline</value>
+    <comment>Güncelleme denetlenemedi: çevrimdışı</comment>
+  </data>
+  <data name="Update.Failed" xml:space="preserve">
+    <value>Could not check for updates</value>
+    <comment>Güncelleme denetlenemedi</comment>
+  </data>
+  <data name="KeyboardLock.OnFormat" xml:space="preserve">
+    <value>{0} on</value>
+  </data>
+  <data name="KeyboardLock.ModuleName" xml:space="preserve">
+    <value>Keyboard locks</value>
+  </data>
+  <data name="KeyboardLock.ScrollLock" xml:space="preserve">
+    <value>Scroll Lock</value>
+  </data>
+  <data name="KeyboardLock.Off" xml:space="preserve">
+    <value>Off</value>
+  </data>
+  <data name="KeyboardLock.On" xml:space="preserve">
+    <value>On</value>
+  </data>
+  <data name="KeyboardLock.OffFormat" xml:space="preserve">
+    <value>{0} off</value>
+  </data>
+  <data name="KeyboardLock.CapsLock" xml:space="preserve">
+    <value>Caps Lock</value>
+  </data>
+  <data name="KeyboardLock.NumLock" xml:space="preserve">
+    <value>Num Lock</value>
+  </data>
+  <data name="UsbDevice.ModuleName" xml:space="preserve">
+    <value>USB devices</value>
+  </data>
+  <data name="UsbDevice.Connected" xml:space="preserve">
+    <value>Connected</value>
+  </data>
+  <data name="UsbDevice.Disconnected" xml:space="preserve">
+    <value>Removed</value>
+  </data>
+  <data name="UsbDevice.ConnectedFormat" xml:space="preserve">
+    <value>{0} connected</value>
+  </data>
+  <data name="UsbDevice.DisconnectedFormat" xml:space="preserve">
+    <value>{0} removed</value>
+  </data>
+</root>

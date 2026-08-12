@@ -34,6 +34,9 @@ public sealed partial class BluetoothModuleViewModel : ObservableObject, IDispos
 
     public string StatusText => Snapshot.State switch
     {
+        _ when Snapshot.RadioState == BluetoothRadioState.Off => Text("Bluetooth.Off", "Bluetooth kapalı"),
+        _ when Snapshot.RadioState == BluetoothRadioState.Unavailable => Text("Bluetooth.Unavailable", "Bluetooth kullanılamıyor"),
+        _ when Snapshot.RadioState == BluetoothRadioState.Unknown => Text("Bluetooth.Unknown", "Bluetooth durumu bilinmiyor"),
         DeviceServiceState.Unavailable => Text("Bluetooth.Unavailable", "Bluetooth kullanılamıyor"),
         DeviceServiceState.Faulted => Text("Bluetooth.Faulted", "Bluetooth izleme hatası"),
         _ when !Snapshot.IsEnumerationComplete => Text("Bluetooth.Searching", "Cihazlar aranıyor"),

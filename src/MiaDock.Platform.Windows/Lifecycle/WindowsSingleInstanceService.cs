@@ -44,8 +44,18 @@ public sealed class WindowsSingleInstanceService : ISingleInstanceService
         if (_registeredInstance is not null)
         {
             _registeredInstance.Activated -= OnActivated;
+            try
+            {
+                _registeredInstance.UnregisterKey();
+            }
+            catch
+            {
+                // Windows also removes the registration when the process exits.
+            }
+            _registeredInstance = null;
         }
 
+        IsCurrentInstance = false;
         _disposed = true;
     }
 

@@ -17,5 +17,10 @@ public interface IIslandAnimationCoordinator : IDisposable
 
     void RequestContentTransition(FrameworkElement element, MotionDirection direction);
 
+    void RequestModuleTransition(
+        FrameworkElement element,
+        MotionDirection direction,
+        IslandLayoutOptions layoutOptions);
+
     void RequestContentRefresh(FrameworkElement element);
 }

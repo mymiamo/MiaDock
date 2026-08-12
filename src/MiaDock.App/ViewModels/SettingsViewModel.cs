@@ -54,7 +54,12 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private double _expandedHeight;
     private double _notificationWidth;
     private double _notificationHeight;
-    private double _cornerRadius;
+    private double _edgeMargin;
+    private double _topLeftCornerRadius;
+    private double _topRightCornerRadius;
+    private double _bottomRightCornerRadius;
+    private double _bottomLeftCornerRadius;
+    private bool _linkCornerRadii;
     private string _backgroundColor = string.Empty;
     private string _accentColor = string.Empty;
     private double _opacity;
@@ -71,6 +76,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private MediaFallbackSetting _mediaFallback;
     private VolumeTargetSetting _volumeTarget;
     private bool _fullscreenEnabled;
+    private FullscreenDockBehavior _fullscreenBehavior;
     private double _fullscreenNotificationSeconds;
     private FullscreenNotificationStyle _fullscreenStyle;
     private bool _showTrackChanges;
@@ -78,6 +84,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private string? _fixedMonitorId;
     private bool _showTrayIcon;
     private bool _showTrayMediaControls;
+    private TrayPrimaryAction _trayPrimaryAction;
     private bool _temporaryNotifications;
     private bool _startWithWindows;
     private StartupLaunchMode _launchMode;
@@ -89,12 +96,15 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private double _batteryEmergencyThreshold;
     private bool _volumeShowOutputDeviceName = true;
     private bool _hotKeysEnabled;
+    private bool _showKeyboardLockEvents;
+    private bool _showUsbDeviceEvents;
     private HotKeyGestureSetting? _toggleDockHotKey;
     private HotKeyGestureSetting? _toggleExpandedHotKey;
     private HotKeyGestureSetting? _nextModuleHotKey;
     private HotKeyGestureSetting? _mediaPlayPauseHotKey;
     private HotKeyGestureSetting? _timerPauseResumeHotKey;
     private string _hotKeyStatusMessage = "Global kısayollar kapalı.";
+    private readonly Dictionary<HotKeyAction, HotKeyEditIssue> _hotKeyEditIssues = [];
     private bool _notificationsEnabled;
     private double _notificationEventSeconds = 5;
     private bool _notificationsInFullscreen;
@@ -155,6 +165,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ResetAllCommand = new RelayCommand(_settingsService.Reset);
         ResetAppearanceCommand = new RelayCommand(() =>
             ApplyAppearanceAndSave(AppearanceSettings.Default));
+        RestoreDefaultHotKeysCommand = new RelayCommand(RestoreDefaultHotKeys);
         CheckForUpdatesCommand = new AsyncRelayCommand(
             CheckForUpdatesAsync,
             () => !IsStoreUpdateChecking);
@@ -180,16 +191,19 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<MediaFallbackSetting>> MediaFallbackModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<VolumeTargetSetting>> VolumeTargets { get; private set; } = [];
     public IReadOnlyList<SettingOption<FullscreenNotificationStyle>> FullscreenStyles { get; private set; } = [];
+    public IReadOnlyList<SettingOption<FullscreenDockBehavior>> FullscreenBehaviors { get; private set; } = [];
     public IReadOnlyList<SettingOption<MonitorSelectionMode>> MonitorModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<StartupLaunchMode>> LaunchModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<CloseBehaviorSetting>> CloseBehaviors { get; private set; } = [];
+    public IReadOnlyList<SettingOption<TrayPrimaryAction>> TrayPrimaryActions { get; private set; } = [];
 
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.2.1.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.4.0.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
+    public IRelayCommand RestoreDefaultHotKeysCommand { get; }
     public IAsyncRelayCommand CheckForUpdatesCommand { get; }
     public IAsyncRelayCommand OpenStoreCommand { get; }
     public bool IsStartupTaskAvailable { get => _isStartupTaskAvailable; private set => SetProperty(ref _isStartupTaskAvailable, value); }
@@ -203,12 +217,45 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         set => SetVolumeShowOutputDeviceName(value);
     }
     public bool HotKeysEnabled { get => _hotKeysEnabled; set => Set(value, ref _hotKeysEnabled, s => s with { HotKeys = s.HotKeys with { IsEnabled = value } }); }
-    public HotKeyGestureSetting? ToggleDockHotKey { get => _toggleDockHotKey; set => SetHotKey(HotKeyAction.ToggleDock, value, ref _toggleDockHotKey); }
-    public HotKeyGestureSetting? ToggleExpandedHotKey { get => _toggleExpandedHotKey; set => SetHotKey(HotKeyAction.ToggleExpanded, value, ref _toggleExpandedHotKey); }
-    public HotKeyGestureSetting? NextModuleHotKey { get => _nextModuleHotKey; set => SetHotKey(HotKeyAction.NextModule, value, ref _nextModuleHotKey); }
-    public HotKeyGestureSetting? MediaPlayPauseHotKey { get => _mediaPlayPauseHotKey; set => SetHotKey(HotKeyAction.MediaPlayPause, value, ref _mediaPlayPauseHotKey); }
-    public HotKeyGestureSetting? TimerPauseResumeHotKey { get => _timerPauseResumeHotKey; set => SetHotKey(HotKeyAction.TimerPauseResume, value, ref _timerPauseResumeHotKey); }
+    public bool ShowKeyboardLockEvents
+    {
+        get => _showKeyboardLockEvents;
+        set => Set(
+            value,
+            ref _showKeyboardLockEvents,
+            s => s with { General = s.General with { ShowKeyboardLockEvents = value } });
+    }
+    public bool ShowUsbDeviceEvents
+    {
+        get => _showUsbDeviceEvents;
+        set => Set(
+            value,
+            ref _showUsbDeviceEvents,
+            s => s with { General = s.General with { ShowUsbDeviceEvents = value } });
+    }
+    public HotKeyGestureSetting? ToggleDockHotKey { get => _toggleDockHotKey; set => SetHotKey(HotKeyAction.ToggleDock, value, ref _toggleDockHotKey, nameof(ToggleDockHotKey)); }
+    public HotKeyGestureSetting? ToggleExpandedHotKey { get => _toggleExpandedHotKey; set => SetHotKey(HotKeyAction.ToggleExpanded, value, ref _toggleExpandedHotKey, nameof(ToggleExpandedHotKey)); }
+    public HotKeyGestureSetting? NextModuleHotKey { get => _nextModuleHotKey; set => SetHotKey(HotKeyAction.NextModule, value, ref _nextModuleHotKey, nameof(NextModuleHotKey)); }
+    public HotKeyGestureSetting? MediaPlayPauseHotKey { get => _mediaPlayPauseHotKey; set => SetHotKey(HotKeyAction.MediaPlayPause, value, ref _mediaPlayPauseHotKey, nameof(MediaPlayPauseHotKey)); }
+    public HotKeyGestureSetting? TimerPauseResumeHotKey { get => _timerPauseResumeHotKey; set => SetHotKey(HotKeyAction.TimerPauseResume, value, ref _timerPauseResumeHotKey, nameof(TimerPauseResumeHotKey)); }
     public string HotKeyStatusMessage { get => _hotKeyStatusMessage; private set => SetProperty(ref _hotKeyStatusMessage, value); }
+    public string HotKeysOnText => _localization.Text("Açık", "On");
+    public string HotKeysOffText => _localization.Text("Kapalı", "Off");
+    public string ToggleDockHotKeyStatus => GetHotKeyStatusText(HotKeyAction.ToggleDock);
+    public string ToggleExpandedHotKeyStatus => GetHotKeyStatusText(HotKeyAction.ToggleExpanded);
+    public string NextModuleHotKeyStatus => GetHotKeyStatusText(HotKeyAction.NextModule);
+    public string MediaPlayPauseHotKeyStatus => GetHotKeyStatusText(HotKeyAction.MediaPlayPause);
+    public string TimerPauseResumeHotKeyStatus => GetHotKeyStatusText(HotKeyAction.TimerPauseResume);
+    public string ToggleDockHotKeyAccessibleName => GetHotKeyAccessibleName(HotKeyAction.ToggleDock);
+    public string ToggleExpandedHotKeyAccessibleName => GetHotKeyAccessibleName(HotKeyAction.ToggleExpanded);
+    public string NextModuleHotKeyAccessibleName => GetHotKeyAccessibleName(HotKeyAction.NextModule);
+    public string MediaPlayPauseHotKeyAccessibleName => GetHotKeyAccessibleName(HotKeyAction.MediaPlayPause);
+    public string TimerPauseResumeHotKeyAccessibleName => GetHotKeyAccessibleName(HotKeyAction.TimerPauseResume);
+    public HotKeyGestureSetting ToggleDockDefaultHotKey => GlobalHotKeySettings.RecommendedFor(HotKeyAction.ToggleDock);
+    public HotKeyGestureSetting ToggleExpandedDefaultHotKey => GlobalHotKeySettings.RecommendedFor(HotKeyAction.ToggleExpanded);
+    public HotKeyGestureSetting NextModuleDefaultHotKey => GlobalHotKeySettings.RecommendedFor(HotKeyAction.NextModule);
+    public HotKeyGestureSetting MediaPlayPauseDefaultHotKey => GlobalHotKeySettings.RecommendedFor(HotKeyAction.MediaPlayPause);
+    public HotKeyGestureSetting TimerPauseResumeDefaultHotKey => GlobalHotKeySettings.RecommendedFor(HotKeyAction.TimerPauseResume);
     public bool NotificationsEnabled
     {
         get => _notificationsEnabled;
@@ -412,7 +459,89 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public double ExpandedHeight { get => _expandedHeight; set => Set(value, ref _expandedHeight, s => s with { Appearance = s.Appearance with { ExpandedHeight = value } }); }
     public double NotificationWidth { get => _notificationWidth; set => Set(value, ref _notificationWidth, s => s with { Appearance = s.Appearance with { NotificationWidth = value } }); }
     public double NotificationHeight { get => _notificationHeight; set => Set(value, ref _notificationHeight, s => s with { Appearance = s.Appearance with { NotificationHeight = value } }); }
-    public double CornerRadius { get => _cornerRadius; set => Set(value, ref _cornerRadius, s => s with { Appearance = s.Appearance with { CornerRadius = value } }); }
+    public double EdgeMargin
+    {
+        get => _edgeMargin;
+        set
+        {
+            var wasAttached = IsAttachedToScreenEdge;
+            Set(value, ref _edgeMargin, s => s with
+            {
+                Appearance = s.Appearance with { EdgeMargin = value }
+            });
+            if (wasAttached != IsAttachedToScreenEdge)
+            {
+                OnPropertyChanged(nameof(IsAttachedToScreenEdge));
+                OnPropertyChanged(nameof(HasScreenEdgeSpacing));
+            }
+        }
+    }
+    public bool IsAttachedToScreenEdge
+    {
+        get => EdgeMargin <= 0.01;
+        set
+        {
+            if (value == IsAttachedToScreenEdge)
+            {
+                return;
+            }
+
+            EdgeMargin = value ? 0 : AppearanceSettings.Default.EdgeMargin;
+        }
+    }
+    public bool HasScreenEdgeSpacing => !IsAttachedToScreenEdge;
+    public double CornerRadius
+    {
+        get => _topLeftCornerRadius;
+        set => TopLeftCornerRadius = value;
+    }
+    public double TopLeftCornerRadius
+    {
+        get => _topLeftCornerRadius;
+        set => SetCornerRadius(value, CornerKind.TopLeft);
+    }
+    public double TopRightCornerRadius
+    {
+        get => _topRightCornerRadius;
+        set => SetCornerRadius(value, CornerKind.TopRight);
+    }
+    public double BottomRightCornerRadius
+    {
+        get => _bottomRightCornerRadius;
+        set => SetCornerRadius(value, CornerKind.BottomRight);
+    }
+    public double BottomLeftCornerRadius
+    {
+        get => _bottomLeftCornerRadius;
+        set => SetCornerRadius(value, CornerKind.BottomLeft);
+    }
+    public bool LinkCornerRadii
+    {
+        get => _linkCornerRadii;
+        set
+        {
+            if (!SetProperty(ref _linkCornerRadii, value) || _synchronizing)
+            {
+                return;
+            }
+
+            _settingsService.Update(settings =>
+            {
+                var radii = value
+                    ? DockCornerRadii.Uniform(settings.Appearance.EffectiveCornerRadii.TopLeft)
+                    : settings.Appearance.EffectiveCornerRadii;
+                return settings with
+                {
+                    Appearance = settings.Appearance with
+                    {
+                        LinkCornerRadii = value,
+                        CornerRadius = radii.TopLeft,
+                        CornerRadii = radii
+                    }
+                };
+            });
+        }
+    }
     public string BackgroundColor { get => _backgroundColor; set => Set(value, ref _backgroundColor, s => s with { Appearance = s.Appearance with { BackgroundColor = value } }); }
     public string AccentColor { get => _accentColor; set => Set(value, ref _accentColor, s => s with { Appearance = s.Appearance with { AccentColor = value } }); }
     public double Opacity { get => _opacity; set => Set(value, ref _opacity, s => s with { Appearance = s.Appearance with { Opacity = value } }); }
@@ -428,7 +557,48 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public string? SelectedSourceId { get => _selectedSourceId; set { Set(value, ref _selectedSourceId, s => s with { Media = s.Media with { SelectedSourceId = value } }); OnPropertyChanged(nameof(MediaSourceIndex)); } }
     public MediaFallbackSetting MediaFallback { get => _mediaFallback; set { Set(value, ref _mediaFallback, s => s with { Media = s.Media with { Fallback = value } }); OnPropertyChanged(nameof(MediaFallbackIndex)); } }
     public VolumeTargetSetting VolumeTarget { get => _volumeTarget; set { Set(value, ref _volumeTarget, s => s with { Media = s.Media with { VolumeTarget = value } }); OnPropertyChanged(nameof(VolumeTargetIndex)); } }
-    public bool FullscreenEnabled { get => _fullscreenEnabled; set => Set(value, ref _fullscreenEnabled, s => s with { Fullscreen = s.Fullscreen with { Enabled = value } }); }
+    public bool FullscreenEnabled
+    {
+        get => _fullscreenEnabled;
+        set
+        {
+            var behavior = value
+                ? (_fullscreenBehavior == FullscreenDockBehavior.HideCompletely
+                    ? FullscreenDockBehavior.NotificationsOnly
+                    : _fullscreenBehavior)
+                : FullscreenDockBehavior.HideCompletely;
+            FullscreenBehavior = behavior;
+        }
+    }
+    public FullscreenDockBehavior FullscreenBehavior
+    {
+        get => _fullscreenBehavior;
+        set
+        {
+            if (!SetProperty(ref _fullscreenBehavior, value))
+            {
+                return;
+            }
+
+            SetProperty(
+                ref _fullscreenEnabled,
+                value != FullscreenDockBehavior.HideCompletely,
+                nameof(FullscreenEnabled));
+            OnPropertyChanged(nameof(FullscreenBehaviorIndex));
+            OnPropertyChanged(nameof(FullscreenNotificationsAvailable));
+            if (!_synchronizing)
+            {
+                _settingsService.Update(settings => settings with
+                {
+                    Fullscreen = settings.Fullscreen with
+                    {
+                        Behavior = value,
+                        Enabled = value != FullscreenDockBehavior.HideCompletely
+                    }
+                });
+            }
+        }
+    }
     public double FullscreenNotificationSeconds { get => _fullscreenNotificationSeconds; set => Set(value, ref _fullscreenNotificationSeconds, s => s with { Fullscreen = s.Fullscreen with { NotificationSeconds = value } }); }
     public FullscreenNotificationStyle FullscreenStyle { get => _fullscreenStyle; set { Set(value, ref _fullscreenStyle, s => s with { Fullscreen = s.Fullscreen with { Style = value } }); OnPropertyChanged(nameof(FullscreenStyleIndex)); } }
     public bool ShowTrackChanges { get => _showTrackChanges; set => Set(value, ref _showTrackChanges, s => s with { Fullscreen = s.Fullscreen with { ShowTrackChanges = value } }); }
@@ -437,6 +607,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public bool ShowTrayIcon { get => _showTrayIcon; set => Set(value, ref _showTrayIcon, s => s with { Tray = s.Tray with { ShowIcon = value } }); }
     public bool ShowTrayMediaControls { get => _showTrayMediaControls; set => Set(value, ref _showTrayMediaControls, s => s with { Tray = s.Tray with { ShowMediaControls = value } }); }
     public bool TemporaryNotifications { get => _temporaryNotifications; set => Set(value, ref _temporaryNotifications, s => s with { Tray = s.Tray with { EnableTemporaryNotifications = value } }); }
+    public TrayPrimaryAction TrayPrimaryAction { get => _trayPrimaryAction; set { Set(value, ref _trayPrimaryAction, s => s with { Tray = s.Tray with { PrimaryAction = value } }); OnPropertyChanged(nameof(TrayPrimaryActionIndex)); } }
     public bool StartWithWindows
     {
         get => _startWithWindows;
@@ -465,9 +636,13 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public int MediaFallbackIndex { get => IndexOf(MediaFallbackModes, MediaFallback); set => MediaFallback = ValueAt(MediaFallbackModes, value, MediaFallback); }
     public int VolumeTargetIndex { get => IndexOf(VolumeTargets, VolumeTarget); set => VolumeTarget = ValueAt(VolumeTargets, value, VolumeTarget); }
     public int FullscreenStyleIndex { get => IndexOf(FullscreenStyles, FullscreenStyle); set => FullscreenStyle = ValueAt(FullscreenStyles, value, FullscreenStyle); }
+    public int FullscreenBehaviorIndex { get => IndexOf(FullscreenBehaviors, FullscreenBehavior); set => FullscreenBehavior = ValueAt(FullscreenBehaviors, value, FullscreenBehavior); }
+    public bool FullscreenNotificationsAvailable =>
+        FullscreenBehavior != FullscreenDockBehavior.HideCompletely;
     public int MonitorModeIndex { get => IndexOf(MonitorModes, MonitorMode); set => MonitorMode = ValueAt(MonitorModes, value, MonitorMode); }
     public int LaunchModeIndex { get => IndexOf(LaunchModes, LaunchMode); set => LaunchMode = ValueAt(LaunchModes, value, LaunchMode); }
     public int CloseBehaviorIndex { get => IndexOf(CloseBehaviors, CloseBehavior); set => CloseBehavior = ValueAt(CloseBehaviors, value, CloseBehavior); }
+    public int TrayPrimaryActionIndex { get => IndexOf(TrayPrimaryActions, TrayPrimaryAction); set => TrayPrimaryAction = ValueAt(TrayPrimaryActions, value, TrayPrimaryAction); }
     public int MediaSourceIndex
     {
         get => MediaSources.Select((source, index) => (source, index)).FirstOrDefault(item => item.source.Id == SelectedSourceId).index is var index &&
@@ -559,7 +734,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             Languages =
             [
                 new(AppLanguage.Turkish, "Türkçe"),
-                new(AppLanguage.English, "English")
+                new(AppLanguage.English, "English"),
+                new(AppLanguage.Azerbaijani, "Azərbaycan dili"),
+                new(AppLanguage.SpanishSpain, "Español (España)"),
+                new(AppLanguage.SpanishMexico, "Español (México)"),
+                new(AppLanguage.PortugueseBrazil, "Português (Brasil)")
             ];
         }
         VisibilityModes =
@@ -580,7 +759,9 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             new(IslandPositionSetting.TopRight, L("Üst sağ", "Top right")),
             new(IslandPositionSetting.BottomCenter, L("Alt orta", "Bottom center")),
             new(IslandPositionSetting.BottomLeft, L("Alt sol", "Bottom left")),
-            new(IslandPositionSetting.BottomRight, L("Alt sağ", "Bottom right"))
+            new(IslandPositionSetting.BottomRight, L("Alt sağ", "Bottom right")),
+            new(IslandPositionSetting.LeftCenter, L("Sol orta", "Left center")),
+            new(IslandPositionSetting.RightCenter, L("Sağ orta", "Right center"))
         ];
         ClockHourFormats =
         [
@@ -607,9 +788,9 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         ];
         AnimationKinds =
         [
-            new(IslandAnimationKind.Spring, L("Yay", "Spring")),
             new(IslandAnimationKind.ScaleFade, L("Ölçek ve solma", "Scale and fade")),
-            new(IslandAnimationKind.SlideFade, L("Kayma ve solma", "Slide and fade"))
+            new(IslandAnimationKind.SlideFade, L("Kayma ve solma", "Slide and fade")),
+            new(IslandAnimationKind.Spring, L("Yay", "Spring"))
         ];
         MotionPresets =
         [
@@ -635,6 +816,18 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             new(FullscreenNotificationStyle.Minimal, L("Sade", "Minimal")),
             new(FullscreenNotificationStyle.WithControls, L("Kontrollü", "With controls"))
         ];
+        TrayPrimaryActions =
+        [
+            new(TrayPrimaryAction.OpenSettings, L("Ayarları aç", "Open settings")),
+            new(TrayPrimaryAction.ToggleDock, L("Dock'u göster veya gizle", "Show or hide dock"))
+        ];
+        FullscreenBehaviors =
+        [
+            new(FullscreenDockBehavior.HideCompletely, L("Tamamen gizle", "Hide completely")),
+            new(FullscreenDockBehavior.NotificationsOnly, L("Yalnızca bildirimleri göster", "Show notifications only")),
+            new(FullscreenDockBehavior.EdgeReveal, L("Kenarda gizle, fareyle göster", "Hide at edge, reveal with pointer")),
+            new(FullscreenDockBehavior.KeepVisible, L("Normal şekilde görünür kal", "Keep visible normally"))
+        ];
         MonitorModes =
         [
             new(MonitorSelectionMode.Primary, L("Ana monitör", "Primary display")),
@@ -644,7 +837,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         LaunchModes =
         [
             new(StartupLaunchMode.Island, L("Doğrudan dock'u başlat", "Start the dock")),
-            new(StartupLaunchMode.Settings, L("Ayarları aç", "Open Settings")),
+            new(StartupLaunchMode.Settings, L("Ayarları aç", "Open settings")),
             new(StartupLaunchMode.SilentTray, L("Sistem tepsisinde sessiz başlat", "Start silently in system tray"))
         ];
         CloseBehaviors =
@@ -658,11 +851,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                      nameof(Languages), nameof(VisibilityModes), nameof(InteractionModes), nameof(Positions),
                      nameof(ClockHourFormats), nameof(ClockDateFormats),
                      nameof(Themes), nameof(AnimationKinds), nameof(MotionPresets), nameof(MediaFallbackModes), nameof(VolumeTargets),
-                     nameof(FullscreenStyles), nameof(MonitorModes), nameof(LaunchModes), nameof(CloseBehaviors),
+                     nameof(FullscreenStyles), nameof(FullscreenBehaviors), nameof(MonitorModes), nameof(LaunchModes), nameof(CloseBehaviors),
                      nameof(LanguageIndex), nameof(VisibilityModeIndex), nameof(InteractionModeIndex),
                      nameof(PositionIndex), nameof(ClockHourFormatIndex), nameof(ClockDateFormatIndex),
                      nameof(ThemeIndex), nameof(AnimationKindIndex), nameof(MotionPresetIndex),
-                     nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex),
+                     nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex), nameof(FullscreenBehaviorIndex),
                      nameof(MonitorModeIndex), nameof(LaunchModeIndex), nameof(CloseBehaviorIndex),
                      nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable), nameof(IsAccentColorEditable),
                      nameof(StoreUpdateStatusMessage), nameof(StoreUpdateVersionText)
@@ -671,6 +864,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             OnPropertyChanged(propertyName);
         }
         RefreshModuleItems(_settingsService.Current);
+        RefreshHotKeyPresentation();
     }
 
     private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args) => LoadFrom(args.Current);
@@ -709,6 +903,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             InteractionMode = settings.General.InteractionMode;
             Position = settings.General.Position;
             PassiveModuleReturnSeconds = settings.General.PassiveModuleReturnSeconds;
+            ShowKeyboardLockEvents = settings.General.ShowKeyboardLockEvents;
+            ShowUsbDeviceEvents = settings.General.ShowUsbDeviceEvents;
             ClockHourFormat = settings.General.Clock.HourFormat;
             ShowClockSeconds = settings.General.Clock.ShowSeconds;
             ShowClockDate = settings.General.Clock.ShowDate;
@@ -723,7 +919,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             ExpandedHeight = settings.Appearance.ExpandedHeight;
             NotificationWidth = settings.Appearance.NotificationWidth;
             NotificationHeight = settings.Appearance.NotificationHeight;
-            CornerRadius = settings.Appearance.CornerRadius;
+            var cornerRadii = settings.Appearance.EffectiveCornerRadii;
+            EdgeMargin = settings.Appearance.EdgeMargin;
+            CornerRadius = cornerRadii.TopLeft;
+            TopLeftCornerRadius = cornerRadii.TopLeft;
+            TopRightCornerRadius = cornerRadii.TopRight;
+            BottomRightCornerRadius = cornerRadii.BottomRight;
+            BottomLeftCornerRadius = cornerRadii.BottomLeft;
+            LinkCornerRadii = settings.Appearance.LinkCornerRadii;
             BackgroundColor = settings.Appearance.BackgroundColor;
             AccentColor = settings.Appearance.AccentColor;
             Opacity = settings.Appearance.Opacity;
@@ -741,6 +944,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             MediaFallback = settings.Media.Fallback;
             VolumeTarget = settings.Media.VolumeTarget;
             FullscreenEnabled = settings.Fullscreen.Enabled;
+            FullscreenBehavior = settings.Fullscreen.Behavior;
             FullscreenNotificationSeconds = settings.Fullscreen.NotificationSeconds;
             FullscreenStyle = settings.Fullscreen.Style;
             ShowTrackChanges = settings.Fullscreen.ShowTrackChanges;
@@ -749,6 +953,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             ShowTrayIcon = settings.Tray.ShowIcon;
             ShowTrayMediaControls = settings.Tray.ShowMediaControls;
             TemporaryNotifications = settings.Tray.EnableTemporaryNotifications;
+            TrayPrimaryAction = settings.Tray.PrimaryAction;
             StartWithWindows = settings.StartupShutdown.StartWithWindows;
             LaunchMode = settings.StartupShutdown.LaunchMode;
             CloseBehavior = settings.StartupShutdown.CloseBehavior;
@@ -762,7 +967,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                     ? volumeEnvelope
                     : null);
             VolumeShowOutputDeviceName = volumeOptions.ShowOutputDeviceName;
+            _hotKeyEditIssues.Clear();
             HotKeysEnabled = settings.HotKeys.IsEnabled;
+            ShowKeyboardLockEvents = settings.General.ShowKeyboardLockEvents;
+            ShowUsbDeviceEvents = settings.General.ShowUsbDeviceEvents;
             ToggleDockHotKey = GetHotKey(settings, HotKeyAction.ToggleDock);
             ToggleExpandedHotKey = GetHotKey(settings, HotKeyAction.ToggleExpanded);
             NextModuleHotKey = GetHotKey(settings, HotKeyAction.NextModule);
@@ -803,7 +1011,14 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
             ExpandedHeight = appearance.ExpandedHeight;
             NotificationWidth = appearance.NotificationWidth;
             NotificationHeight = appearance.NotificationHeight;
-            CornerRadius = appearance.CornerRadius;
+            var cornerRadii = appearance.EffectiveCornerRadii;
+            EdgeMargin = appearance.EdgeMargin;
+            CornerRadius = cornerRadii.TopLeft;
+            TopLeftCornerRadius = cornerRadii.TopLeft;
+            TopRightCornerRadius = cornerRadii.TopRight;
+            BottomRightCornerRadius = cornerRadii.BottomRight;
+            BottomLeftCornerRadius = cornerRadii.BottomLeft;
+            LinkCornerRadii = appearance.LinkCornerRadii;
             BackgroundColor = appearance.BackgroundColor;
             AccentColor = appearance.AccentColor;
             Opacity = appearance.Opacity;
@@ -837,6 +1052,9 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
                      nameof(Theme), nameof(ThemeIndex), nameof(CollapsedWidth), nameof(CollapsedHeight),
                      nameof(HoverWidth), nameof(HoverHeight), nameof(ExpandedWidth), nameof(ExpandedHeight),
                      nameof(NotificationWidth), nameof(NotificationHeight), nameof(CornerRadius),
+                     nameof(EdgeMargin), nameof(IsAttachedToScreenEdge), nameof(HasScreenEdgeSpacing),
+                     nameof(TopLeftCornerRadius), nameof(TopRightCornerRadius),
+                     nameof(BottomRightCornerRadius), nameof(BottomLeftCornerRadius), nameof(LinkCornerRadii),
                      nameof(BackgroundColor), nameof(AccentColor), nameof(Opacity), nameof(ShadowIntensity),
                      nameof(AnimationSpeed), nameof(AnimationKind), nameof(AnimationKindIndex),
                      nameof(MotionPreset), nameof(MotionPresetIndex), nameof(MotionIntensity),
@@ -891,15 +1109,150 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private void SetHotKey(
         HotKeyAction action,
         HotKeyGestureSetting? value,
-        ref HotKeyGestureSetting? field)
+        ref HotKeyGestureSetting? field,
+        string propertyName)
     {
-        if (!SetProperty(ref field, value) || _synchronizing) return;
+        if (!_synchronizing && value is not null)
+        {
+            if (!HotKeyGestureValidator.IsValid(value))
+            {
+                RejectHotKeyEdit(action, HotKeyEditIssue.Invalid, propertyName);
+                return;
+            }
+
+            if (HotKeyGestureValidator.IsDuplicate(
+                    _settingsService.Current.HotKeys.Bindings,
+                    action,
+                    value))
+            {
+                RejectHotKeyEdit(action, HotKeyEditIssue.Duplicate, propertyName);
+                return;
+            }
+        }
+
+        _hotKeyEditIssues.Remove(action);
+        if (!SetProperty(ref field, value, propertyName) || _synchronizing)
+        {
+            RefreshHotKeyPresentation();
+            return;
+        }
         _settingsService.Update(settings =>
         {
             var bindings = new Dictionary<HotKeyAction, HotKeyGestureSetting>(settings.HotKeys.Bindings);
             if (value is null) bindings.Remove(action);
             else bindings[action] = value;
             return settings with { HotKeys = settings.HotKeys with { Bindings = bindings } };
+        });
+    }
+
+    private void SetCornerRadius(double value, CornerKind corner)
+    {
+        if (!double.IsFinite(value))
+        {
+            return;
+        }
+
+        value = Math.Clamp(value, 0, 48);
+        if (_synchronizing)
+        {
+            _ = corner switch
+            {
+                CornerKind.TopLeft => SetProperty(ref _topLeftCornerRadius, value, nameof(TopLeftCornerRadius)),
+                CornerKind.TopRight => SetProperty(ref _topRightCornerRadius, value, nameof(TopRightCornerRadius)),
+                CornerKind.BottomRight => SetProperty(ref _bottomRightCornerRadius, value, nameof(BottomRightCornerRadius)),
+                _ => SetProperty(ref _bottomLeftCornerRadius, value, nameof(BottomLeftCornerRadius))
+            };
+            if (corner == CornerKind.TopLeft)
+            {
+                OnPropertyChanged(nameof(CornerRadius));
+            }
+
+            return;
+        }
+
+        DockCornerRadii next;
+        if (_linkCornerRadii)
+        {
+            var linkedChanged =
+                SetProperty(ref _topLeftCornerRadius, value, nameof(TopLeftCornerRadius)) |
+                SetProperty(ref _topRightCornerRadius, value, nameof(TopRightCornerRadius)) |
+                SetProperty(ref _bottomRightCornerRadius, value, nameof(BottomRightCornerRadius)) |
+                SetProperty(ref _bottomLeftCornerRadius, value, nameof(BottomLeftCornerRadius));
+            OnPropertyChanged(nameof(CornerRadius));
+            if (!linkedChanged)
+            {
+                return;
+            }
+
+            next = DockCornerRadii.Uniform(value);
+        }
+        else
+        {
+            var changed = corner switch
+            {
+                CornerKind.TopLeft => SetProperty(ref _topLeftCornerRadius, value, nameof(TopLeftCornerRadius)),
+                CornerKind.TopRight => SetProperty(ref _topRightCornerRadius, value, nameof(TopRightCornerRadius)),
+                CornerKind.BottomRight => SetProperty(ref _bottomRightCornerRadius, value, nameof(BottomRightCornerRadius)),
+                _ => SetProperty(ref _bottomLeftCornerRadius, value, nameof(BottomLeftCornerRadius))
+            };
+            if (!changed)
+            {
+                return;
+            }
+
+            if (corner == CornerKind.TopLeft)
+            {
+                OnPropertyChanged(nameof(CornerRadius));
+            }
+
+            next = corner switch
+            {
+                CornerKind.TopLeft => new DockCornerRadii(value, _topRightCornerRadius, _bottomRightCornerRadius, _bottomLeftCornerRadius),
+                CornerKind.TopRight => new DockCornerRadii(_topLeftCornerRadius, value, _bottomRightCornerRadius, _bottomLeftCornerRadius),
+                CornerKind.BottomRight => new DockCornerRadii(_topLeftCornerRadius, _topRightCornerRadius, value, _bottomLeftCornerRadius),
+                _ => new DockCornerRadii(_topLeftCornerRadius, _topRightCornerRadius, _bottomRightCornerRadius, value)
+            };
+        }
+
+        _settingsService.Update(settings => settings with
+        {
+            Appearance = settings.Appearance with
+            {
+                CornerRadius = next.TopLeft,
+                CornerRadii = next,
+                LinkCornerRadii = _linkCornerRadii
+            }
+        });
+    }
+
+
+    private void RejectHotKeyEdit(
+        HotKeyAction action,
+        HotKeyEditIssue issue,
+        string propertyName)
+    {
+        _hotKeyEditIssues[action] = issue;
+        RefreshHotKeyPresentation();
+        if (_uiDispatcher is not null &&
+            _uiDispatcher.HasThreadAccess &&
+            _uiDispatcher.TryEnqueue(() => OnPropertyChanged(propertyName)))
+        {
+            return;
+        }
+
+        OnPropertyChanged(propertyName);
+    }
+
+    private void RestoreDefaultHotKeys()
+    {
+        _hotKeyEditIssues.Clear();
+        _settingsService.Update(settings => settings with
+        {
+            HotKeys = settings.HotKeys with
+            {
+                Bindings = new Dictionary<HotKeyAction, HotKeyGestureSetting>(
+                    GlobalHotKeySettings.RecommendedBindings)
+            }
         });
     }
 
@@ -978,7 +1331,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private string AvailabilityText(ModuleAvailabilityState state) => state switch
     {
         ModuleAvailabilityState.Ready => _localization.Text("Hazır", "Ready"),
-        ModuleAvailabilityState.Disabled => _localization.Text("Kapalı", "Disabled"),
+        ModuleAvailabilityState.Disabled => _localization.Text("Devre dışı", "Turned off"),
         ModuleAvailabilityState.PermissionRequired => _localization.Text("İzin gerekli", "Permission required"),
         ModuleAvailabilityState.PermissionDenied => _localization.Text("İzin reddedildi", "Permission denied"),
         ModuleAvailabilityState.ApiUnavailable => _localization.Text("Windows API kullanılamıyor", "Windows API unavailable"),
@@ -1014,6 +1367,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private static ModuleSettingsEnvelope DefaultEnvelope(string moduleId) => moduleId switch
     {
         "media" => ModuleSettingsEnvelope.MediaDefault,
+        "privacy" => ModuleSettingsEnvelope.PrivacyDefault,
         "system-activity" => ModuleSettingsEnvelope.SystemActivityDefault,
         "volume" => ModuleSettingsEnvelope.VolumeDefault,
         "battery" => ModuleSettingsEnvelope.BatteryDefault,
@@ -1029,7 +1383,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     [
         new("media", "Medya", "Media", "Windows medya oturumları ve oynatma denetimleri.", "Windows media sessions and playback controls.", "\uE8D6"),
         new("volume", "Windows ana sesi", "Windows master volume", "Ses değişikliklerini gösterir ve ana ses seviyesini denetler.", "Shows volume changes and controls the Windows master volume.", "\uE995"),
-        new("system-activity", "Mikrofon, kamera ve arama", "Microphone, camera and calls", "Gizlilik göstergelerini ve iletişim etkinliğini yerel olarak izler.", "Locally monitors privacy indicators and communication activity.", "\uE767"),
+        new("privacy", "Gizlilik", "Privacy", "Mikrofon ve kamerayı kullanan uygulamaları gösterir.", "Shows which apps are using the microphone and camera.", "\uE72E"),
+        new("system-activity", "Arama etkinliği", "Call activity", "Yerel arama çıkarımını izler; görüşme içeriği okunmaz.", "Monitors local call inference; call content is never read.", "\uE717"),
         new("battery", "Pil", "Battery", "Şarj, enerji tasarrufu ve pil eşiklerini gösterir.", "Shows charging, energy saver and battery thresholds.", "\uE850"),
         new("network", "Ağ", "Network", "Bağlantı türünü ve görünürken aktarım hızını gösterir.", "Shows connection type and throughput while visible.", "\uE968"),
         new("bluetooth", "Bluetooth", "Bluetooth", "Eşleştirilmiş cihaz bağlantı durumlarını izler.", "Monitors paired device connection states.", "\uE702"),
@@ -1185,18 +1540,67 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private static HotKeyGestureSetting? GetHotKey(MiaDockSettings settings, HotKeyAction action) =>
         settings.HotKeys.Bindings.TryGetValue(action, out var gesture) ? gesture : null;
 
-    private void OnHotKeyRegistrationsChanged(object? sender, EventArgs args) => UpdateHotKeyStatus();
+    private void OnHotKeyRegistrationsChanged(object? sender, EventArgs args)
+    {
+        if (_uiDispatcher is null || _uiDispatcher.HasThreadAccess)
+        {
+            RefreshHotKeyPresentation();
+            return;
+        }
+
+        _uiDispatcher.TryEnqueue(RefreshHotKeyPresentation);
+    }
+
+    private void RefreshHotKeyPresentation()
+    {
+        foreach (var propertyName in new[]
+                 {
+                     nameof(ToggleDockHotKeyStatus), nameof(ToggleExpandedHotKeyStatus),
+                     nameof(NextModuleHotKeyStatus), nameof(MediaPlayPauseHotKeyStatus),
+                     nameof(TimerPauseResumeHotKeyStatus), nameof(ToggleDockHotKeyAccessibleName),
+                     nameof(ToggleExpandedHotKeyAccessibleName), nameof(NextModuleHotKeyAccessibleName),
+                     nameof(MediaPlayPauseHotKeyAccessibleName), nameof(TimerPauseResumeHotKeyAccessibleName),
+                     nameof(HotKeysOnText), nameof(HotKeysOffText)
+                 })
+        {
+            OnPropertyChanged(propertyName);
+        }
+
+        UpdateHotKeyStatus();
+    }
 
     private void UpdateHotKeyStatus()
     {
+        if (_hotKeyEditIssues.Values.Contains(HotKeyEditIssue.Invalid))
+        {
+            HotKeyStatusMessage = _localization.Text(
+                "Geçersiz kombinasyon kaydedilmedi. Ctrl, Alt veya Shift içeren desteklenen bir tuş kullanın.",
+                "The invalid combination was not saved. Use a supported key with Ctrl, Alt, or Shift.");
+            return;
+        }
+
+        if (_hotKeyEditIssues.Values.Contains(HotKeyEditIssue.Duplicate))
+        {
+            HotKeyStatusMessage = _localization.Text(
+                "Yinelenen kombinasyon kaydedilmedi. Her eylem için farklı bir kısayol seçin.",
+                "The duplicate combination was not saved. Choose a different shortcut for each action.");
+            return;
+        }
+
         if (!HotKeysEnabled)
         {
             HotKeyStatusMessage = _localization.Text("Global kısayollar kapalı.", "Global shortcuts are disabled.");
             return;
         }
 
-        var statuses = _hotKeyService?.RegistrationStatuses;
-        if (statuses?.Values.Any(value => value == HotKeyRegistrationStatus.Conflict) == true)
+        var statuses = Enum.GetValues<HotKeyAction>().Select(ResolveHotKeyStatus).ToArray();
+        if (statuses.Contains(HotKeyRegistrationStatus.Invalid))
+        {
+            HotKeyStatusMessage = _localization.Text(
+                "En az bir kısayol geçersiz ve etkinleştirilemedi.",
+                "At least one shortcut is invalid and could not be activated.");
+        }
+        else if (statuses.Contains(HotKeyRegistrationStatus.Conflict))
         {
             HotKeyStatusMessage = _localization.Text("En az bir kısayol başka bir uygulama tarafından kullanılıyor.", "At least one shortcut is already used by another app.");
         }
@@ -1210,7 +1614,57 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         }
     }
 
+    private HotKeyRegistrationStatus ResolveHotKeyStatus(HotKeyAction action)
+    {
+        if (_hotKeyEditIssues.TryGetValue(action, out var issue))
+        {
+            return issue == HotKeyEditIssue.Invalid
+                ? HotKeyRegistrationStatus.Invalid
+                : HotKeyRegistrationStatus.Conflict;
+        }
+
+        var settings = _settingsService.Current.HotKeys;
+        if (!settings.IsEnabled || !settings.Bindings.TryGetValue(action, out var gesture))
+        {
+            return HotKeyRegistrationStatus.Disabled;
+        }
+
+        if (!HotKeyGestureValidator.IsValid(gesture))
+        {
+            return HotKeyRegistrationStatus.Invalid;
+        }
+
+        return _hotKeyService?.RegistrationStatuses.TryGetValue(action, out var status) == true
+            ? status
+            : HotKeyRegistrationStatus.Registered;
+    }
+
+    private string GetHotKeyStatusText(HotKeyAction action) => ResolveHotKeyStatus(action) switch
+    {
+        HotKeyRegistrationStatus.Registered => _localization.Text("Etkin", "Active"),
+        HotKeyRegistrationStatus.Conflict => _localization.Text("Çakışıyor", "Conflicting"),
+        HotKeyRegistrationStatus.Invalid => _localization.Text("Geçersiz", "Invalid"),
+        _ => _localization.Text("Kapalı", "Off")
+    };
+
+    private string GetHotKeyAccessibleName(HotKeyAction action) =>
+        _localization.Text(
+            $"{GetHotKeyActionName(action)} kısayolu, durum: {GetHotKeyStatusText(action)}",
+            $"{GetHotKeyActionName(action)} shortcut, status: {GetHotKeyStatusText(action)}");
+
+    private string GetHotKeyActionName(HotKeyAction action) => action switch
+    {
+        HotKeyAction.ToggleDock => _localization.Text("Dock'u göster veya gizle", "Show or hide dock"),
+        HotKeyAction.ToggleExpanded => _localization.Text("Dock'u genişlet veya küçült", "Expand or collapse dock"),
+        HotKeyAction.NextModule => _localization.Text("Sonraki modül", "Next module"),
+        HotKeyAction.MediaPlayPause => _localization.Text("Medyayı oynat veya duraklat", "Play or pause media"),
+        HotKeyAction.TimerPauseResume => _localization.Text("Zamanlayıcıyı duraklat veya sürdür", "Pause or resume timer"),
+        _ => action.ToString()
+    };
+
     private enum ThresholdKind { Low, Critical, Emergency }
+    private enum CornerKind { TopLeft, TopRight, BottomRight, BottomLeft }
+    private enum HotKeyEditIssue { Invalid, Duplicate }
 
     private async Task RefreshStartupStatusAsync()
     {

@@ -2,6 +2,7 @@ using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
 using MiaDock.Core.Settings;
 using MiaDock.Core.Focus;
+using MiaDock.Core.Threading;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.Services;
 using MiaDock.Platform.Windows.Display;
@@ -40,6 +41,7 @@ public sealed class TrayMenuCoordinator : IDisposable
     private readonly IDisplayTopologyService _displays;
     private readonly IStartupTaskService _startup;
     private readonly IApplicationLifetimeService _lifetime;
+    private readonly IUiDispatcher _dispatcher;
     private readonly ILogService _log;
     private readonly ILocalizationService _localization;
     private readonly IFocusService _focus;
@@ -59,6 +61,7 @@ public sealed class TrayMenuCoordinator : IDisposable
         IDisplayTopologyService displays,
         IStartupTaskService startup,
         IApplicationLifetimeService lifetime,
+        IUiDispatcher dispatcher,
         ILogService log,
         ILocalizationService localization,
         IFocusService focus)
@@ -72,6 +75,7 @@ public sealed class TrayMenuCoordinator : IDisposable
         _displays = displays;
         _startup = startup;
         _lifetime = lifetime;
+        _dispatcher = dispatcher;
         _log = log;
         _localization = localization;
         _focus = focus;
@@ -108,6 +112,9 @@ public sealed class TrayMenuCoordinator : IDisposable
             return;
         }
 
+        // Mark disposed before unsubscribing so late media/tray callbacks become
+        // no-ops instead of rebuilding menus during HWND teardown.
+        _disposed = true;
         _tray.CommandInvoked -= OnCommandInvoked;
         _tray.PrimaryInvoked -= OnPrimaryInvoked;
         _settings.SettingsChanged -= OnSettingsChanged;
@@ -118,23 +125,11 @@ public sealed class TrayMenuCoordinator : IDisposable
         _focus.FocusChanged -= OnFocusChanged;
         _localization.LanguageChanged -= OnLanguageChanged;
         _tray.Dispose();
-        _disposed = true;
     }
 
     private IReadOnlyList<TrayMenuItem> BuildMenu()
     {
         var settings = _settings.Current;
-        var mediaControls = new List<TrayMenuItem>();
-        if (settings.Tray.ShowMediaControls)
-        {
-            mediaControls.AddRange(
-            [
-                new(PreviousCommand, Text("Tray.Previous"), _modules.CanExecuteCommand(MediaModuleId, "previous"), IconGlyph: "\uE892"),
-                new(PlayPauseCommand, PlaybackLabel(), _modules.CanExecuteCommand(MediaModuleId, "play-pause"), IconGlyph: "\uE768"),
-                new(NextCommand, Text("Tray.Next"), _modules.CanExecuteCommand(MediaModuleId, "next"), IconGlyph: "\uE893"),
-                TrayMenuItem.Separator
-            ]);
-        }
 
         _sourceCommands.Clear();
         var sourceItems = new List<TrayMenuItem>();
@@ -146,7 +141,8 @@ public sealed class TrayMenuCoordinator : IDisposable
             sourceItems.Add(new TrayMenuItem(
                 command,
                 source.DisplayName,
-                IsChecked: source.Id == settings.Media.SelectedSourceId));
+                IsChecked: source.Id == settings.Media.SelectedSourceId,
+                IsRadio: true));
         }
 
         if (sourceItems.Count == 0)
@@ -157,8 +153,16 @@ public sealed class TrayMenuCoordinator : IDisposable
         _displayCommands.Clear();
         var monitorItems = new List<TrayMenuItem>
         {
-            new(PrimaryMonitorCommand, Text("Tray.PrimaryMonitor"), IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Primary),
-            new(ActiveMonitorCommand, Text("Tray.ActiveMonitor"), IsChecked: settings.Monitor.Mode == MonitorSelectionMode.ActiveWindow),
+            new(
+                PrimaryMonitorCommand,
+                Text("Tray.PrimaryMonitor"),
+                IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Primary,
+                IsRadio: true),
+            new(
+                ActiveMonitorCommand,
+                Text("Tray.ActiveMonitor"),
+                IsChecked: settings.Monitor.Mode == MonitorSelectionMode.ActiveWindow,
+                IsRadio: true),
             TrayMenuItem.Separator
         };
         for (var index = 0; index < _displays.Displays.Count; index++)
@@ -170,7 +174,8 @@ public sealed class TrayMenuCoordinator : IDisposable
                 command,
                 display.DisplayName,
                 IsChecked: settings.Monitor.Mode == MonitorSelectionMode.Fixed &&
-                           settings.Monitor.FixedMonitorId == display.Id));
+                           settings.Monitor.FixedMonitorId == display.Id,
+                IsRadio: true));
         }
 
         var items = new List<TrayMenuItem>();
@@ -186,29 +191,63 @@ public sealed class TrayMenuCoordinator : IDisposable
         items.Add(new TrayMenuItem(
             ToggleDockCommand,
             _overlay.IsDockVisible ? Text("Dock.Hide") : Text("Dock.Show"),
-            IconGlyph: "\uE7F4"));
-        items.AddRange(mediaControls);
+            IconGlyph: "\uE8A1"));
         items.Add(new TrayMenuItem(SettingsCommand, Text("Dock.Settings"), IconGlyph: "\uE713"));
+        items.Add(TrayMenuItem.Separator);
+
+        if (settings.Tray.ShowMediaControls)
+        {
+            var playing = _media.Current.PlaybackStatus == PlaybackStatus.Playing;
+            items.Add(new TrayMenuItem(
+                PreviousCommand,
+                Text("Tray.Previous"),
+                _modules.CanExecuteCommand(MediaModuleId, "previous"),
+                IconGlyph: "\uE892"));
+            items.Add(new TrayMenuItem(
+                PlayPauseCommand,
+                PlaybackLabel(),
+                _modules.CanExecuteCommand(MediaModuleId, "play-pause"),
+                IconGlyph: playing ? "\uE769" : "\uE768"));
+            items.Add(new TrayMenuItem(
+                NextCommand,
+                Text("Tray.Next"),
+                _modules.CanExecuteCommand(MediaModuleId, "next"),
+                IconGlyph: "\uE893"));
+        }
+
         items.Add(new TrayMenuItem(0, Text("Tray.DefaultMedia"), Children: sourceItems, IconGlyph: "\uE8D6"));
+        items.Add(TrayMenuItem.Separator);
+
         items.Add(new TrayMenuItem(
             StartupCommand,
             Text("Tray.StartWithWindows"),
             IsEnabled: _startupStatus != StartupTaskStatus.Unavailable,
             IsChecked: _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy,
             IconGlyph: "\uE7E8"));
-        items.Add(new TrayMenuItem(0, Text("Tray.FullscreenBehavior"), Children:
-        [
-            new(FullscreenEnabledCommand, Text("Tray.Fullscreen.Show"), IsChecked: settings.Fullscreen.Enabled),
-            TrayMenuItem.Separator,
-            new(FullscreenMinimalCommand, Text("Tray.Fullscreen.Minimal"), IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal),
-            new(FullscreenControlledCommand, Text("Tray.Fullscreen.Controls"), IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls)
-        ], IconGlyph: "\uE740"));
-        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems, IconGlyph: "\uE7F4"));
         items.Add(new TrayMenuItem(
             NotificationsCommand,
             Text("Tray.TemporaryNotifications"),
             IsChecked: settings.Tray.EnableTemporaryNotifications,
             IconGlyph: "\uEA8F"));
+        items.Add(new TrayMenuItem(0, Text("Tray.FullscreenBehavior"), Children:
+        [
+            new(
+                FullscreenEnabledCommand,
+                Text("Tray.Fullscreen.Show"),
+                IsChecked: settings.Fullscreen.Behavior != FullscreenDockBehavior.HideCompletely),
+            TrayMenuItem.Separator,
+            new(
+                FullscreenMinimalCommand,
+                Text("Tray.Fullscreen.Minimal"),
+                IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal,
+                IsRadio: true),
+            new(
+                FullscreenControlledCommand,
+                Text("Tray.Fullscreen.Controls"),
+                IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls,
+                IsRadio: true)
+        ], IconGlyph: "\uE740"));
+        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems, IconGlyph: "\uE7F4"));
         items.Add(TrayMenuItem.Separator);
         items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit"), IconGlyph: "\uE8BB"));
         return items;
@@ -228,8 +267,33 @@ public sealed class TrayMenuCoordinator : IDisposable
 
     private void OnPrimaryInvoked(object? sender, EventArgs args)
     {
-        _overlay.ShowDock();
-        RefreshMenu();
+        try
+        {
+            if (_settings.Current.Tray.PrimaryAction == TrayPrimaryAction.ToggleDock)
+            {
+                _overlay.ToggleDock();
+            }
+            else
+            {
+                _settingsWindow.Show();
+            }
+
+            RefreshMenu();
+        }
+        catch (Exception exception)
+        {
+            _log.Write(
+                TechnicalLogLevel.Error,
+                TechnicalEventIds.TrayCommandFailed,
+                "Tray",
+                "The configured tray primary action failed safely.",
+                exception,
+                new Dictionary<string, object?>
+                {
+                    ["operation"] = "primary-action",
+                    ["action"] = _settings.Current.Tray.PrimaryAction.ToString()
+                });
+        }
     }
 
     private void OnCommandInvoked(object? sender, int command) => _ = ExecuteCommandSafelyAsync(command);
@@ -308,7 +372,13 @@ public sealed class TrayMenuCoordinator : IDisposable
             case FullscreenEnabledCommand:
                 _settings.Update(settings => settings with
                 {
-                    Fullscreen = settings.Fullscreen with { Enabled = !settings.Fullscreen.Enabled }
+                    Fullscreen = settings.Fullscreen with
+                    {
+                        Behavior = settings.Fullscreen.Behavior == FullscreenDockBehavior.HideCompletely
+                            ? FullscreenDockBehavior.NotificationsOnly
+                            : FullscreenDockBehavior.HideCompletely,
+                        Enabled = settings.Fullscreen.Behavior == FullscreenDockBehavior.HideCompletely
+                    }
                 });
                 break;
             case FullscreenMinimalCommand:
@@ -339,7 +409,13 @@ public sealed class TrayMenuCoordinator : IDisposable
                 }
                 break;
             case ExitCommand:
-                _lifetime.RequestExit();
+                // Tray commands run inside the shell/tray WndProc dispatch path.
+                // Always marshal Exit onto a fresh dispatcher frame first.
+                if (!_dispatcher.TryEnqueue(_lifetime.RequestExit))
+                {
+                    _lifetime.RequestExit();
+                }
+
                 return;
         }
 

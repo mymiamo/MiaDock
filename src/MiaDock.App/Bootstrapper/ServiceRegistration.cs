@@ -1,7 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
+using MiaDock.App.Modules;
 using MiaDock.App.ViewModels;
 using MiaDock.App.Infrastructure;
+using MiaDock.Core.Input;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Overlay;
 using MiaDock.Core.Presentation;
@@ -28,6 +30,7 @@ using MiaDock.Modules.SystemStatus.Services;
 using MiaDock.Modules.SystemStatus.Settings;
 using MiaDock.Modules.SystemStatus.ViewModels;
 using MiaDock.Platform.Windows.Audio;
+using MiaDock.Platform.Windows.Privacy;
 using MiaDock.Modules.DeviceStatus;
 using MiaDock.Modules.DeviceStatus.Services;
 using MiaDock.Modules.DeviceStatus.Settings;
@@ -40,6 +43,7 @@ using MiaDock.Modules.Time.Services;
 using MiaDock.Modules.Time.ViewModels;
 using MiaDock.Platform.Windows.Time;
 using MiaDock.Platform.Windows.HotKeys;
+using MiaDock.Platform.Windows.Input;
 using MiaDock.Modules.Notifications;
 using MiaDock.Modules.Notifications.Services;
 using MiaDock.Modules.Notifications.Settings;
@@ -52,8 +56,9 @@ using MiaDock.Platform.Windows.Transfers;
 using MiaDock.Core.Localization;
 using MiaDock.Core.Updates;
 using MiaDock.Platform.Windows.Updates;
-using MiaDock.App.Modules;
 using MiaDock.Core.Focus;
+using MiaDock.Core.Applications;
+using MiaDock.Core.Lifecycle;
 using MiaDock.Platform.Windows.Applications;
 
 namespace MiaDock.App.Bootstrapper;
@@ -72,7 +77,9 @@ public static class ServiceRegistration
         services.AddSingleton<IFullscreenDetectionService, WindowsFullscreenDetectionService>();
         services.AddSingleton<IApplicationActivityService, WindowsApplicationActivityService>();
         services.AddSingleton<IFocusSettingsLauncher, WindowsFocusSettingsLauncher>();
+        services.AddSingleton<IExternalUriLauncher, WindowsExternalUriLauncher>();
         services.AddSingleton<ISingleInstanceService, WindowsSingleInstanceService>();
+        services.AddSingleton<ICrashStateStore, JsonCrashStateStore>();
         services.AddSingleton<IWindowsSessionLockStateService, WindowsSessionLockStateService>();
         services.AddSingleton<IStartupTaskService, WindowsStartupTaskService>();
         services.AddSingleton<ITrayIconService>(_ => new WindowsTrayIconService(WindowBranding.IconPath));
@@ -83,10 +90,12 @@ public static class ServiceRegistration
         services.AddSingleton<ISystemActivityService, WindowsSystemActivityService>();
         services.AddSingleton<IAudioMixerService>(provider =>
             (IAudioMixerService)provider.GetRequiredService<ISystemActivityService>());
+        services.AddSingleton<IPrivacyUsageService, WindowsPrivacyUsageService>();
         services.AddSingleton<IAudioSettingsLauncher, WindowsAudioSettingsLauncher>();
         services.AddSingleton<IPrivacySettingsLauncher, WindowsPrivacySettingsLauncher>();
         services.AddSingleton<IPowerStatusService, WindowsPowerStatusService>();
         services.AddSingleton<INetworkStatusService, WindowsNetworkStatusService>();
+        services.AddSingleton<IBluetoothRadioStateProvider, WindowsBluetoothRadioStateProvider>();
         services.AddSingleton<IBluetoothStatusService, WindowsBluetoothStatusService>();
         services.AddSingleton<ISystemResumeService, WindowsSystemResumeService>();
         services.AddSingleton<ITimerStateStore, JsonTimerStateStore>();
@@ -101,6 +110,7 @@ public static class ServiceRegistration
         services.AddSingleton<PresentationPrivacyPolicy>();
         services.AddSingleton<IIslandModule, MusicModule>();
         services.AddSingleton<IIslandModule, VolumeModule>();
+        services.AddSingleton<IIslandModule, PrivacyModule>();
         services.AddSingleton<IIslandModule, SystemActivityModule>();
         services.AddSingleton<IIslandModule, BatteryModule>();
         services.AddSingleton<IIslandModule, NetworkModule>();
@@ -108,6 +118,14 @@ public static class ServiceRegistration
         services.AddSingleton<IIslandModule, TimerModule>();
         services.AddSingleton<IIslandModule, NotificationModule>();
         services.AddSingleton<IIslandModule, TransferModule>();
+        services.AddSingleton<IKeyboardLockMonitor, WindowsKeyboardLockMonitor>();
+        services.AddSingleton<KeyboardLockModule>();
+        services.AddSingleton<IIslandModule>(provider =>
+            provider.GetRequiredService<KeyboardLockModule>());
+        services.AddSingleton<IUsbDeviceMonitor, WindowsUsbDeviceMonitor>();
+        services.AddSingleton<UsbDeviceModule>();
+        services.AddSingleton<IIslandModule>(provider =>
+            provider.GetRequiredService<UsbDeviceModule>());
         services.AddSingleton<StoreUpdateModule>();
         services.AddSingleton<IIslandModule>(provider =>
             provider.GetRequiredService<StoreUpdateModule>());
@@ -117,6 +135,7 @@ public static class ServiceRegistration
         {
             var music = provider.GetRequiredService<MusicModuleViewModel>();
             var system = provider.GetRequiredService<SystemActivityViewModel>();
+            var privacy = provider.GetRequiredService<PrivacyModuleViewModel>();
             var volume = provider.GetRequiredService<VolumeModuleViewModel>();
             var localization = provider.GetRequiredService<IAppLocalizationService>();
             var settings = provider.GetRequiredService<ISettingsService>();
@@ -133,7 +152,7 @@ public static class ServiceRegistration
 
             var idleDashboard = provider.GetRequiredService<IdleDashboardViewModel>();
             Register("IdleCompactView", () =>
-                new Controls.IdleCompactView(music, system, localization, settings, focus) { DataContext = idleDashboard });
+                new Controls.IdleCompactView(music, system, localization, settings, focus, privacy) { DataContext = idleDashboard });
             Register("IdleHoverView", () =>
                 new Controls.IdleHoverView(music, idleDashboard, localization, settings, focus));
             Register("IdleExpandedView", () =>
@@ -148,6 +167,10 @@ public static class ServiceRegistration
                 new Controls.VolumeExpandedView { DataContext = volume });
             Register("VolumeNotificationView", () =>
                 new Controls.VolumeNotificationView { DataContext = volume });
+            Register("PrivacyCompactView", () =>
+                new Controls.PrivacyCompactView { DataContext = privacy });
+            Register("PrivacyExpandedView", () =>
+                new Controls.PrivacyExpandedView { DataContext = privacy });
             Register("SystemActivityCompactView", () =>
                 new Controls.SystemActivityCompactView { DataContext = system });
             Register("SystemActivityExpandedView", () =>
@@ -216,6 +239,7 @@ public static class ServiceRegistration
 
         services.AddSingleton<MusicModuleViewModel>();
         services.AddSingleton<SystemActivityViewModel>();
+        services.AddSingleton<PrivacyModuleViewModel>();
         services.AddSingleton<VolumeModuleViewModel>();
         services.AddSingleton<BatteryModuleViewModel>();
         services.AddSingleton<NetworkModuleViewModel>();
@@ -234,6 +258,7 @@ public static class ServiceRegistration
         services.AddSingleton<DiagnosticsViewModel>();
         services.AddSingleton<IDiagnosticsFileService, DiagnosticsFileService>();
         services.AddSingleton<AppExceptionCoordinator>();
+        services.AddSingleton<CrashRecoveryCoordinator>();
         services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
         services.AddSingleton<IOnboardingWindowService, OnboardingWindowService>();
         services.AddSingleton<IApplicationLifetimeService, ApplicationLifetimeService>();

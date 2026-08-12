@@ -93,6 +93,56 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
+    public void IslandSurface_RemovesOuterStrokeAcrossThemes()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml.cs"));
+        var styles = XDocument.Load(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.UI",
+            "Themes",
+            "DockControlStyles.xaml"));
+        var xNamespace = XNamespace.Get("http://schemas.microsoft.com/winfx/2006/xaml");
+        var surfaceStyle = styles.Descendants().Single(element =>
+            element.Name.LocalName == "Style" &&
+            element.Attribute(xNamespace + "Key")?.Value == "DockSurfaceStyle");
+        var borderThickness = surfaceStyle.Elements().Single(element =>
+            element.Name.LocalName == "Setter" &&
+            element.Attribute("Property")?.Value == "BorderThickness");
+        var overlaySource = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.App",
+            "OverlayWindow.xaml.cs"));
+        var controllerSource = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.Platform.Windows",
+            "Overlay",
+            "OverlayWindowController.cs"));
+
+        StringAssert.Contains(source, "Surface.BorderThickness = new Thickness(0);");
+        Assert.DoesNotContain(
+            "Surface.BorderThickness = new Thickness(1)",
+            source,
+            StringComparison.Ordinal);
+        Assert.AreEqual("0", borderThickness.Attribute("Value")?.Value);
+        Assert.DoesNotContain("ToLayeredSurfaceArgb", overlaySource, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "new LayeredRoundedBackdropWindow",
+            controllerSource,
+            StringComparison.Ordinal);
+        StringAssert.Contains(controllerSource, "ClearWindowRegionIfNeeded");
+        Assert.DoesNotContain(
+            "RoundedRegionBuilder.Create(",
+            controllerSource,
+            StringComparison.Ordinal);
+    }
+
+    [TestMethod]
     public void MusicCompactView_UsesReusableAudioActivityIndicator()
     {
         var document = LoadControl("MusicCompactView.xaml");
@@ -315,7 +365,7 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
-    public void SystemActivityView_ContainsPrivacyRowsWithoutAudioSliders()
+    public void SystemActivityView_ContainsCallStatusWithoutPrivacyDeviceRows()
     {
         var document = LoadControl("SystemActivityExpandedView.xaml");
         var sliders = document.Descendants()
@@ -324,11 +374,13 @@ public sealed class IslandShellTests
 
         Assert.IsEmpty(sliders);
         var text = document.ToString();
-        StringAssert.Contains(text, "MicrophoneText");
-        StringAssert.Contains(text, "CameraText");
         StringAssert.Contains(text, "CallText");
-        StringAssert.Contains(text, "OpenMicrophonePrivacySettingsCommand");
-        StringAssert.Contains(text, "OpenCameraPrivacySettingsCommand");
+        StringAssert.Contains(text, "Arama durumu");
+        Assert.DoesNotContain("MicrophoneText", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("CameraText", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("OpenMicrophonePrivacySettingsCommand", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("OpenCameraPrivacySettingsCommand", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("IsCameraInUse", text, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -439,7 +491,8 @@ public sealed class IslandShellTests
         StringAssert.Contains(source, "Descriptor.MinimumExpandedHeight");
         StringAssert.Contains(source, "Math.Clamp(Math.Max(baseLayout.ExpandedHeight, minimum), 360, 420)");
         StringAssert.Contains(source, "RequestLayoutTransition(effective)");
-        StringAssert.Contains(source, "CreateRoundedRectangleGeometry");
+        StringAssert.Contains(source, "BackdropSurface.CornerRadius = cornerRadius;");
+        StringAssert.Contains(source, "Surface.CornerRadius = cornerRadius;");
     }
 
     [TestMethod]

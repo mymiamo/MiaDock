@@ -3,6 +3,8 @@ using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Composition.SystemBackdrops;
 using MiaDock.App.Models;
 using MiaDock.App.ViewModels;
 using MiaDock.App.Views.Onboarding;
@@ -32,23 +34,23 @@ public sealed partial class OnboardingWindow : Window
         _pages = new Dictionary<OnboardingStep, UserControl>
         {
             [OnboardingStep.Welcome] = Page(new WelcomeStepView()),
-            [OnboardingStep.Startup] = Page(new StartupStepView()),
-            [OnboardingStep.Appearance] = Page(new AppearanceStepView()),
-            [OnboardingStep.Media] = Page(new MediaStepView()),
-            [OnboardingStep.Display] = Page(new DisplayStepView()),
-            [OnboardingStep.Interaction] = Page(new InteractionStepView()),
-            [OnboardingStep.Fullscreen] = Page(new FullscreenStepView()),
-            [OnboardingStep.Modules] = Page(new ModulesStepView()),
-            [OnboardingStep.Summary] = Page(new SummaryStepView())
+            [OnboardingStep.Personalization] = Page(new PersonalizationStepView()),
+            [OnboardingStep.Interaction] = Page(new UsageStepView()),
+            [OnboardingStep.FeaturesAndPrivacy] = Page(new FeaturesAndPrivacyStepView()),
+            [OnboardingStep.Ready] = Page(new ReadyStepView())
         };
-        AppWindow.Resize(new SizeInt32(960, 680));
+        AppWindow.Resize(new SizeInt32(1040, 700));
         if (AppWindow.Presenter is OverlappedPresenter presenter)
         {
             presenter.IsResizable = true;
-            presenter.IsMaximizable = false;
+            presenter.IsMaximizable = true;
             presenter.IsMinimizable = true;
             presenter.SetBorderAndTitleBar(true, true);
         }
+
+        ExtendsContentIntoTitleBar = true;
+        SetTitleBar(TitleBar);
+        TryApplySystemBackdrop();
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         _localization.LanguageChanged += OnLanguageChanged;
@@ -77,7 +79,7 @@ public sealed partial class OnboardingWindow : Window
 
     private void ApplyLocalization()
     {
-        Title = _localization.Text("MiaDock İlk Kurulum", "MiaDock Setup");
+        Title = _localization.Text("MiaDock Başlarken", "MiaDock Get Started");
         _localization.Apply(Root);
         foreach (var page in _pages.Values) _localization.Apply(page);
         UpdateStep();
@@ -96,7 +98,7 @@ public sealed partial class OnboardingWindow : Window
 
     private async void OnNextClick(object sender, RoutedEventArgs args)
     {
-        if (_viewModel.CurrentStep == OnboardingStep.Modules)
+        if (_viewModel.CurrentStep == OnboardingStep.FeaturesAndPrivacy)
         {
             var selected = _viewModel.ModuleOptions
                 .Where(option =>
@@ -172,6 +174,29 @@ public sealed partial class OnboardingWindow : Window
             _viewModel.IsLastStep
                 ? _localization.Get("Onboarding.Button.Finish.Automation")
                 : _localization.Get("Onboarding.Button.Next.Automation"));
+    }
+
+    private void OnRootSizeChanged(object sender, SizeChangedEventArgs args)
+    {
+        var compact = args.NewSize.Width < 720;
+        RailColumn.Width = new GridLength(compact ? 0 : 272);
+        StepRail.Visibility = compact ? Visibility.Collapsed : Visibility.Visible;
+        CompactProgress.Visibility = compact ? Visibility.Visible : Visibility.Collapsed;
+        StepScrollViewer.Padding = compact
+            ? new Thickness(20, 64, 20, 24)
+            : new Thickness(40, 28, 40, 28);
+    }
+
+    private void TryApplySystemBackdrop()
+    {
+        try
+        {
+            SystemBackdrop = new MicaBackdrop { Kind = MicaKind.Base };
+        }
+        catch
+        {
+            SystemBackdrop = null;
+        }
     }
 
     private async void OnAppWindowClosing(AppWindow sender, AppWindowClosingEventArgs args)

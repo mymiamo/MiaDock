@@ -2,55 +2,103 @@
     x:Class="MiaDock.App.OnboardingWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="MiaDock İlk Kurulum">
-  <Grid x:Name="Root" Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+    Title="MiaDock Başlarken">
+  <Grid x:Name="Root"
+        Background="{ThemeResource SettingsWindowBackgroundBrush}"
+        SizeChanged="OnRootSizeChanged">
     <Grid.RowDefinitions>
+      <RowDefinition Height="48" />
       <RowDefinition Height="*" />
       <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="250" />
+      <ColumnDefinition x:Name="RailColumn" Width="272" />
       <ColumnDefinition Width="*" />
     </Grid.ColumnDefinitions>
 
-    <Border Grid.RowSpan="2" Background="{ThemeResource LayerFillColorDefaultBrush}"
-            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,0,1,0">
-      <StackPanel Padding="24,32" Spacing="20">
-        <StackPanel Orientation="Horizontal" Spacing="12">
-          <Image Width="36" Height="36" Source="ms-appx:///Assets/AppLogo.png"
-                 Stretch="Uniform" AutomationProperties.Name="MiaDock logosu" />
-          <TextBlock Text="MiaDock" FontSize="28" FontWeight="SemiBold"
-                     VerticalAlignment="Center" />
-        </StackPanel>
-        <TextBlock Text="İlk kurulum" Opacity="0.68" />
-        <ListView x:Name="StepList" ItemsSource="{Binding Steps}" DisplayMemberPath="Title"
+    <Grid x:Name="TitleBar" Grid.ColumnSpan="2" Padding="18,0,150,0">
+      <StackPanel Orientation="Horizontal" Spacing="10" VerticalAlignment="Center">
+        <Image Width="22" Height="22" Source="ms-appx:///Assets/AppLogo.png"
+               AutomationProperties.Name="MiaDock logosu" />
+        <TextBlock Text="MiaDock Başlarken" FontWeight="SemiBold" />
+      </StackPanel>
+    </Grid>
+
+    <Border x:Name="StepRail"
+            Grid.Row="1" Grid.RowSpan="2"
+            Background="{ThemeResource LayerFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,1,0">
+      <StackPanel Padding="28,28,20,24" Spacing="18">
+        <TextBlock Text="{Binding StepPositionText}" Opacity="0.68" />
+        <ListView x:Name="StepList"
+                  ItemsSource="{Binding Steps}"
                   SelectedIndex="{Binding CurrentStepIndex, Mode=OneWay}"
-                  IsHitTestVisible="False" IsTabStop="False"
-                  AutomationProperties.Name="Kurulum adımları" />
+                  IsHitTestVisible="False"
+                  IsTabStop="False"
+                  AutomationProperties.Name="Kurulum adımları">
+          <ListView.ItemContainerStyle>
+            <Style TargetType="ListViewItem">
+              <Setter Property="MinHeight" Value="52" />
+              <Setter Property="Padding" Value="10,6" />
+              <Setter Property="CornerRadius" Value="8" />
+            </Style>
+          </ListView.ItemContainerStyle>
+          <ListView.ItemTemplate>
+            <DataTemplate>
+              <StackPanel Orientation="Horizontal" Spacing="12">
+                <FontIcon Glyph="&#xE73E;" FontSize="14" />
+                <TextBlock Text="{Binding Title}" VerticalAlignment="Center" TextWrapping="Wrap" />
+              </StackPanel>
+            </DataTemplate>
+          </ListView.ItemTemplate>
+        </ListView>
       </StackPanel>
     </Border>
 
-    <ScrollViewer Grid.Column="1" Padding="42,36,42,28">
-      <ContentControl x:Name="StepHost" />
+    <StackPanel x:Name="CompactProgress"
+                Grid.Row="1" Grid.Column="1"
+                Margin="20,14,20,0"
+                Spacing="6"
+                Visibility="Collapsed">
+      <Grid>
+        <TextBlock Text="{Binding CurrentStepTitle}" FontWeight="SemiBold" />
+        <TextBlock Text="{Binding StepPositionText}" HorizontalAlignment="Right" Opacity="0.68" />
+      </Grid>
+      <ProgressBar Minimum="0" Maximum="5" Value="{Binding ProgressValue}" Height="3" />
+    </StackPanel>
+
+    <ScrollViewer x:Name="StepScrollViewer"
+                  Grid.Row="1" Grid.Column="1"
+                  Padding="40,28,40,28"
+                  HorizontalScrollMode="Disabled"
+                  HorizontalScrollBarVisibility="Disabled"
+                  HorizontalContentAlignment="Stretch">
+      <ContentControl x:Name="StepHost" HorizontalContentAlignment="Stretch" />
     </ScrollViewer>
 
-    <Border Grid.Row="1" Grid.Column="1" Padding="32,18"
-            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="0,1,0,0">
+    <Border Grid.Row="2" Grid.Column="1"
+            Padding="28,16"
+            BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,1,0,0">
       <Grid ColumnSpacing="12">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <StackPanel VerticalAlignment="Center" Spacing="4">
-          <TextBlock Text="{Binding StepPositionText}" Opacity="0.68" />
-          <TextBlock Text="{Binding ValidationMessage}" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
-                     TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
-        </StackPanel>
-        <Button x:Name="BackButton" Grid.Column="1" Content="Geri" Click="OnBackClick"
+        <TextBlock Text="{Binding ValidationMessage}"
+                   VerticalAlignment="Center"
+                   Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                   TextWrapping="Wrap"
+                   AutomationProperties.LiveSetting="Assertive" />
+        <Button x:Name="BackButton" Grid.Column="1" Content="Geri"
+                MinWidth="112" MinHeight="44" Click="OnBackClick"
                 AutomationProperties.Name="Önceki kurulum adımı" />
-        <Button x:Name="NextButton" Grid.Column="2" Content="İleri" Click="OnNextClick"
-                Style="{StaticResource AccentButtonStyle}" AutomationProperties.Name="Sonraki kurulum adımı" />
+        <Button x:Name="NextButton" Grid.Column="2" Content="İleri"
+                MinWidth="132" MinHeight="44" Click="OnNextClick"
+                Style="{StaticResource AccentButtonStyle}"
+                AutomationProperties.Name="Sonraki kurulum adımı" />
       </Grid>
     </Border>
   </Grid>

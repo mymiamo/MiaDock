@@ -66,29 +66,51 @@ public sealed class WindowsSessionLockStateService : IWindowsSessionLockStateSer
     public void Dispose()
     {
         if (_disposed) return;
+
+        // Unregister session notify, but skip DestroyWindow/UnregisterClass.
+        // DestroyWindow re-enters the native WndProc and has fail-fast'd on Exit.
+        _disposed = true;
         if (_windowHandle != 0)
         {
-            if (_started) WTSUnRegisterSessionNotification(_windowHandle);
-            DestroyWindow(_windowHandle);
+            if (_started)
+            {
+                try
+                {
+                    WTSUnRegisterSessionNotification(_windowHandle);
+                }
+                catch (Exception)
+                {
+                }
+            }
+
             _windowHandle = 0;
         }
-        if (_instance != 0) UnregisterClassW(_windowClassName, _instance);
+
         _started = false;
-        _disposed = true;
     }
 
     private nint HandleWindowMessage(nint window, uint message, nuint wParam, nint lParam)
     {
-        if (message == WmWtsSessionChange &&
-            (wParam == WtsSessionLock || wParam == WtsSessionUnlock))
+        try
         {
-            var locked = wParam == WtsSessionLock;
-            if (IsLocked != locked)
+            if (!_disposed &&
+                message == WmWtsSessionChange &&
+                (wParam == WtsSessionLock || wParam == WtsSessionUnlock))
             {
-                IsLocked = locked;
-                LockStateChanged?.Invoke(this, locked);
+                var locked = wParam == WtsSessionLock;
+                if (IsLocked != locked)
+                {
+                    IsLocked = locked;
+                    LockStateChanged?.Invoke(this, locked);
+                }
+                return 0;
             }
-            return 0;
+        }
+        catch (Exception)
+        {
+            // A managed exception must never cross the reverse P/Invoke WndProc
+            // boundary; escaping here terminates the process through a native
+            // fail-fast path that no handler can observe.
         }
 
         return DefWindowProcW(window, message, wParam, lParam);

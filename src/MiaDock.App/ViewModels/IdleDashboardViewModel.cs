@@ -42,19 +42,27 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
 
     public string BatteryText => _battery.IsBatteryPresent
         ? $"{_battery.ChargePercent}%"
-        : Text("Battery.NotPresent");
+        : _battery.Availability == BatteryAvailabilityState.NotPresent
+            ? Text("Battery.NotPresent")
+            : Text("Battery.Unknown");
 
     public Visibility BatteryVisibility => _battery.IsBatteryPresent
         ? Visibility.Visible
         : Visibility.Collapsed;
 
-    public string BatteryStatus => !_battery.IsBatteryPresent
-        ? Text("Battery.NotPresent")
-        : _battery.IsCharging
+    public string BatteryStatus => _battery.Availability switch
+    {
+        BatteryAvailabilityState.NotPresent => Text("Battery.NotPresent"),
+        BatteryAvailabilityState.ApiUnavailable => Text("Battery.Unavailable"),
+        BatteryAvailabilityState.AccessDenied => Text("Battery.AccessDenied"),
+        BatteryAvailabilityState.TransientError => Text("Battery.TransientError"),
+        BatteryAvailabilityState.Unknown => Text("Battery.Unknown"),
+        _ => _battery.IsCharging
             ? Text("Battery.Percent.Charging.Automation", _battery.ChargePercent)
             : _battery.IsEnergySaverOn
                 ? Text("Battery.Percent.Saver.Automation", _battery.ChargePercent)
-                : Text("Battery.Percent.Automation", _battery.ChargePercent);
+                : Text("Battery.Percent.Automation", _battery.ChargePercent)
+    };
 
     public string NetworkGlyph => _network.ConnectionKind switch
     {
@@ -101,11 +109,17 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         ? Visibility.Visible
         : Visibility.Collapsed;
 
-    public string BluetoothStatus => ConnectedBluetoothCount switch
+    public string BluetoothStatus => _bluetooth.RadioState switch
     {
-        0 => Text("Bluetooth.None.Automation"),
-        1 => Text("Bluetooth.One.Automation"),
-        var count => Text("Bluetooth.Many.Automation", count)
+        BluetoothRadioState.Off => Text("Bluetooth.Off"),
+        BluetoothRadioState.Unavailable => Text("Bluetooth.Unavailable"),
+        BluetoothRadioState.Unknown => Text("Bluetooth.Unknown"),
+        _ => ConnectedBluetoothCount switch
+        {
+            0 => Text("Bluetooth.None.Automation"),
+            1 => Text("Bluetooth.One.Automation"),
+            var count => Text("Bluetooth.Many.Automation", count)
+        }
     };
 
     public string StatusSummary

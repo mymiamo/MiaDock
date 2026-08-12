@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using MiaDock.Core.Overlay;
+using MiaDock.Core.Presentation;
 using MiaDock.Platform.Windows.Interop;
 using MiaDock.Platform.Windows.Display;
 
@@ -18,12 +19,14 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     private readonly IDisplayTopologyService _displayTopology;
     private readonly NativeMethods.SubclassProcedure _subclassProcedure;
     private readonly NativeMethods.LowLevelMouseProcedure _mouseProcedure;
-    private readonly LayeredRoundedBackdropWindow _backdropWindow;
     private OverlaySize _sizeInDips;
-    private double _cornerRadiusInDips;
-    private uint _surfaceArgb = 0xFF000000;
+    private DockCornerRadii _cornerRadiiInDips;
+    private double _marginInDips;
     private OverlayPlacement? _lastPlacement;
+    private OverlayPlacement? _lastVisiblePlacement;
+    private OverlayWorkArea? _lastDisplayBounds;
     private uint _lastDpi;
+    private bool _hasClearedRegion;
     private bool _disposed;
     private bool _subclassInstalled;
     private bool _inputActivationEnabled;
@@ -31,6 +34,8 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     private int _outsideClickPending;
     private OverlayPosition _position;
     private string? _displayId;
+    private bool _edgeRevealHidden;
+    private double _edgeRevealStripInDips = 2;
 
     public OverlayWindowController(
         Window window,
@@ -54,7 +59,8 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         _placementCalculator = placementCalculator;
         _displayTopology = displayTopology;
         _sizeInDips = options.InitialSize;
-        _cornerRadiusInDips = options.CornerRadiusInDips;
+        _cornerRadiiInDips = options.CornerRadiiInDips;
+        _marginInDips = options.MarginInDips;
         _position = options.Position;
         _subclassProcedure = WindowMessageHandler;
         _mouseProcedure = LowLevelMouseHandler;
@@ -68,7 +74,6 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         ConfigurePresenter();
         SuppressWindowChrome();
         EnableTransparentCompositionSurface();
-        _backdropWindow = new LayeredRoundedBackdropWindow();
         InstallSubclass();
         _window.Closed += OnWindowClosed;
         _displayTopology.DisplaysChanged += OnDisplaysChanged;
@@ -88,7 +93,6 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         Reposition();
         _ = NativeMethods.ShowWindow(WindowHandle, NativeConstants.SwShowNoActivate);
         IsVisible = true;
-        UpdateBackdropFromLastPlacement();
         // WinUI can restore frame styles during the first HWND presentation.
         SuppressWindowChrome();
     }
@@ -97,19 +101,24 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     {
         ThrowIfDisposed();
         _ = NativeMethods.ShowWindow(WindowHandle, NativeConstants.SwHide);
-        _backdropWindow.Hide();
         IsVisible = false;
     }
 
-    public void UpdatePlacement(OverlayPosition position, string? displayId)
+    public void UpdatePlacement(OverlayPosition position, string? displayId, double marginInDips)
     {
         ThrowIfDisposed();
+        if (!double.IsFinite(marginInDips) || marginInDips < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(marginInDips));
+        }
+
         _position = position;
         _displayId = displayId;
+        _marginInDips = marginInDips;
         Reposition();
     }
 
-    public void UpdateLayout(OverlaySize sizeInDips, double cornerRadiusInDips)
+    public void UpdateLayout(OverlaySize sizeInDips, DockCornerRadii cornerRadiiInDips)
     {
         ThrowIfDisposed();
 
@@ -118,13 +127,13 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             throw new ArgumentOutOfRangeException(nameof(sizeInDips));
         }
 
-        if (!double.IsFinite(cornerRadiusInDips) || cornerRadiusInDips < 0)
+        if (!AreValid(cornerRadiiInDips))
         {
-            throw new ArgumentOutOfRangeException(nameof(cornerRadiusInDips));
+            throw new ArgumentOutOfRangeException(nameof(cornerRadiiInDips));
         }
 
         _sizeInDips = sizeInDips;
-        _cornerRadiusInDips = cornerRadiusInDips;
+        _cornerRadiiInDips = cornerRadiiInDips;
         Reposition();
     }
 
@@ -138,13 +147,6 @@ internal sealed class OverlayWindowController : IOverlayWindowController
 
         // Surface transparency belongs to the XAML island background. The HWND
         // must remain non-layered so Desktop Acrylic can sample what is behind it.
-    }
-
-    public void UpdateSurfaceColor(uint argb)
-    {
-        ThrowIfDisposed();
-        _surfaceArgb = argb;
-        UpdateBackdropFromLastPlacement();
     }
 
     public void SetOutsideClickMonitoring(bool enabled)
@@ -187,12 +189,78 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         ApplyExtendedStyles();
     }
 
+    public void SetEdgeRevealHidden(bool hidden, double visibleStripInDips = 2)
+    {
+        ThrowIfDisposed();
+        if (!double.IsFinite(visibleStripInDips) || visibleStripInDips is < 1 or > 16)
+        {
+            throw new ArgumentOutOfRangeException(nameof(visibleStripInDips));
+        }
+
+        if (_edgeRevealHidden == hidden &&
+            Math.Abs(_edgeRevealStripInDips - visibleStripInDips) < 0.01)
+        {
+            return;
+        }
+
+        _edgeRevealHidden = hidden;
+        _edgeRevealStripInDips = visibleStripInDips;
+        Reposition();
+    }
+
+    public bool IsPointerAtAttachedEdge(
+        int activationThicknessInPixels = 3,
+        int spanPaddingInPixels = 24)
+    {
+        ThrowIfDisposed();
+        if (_lastVisiblePlacement is not { } placement ||
+            _lastDisplayBounds is not { } displayBounds ||
+            !NativeMethods.GetCursorPos(out var point))
+        {
+            return false;
+        }
+
+        return DockEdgeRevealGeometry.IsPointerAtActivationEdge(
+            point.X,
+            point.Y,
+            displayBounds,
+            placement,
+            _position,
+            activationThicknessInPixels,
+            spanPaddingInPixels);
+    }
+
+    public bool IsPointerOverWindow()
+    {
+        ThrowIfDisposed();
+        if (!NativeMethods.GetCursorPos(out var point) ||
+            !NativeMethods.GetWindowRect(WindowHandle, out var bounds))
+        {
+            return false;
+        }
+
+        return point.X >= bounds.Left &&
+               point.X < bounds.Right &&
+               point.Y >= bounds.Top &&
+               point.Y < bounds.Bottom &&
+               RoundedRectangleHitTest.Contains(
+                   point.X - bounds.Left,
+                   point.Y - bounds.Top,
+                   bounds.Width,
+                   bounds.Height,
+                   GetCornerRadiiInPixels());
+    }
+
     public void Dispose()
     {
         if (_disposed)
         {
             return;
         }
+
+        // Native window destruction can synchronously re-enter WM_NCDESTROY. Set the
+        // guard first so cleanup cannot recursively execute on the same native stack.
+        _disposed = true;
 
         _window.Closed -= OnWindowClosed;
         _displayTopology.DisplaysChanged -= OnDisplaysChanged;
@@ -203,8 +271,6 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         }
 
         StopOutsideClickMonitoring();
-        _backdropWindow.Dispose();
-        _disposed = true;
     }
 
     private void ConfigurePresenter()
@@ -372,12 +438,27 @@ internal sealed class OverlayWindowController : IOverlayWindowController
 
         var display = _displayTopology.Find(_displayId) ?? _displayTopology.Primary;
         var workArea = display.WorkArea;
-        var placement = _placementCalculator.Calculate(new OverlayLayoutRequest(
+        var visiblePlacement = _placementCalculator.Calculate(new OverlayLayoutRequest(
             new OverlayWorkArea(workArea.X, workArea.Y, workArea.Width, workArea.Height),
             _sizeInDips,
             dpi,
             _position,
-            _options.MarginInDips));
+            _marginInDips));
+        var displayBounds = new OverlayWorkArea(
+            display.Bounds.X,
+            display.Bounds.Y,
+            display.Bounds.Width,
+            display.Bounds.Height);
+        var visibleStripPixels = Math.Max(
+            1,
+            checked((int)Math.Round(_edgeRevealStripInDips * dpi / 96d)));
+        var placement = _edgeRevealHidden
+            ? DockEdgeRevealGeometry.HideTowardAttachedEdge(
+                visiblePlacement,
+                displayBounds,
+                _position,
+                visibleStripPixels)
+            : visiblePlacement;
 
         EnsureSetWindowPos(
             placement.X,
@@ -388,68 +469,32 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             NativeConstants.SwpNoActivate
             | NativeConstants.SwpNoOwnerZOrder);
 
-        ApplyWindowRegion(placement, dpi);
+        // SetWindowRgn masks are permanently 1-bit and turn the rounded corners
+        // into a staircase. The backdrop element carries the silhouette instead,
+        // so the HWND stays rectangular and DWM keeps the anti-aliased alpha.
+        ClearWindowRegionIfNeeded();
         _lastPlacement = placement;
+        _lastVisiblePlacement = visiblePlacement;
+        _lastDisplayBounds = displayBounds;
         _lastDpi = dpi;
-        _backdropWindow.Update(
-            placement,
-            GetCornerRadiusInPixels(dpi),
-            GetFeatherInset(dpi) + 1d,
-            _surfaceArgb,
-            WindowHandle,
-            IsVisible);
         LastFailure = null;
     }
 
-    private void ApplyWindowRegion(OverlayPlacement placement, uint dpi)
+    private void ClearWindowRegionIfNeeded()
     {
-        var featherInset = GetFeatherInset(dpi);
-        var radius = checked((int)Math.Round(
-            _cornerRadiusInDips * dpi / 96d,
-            MidpointRounding.AwayFromZero)) - featherInset;
-        radius = Math.Clamp(radius, 0, Math.Min(
-            placement.Width - featherInset * 2,
-            placement.Height - featherInset * 2) / 2);
-        var diameter = Math.Max(1, radius * 2);
-        var region = NativeMethods.CreateRoundRectRgn(
-            featherInset,
-            featherInset,
-            placement.Width - featherInset + 1,
-            placement.Height - featherInset + 1,
-            diameter,
-            diameter);
-
-        if (region == 0)
-        {
-            throw new Win32Exception(
-                Marshal.GetLastPInvokeError(),
-                "Unable to create the overlay transparency region.");
-        }
-
-        if (NativeMethods.SetWindowRgn(WindowHandle, region, true) == 0)
-        {
-            var error = Marshal.GetLastPInvokeError();
-            _ = NativeMethods.DeleteObject(region);
-            throw new Win32Exception(error, "Unable to apply the overlay transparency region.");
-        }
-
-        // SetWindowRgn owns the region after a successful call.
-    }
-
-    private void UpdateBackdropFromLastPlacement()
-    {
-        if (_lastPlacement is not { } placement || _lastDpi == 0)
+        if (_hasClearedRegion)
         {
             return;
         }
 
-        _backdropWindow.Update(
-            placement,
-            GetCornerRadiusInPixels(_lastDpi),
-            GetFeatherInset(_lastDpi) + 1d,
-            _surfaceArgb,
-            WindowHandle,
-            IsVisible);
+        if (NativeMethods.SetWindowRgn(WindowHandle, 0, true) == 0)
+        {
+            throw new Win32Exception(
+                Marshal.GetLastPInvokeError(),
+                "Unable to clear the overlay window region.");
+        }
+
+        _hasClearedRegion = true;
     }
 
     private void EnsureSetWindowPos(
@@ -474,6 +519,27 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         nuint subclassId,
         nuint referenceData)
     {
+        try
+        {
+            if (TryHandleWindowMessage(message, lParam) is { } handled)
+            {
+                return handled;
+            }
+        }
+        catch (Exception exception)
+        {
+            // The runtime fails fast when a managed exception unwinds into the
+            // native window procedure, so the process dies without a log entry.
+            // Every failure is captured here and the message falls through to
+            // the default handler instead.
+            LastFailure = exception;
+        }
+
+        return NativeMethods.DefSubclassProc(windowHandle, message, wParam, lParam);
+    }
+
+    private nint? TryHandleWindowMessage(uint message, nint lParam)
+    {
         if (message == NativeConstants.WmMouseActivate)
         {
             if (!_inputActivationEnabled)
@@ -491,7 +557,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
                     point.Y - hitTestBounds.Top,
                     hitTestBounds.Right - hitTestBounds.Left,
                     hitTestBounds.Bottom - hitTestBounds.Top,
-                    GetCornerRadiusInPixels()))
+                    GetCornerRadiiInPixels()))
             {
                 return NativeConstants.HtTransparent;
             }
@@ -502,17 +568,33 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             or NativeConstants.WmThemeChanged
             or NativeConstants.WmDwmCompositionChanged)
         {
-            _window.DispatcherQueue.TryEnqueue(TryRefreshAppearanceAndPosition);
+            _ = EnqueueOnWindowThread(TryRefreshAppearanceAndPosition);
         }
         else if (message == NativeConstants.WmNcDestroy)
         {
             Dispose();
         }
 
-        return NativeMethods.DefSubclassProc(windowHandle, message, wParam, lParam);
+        return null;
     }
 
     private nint LowLevelMouseHandler(int code, nuint message, nint data)
+    {
+        try
+        {
+            ObserveGlobalPointerMessage(code, message, data);
+        }
+        catch (Exception exception)
+        {
+            // A hook callback runs on a native stack as well, so an escaping
+            // exception would terminate the process instead of being reported.
+            LastFailure = exception;
+        }
+
+        return NativeMethods.CallNextHookEx(_mouseHook, code, message, data);
+    }
+
+    private void ObserveGlobalPointerMessage(int code, nuint message, nint data)
     {
         if (code >= 0 &&
             IsPointerDownMessage(message) &&
@@ -529,30 +611,47 @@ internal sealed class OverlayWindowController : IOverlayWindowController
                               point.Y - bounds.Top,
                               bounds.Right - bounds.Left,
                               bounds.Bottom - bounds.Top,
-                              GetCornerRadiusInPixels());
+                              GetCornerRadiiInPixels());
             if (outside && Interlocked.Exchange(ref _outsideClickPending, 1) == 0)
             {
-                _window.DispatcherQueue.TryEnqueue(() =>
+                if (!EnqueueOnWindowThread(() =>
+                    {
+                        Interlocked.Exchange(ref _outsideClickPending, 0);
+                        OutsidePointerPressed?.Invoke(this, EventArgs.Empty);
+                    }))
                 {
                     Interlocked.Exchange(ref _outsideClickPending, 0);
-                    OutsidePointerPressed?.Invoke(this, EventArgs.Empty);
-                });
+                }
             }
         }
-
-        return NativeMethods.CallNextHookEx(_mouseHook, code, message, data);
     }
 
-    private double GetCornerRadiusInPixels()
+    private bool EnqueueOnWindowThread(Microsoft.UI.Dispatching.DispatcherQueueHandler callback)
+    {
+        // Broadcast messages and the global hook keep arriving while the window
+        // tears down, and reading DispatcherQueue on a closed window throws.
+        if (_disposed)
+        {
+            return false;
+        }
+
+        return _window.DispatcherQueue?.TryEnqueue(callback) == true;
+    }
+
+    private DockCornerRadii GetCornerRadiiInPixels()
     {
         var dpi = NativeMethods.GetDpiForWindow(WindowHandle);
-        return dpi == 0 ? _cornerRadiusInDips : GetCornerRadiusInPixels(dpi);
+        return dpi == 0 ? _cornerRadiiInDips : GetCornerRadiiInPixels(dpi);
     }
 
-    private double GetCornerRadiusInPixels(uint dpi) => _cornerRadiusInDips * dpi / 96d;
+    private DockCornerRadii GetCornerRadiiInPixels(uint dpi) =>
+        _cornerRadiiInDips.Scale(dpi / 96d);
 
-    private static int GetFeatherInset(uint dpi) =>
-        Math.Max(1, checked((int)Math.Ceiling(dpi / 96d)));
+    private static bool AreValid(DockCornerRadii radii) =>
+        double.IsFinite(radii.TopLeft) && radii.TopLeft >= 0 &&
+        double.IsFinite(radii.TopRight) && radii.TopRight >= 0 &&
+        double.IsFinite(radii.BottomRight) && radii.BottomRight >= 0 &&
+        double.IsFinite(radii.BottomLeft) && radii.BottomLeft >= 0;
 
     private static bool IsPointerDownMessage(nuint message) =>
         message is NativeConstants.WmLeftButtonDown
@@ -587,7 +686,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     private void OnWindowClosed(object sender, WindowEventArgs args) => Dispose();
 
     private void OnDisplaysChanged(object? sender, IReadOnlyList<DisplayDescriptor> displays) =>
-        _window.DispatcherQueue.TryEnqueue(TryRefreshAppearanceAndPosition);
+        _ = EnqueueOnWindowThread(TryRefreshAppearanceAndPosition);
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
 }

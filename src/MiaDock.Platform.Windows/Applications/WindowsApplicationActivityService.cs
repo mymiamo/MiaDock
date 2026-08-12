@@ -238,8 +238,19 @@ public sealed class WindowsApplicationActivityService : IApplicationActivityServ
         int objectId,
         int childId,
         uint eventThread,
-        uint eventTime) =>
-        RequestRefresh();
+        uint eventTime)
+    {
+        try
+        {
+            RequestRefresh();
+        }
+        catch (Exception exception)
+        {
+            // The hook runs on a native stack, where an escaping managed
+            // exception fails fast instead of surfacing as a handled error.
+            LastFailure = exception;
+        }
+    }
 
     private void OnProcessChanged(object sender, EventArrivedEventArgs args) =>
         RequestRefresh();

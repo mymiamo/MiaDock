@@ -2,6 +2,7 @@ using System.Globalization;
 using MiaDock.Core.Localization;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Settings;
+using MiaDock.Core.Threading;
 using MiaDock.Modules.SystemStatus;
 using MiaDock.Modules.SystemStatus.Models;
 using MiaDock.Modules.SystemStatus.Services;
@@ -314,6 +315,7 @@ public sealed class VolumeModuleTests
         Assert.AreSame(retained, viewModel.MixerSessions.Single());
         Assert.AreEqual("100%", retained.VolumeText);
         Assert.AreEqual(0, retained.Snapshot.PeakLevel, 0.0001);
+        Assert.AreEqual(0, retained.PeakLevel, 0.0001);
     }
 
     [TestMethod]
@@ -386,6 +388,39 @@ public sealed class VolumeModuleTests
             Sessions = [snapshot with { IsMuted = true }]
         });
         Assert.AreEqual("Unmute Player", session.MuteAutomationName);
+    }
+
+    [TestMethod]
+    public async Task BackgroundAudioEvents_AreMarshaledBeforeUpdatingUiCollections()
+    {
+        var service = new FakeSystemActivityService(CreateSnapshot());
+        var settings = new FakeVolumeSettings(VolumeModuleOptions.Default);
+        var mixer = new FakeAudioMixerService();
+        var dispatcher = new QueuedUiDispatcher();
+        using var viewModel = new VolumeModuleViewModel(
+            service,
+            new FakeAudioSettingsLauncher(),
+            settings,
+            mixer: mixer,
+            uiDispatcher: dispatcher);
+        var snapshot = AudioMixerSnapshot.Default with
+        {
+            ServiceState = SystemActivityServiceState.Ready,
+            Sessions =
+            [
+                new AudioMixerSessionSnapshot(
+                    "process:1", 1, "Player", "player", null,
+                    0.5, false, true, false, 0)
+            ]
+        };
+
+        await Task.Run(() => mixer.Publish(snapshot));
+
+        Assert.IsEmpty(viewModel.MixerSessions);
+        Assert.AreEqual(1, dispatcher.PendingCount);
+        dispatcher.Drain();
+        Assert.HasCount(1, viewModel.MixerSessions);
+        Assert.AreEqual("Player", viewModel.MixerSessions.Single().DisplayName);
     }
 
     private static VolumeModuleViewModel CreateViewModel(
@@ -560,6 +595,28 @@ public sealed class VolumeModuleTests
                 _ => key
             };
             return string.Format(CurrentCulture, format, arguments);
+        }
+    }
+
+    private sealed class QueuedUiDispatcher : IUiDispatcher
+    {
+        private readonly Queue<Action> _callbacks = new();
+
+        public bool HasThreadAccess => false;
+        public int PendingCount => _callbacks.Count;
+
+        public bool TryEnqueue(Action callback)
+        {
+            _callbacks.Enqueue(callback);
+            return true;
+        }
+
+        public void Drain()
+        {
+            while (_callbacks.TryDequeue(out var callback))
+            {
+                callback();
+            }
         }
     }
 }

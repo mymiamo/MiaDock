@@ -1,4 +1,5 @@
 using MiaDock.App.ViewModels;
+using MiaDock.Core.Applications;
 
 namespace MiaDock.App.Services;
 
@@ -9,7 +10,8 @@ public sealed class SettingsWindowService(
     DiagnosticsViewModel diagnosticsViewModel,
     IDiagnosticsFileService diagnosticsFileService,
     IAppLocalizationService localization,
-    FocusSettingsViewModel focusSettingsViewModel) : ISettingsWindowService
+    FocusSettingsViewModel focusSettingsViewModel,
+    IExternalUriLauncher externalUriLauncher) : ISettingsWindowService
 {
     private SettingsWindow? _window;
 
@@ -26,7 +28,8 @@ public sealed class SettingsWindowService(
                 diagnosticsViewModel,
                 diagnosticsFileService,
                 localization,
-                focusSettingsViewModel);
+                focusSettingsViewModel,
+                externalUriLauncher);
             _window.Closed += OnWindowClosed;
         }
 

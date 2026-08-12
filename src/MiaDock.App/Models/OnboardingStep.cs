@@ -3,14 +3,10 @@ namespace MiaDock.App.Models;
 public enum OnboardingStep
 {
     Welcome,
-    Startup,
-    Appearance,
-    Media,
-    Display,
+    Personalization,
     Interaction,
-    Fullscreen,
-    Modules,
-    Summary
+    FeaturesAndPrivacy,
+    Ready
 }
 
 public sealed record OnboardingStepDefinition(OnboardingStep Step, string Title);

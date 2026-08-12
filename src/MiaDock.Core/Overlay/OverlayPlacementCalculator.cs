@@ -40,9 +40,9 @@ public sealed class OverlayPlacementCalculator : IOverlayPlacementCalculator
 
         var x = request.Position switch
         {
-            OverlayPosition.TopLeft or OverlayPosition.BottomLeft => left + margin,
+            OverlayPosition.TopLeft or OverlayPosition.BottomLeft or OverlayPosition.LeftCenter => left + margin,
             OverlayPosition.TopCenter or OverlayPosition.BottomCenter => left + ((request.WorkArea.Width - width) / 2),
-            OverlayPosition.TopRight or OverlayPosition.BottomRight => right - width - margin,
+            OverlayPosition.TopRight or OverlayPosition.BottomRight or OverlayPosition.RightCenter => right - width - margin,
             _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown overlay position.")
         };
 
@@ -50,6 +50,7 @@ public sealed class OverlayPlacementCalculator : IOverlayPlacementCalculator
         {
             OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight => top + margin,
             OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight => bottom - height - margin,
+            OverlayPosition.LeftCenter or OverlayPosition.RightCenter => top + ((request.WorkArea.Height - height) / 2),
             _ => throw new ArgumentOutOfRangeException(nameof(request), "Unknown overlay position.")
         };
 

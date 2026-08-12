@@ -1,0 +1,69 @@
+<UserControl x:Class="MiaDock.App.Views.Onboarding.UsageStepView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel Spacing="18" MaxWidth="760" HorizontalAlignment="Stretch">
+    <StackPanel Spacing="5">
+      <TextBlock Text="Kullanım Şekli" FontSize="32" FontWeight="SemiBold"
+                 AutomationProperties.HeadingLevel="Level1" />
+      <TextBlock Text="Dock'un etkileşim, başlangıç ve tam ekran davranışını belirleyin."
+                 TextWrapping="Wrap" Opacity="0.72" />
+    </StackPanel>
+
+    <Border CornerRadius="12" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+      <StackPanel>
+        <Border Style="{StaticResource SettingsRowBorderStyle}">
+          <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="300"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="Etkileşim davranışı" FontWeight="SemiBold" />
+              <TextBlock Text="Hover ve tıklama davranışını seçin." FontSize="12" Opacity="0.68" />
+            </StackPanel>
+            <ComboBox Grid.Column="1" ItemsSource="{Binding InteractionModes}"
+                      ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+                      SelectedIndex="{Binding InteractionModeIndex, Mode=TwoWay}"
+                      MinHeight="44" HorizontalAlignment="Stretch"
+                      AutomationProperties.Name="Dock etkileşim davranışı" />
+          </Grid>
+        </Border>
+        <Border Style="{StaticResource SettingsRowBorderStyle}">
+          <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="Windows açılışında başlat" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding StartupStatusMessage}" FontSize="12" Opacity="0.68" TextWrapping="Wrap" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" MinHeight="44"
+                          IsOn="{Binding StartWithWindows, Mode=TwoWay}"
+                          IsEnabled="{Binding IsStartupTaskAvailable}"
+                          AutomationProperties.Name="Windows başlangıcında çalıştır" />
+          </Grid>
+        </Border>
+        <Border Padding="16,12" MinHeight="64">
+          <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center" Spacing="2">
+              <TextBlock Text="Tam ekran davranışı" FontWeight="SemiBold" />
+              <TextBlock Text="Oyunlarda dock gizlenir; seçilen olaylar kısa süre gösterilebilir."
+                         FontSize="12" Opacity="0.68" TextWrapping="Wrap" />
+            </StackPanel>
+            <ToggleSwitch Grid.Column="1" MinHeight="44"
+                          IsOn="{Binding FullscreenEnabled, Mode=TwoWay}"
+                          AutomationProperties.Name="Tam ekran bildirimleri" />
+          </Grid>
+        </Border>
+      </StackPanel>
+    </Border>
+
+    <StackPanel Spacing="7">
+      <TextBlock Text="Tam ekran bildirim görünümü" FontWeight="SemiBold" />
+      <ComboBox ItemsSource="{Binding FullscreenStyles}"
+                ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+                SelectedIndex="{Binding FullscreenStyleIndex, Mode=TwoWay}"
+                MinHeight="44" HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Tam ekran bildirim görünümü" />
+    </StackPanel>
+    <InfoBar IsOpen="True" Severity="Informational" Title="Odak korunur"
+             Message="MiaDock hover ile açılırken aktif oyunun veya uygulamanın klavye odağını almaz." />
+  </StackPanel>
+</UserControl>

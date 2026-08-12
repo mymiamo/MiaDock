@@ -22,6 +22,27 @@ public sealed class WindowsMediaAudioMeterLifecycleTests
         Assert.IsFalse(source.Contains(
             "catch (Exception) when (!_disposed)",
             StringComparison.Ordinal));
+
+        var systemActivitySource = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.Platform.Windows",
+            "Audio",
+            "WindowsSystemActivityService.cs"));
+        var sessionHandleSource = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.Platform.Windows",
+            "Audio",
+            "AudioSessionHandle.cs"));
+        Assert.DoesNotContain("FinalReleaseComObject", systemActivitySource, StringComparison.Ordinal);
+        Assert.DoesNotContain("FinalReleaseComObject", sessionHandleSource, StringComparison.Ordinal);
+        StringAssert.Contains(systemActivitySource, "AudioTopologyRebind");
+        StringAssert.Contains(systemActivitySource, "AudioTopologyDebounceInterval");
+        StringAssert.Contains(systemActivitySource, "_audioRebindTimer.Change(");
+        Assert.IsFalse(systemActivitySource.Contains(
+            "FlushAsync(timeout.Token)",
+            StringComparison.Ordinal));
     }
 
     private static string FindRepositoryRoot()

@@ -25,4 +25,14 @@ public static class HotKeyGestureValidator
         return gesture.Modifiers != HotKeyModifiers.None &&
                (gesture.Modifiers & ~allowed) == HotKeyModifiers.None;
     }
+
+    public static bool IsDuplicate(
+        IReadOnlyDictionary<HotKeyAction, HotKeyGestureSetting> bindings,
+        HotKeyAction action,
+        HotKeyGestureSetting gesture)
+    {
+        ArgumentNullException.ThrowIfNull(bindings);
+        ArgumentNullException.ThrowIfNull(gesture);
+        return bindings.Any(pair => pair.Key != action && pair.Value == gesture);
+    }
 }

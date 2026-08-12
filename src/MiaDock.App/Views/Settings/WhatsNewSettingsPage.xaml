@@ -1,0 +1,19 @@
+<UserControl x:Class="MiaDock.App.Views.Settings.WhatsNewSettingsPage"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}"
+                HorizontalContentAlignment="Stretch">
+    <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
+      <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
+        <TextBlock Text="Yenilikler"
+                   Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
+        <TextBlock Text="Bu sürümde ve önceki sürümlerde neler değişti."
+                   Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
+      </StackPanel>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}" Padding="20">
+        <StackPanel x:Name="ContentHost" Spacing="0" />
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

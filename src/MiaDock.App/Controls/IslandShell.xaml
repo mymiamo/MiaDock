@@ -5,12 +5,13 @@
 
   <Grid x:Name="LayoutRoot"
         Width="292"
-        Height="46">
+        Height="46"
+        Background="Transparent">
     <SystemBackdropElement x:Name="BackdropSurface"
                            CornerRadius="23" />
     <Border x:Name="Surface"
             Style="{StaticResource DockSurfaceStyle}">
-      <Grid x:Name="ContentHost" />
+      <Grid x:Name="ContentHost" Background="Transparent" />
     </Border>
   </Grid>
 </UserControl>

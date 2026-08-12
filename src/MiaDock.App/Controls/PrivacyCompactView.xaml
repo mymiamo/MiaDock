@@ -1,0 +1,47 @@
+<UserControl x:Class="MiaDock.App.Controls.PrivacyCompactView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+  </UserControl.Resources>
+  <Grid>
+    <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+          AutomationProperties.Name="{Binding SummaryText}"
+          Visibility="{Binding HasActiveUsage, Converter={StaticResource BooleanToVisibility}}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <FontIcon Glyph="{Binding StatusGlyph}" Style="{StaticResource DockModuleIconStyle}" />
+      <TextBlock Grid.Column="1"
+                 Text="{Binding Applications[0].DisplayName}"
+                 VerticalAlignment="Center"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockBodyTextStyle}" />
+      <TextBlock Grid.Column="2"
+                 Text="{Binding SummaryText}"
+                 MaxWidth="110"
+                 VerticalAlignment="Center"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockStatusTextStyle}" />
+    </Grid>
+    <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+          AutomationProperties.Name="{Binding EmptyText}">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Grid.Visibility>
+        <Binding Path="HasActiveUsage" Converter="{StaticResource BooleanToVisibility}" ConverterParameter="Invert" />
+      </Grid.Visibility>
+      <FontIcon Glyph="&#xE72E;" Style="{StaticResource DockModuleIconStyle}" />
+      <TextBlock Grid.Column="1"
+                 Text="{Binding EmptyText}"
+                 VerticalAlignment="Center"
+                 TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockBodyTextStyle}" />
+    </Grid>
+  </Grid>
+</UserControl>

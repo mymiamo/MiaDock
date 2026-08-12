@@ -1,4 +1,5 @@
 using MiaDock.Platform.Windows.Overlay;
+using MiaDock.Core.Presentation;
 
 namespace MiaDock.Platform.Windows.Tests.Overlay;
 
@@ -35,5 +36,16 @@ public sealed class RoundedRectangleHitTestTests
 
         Assert.AreEqual(x, point.X);
         Assert.AreEqual(y, point.Y);
+    }
+
+    [TestMethod]
+    public void Contains_UsesIndependentCornerRadii()
+    {
+        var radii = new DockCornerRadii(0, 20, 0, 20);
+
+        Assert.IsTrue(RoundedRectangleHitTest.Contains(0, 0, 100, 40, radii));
+        Assert.IsFalse(RoundedRectangleHitTest.Contains(99, 0, 100, 40, radii));
+        Assert.IsTrue(RoundedRectangleHitTest.Contains(99, 39, 100, 40, radii));
+        Assert.IsFalse(RoundedRectangleHitTest.Contains(0, 39, 100, 40, radii));
     }
 }

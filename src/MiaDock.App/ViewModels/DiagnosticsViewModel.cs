@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MiaDock.Core.Logging;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text.Json;
 
 namespace MiaDock.App.ViewModels;
@@ -53,6 +55,19 @@ public sealed class DiagnosticsViewModel(
 
     public string LogDirectoryPath => logService.LogDirectoryPath;
 
+    public string RuntimeSummaryText
+    {
+        get
+        {
+            var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "unknown";
+            return $"MiaDock {version} · {RuntimeInformation.OSDescription} · {RuntimeInformation.ProcessArchitecture}";
+        }
+    }
+
+    public string SessionSummaryText => RecentEntries.FirstOrDefault() is { } latest
+        ? $"Son oturum: {latest.SessionId} · Düşürülen kayıt: {logService.DroppedEntryCount}"
+        : $"Düşürülen kayıt: {logService.DroppedEntryCount}";
+
     public string StatusMessage { get => _statusMessage; private set => SetProperty(ref _statusMessage, value); }
 
     public bool IsBusy { get => _isBusy; private set => SetProperty(ref _isBusy, value); }
@@ -75,11 +90,13 @@ public sealed class DiagnosticsViewModel(
                 RecentEntries.Add(entry);
             }
 
+            OnPropertyChanged(nameof(SessionSummaryText));
+
             FileCount = storage.FileCount;
             TotalBytes = storage.TotalBytes;
             StatusMessage = logService.LastFailure is null
-                ? $"{entries.Count} güvenli teknik kayıt gösteriliyor."
-                : "Son log yazma işlemi tamamlanamadı.";
+                ? $"{entries.Count} güvenli teknik kayıt gösteriliyor. ZIP; çalışma ortamı, olay özeti ve son 250 olay zaman çizelgesini içerir."
+                : $"Son log yazma işlemi tamamlanamadı: {logService.LastFailure.GetType().Name} (0x{logService.LastFailure.HResult:X8}).";
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
@@ -100,6 +117,7 @@ public sealed class DiagnosticsViewModel(
             RecentEntries.Clear();
             FileCount = 0;
             TotalBytes = 0;
+            OnPropertyChanged(nameof(SessionSummaryText));
             StatusMessage = "Yerel loglar temizlendi.";
         }
         finally

@@ -3,11 +3,20 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
   <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
         AutomationProperties.Name="{Binding ActivityTitle}">
-    <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" />
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
     <FontIcon Glyph="{Binding ActivityGlyph}" Style="{StaticResource DockModuleIconStyle}" />
-    <TextBlock Grid.Column="1" Text="{Binding ActivityTitle}" VerticalAlignment="Center"
-               TextTrimming="CharacterEllipsis" Style="{StaticResource DockBodyTextStyle}" />
-    <TextBlock Grid.Column="2" Text="Gizlilik" VerticalAlignment="Center"
+    <TextBlock Grid.Column="1"
+               Text="{Binding ActivityTitle}"
+               VerticalAlignment="Center"
+               TextTrimming="CharacterEllipsis"
+               Style="{StaticResource DockBodyTextStyle}" />
+    <TextBlock Grid.Column="2"
+               Text="Arama"
+               VerticalAlignment="Center"
                Style="{StaticResource DockStatusTextStyle}" />
   </Grid>
 </UserControl>

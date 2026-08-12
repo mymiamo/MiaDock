@@ -34,6 +34,12 @@ public static class DockInteractionSession
         }
     }
 
+    public static IDisposable Enter(object owner)
+    {
+        Begin(owner);
+        return new InteractionToken(owner);
+    }
+
     public static void End(object owner)
     {
         ArgumentNullException.ThrowIfNull(owner);
@@ -46,6 +52,20 @@ public static class DockInteractionSession
         if (changed)
         {
             ActivityChanged?.Invoke(null, false);
+        }
+    }
+
+    private sealed class InteractionToken(object owner) : IDisposable
+    {
+        private object? _owner = owner;
+
+        public void Dispose()
+        {
+            var current = Interlocked.Exchange(ref _owner, null);
+            if (current is not null)
+            {
+                End(current);
+            }
         }
     }
 }

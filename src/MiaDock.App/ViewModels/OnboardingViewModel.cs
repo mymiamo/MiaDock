@@ -21,6 +21,7 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
     private readonly IThemeService _theme;
     private readonly IAppLocalizationService _localization;
     private readonly AppearanceSettings _originalAppearance;
+    private readonly AppLanguage _originalLanguage;
     private IReadOnlyList<OnboardingStepDefinition> _steps = [];
     private IReadOnlyList<SettingOption<ThemeStyle>> _themes = [];
     private IReadOnlyList<SettingOption<MonitorSelectionMode>> _monitorModes = [];
@@ -43,8 +44,6 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
     private string _startupStatusMessage = "Başlangıç durumu denetleniyor.";
     private string _validationMessage = string.Empty;
     private bool _isBusy;
-    private readonly SemaphoreSlim _languageSaveGate = new(1, 1);
-    private int _languageSaveRevision;
 
     public OnboardingViewModel(
         ISettingsService settings,
@@ -61,6 +60,7 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
         _theme = theme;
         _localization = localization;
         _originalAppearance = settings.Current.Appearance;
+        _originalLanguage = settings.Current.General.Language;
         _language = settings.Current.General.Language;
         var draft = OnboardingDraft.FromSettings(settings.Current);
         _startWithWindows = draft.StartWithWindows;
@@ -81,7 +81,11 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<AppLanguage>> Languages { get; } =
     [
         new(AppLanguage.Turkish, "Türkçe"),
-        new(AppLanguage.English, "English")
+        new(AppLanguage.English, "English"),
+        new(AppLanguage.Azerbaijani, "Azərbaycan dili"),
+        new(AppLanguage.SpanishSpain, "Español (España)"),
+        new(AppLanguage.SpanishMexico, "Español (México)"),
+        new(AppLanguage.PortugueseBrazil, "Português (Brasil)")
     ];
 
     public IReadOnlyList<OnboardingStepDefinition> Steps => _steps;
@@ -96,6 +100,8 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
     public bool IsFirstStep => CurrentStepIndex == 0;
     public bool IsLastStep => CurrentStepIndex == Steps.Count - 1;
     public string StepPositionText => $"{CurrentStepIndex + 1} / {Steps.Count}";
+    public string CurrentStepTitle => Steps[CurrentStepIndex].Title;
+    public int ProgressValue => CurrentStepIndex + 1;
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public IReadOnlyList<SettingOption<string?>> MediaSourceOptions =>
         [
@@ -116,11 +122,6 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
             }
 
             OnPropertyChanged(nameof(LanguageIndex));
-            _settings.Update(settings => settings with
-            {
-                General = settings.General with { Language = value }
-            });
-            _ = FlushLanguagePreferenceAsync(Interlocked.Increment(ref _languageSaveRevision));
             if (_localization.CurrentLanguage != value)
             {
                 _localization.SetLanguage(value);
@@ -252,7 +253,12 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
                 Appearance = settings.Appearance with { Theme = Theme },
                 Media = settings.Media with { SelectedSourceId = SelectedSourceId },
                 Monitor = new MonitorSettings(MonitorMode, MonitorMode == MonitorSelectionMode.Fixed ? FixedMonitorId : null),
-                General = settings.General with { Position = Position, InteractionMode = InteractionMode },
+                General = settings.General with
+                {
+                    Language = Language,
+                    Position = Position,
+                    InteractionMode = InteractionMode
+                },
                 Fullscreen = settings.Fullscreen with { Enabled = FullscreenEnabled, Style = FullscreenStyle },
                 Modules = ApplyModuleSelection(settings.Modules),
                 StartupShutdown = settings.StartupShutdown with { StartWithWindows = startupEnabled },
@@ -267,7 +273,14 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
         }
     }
 
-    public void RestorePreviewTheme() => _theme.Apply(_originalAppearance);
+    public void RestorePreviewTheme()
+    {
+        _theme.Apply(_originalAppearance);
+        if (_localization.CurrentLanguage != _originalLanguage)
+        {
+            _localization.SetLanguage(_originalLanguage);
+        }
+    }
 
     public void Dispose()
     {
@@ -280,7 +293,7 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
     private bool ValidateCurrentStep()
     {
         ValidationMessage = string.Empty;
-        if (CurrentStep == OnboardingStep.Display && MonitorMode == MonitorSelectionMode.Fixed)
+        if (CurrentStep == OnboardingStep.Personalization && MonitorMode == MonitorSelectionMode.Fixed)
         {
             if (string.IsNullOrWhiteSpace(FixedMonitorId) || _displays.Find(FixedMonitorId) is null)
             {
@@ -304,6 +317,8 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(IsFirstStep));
         OnPropertyChanged(nameof(IsLastStep));
         OnPropertyChanged(nameof(StepPositionText));
+        OnPropertyChanged(nameof(CurrentStepTitle));
+        OnPropertyChanged(nameof(ProgressValue));
     }
 
     private void OnMusicPropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
@@ -345,14 +360,10 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
         _steps =
         [
             new(OnboardingStep.Welcome, Text("Onboarding.Step.Welcome")),
-            new(OnboardingStep.Startup, Text("Onboarding.Step.Startup")),
-            new(OnboardingStep.Appearance, Text("Onboarding.Step.Appearance")),
-            new(OnboardingStep.Media, Text("Onboarding.Step.Media")),
-            new(OnboardingStep.Display, Text("Onboarding.Step.Display")),
+            new(OnboardingStep.Personalization, Text("Onboarding.Step.Personalization")),
             new(OnboardingStep.Interaction, Text("Onboarding.Step.Interaction")),
-            new(OnboardingStep.Fullscreen, Text("Onboarding.Step.Fullscreen")),
-            new(OnboardingStep.Modules, Text("Onboarding.Step.Modules")),
-            new(OnboardingStep.Summary, Text("Onboarding.Step.Summary"))
+            new(OnboardingStep.FeaturesAndPrivacy, Text("Onboarding.Step.FeaturesAndPrivacy")),
+            new(OnboardingStep.Ready, Text("Onboarding.Step.Ready"))
         ];
         _themes =
         [
@@ -446,26 +457,6 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
         };
     }
 
-    private async Task FlushLanguagePreferenceAsync(int revision)
-    {
-        await _languageSaveGate.WaitAsync();
-        try
-        {
-            if (revision == Volatile.Read(ref _languageSaveRevision))
-            {
-                await _settings.FlushAsync();
-            }
-        }
-        catch
-        {
-            // SettingsService records the technical failure without exposing personal data.
-        }
-        finally
-        {
-            _languageSaveGate.Release();
-        }
-    }
-
     private void NotifySummary() => OnPropertyChanged(nameof(SummaryText));
 
     private void OnModuleOptionChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs args)
@@ -496,7 +487,8 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
             : settings.Modules.TryGetValue(id, out var envelope) && envelope.IsEnabled;
         yield return new("media", Text("Onboarding.Module.Media.Title"), Text("Onboarding.Module.Media.Description"), "\uE8D6", Enabled("media"));
         yield return new("volume", Text("Onboarding.Module.Volume.Title"), Text("Onboarding.Module.Volume.Description"), "\uE995", Enabled("volume"));
-        yield return new("system-activity", Text("Onboarding.Module.System.Title"), Text("Onboarding.Module.System.Description"), "\uE767", Enabled("system-activity"));
+        yield return new("privacy", Text("Onboarding.Module.Privacy.Title"), Text("Onboarding.Module.Privacy.Description"), "\uE72E", Enabled("privacy"));
+        yield return new("system-activity", Text("Onboarding.Module.System.Title"), Text("Onboarding.Module.System.Description"), "\uE717", Enabled("system-activity"));
         yield return new("battery", Text("Onboarding.Module.Battery.Title"), Text("Onboarding.Module.Battery.Description"), "\uE850", Enabled("battery"));
         yield return new("network", Text("Onboarding.Module.Network.Title"), Text("Onboarding.Module.Network.Description"), "\uE968", Enabled("network"));
         yield return new("bluetooth", Text("Onboarding.Module.Bluetooth.Title"), Text("Onboarding.Module.Bluetooth.Description"), "\uE702", Enabled("bluetooth"));

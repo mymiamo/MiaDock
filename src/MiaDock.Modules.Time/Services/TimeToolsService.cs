@@ -1,3 +1,4 @@
+using MiaDock.Core.Logging;
 using MiaDock.Modules.Time.Models;
 using MiaDock.Modules.Time.Persistence;
 
@@ -6,12 +7,18 @@ namespace MiaDock.Modules.Time.Services;
 public sealed class TimeToolsService : ITimeToolsService
 {
     private static readonly TimeSpan MaximumTimerDuration = TimeSpan.FromHours(99);
+    private static readonly TimeSpan PersistFailureLogInterval = TimeSpan.FromMinutes(1);
     private readonly object _gate = new();
     private readonly ITimerStateStore _store;
     private readonly ISystemResumeService? _resumeService;
     private readonly ITimerAlarmPlayer? _alarmPlayer;
+    private readonly ILogService? _log;
     private readonly TimeProvider _timeProvider;
     private Timer? _ticker;
+    private Task _persistTask = Task.CompletedTask;
+    private long _persistRevision;
+    private DateTimeOffset _lastPersistFailureLogUtc = DateTimeOffset.MinValue;
+    private bool _persistWorkerRunning;
     private long _timerAnchorTimestamp;
     private TimeSpan _timerAnchorRemaining;
     private long _stopwatchAnchorTimestamp;
@@ -25,11 +32,13 @@ public sealed class TimeToolsService : ITimeToolsService
         ITimerStateStore store,
         ISystemResumeService? resumeService = null,
         TimeProvider? timeProvider = null,
-        ITimerAlarmPlayer? alarmPlayer = null)
+        ITimerAlarmPlayer? alarmPlayer = null,
+        ILogService? log = null)
     {
         _store = store;
         _resumeService = resumeService;
         _alarmPlayer = alarmPlayer;
+        _log = log;
         _timeProvider = timeProvider ?? TimeProvider.System;
         if (_resumeService is not null)
         {
@@ -70,7 +79,7 @@ public sealed class TimeToolsService : ITimeToolsService
         {
             _alarmPlayer?.Play();
         }
-        await PersistAsync().ConfigureAwait(false);
+        await RequestPersistAsync().ConfigureAwait(false);
     }
 
     public bool StartTimer(TimeSpan duration)
@@ -99,7 +108,7 @@ public sealed class TimeToolsService : ITimeToolsService
         }
 
         Publish(snapshot);
-        _ = PersistAsync();
+        QueuePersist();
         return true;
     }
 
@@ -126,7 +135,7 @@ public sealed class TimeToolsService : ITimeToolsService
         }
 
         Publish(snapshot);
-        _ = PersistAsync();
+        QueuePersist();
         return true;
     }
 
@@ -152,7 +161,7 @@ public sealed class TimeToolsService : ITimeToolsService
         }
 
         Publish(snapshot);
-        _ = PersistAsync();
+        QueuePersist();
         return true;
     }
 
@@ -180,7 +189,7 @@ public sealed class TimeToolsService : ITimeToolsService
 
         _alarmPlayer?.Stop();
         Publish(snapshot);
-        _ = PersistAsync();
+        QueuePersist();
         return true;
     }
 
@@ -196,7 +205,7 @@ public sealed class TimeToolsService : ITimeToolsService
             _completionPending = false;
         }
 
-        _ = PersistAsync();
+        QueuePersist();
         return true;
     }
 
@@ -346,7 +355,7 @@ public sealed class TimeToolsService : ITimeToolsService
         if (completed)
         {
             _alarmPlayer?.Play();
-            _ = PersistAsync();
+            QueuePersist();
         }
     }
 
@@ -401,7 +410,7 @@ public sealed class TimeToolsService : ITimeToolsService
         {
             _alarmPlayer?.Play();
         }
-        _ = PersistAsync();
+        QueuePersist();
     }
 
     private void RestoreLocked(TimerPersistentState? state)
@@ -487,32 +496,86 @@ public sealed class TimeToolsService : ITimeToolsService
         _ticker ??= new Timer(OnTick, null, TimeSpan.Zero, TimeSpan.FromMilliseconds(100));
     }
 
-    private async Task PersistAsync()
+    private void QueuePersist() => _ = RequestPersistAsync();
+
+    private Task RequestPersistAsync()
     {
-        TimerPersistentState state;
         lock (_gate)
         {
             if (_disposed)
             {
+                return Task.CompletedTask;
+            }
+
+            _persistRevision++;
+            if (_persistWorkerRunning)
+            {
+                return _persistTask;
+            }
+
+            _persistWorkerRunning = true;
+            _persistTask = PersistLoopAsync();
+            return _persistTask;
+        }
+    }
+
+    private async Task PersistLoopAsync()
+    {
+        while (true)
+        {
+            TimerPersistentState state;
+            long revision;
+            lock (_gate)
+            {
+                revision = _persistRevision;
+                state = new TimerPersistentState(
+                    TimerPersistentState.CurrentSchemaVersion,
+                    Current.TimerState,
+                    Current.TimerDuration.Ticks,
+                    Current.TimerRemaining.Ticks,
+                    Current.TimerTargetUtc,
+                    _completionPending);
+            }
+
+            try
+            {
+                await _store.SaveAsync(state).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                LogPersistFailure(exception);
+            }
+
+            lock (_gate)
+            {
+                if (revision == _persistRevision)
+                {
+                    _persistWorkerRunning = false;
+                    return;
+                }
+            }
+        }
+    }
+
+    private void LogPersistFailure(Exception exception)
+    {
+        var now = _timeProvider.GetUtcNow();
+        lock (_gate)
+        {
+            if (now - _lastPersistFailureLogUtc < PersistFailureLogInterval)
+            {
                 return;
             }
 
-            state = new TimerPersistentState(
-                TimerPersistentState.CurrentSchemaVersion,
-                Current.TimerState,
-                Current.TimerDuration.Ticks,
-                Current.TimerRemaining.Ticks,
-                Current.TimerTargetUtc,
-                _completionPending);
+            _lastPersistFailureLogUtc = now;
         }
 
-        try
-        {
-            await _store.SaveAsync(state).ConfigureAwait(false);
-        }
-        catch (Exception)
-        {
-        }
+        _log?.Write(
+            TechnicalLogLevel.Warning,
+            TechnicalEventIds.TimeStatePersistFailed,
+            "TimeTools",
+            "Time tool state could not be persisted; the latest state will be retried on the next change.",
+            exception);
     }
 
     private void Publish(TimeToolsSnapshot snapshot) => SnapshotChanged?.Invoke(this, snapshot);
@@ -539,7 +602,7 @@ public sealed class TimeToolsService : ITimeToolsService
             }
         }
 
-        await PersistAsync().ConfigureAwait(false);
+        await RequestPersistAsync().ConfigureAwait(false);
         _alarmPlayer?.Stop();
         lock (_gate)
         {

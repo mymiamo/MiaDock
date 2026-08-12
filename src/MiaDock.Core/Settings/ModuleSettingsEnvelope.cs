@@ -25,6 +25,13 @@ public sealed record ModuleSettingsEnvelope(
         true,
         new Dictionary<string, JsonElement>(StringComparer.Ordinal));
 
+    public static ModuleSettingsEnvelope PrivacyDefault { get; } = new(
+        InitialSchemaVersion,
+        true,
+        3.5,
+        true,
+        new Dictionary<string, JsonElement>(StringComparer.Ordinal));
+
     public static ModuleSettingsEnvelope VolumeDefault { get; } = new(
         InitialSchemaVersion,
         true,

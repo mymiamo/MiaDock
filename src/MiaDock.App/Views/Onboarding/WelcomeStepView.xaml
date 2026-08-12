@@ -1,31 +1,60 @@
 <UserControl x:Class="MiaDock.App.Views.Onboarding.WelcomeStepView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <StackPanel Spacing="18" MaxWidth="620" HorizontalAlignment="Left">
-    <Border Padding="18"
-            CornerRadius="12"
+  <StackPanel Spacing="22" MaxWidth="760" HorizontalAlignment="Stretch">
+    <StackPanel Spacing="6">
+      <TextBlock Text="MiaDock'a hoş geldiniz"
+                 FontSize="34" FontWeight="SemiBold"
+                 AutomationProperties.HeadingLevel="Level1" />
+      <TextBlock Text="Dock'unuzu birkaç sakin adımda size göre hazırlayalım."
+                 FontSize="17" TextWrapping="Wrap" Opacity="0.76" />
+    </StackPanel>
+
+    <Border Padding="20" CornerRadius="12"
             Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
             BorderThickness="1">
-      <StackPanel Spacing="8">
-        <TextBlock Text="Dil / Language"
-                   Style="{ThemeResource SubtitleTextBlockStyle}" />
-        <TextBlock Text="Devam etmek istediğiniz dili seçin / Choose your language"
-                   TextWrapping="Wrap"
-                   Opacity="0.72" />
-        <RadioButtons ItemsSource="{Binding Languages}"
-                      ItemTemplate="{StaticResource SettingOptionItemTemplate}"
-                      SelectedIndex="{Binding LanguageIndex, Mode=TwoWay}"
-                      MaxColumns="2"
-                      AutomationProperties.Name="Dil / Language" />
-      </StackPanel>
+      <Grid ColumnSpacing="20">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="260" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Spacing="6">
+          <TextBlock Text="Dil / Language" FontWeight="SemiBold" FontSize="18" />
+          <TextBlock Text="Devam etmek istediğiniz dili seçin / Choose your language"
+                     TextWrapping="Wrap" Opacity="0.72" />
+        </StackPanel>
+        <ComboBox Grid.Column="1"
+                  ItemsSource="{Binding Languages}"
+                  ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+                  SelectedIndex="{Binding LanguageIndex, Mode=TwoWay}"
+                  MinHeight="44" HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="Dil / Language" />
+      </Grid>
     </Border>
-    <TextBlock Text="MiaDock'a hoş geldiniz" Style="{ThemeResource TitleTextBlockStyle}" />
-    <TextBlock Text="Windows 11 ile doğal biçimde çalışan, modüler ve etkileşimli dock'unuzu birkaç adımda hazırlayalım."
-               TextWrapping="Wrap" FontSize="18" />
-    <InfoBar IsOpen="True" Severity="Informational" Title="Gizlilik"
-             Message="MiaDock çevrimdışı çalışır; hesap, sunucu bağlantısı, telemetri veya otomatik hata gönderimi kullanmaz." />
-    <TextBlock Text="İlk sürümde medya modülü kullanılabilir. Pil, mikrofon, zamanlayıcı ve diğer modüller daha sonra aynı altyapıya eklenebilir."
-               TextWrapping="Wrap" Opacity="0.72" />
+
+    <StackPanel Spacing="12">
+      <TextBlock Text="Gizlilik yaklaşımımız" FontSize="20" FontWeight="SemiBold" />
+      <Grid ColumnSpacing="16">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <StackPanel Spacing="5">
+          <FontIcon Glyph="&#xEA18;" FontSize="24" HorizontalAlignment="Left"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+          <TextBlock Text="Yerel ve çevrimdışı" FontWeight="SemiBold" />
+          <TextBlock Text="Hesap, telemetri veya otomatik hata gönderimi kullanılmaz."
+                     TextWrapping="Wrap" Opacity="0.68" />
+        </StackPanel>
+        <StackPanel Grid.Column="1" Spacing="5">
+          <FontIcon Glyph="&#xE72E;" FontSize="24" HorizontalAlignment="Left"
+                    Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+          <TextBlock Text="İzinler sizde" FontWeight="SemiBold" />
+          <TextBlock Text="Kamera, mikrofon ve bildirim izni yalnız ilgili özelliği ilk kullandığınızda istenir."
+                     TextWrapping="Wrap" Opacity="0.68" />
+        </StackPanel>
+      </Grid>
+    </StackPanel>
   </StackPanel>
 </UserControl>

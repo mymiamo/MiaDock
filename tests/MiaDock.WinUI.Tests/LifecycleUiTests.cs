@@ -156,7 +156,7 @@ public sealed class LifecycleUiTests
             "focus.AllowsNormalDock(");
         StringAssert.Contains(
             source,
-            "focus.AllowsTemporaryDock(_fullscreenState.IsFullscreen)");
+            "focus.AllowsTemporaryDock(_fullscreenAffectsDockDisplay)");
         StringAssert.Contains(
             source,
             "_focusPolicy.PolicyChanged += OnFocusPolicyChanged");
@@ -179,6 +179,25 @@ public sealed class LifecycleUiTests
         StringAssert.Contains(source, "SetInputActivationEnabled(isExpanded)");
         StringAssert.Contains(source, "SuspendTransientInteraction");
         StringAssert.Contains(source, "DockInteractionSession.IsActive");
+        StringAssert.Contains(source, "OnIslandRightTapped");
+        StringAssert.Contains(source, "args.Handled = true");
+        Assert.IsFalse(source.Contains("DockContextFlyout", StringComparison.Ordinal));
+        StringAssert.Contains(source, "ResumeTransientInteraction(state, _isPointerOverDock)");
+    }
+
+    [TestMethod]
+    public void IdleDashboard_ShowsFocusCardWhenFeatureIsEnabled()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IdleExpandedView.xaml.cs"));
+
+        StringAssert.Contains(source, "Current.Focus.IsEnabled");
+        StringAssert.Contains(source, "Previous.Focus.IsEnabled");
+        StringAssert.Contains(source, "FocusCard.Visibility");
+        StringAssert.Contains(source, "Grid.SetColumnSpan(MusicPanel, isEnabled ? 1 : 2)");
+        Assert.DoesNotContain("nameof(FocusDockViewModel.IsActive)", source, StringComparison.Ordinal);
     }
 
     [TestMethod]
@@ -202,10 +221,82 @@ public sealed class LifecycleUiTests
             "Services",
             "AppExceptionCoordinator.cs"));
 
-        StringAssert.Contains(source, "args.Handled = args.Exception is XamlParseException");
+        StringAssert.Contains(source, "var recoverable = args.Exception is XamlParseException");
         StringAssert.Contains(source, "InvalidComObjectException");
         StringAssert.Contains(source, "ObjectDisposedException");
-        Assert.DoesNotContain("args.Handled = true", source, StringComparison.Ordinal);
+        // Only the recoverable set may swallow the failure; anything else has to
+        // reach the crash checkpoint and the restart path.
+        StringAssert.Contains(source, "if (recoverable)");
+        StringAssert.Contains(source, "args.Handled = false;");
+        StringAssert.Contains(source, "TryRestartAfterCrash(args.Exception);");
+    }
+
+    [TestMethod]
+    public void PackageManifest_DeclaresBluetoothRadioCapability()
+    {
+        var document = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Package.appxmanifest"));
+        var capabilities = document.Descendants()
+            .Where(element => element.Name.LocalName is "Capability" or "DeviceCapability")
+            .Select(element => element.Attribute("Name")?.Value)
+            .ToArray();
+
+        CollectionAssert.Contains(capabilities, "radios");
+    }
+
+    [TestMethod]
+    public void ShutdownBoundary_LogsFailureAndAlwaysReachesUiExit()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "App.xaml.cs"));
+
+        StringAssert.Contains(source, "TechnicalEventIds.ApplicationShutdownFailed");
+        StringAssert.Contains(source, "Application shutdown encountered an error and will continue.");
+        StringAssert.Contains(source, "finally");
+        StringAssert.Contains(source, "ExitOnUiThread();");
+        StringAssert.Contains(source, "Environment.Exit(0)");
+        StringAssert.Contains(source, "TryEnqueue(() => _ = ShutdownAsync())");
+        StringAssert.Contains(source, "private async Task ShutdownAsync()");
+
+        // Platform teardown pumps native WndProc callbacks; exception handlers
+        // must still be attached while DisposeAsync runs.
+        var disposeServices = source.IndexOf("await _services.DisposeAsync();", StringComparison.Ordinal);
+        var disposeCoordinator = source.IndexOf(
+            "_exceptionCoordinator.Dispose();",
+            disposeServices,
+            StringComparison.Ordinal);
+        Assert.IsGreaterThanOrEqualTo(0, disposeServices);
+        Assert.IsGreaterThan(disposeServices, disposeCoordinator);
+    }
+
+    [TestMethod]
+    public void SettingsLaunchMode_ShowsDockBeforeOpeningSettings()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "App.xaml.cs"));
+        var settingsCase = source.IndexOf("case StartupLaunchMode.Settings:", StringComparison.Ordinal);
+        var silentTrayCase = source.IndexOf("case StartupLaunchMode.SilentTray:", StringComparison.Ordinal);
+        var showDock = source.IndexOf("_overlayWindow.ShowNoActivate();", settingsCase, StringComparison.Ordinal);
+
+        Assert.IsGreaterThanOrEqualTo(0, settingsCase);
+        Assert.IsGreaterThan(settingsCase, showDock);
+        Assert.IsGreaterThan(showDock, silentTrayCase);
+    }
+
+    [TestMethod]
+    public void ModuleSettingsLoop_ContainsAndLogsIndividualModuleFailures()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Services",
+            "ModuleSettingsCoordinator.cs"));
+
+        StringAssert.Contains(source, "TechnicalEventIds.ModuleSettingsApplyFailed");
+        StringAssert.Contains(source, "remaining modules will continue");
+        StringAssert.Contains(source, "catch (OperationCanceledException)");
     }
 
     [TestMethod]
@@ -223,5 +314,7 @@ public sealed class LifecycleUiTests
         StringAssert.Contains(source, "_focus.FocusChanged -= OnFocusChanged");
         StringAssert.Contains(source, "_focus.Deactivate()");
         StringAssert.Contains(source, "_overlay.ShowDock()");
+        StringAssert.Contains(source, "TrayPrimaryAction.ToggleDock");
+        StringAssert.Contains(source, "_settingsWindow.Show()");
     }
 }

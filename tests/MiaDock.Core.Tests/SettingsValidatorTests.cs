@@ -7,6 +7,42 @@ namespace MiaDock.Core.Tests;
 public sealed class SettingsValidatorTests
 {
     [TestMethod]
+    public void Normalize_SchemaEighteen_MigratesLegacyFullscreenToggle()
+    {
+        var disabled = MiaDockSettings.Default with
+        {
+            SchemaVersion = 18,
+            Fullscreen = MiaDockSettings.Default.Fullscreen with
+            {
+                Enabled = false,
+                Behavior = FullscreenDockBehavior.NotificationsOnly
+            }
+        };
+
+        var result = SettingsValidator.Normalize(disabled);
+
+        Assert.AreEqual(FullscreenDockBehavior.HideCompletely, result.Fullscreen.Behavior);
+        Assert.IsFalse(result.Fullscreen.Enabled);
+    }
+
+    [TestMethod]
+    public void Normalize_FullscreenBehaviorKeepsLegacyEnabledFieldConsistent()
+    {
+        var source = MiaDockSettings.Default with
+        {
+            Fullscreen = MiaDockSettings.Default.Fullscreen with
+            {
+                Enabled = false,
+                Behavior = FullscreenDockBehavior.EdgeReveal
+            }
+        };
+
+        var result = SettingsValidator.Normalize(source);
+
+        Assert.AreEqual(FullscreenDockBehavior.EdgeReveal, result.Fullscreen.Behavior);
+        Assert.IsTrue(result.Fullscreen.Enabled);
+    }
+    [TestMethod]
     public void Normalize_ValidSettings_RemainsValueEqual()
     {
         var result = SettingsValidator.Normalize(MiaDockSettings.Default);
@@ -302,6 +338,8 @@ public sealed class SettingsValidatorTests
         Assert.AreEqual(60, result.Modules["timer"].EventDurationSeconds);
         Assert.IsFalse(result.Modules["timer"].ShowInFullscreen);
         Assert.AreEqual(5, result.Modules["media"].EventDurationSeconds);
+        Assert.IsTrue(result.Modules["privacy"].IsEnabled);
+        Assert.AreEqual(3.5, result.Modules["privacy"].EventDurationSeconds);
         Assert.IsTrue(result.Modules["system-activity"].IsEnabled);
         Assert.AreEqual(3, result.Modules["system-activity"].EventDurationSeconds);
         Assert.IsTrue(result.Modules["volume"].IsEnabled);
@@ -422,11 +460,29 @@ public sealed class SettingsValidatorTests
 
         var result = SettingsValidator.Normalize(previous);
 
-        Assert.AreEqual(18, result.SchemaVersion);
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
         Assert.AreEqual("#123456", result.Appearance.AccentColor);
         Assert.IsNotNull(result.Appearance.Motion);
         Assert.AreEqual(MotionPreset.Fluid, result.Appearance.Motion.Preset);
         Assert.AreEqual(1.4, result.Appearance.Motion.Speed, 0.001);
+        Assert.IsTrue(result.General.ShowKeyboardLockEvents);
+        Assert.IsTrue(result.General.ShowUsbDeviceEvents);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaBelow22_EnablesUsbDeviceEventsByDefault()
+    {
+        var previous = MiaDockSettings.Default with
+        {
+            SchemaVersion = 21,
+            General = MiaDockSettings.Default.General with { ShowUsbDeviceEvents = false }
+        };
+
+        // Schema < 22 always restores the new default (on) once.
+        var result = SettingsValidator.Normalize(previous);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.IsTrue(result.General.ShowUsbDeviceEvents);
     }
 
     [TestMethod]
@@ -456,5 +512,66 @@ public sealed class SettingsValidatorTests
         Assert.AreEqual(120, motion.ContentDelayMilliseconds);
         Assert.IsTrue(motion.EnableParallax);
         Assert.IsTrue(motion.EnableTransientBlur);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaEighteen_MigratesLegacyRadiusAndEdgeMargin()
+    {
+        var previous = MiaDockSettings.Default with
+        {
+            SchemaVersion = 18,
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                CornerRadius = 17,
+                EdgeMargin = 77,
+                CornerRadii = null,
+                LinkCornerRadii = false
+            }
+        };
+
+        var result = SettingsValidator.Normalize(previous);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(12, result.Appearance.EdgeMargin);
+        Assert.AreEqual(MiaDock.Core.Presentation.DockCornerRadii.Uniform(17), result.Appearance.EffectiveCornerRadii);
+        Assert.IsTrue(result.Appearance.LinkCornerRadii);
+    }
+
+    [TestMethod]
+    public void Normalize_ClampsIndependentCornerRadiiAndEdgeMargin()
+    {
+        var invalid = MiaDockSettings.Default with
+        {
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                EdgeMargin = -20,
+                LinkCornerRadii = false,
+                CornerRadii = new(-3, 12, 90, double.NaN)
+            }
+        };
+
+        var appearance = SettingsValidator.Normalize(invalid).Appearance;
+
+        Assert.AreEqual(0, appearance.EdgeMargin);
+        Assert.AreEqual(new MiaDock.Core.Presentation.DockCornerRadii(0, 12, 48, 23), appearance.EffectiveCornerRadii);
+    }
+
+    [TestMethod]
+    public void Normalize_LinkedCornersUseTopLeftAndRemainIdempotent()
+    {
+        var settings = MiaDockSettings.Default with
+        {
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                LinkCornerRadii = true,
+                CornerRadii = new(9, 12, 18, 24)
+            }
+        };
+
+        var once = SettingsValidator.Normalize(settings);
+        var twice = SettingsValidator.Normalize(once);
+
+        Assert.AreEqual(MiaDock.Core.Presentation.DockCornerRadii.Uniform(9), once.Appearance.EffectiveCornerRadii);
+        Assert.AreEqual(once, twice);
     }
 }

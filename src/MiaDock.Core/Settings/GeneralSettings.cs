@@ -6,7 +6,9 @@ public sealed record GeneralSettings(
     IslandInteractionMode InteractionMode,
     IslandPositionSetting Position,
     double PassiveModuleReturnSeconds,
-    ClockDisplaySettings Clock)
+    ClockDisplaySettings Clock,
+    bool ShowKeyboardLockEvents = true,
+    bool ShowUsbDeviceEvents = true)
 {
     public static GeneralSettings Default { get; } = new(
         AppLanguage.Turkish,
@@ -14,5 +16,7 @@ public sealed record GeneralSettings(
         IslandInteractionMode.HoverAndClick,
         IslandPositionSetting.TopCenter,
         8,
-        ClockDisplaySettings.Default);
+        ClockDisplaySettings.Default,
+        true,
+        true);
 }

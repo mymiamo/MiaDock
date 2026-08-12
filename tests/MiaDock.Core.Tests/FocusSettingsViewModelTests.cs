@@ -10,6 +10,42 @@ namespace MiaDock.Core.Tests;
 public sealed class FocusSettingsViewModelTests
 {
     [TestMethod]
+    public void MasterToggle_ClearsActivationButPreservesProfilesAndCanBeReenabled()
+    {
+        var custom = Custom("reading", "Reading");
+        var settings = new FakeSettingsService
+        {
+            Current = MiaDockSettings.Default with
+            {
+                Focus = FocusSettings.Default with
+                {
+                    Profiles = [.. FocusProfileDefaults.All, custom],
+                    ActiveState = new FocusActivationState(
+                        custom.Id,
+                        FocusActivationSource.Manual,
+                        DateTimeOffset.UtcNow,
+                        null)
+                }
+            }
+        };
+        using var viewModel = CreateViewModel(settings);
+
+        viewModel.IsFocusEnabled = false;
+
+        Assert.IsFalse(settings.Current.Focus.IsEnabled);
+        Assert.IsNull(settings.Current.Focus.ActiveState);
+        Assert.IsTrue(settings.Current.Focus.Profiles.Any(profile => profile.Id == custom.Id));
+        Assert.IsFalse(viewModel.AreFocusDetailsEnabled);
+        Assert.IsFalse(viewModel.CanCreateProfile);
+
+        viewModel.IsFocusEnabled = true;
+
+        Assert.IsTrue(settings.Current.Focus.IsEnabled);
+        Assert.IsNull(settings.Current.Focus.ActiveState);
+        Assert.IsTrue(viewModel.AreFocusDetailsEnabled);
+    }
+
+    [TestMethod]
     public void NewCustomProfile_IsSavedWithSafePrivacyDefaults()
     {
         var settings = new FakeSettingsService();

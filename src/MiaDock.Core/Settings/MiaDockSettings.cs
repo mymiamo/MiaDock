@@ -16,7 +16,7 @@ public sealed record MiaDockSettings(
     FocusSettings Focus,
     IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules)
 {
-    public const int CurrentSchemaVersion = 18;
+    public const int CurrentSchemaVersion = 22;
 
     public static MiaDockSettings Default { get; } = new(
         CurrentSchemaVersion,
@@ -35,6 +35,7 @@ public sealed record MiaDockSettings(
         new Dictionary<string, ModuleSettingsEnvelope>(StringComparer.Ordinal)
         {
             ["media"] = ModuleSettingsEnvelope.MediaDefault,
+            ["privacy"] = ModuleSettingsEnvelope.PrivacyDefault,
             ["system-activity"] = ModuleSettingsEnvelope.SystemActivityDefault,
             ["volume"] = ModuleSettingsEnvelope.VolumeDefault,
             ["battery"] = ModuleSettingsEnvelope.BatteryDefault,

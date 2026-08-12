@@ -1,3 +1,5 @@
+using MiaDock.App.Modules;
+using MiaDock.Core.Logging;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Settings;
 
@@ -7,6 +9,7 @@ public sealed class ModuleSettingsCoordinator : IDisposable
 {
     private readonly ISettingsService _settings;
     private readonly IIslandModuleRegistry _registry;
+    private readonly ILogService _log;
     private readonly object _gate = new();
     private readonly CancellationTokenSource _disposeCancellation = new();
     private MiaDockSettings? _pendingSettings;
@@ -14,10 +17,14 @@ public sealed class ModuleSettingsCoordinator : IDisposable
     private bool _started;
     private bool _disposed;
 
-    public ModuleSettingsCoordinator(ISettingsService settings, IIslandModuleRegistry registry)
+    public ModuleSettingsCoordinator(
+        ISettingsService settings,
+        IIslandModuleRegistry registry,
+        ILogService log)
     {
         _settings = settings;
         _registry = registry;
+        _log = log;
     }
 
     public void Start()
@@ -75,10 +82,16 @@ public sealed class ModuleSettingsCoordinator : IDisposable
                 foreach (var module in _registry.Modules)
                 {
                     cancellationToken.ThrowIfCancellationRequested();
-                    var enabled = settings.Modules.TryGetValue(
-                        module.Descriptor.Id,
-                        out var moduleSettings) &&
-                                  moduleSettings.IsEnabled;
+                    var enabled = module.Descriptor.Id switch
+                    {
+                        "store-update" => true,
+                        KeyboardLockModule.ModuleId => settings.General.ShowKeyboardLockEvents,
+                        UsbDeviceModule.ModuleId => settings.General.ShowUsbDeviceEvents,
+                        _ => settings.Modules.TryGetValue(
+                                 module.Descriptor.Id,
+                                 out var moduleSettings) &&
+                             moduleSettings.IsEnabled
+                    };
                     if (module.IsEnabled == enabled)
                     {
                         continue;
@@ -95,9 +108,19 @@ public sealed class ModuleSettingsCoordinator : IDisposable
                     {
                         return;
                     }
-                    catch
+                    catch (Exception exception)
                     {
-                        // A module failure must not prevent other settings from being applied.
+                        _log.Write(
+                            TechnicalLogLevel.Warning,
+                            TechnicalEventIds.ModuleSettingsApplyFailed,
+                            "Modules",
+                            "A module setting could not be applied; remaining modules will continue.",
+                            exception,
+                            new Dictionary<string, object?>
+                            {
+                                ["moduleId"] = module.Descriptor.Id,
+                                ["enabled"] = enabled
+                            });
                     }
                 }
             }

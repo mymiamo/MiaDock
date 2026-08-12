@@ -2,11 +2,10 @@
     x:Class="MiaDock.App.Views.Settings.TraySettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <ScrollViewer Padding="28,24,28,48"
-                HorizontalScrollMode="Disabled"
+  <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}"
                 HorizontalContentAlignment="Stretch">
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
-      <StackPanel Spacing="5" Margin="0,0,0,8">
+      <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
         <TextBlock Text="Sistem tepsisi"
                    Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Sistem tepsisi simgesinde sunulacak davranışları seçin."
@@ -15,12 +14,22 @@
 
       <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="4">
+          <TextBlock Text="Simgeye bir kez tıklayınca"
+                     Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
+          <ComboBox ItemsSource="{Binding TrayPrimaryActions}"
+                    DisplayMemberPath="Label"
+                    SelectedIndex="{Binding TrayPrimaryActionIndex, Mode=TwoWay}"
+                    HorizontalAlignment="Stretch"
+                    AutomationProperties.Name="Tray tek tık davranışı" />
           <ToggleSwitch Header="Sistem tepsisi simgesini göster"
-                        IsOn="{Binding ShowTrayIcon, Mode=TwoWay}" />
+                        IsOn="{Binding ShowTrayIcon, Mode=TwoWay}"
+                        AutomationProperties.Name="Sistem tepsisi simgesini göster" />
           <ToggleSwitch Header="Medya kontrollerini menüde göster"
-                        IsOn="{Binding ShowTrayMediaControls, Mode=TwoWay}" />
+                        IsOn="{Binding ShowTrayMediaControls, Mode=TwoWay}"
+                        AutomationProperties.Name="Medya kontrollerini menüde göster" />
           <ToggleSwitch Header="Geçici bildirimleri etkinleştir"
-                        IsOn="{Binding TemporaryNotifications, Mode=TwoWay}" />
+                        IsOn="{Binding TemporaryNotifications, Mode=TwoWay}"
+                        AutomationProperties.Name="Geçici bildirimleri etkinleştir" />
         </StackPanel>
       </Border>
 

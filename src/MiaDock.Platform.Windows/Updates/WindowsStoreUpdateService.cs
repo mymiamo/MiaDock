@@ -1,4 +1,5 @@
 using MiaDock.Core.Logging;
+using MiaDock.Core.Threading;
 using MiaDock.Core.Updates;
 
 namespace MiaDock.Platform.Windows.Updates;
@@ -7,19 +8,22 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
 {
     private readonly IStoreUpdateClient _client;
     private readonly ILogService? _log;
+    private readonly IUiDispatcher? _dispatcher;
     private readonly SemaphoreSlim _checkGate = new(1, 1);
 
-    public WindowsStoreUpdateService(ILogService log)
-        : this(new WindowsStoreUpdateClient(), log)
+    public WindowsStoreUpdateService(ILogService log, IUiDispatcher dispatcher)
+        : this(new WindowsStoreUpdateClient(), log, dispatcher)
     {
     }
 
     internal WindowsStoreUpdateService(
         IStoreUpdateClient client,
-        ILogService? log = null)
+        ILogService? log = null,
+        IUiDispatcher? dispatcher = null)
     {
         _client = client ?? throw new ArgumentNullException(nameof(client));
         _log = log;
+        _dispatcher = dispatcher;
         Current = StoreUpdateSnapshot.Unavailable(client.CurrentVersion);
     }
 
@@ -38,22 +42,15 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
                 return Publish(StoreUpdateSnapshot.Unavailable(_client.CurrentVersion));
             }
 
-            if (!_client.HasInternetAccess)
-            {
-                return Publish(new StoreUpdateSnapshot(
-                    StoreUpdateStatus.Offline,
-                    _client.CurrentVersion,
-                    CheckedAtUtc: DateTimeOffset.UtcNow));
-            }
-
             Publish(new StoreUpdateSnapshot(
                 StoreUpdateStatus.Checking,
                 _client.CurrentVersion));
 
             try
             {
-                var versions = await _client
-                    .GetAvailableVersionsAsync(cancellationToken)
+                var versions = await RunOnUiThreadAsync(
+                    () => _client.GetAvailableVersionsAsync(cancellationToken),
+                    cancellationToken)
                     .ConfigureAwait(false);
                 var currentVersion = StoreUpdateSnapshot.Normalize(_client.CurrentVersion);
                 var availableVersion = versions
@@ -76,7 +73,7 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
                     properties: new Dictionary<string, object?>
                     {
                         ["status"] = result.Status.ToString(),
-                        ["updateCount"] = versions.Count
+                        ["count"] = versions.Count
                     });
                 return Publish(result);
             }
@@ -95,8 +92,11 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
                     {
                         ["hresult"] = $"0x{exception.HResult:X8}"
                     });
+                var status = !_client.HasInternetAccess || IsNetworkFailure(exception)
+                    ? StoreUpdateStatus.Offline
+                    : StoreUpdateStatus.Failed;
                 return Publish(new StoreUpdateSnapshot(
-                    StoreUpdateStatus.Failed,
+                    status,
                     _client.CurrentVersion,
                     CheckedAtUtc: DateTimeOffset.UtcNow));
             }
@@ -112,8 +112,9 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
     {
         try
         {
-            return await _client
-                .OpenStorePageAsync(cancellationToken)
+            return await RunOnUiThreadAsync(
+                    () => _client.OpenStorePageAsync(cancellationToken),
+                    cancellationToken)
                 .ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -141,4 +142,46 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
         UpdateAvailabilityChanged?.Invoke(this, value);
         return value;
     }
+
+    private Task<T> RunOnUiThreadAsync<T>(
+        Func<Task<T>> operation,
+        CancellationToken cancellationToken)
+    {
+        if (_dispatcher is null || _dispatcher.HasThreadAccess)
+        {
+            return operation();
+        }
+
+        var completion = new TaskCompletionSource<T>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!_dispatcher.TryEnqueue(async () =>
+            {
+                try
+                {
+                    completion.TrySetResult(await operation());
+                }
+                catch (OperationCanceledException)
+                    when (cancellationToken.IsCancellationRequested)
+                {
+                    completion.TrySetCanceled(cancellationToken);
+                }
+                catch (Exception exception)
+                {
+                    completion.TrySetException(exception);
+                }
+            }))
+        {
+            completion.TrySetException(
+                new InvalidOperationException("The UI dispatcher is unavailable."));
+        }
+
+        return completion.Task;
+    }
+
+    private static bool IsNetworkFailure(Exception exception) =>
+        exception.HResult is unchecked((int)0x80072EE2) or
+            unchecked((int)0x80072EE7) or
+            unchecked((int)0x80072EFD) or
+            unchecked((int)0x800704CF) or
+            unchecked((int)0x800C0005);
 }

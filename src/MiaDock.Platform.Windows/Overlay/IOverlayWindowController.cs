@@ -1,4 +1,5 @@
 using MiaDock.Core.Overlay;
+using MiaDock.Core.Presentation;
 
 namespace MiaDock.Platform.Windows.Overlay;
 
@@ -16,15 +17,19 @@ public interface IOverlayWindowController : IDisposable
 
     void Hide();
 
-    void UpdatePlacement(OverlayPosition position, string? displayId);
+    void UpdatePlacement(OverlayPosition position, string? displayId, double marginInDips);
 
-    void UpdateLayout(OverlaySize sizeInDips, double cornerRadiusInDips);
+    void UpdateLayout(OverlaySize sizeInDips, DockCornerRadii cornerRadiiInDips);
 
     void UpdateOpacity(double opacity);
-
-    void UpdateSurfaceColor(uint argb);
 
     void SetOutsideClickMonitoring(bool enabled);
 
     void SetInputActivationEnabled(bool enabled);
+
+    void SetEdgeRevealHidden(bool hidden, double visibleStripInDips = 2);
+
+    bool IsPointerAtAttachedEdge(int activationThicknessInPixels = 3, int spanPaddingInPixels = 24);
+
+    bool IsPointerOverWindow();
 }

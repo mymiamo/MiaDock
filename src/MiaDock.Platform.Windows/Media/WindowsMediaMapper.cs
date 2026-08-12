@@ -22,8 +22,23 @@ internal sealed class WindowsMediaMapper
         bool includeArtwork = true,
         long artworkRevision = 0)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var playbackInfo = session.GetPlaybackInfo();
         var timeline = session.GetTimelineProperties();
+        var playbackStatus = MapPlaybackStatus(playbackInfo.PlaybackStatus);
+        var playbackRate = playbackInfo.PlaybackRate is > 0 ? playbackInfo.PlaybackRate.Value : 1;
+        var controls = playbackInfo.Controls;
+        var capabilities = new MediaCapabilities(
+            controls.IsPlayEnabled || controls.IsPlayPauseToggleEnabled,
+            controls.IsPauseEnabled || controls.IsPlayPauseToggleEnabled,
+            controls.IsPreviousEnabled,
+            controls.IsNextEnabled,
+            controls.IsPlaybackPositionEnabled,
+            false);
+        var start = timeline.StartTime;
+        var end = timeline.EndTime;
+        var rawPosition = timeline.Position;
+
         var mediaProperties = await session.TryGetMediaPropertiesAsync().AsTask(cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -34,34 +49,28 @@ internal sealed class WindowsMediaMapper
             ? mediaProperties.Artist
             : mediaProperties.AlbumArtist ?? string.Empty;
         var albumTitle = mediaProperties.AlbumTitle ?? string.Empty;
+        var thumbnailReference = mediaProperties.Thumbnail;
         var artwork = includeArtwork
             ? await _imageReader.ReadAsync(
-                mediaProperties.Thumbnail,
+                thumbnailReference,
                 CreateArtworkCacheKey(source.Id, title, artist, albumTitle, artworkRevision),
                 cancellationToken).ConfigureAwait(false)
             : null;
+        cancellationToken.ThrowIfCancellationRequested();
 
-        var start = timeline.StartTime;
-        var duration = timeline.EndTime > start ? timeline.EndTime - start : TimeSpan.Zero;
-        var position = timeline.Position > start ? timeline.Position - start : TimeSpan.Zero;
+        var duration = end > start ? end - start : TimeSpan.Zero;
+        var position = rawPosition > start ? rawPosition - start : TimeSpan.Zero;
         position = duration > TimeSpan.Zero && position > duration ? duration : position;
-        var controls = playbackInfo.Controls;
 
         return new MediaSnapshot(
             source,
             new TrackInfo(title, artist, albumTitle, artwork),
-            MapPlaybackStatus(playbackInfo.PlaybackStatus),
-            playbackInfo.PlaybackRate is > 0 ? playbackInfo.PlaybackRate.Value : 1,
+            playbackStatus,
+            playbackRate,
             position,
             duration,
             0,
-            new MediaCapabilities(
-                controls.IsPlayEnabled || controls.IsPlayPauseToggleEnabled,
-                controls.IsPauseEnabled || controls.IsPlayPauseToggleEnabled,
-                controls.IsPreviousEnabled,
-                controls.IsNextEnabled,
-                controls.IsPlaybackPositionEnabled,
-                false));
+            capabilities);
     }
 
     internal static PlaybackStatus MapPlaybackStatus(WindowsPlaybackStatus status) => status switch

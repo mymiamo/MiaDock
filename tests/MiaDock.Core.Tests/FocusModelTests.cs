@@ -26,6 +26,32 @@ public sealed class FocusModelTests
         Assert.IsTrue(profiles.All(profile => profile.CustomName is null));
         Assert.IsTrue(profiles.All(profile =>
             !string.IsNullOrWhiteSpace(FocusProfileDefaults.GetDisplayNameKey(profile))));
+        Assert.IsTrue(FocusSettings.Default.IsEnabled);
+    }
+
+    [TestMethod]
+    public void Normalize_DisabledFocusClearsActiveEffectButPreservesProfiles()
+    {
+        var custom = CreateCustom("custom", "Korunan profil");
+        var source = MiaDockSettings.Default with
+        {
+            Focus = new FocusSettings(
+                4,
+                FocusProfileDefaults.All.Append(custom).ToArray(),
+                new FocusActivationState(
+                    custom.Id,
+                    FocusActivationSource.Manual,
+                    DateTimeOffset.Parse("2026-08-09T10:00:00Z"),
+                    null),
+                false)
+        };
+
+        var result = SettingsValidator.Normalize(source);
+
+        Assert.IsFalse(result.Focus.IsEnabled);
+        Assert.IsNull(result.Focus.ActiveState);
+        Assert.IsTrue(result.Focus.Profiles.Any(profile => profile.Id == custom.Id));
+        Assert.AreEqual(result.Focus, SettingsValidator.Normalize(result).Focus);
     }
 
     [TestMethod]
@@ -68,7 +94,7 @@ public sealed class FocusModelTests
         var migrated = result.Focus.Profiles.Single(profile =>
             profile.Id == FocusProfileDefaults.DoNotDisturbId);
 
-        Assert.AreEqual(3, result.Focus.SchemaVersion);
+        Assert.AreEqual(4, result.Focus.SchemaVersion);
         Assert.AreEqual(
             FocusDockVisibility.UseGlobalSetting,
             migrated.Behavior.DockVisibility);

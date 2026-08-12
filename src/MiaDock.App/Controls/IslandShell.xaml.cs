@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
+using Microsoft.UI.Composition;
 using Microsoft.UI.Composition.SystemBackdrops;
 using MiaDock.App.Animations;
 using MiaDock.App.Services;
@@ -18,6 +19,7 @@ namespace MiaDock.App.Controls;
 
 public sealed partial class IslandShell : UserControl
 {
+    private const long ParallaxThrottleMilliseconds = 16;
     private readonly CompactModuleHost _collapsedView;
     private readonly CompactModuleHost _hoverView;
     private readonly ExpandedModuleHost _expandedView;
@@ -29,6 +31,10 @@ public sealed partial class IslandShell : UserControl
     private IslandMotionOptions _motionOptions = IslandMotionOptions.Default;
     private IAnimationPreferenceService? _animationPreferences;
     private IslandVisualState _activeState = IslandVisualState.Collapsed;
+    private ContentMotionRequestedEventArgs? _pendingContentMotion;
+    private IslandVisualMetrics? _appliedMetrics;
+    private long _lastParallaxTimestamp;
+    private Vector3 _lastParallaxTranslation;
     public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
         nameof(State),
         typeof(string),
@@ -109,7 +115,8 @@ public sealed partial class IslandShell : UserControl
 
     public OverlaySize VisualSize => new(LayoutRoot.Width, LayoutRoot.Height);
 
-    public double VisualCornerRadius => Surface.CornerRadius.TopLeft;
+    public DockCornerRadii VisualCornerRadii =>
+        _appliedMetrics?.CornerRadii ?? _layoutOptions.EffectiveCornerRadii;
 
     public event EventHandler? VisualSizeChanged;
 
@@ -247,11 +254,30 @@ public sealed partial class IslandShell : UserControl
                 37,
                 37));
         }
-        Surface.BorderThickness = new Thickness(1 + appearance.ShadowIntensity);
+        Surface.BorderThickness = new Thickness(0);
         Surface.Shadow = appearance.ShadowIntensity > 0.01 ? new ThemeShadow() : null;
         Surface.Translation = appearance.ShadowIntensity > 0.01
             ? new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24))
             : Vector3.Zero;
+
+        ApplyCornerRadii(appearance.EffectiveCornerRadii);
+    }
+
+    public void ApplyCornerRadii(DockCornerRadii radii)
+    {
+        _baseLayoutOptions = _baseLayoutOptions with
+        {
+            CornerRadius = radii.TopLeft,
+            CornerRadii = radii
+        };
+        _layoutOptions = CreateEffectiveLayout(_baseLayoutOptions, ModuleDisplay);
+        if (_animationCoordinator is not null)
+        {
+            _animationCoordinator.UpdateOptions(_motionOptions, _layoutOptions);
+            return;
+        }
+
+        ApplyMetrics(IslandAnimationProfile.ForState(_activeState, _layoutOptions));
     }
 
     public void ApplySystemBackdrop(ThemeStyle theme)
@@ -261,14 +287,25 @@ public sealed partial class IslandShell : UserControl
             ThemeStyle.Windows11Mica => new MicaBackdrop { Kind = MicaKind.Base },
             ThemeStyle.Windows11MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
             ThemeStyle.AdaptiveFluent => new MicaBackdrop { Kind = MicaKind.Base },
-            ThemeStyle.Windows11Acrylic => new DesktopAcrylicBackdrop(),
-            ThemeStyle.Windows11AcrylicThin or ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass =>
-                new DesktopAcrylicBackdrop(),
+            ThemeStyle.Windows11Acrylic or ThemeStyle.Windows11AcrylicThin => new DesktopAcrylicBackdrop(),
+            ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass =>
+                ColorlessGlassBackdrop.IsSupported ? new ColorlessGlassBackdrop() : null,
             _ => null
         };
     }
 
-    public void ClearSystemBackdrop() => BackdropSurface.SystemBackdrop = null;
+    public void ClearSystemBackdrop()
+    {
+        try
+        {
+            BackdropSurface.SystemBackdrop = null;
+        }
+        catch (Exception)
+        {
+            // Disconnecting Acrylic/Mica during HWND teardown can throw; the
+            // element is about to disappear with the window either way.
+        }
+    }
 
     private static void OnStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
     {
@@ -304,7 +341,7 @@ public sealed partial class IslandShell : UserControl
         Surface.BorderBrush = theme.UsesColorlessGlass()
             ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
             : new SolidColorBrush(Color.FromArgb(255, 37, 37, 37));
-        Surface.BorderThickness = new Thickness(1);
+        Surface.BorderThickness = new Thickness(0);
     }
 
     private static Brush CreateSurfaceBrush(ThemeStyle theme, Color color, double opacity)
@@ -373,12 +410,15 @@ public sealed partial class IslandShell : UserControl
             return;
         }
 
+        shell._pendingContentMotion = null;
         var display = args.NewValue as ModuleDisplayState;
         shell._collapsedView.DisplayState = display;
         shell._hoverView.DisplayState = display;
         shell._expandedView.DisplayState = display;
         shell._notificationView.DisplayState = display;
-        shell.RefreshEffectiveLayout();
+        var contentMotion = shell._pendingContentMotion;
+        shell._pendingContentMotion = null;
+        shell.RefreshEffectiveLayout(contentMotion);
     }
 
     private static void OnAvailableModulesChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args) =>
@@ -404,13 +444,7 @@ public sealed partial class IslandShell : UserControl
         ModuleViewLoadFailed?.Invoke(this, args);
 
     private void OnContentMotionRequested(object? sender, ContentMotionRequestedEventArgs args) =>
-        RequestContentMotion(args);
-
-    private void RequestContentMotion(ContentMotionRequestedEventArgs args)
-    {
-        _animationCoordinator?.RequestContentTransition(args.Target, args.Direction);
-        AnimateBackdropEmphasis();
-    }
+        _pendingContentMotion = args;
 
     private void AnimateBackdropEmphasis()
     {
@@ -439,16 +473,32 @@ public sealed partial class IslandShell : UserControl
             return;
         }
 
+        var now = Environment.TickCount64;
+        if (_lastParallaxTimestamp != 0 &&
+            now - _lastParallaxTimestamp < ParallaxThrottleMilliseconds)
+        {
+            return;
+        }
+
+        _lastParallaxTimestamp = now;
+
         var point = args.GetCurrentPoint(LayoutRoot).Position;
         var width = Math.Max(LayoutRoot.ActualWidth, 1);
         var height = Math.Max(LayoutRoot.ActualHeight, 1);
         var limit = 3f * (float)_motionOptions.Intensity;
-        Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.SetIsTranslationEnabled(_expandedView, true);
-        var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(_expandedView);
-        visual.Properties.InsertVector3("Translation", new Vector3(
+        var translation = new Vector3(
             ((float)(point.X / width) - 0.5f) * limit * 2,
             ((float)(point.Y / height) - 0.5f) * limit * 2,
-            0));
+            0);
+        if (Vector3.DistanceSquared(_lastParallaxTranslation, translation) < 0.01f)
+        {
+            return;
+        }
+
+        _lastParallaxTranslation = translation;
+        Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.SetIsTranslationEnabled(_expandedView, true);
+        var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(_expandedView);
+        visual.Properties.InsertVector3("Translation", translation);
     }
 
     private void OnParallaxPointerExited(object sender, Microsoft.UI.Xaml.Input.PointerRoutedEventArgs args) =>
@@ -456,35 +506,107 @@ public sealed partial class IslandShell : UserControl
 
     private void ResetParallax()
     {
+        _lastParallaxTimestamp = 0;
+        if (_lastParallaxTranslation == Vector3.Zero)
+        {
+            return;
+        }
+
+        _lastParallaxTranslation = Vector3.Zero;
         var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(_expandedView);
         visual.Properties.InsertVector3("Translation", Vector3.Zero);
     }
 
     private void ApplyMetrics(IslandVisualMetrics metrics)
     {
-        LayoutRoot.Width = metrics.Width;
-        LayoutRoot.Height = metrics.Height;
-        var rootVisual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(LayoutRoot);
-        var clipGeometry = rootVisual.Compositor.CreateRoundedRectangleGeometry();
-        clipGeometry.Size = new Vector2((float)metrics.Width, (float)metrics.Height);
-        clipGeometry.CornerRadius = new Vector2((float)metrics.CornerRadius);
-        rootVisual.Clip = rootVisual.Compositor.CreateGeometricClip(clipGeometry);
-        BackdropSurface.CornerRadius = new CornerRadius(metrics.CornerRadius);
-        Surface.CornerRadius = new CornerRadius(metrics.CornerRadius);
-        VisualSizeChanged?.Invoke(this, EventArgs.Empty);
-    }
-
-    private void RefreshEffectiveLayout()
-    {
-        var effective = CreateEffectiveLayout(_baseLayoutOptions, ModuleDisplay);
-        if (effective == _layoutOptions)
+        if (_appliedMetrics is { } previous && MetricsAreEquivalent(previous, metrics))
         {
             return;
         }
 
-        _layoutOptions = effective;
-        _animationCoordinator?.RequestLayoutTransition(effective);
+        var sizeChanged = _appliedMetrics is not { } applied ||
+                          !NearlyEqual(applied.Width, metrics.Width) ||
+                          !NearlyEqual(applied.Height, metrics.Height);
+        var radiusChanged = _appliedMetrics is not { } current ||
+                            !RadiiAreEquivalent(current.CornerRadii, metrics.CornerRadii);
+        if (sizeChanged)
+        {
+            LayoutRoot.Width = metrics.Width;
+            LayoutRoot.Height = metrics.Height;
+        }
+
+        ClearHardClips();
+        if (sizeChanged || radiusChanged)
+        {
+            var cornerRadius = ToXamlCornerRadius(metrics.CornerRadii);
+            BackdropSurface.CornerRadius = cornerRadius;
+            Surface.CornerRadius = cornerRadius;
+        }
+
+        _appliedMetrics = metrics;
+        VisualSizeChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    private void RefreshEffectiveLayout(ContentMotionRequestedEventArgs? contentMotion)
+    {
+        var effective = CreateEffectiveLayout(_baseLayoutOptions, ModuleDisplay);
+        var layoutChanged = effective != _layoutOptions;
+        _layoutOptions = effective;
+        if (contentMotion is not null && _activeState == IslandVisualState.ExpandedModule)
+        {
+            if (layoutChanged)
+            {
+                _animationCoordinator?.RequestModuleTransition(
+                    contentMotion.Target,
+                    contentMotion.Direction,
+                    effective);
+            }
+            else
+            {
+                _animationCoordinator?.RequestContentTransition(
+                    contentMotion.Target,
+                    contentMotion.Direction);
+            }
+
+            AnimateBackdropEmphasis();
+            return;
+        }
+
+        if (layoutChanged)
+        {
+            _animationCoordinator?.RequestLayoutTransition(effective);
+        }
+    }
+
+    private static bool MetricsAreEquivalent(IslandVisualMetrics left, IslandVisualMetrics right) =>
+        NearlyEqual(left.Width, right.Width) &&
+        NearlyEqual(left.Height, right.Height) &&
+        RadiiAreEquivalent(left.CornerRadii, right.CornerRadii);
+
+    private void ClearHardClips()
+    {
+        // Geometric clips and rectangular XAML clips cut the silhouette without
+        // anti-aliasing. The per-corner CornerRadius on BackdropSurface and
+        // Surface already shapes the dock, so no additional mask is applied.
+        LayoutRoot.Clip = null;
+        Microsoft.UI.Xaml.Hosting.ElementCompositionPreview
+            .GetElementVisual(LayoutRoot)
+            .Clip = null;
+    }
+
+    private static CornerRadius ToXamlCornerRadius(DockCornerRadii radii) => new(
+        radii.TopLeft,
+        radii.TopRight,
+        radii.BottomRight,
+        radii.BottomLeft);
+
+    private static bool RadiiAreEquivalent(DockCornerRadii left, DockCornerRadii right) =>
+        NearlyEqual(left.TopLeft, right.TopLeft) &&
+        NearlyEqual(left.TopRight, right.TopRight) &&
+        NearlyEqual(left.BottomRight, right.BottomRight) &&
+        NearlyEqual(left.BottomLeft, right.BottomLeft);
+
+    private static bool NearlyEqual(double left, double right) => Math.Abs(left - right) < 0.01;
 
     private static IslandLayoutOptions CreateEffectiveLayout(
         IslandLayoutOptions baseLayout,

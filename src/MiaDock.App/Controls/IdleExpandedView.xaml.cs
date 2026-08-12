@@ -47,6 +47,8 @@ public sealed partial class IdleExpandedView : UserControl
         {
             FocusPanel.Configure(focus);
         }
+
+        UpdateFocusVisibility();
     }
 
     private void OnLoaded(object sender, RoutedEventArgs args)
@@ -70,9 +72,9 @@ public sealed partial class IdleExpandedView : UserControl
         {
             _settings.SettingsChanged += OnSettingsChanged;
         }
-
         UpdateClock();
         UpdateMediaVisibility();
+        UpdateFocusVisibility();
         ScheduleNextMinute();
     }
 
@@ -97,7 +99,6 @@ public sealed partial class IdleExpandedView : UserControl
         {
             _settings.SettingsChanged -= OnSettingsChanged;
         }
-
         StopTimer();
     }
 
@@ -118,6 +119,15 @@ public sealed partial class IdleExpandedView : UserControl
         MediaMetadataPanel.Visibility = hasMedia ? Visibility.Visible : Visibility.Collapsed;
         MediaEmptyPanel.Visibility = hasMedia ? Visibility.Collapsed : Visibility.Visible;
         UpdateAutomationName(hasMedia);
+    }
+
+    private void UpdateFocusVisibility()
+    {
+        var isEnabled = _settings?.Current.Focus.IsEnabled ?? true;
+        FocusCard.Visibility = isEnabled ? Visibility.Visible : Visibility.Collapsed;
+        FocusColumn.Width = isEnabled ? new GridLength(170) : new GridLength(0);
+        Grid.SetColumn(MusicPanel, isEnabled ? 1 : 0);
+        Grid.SetColumnSpan(MusicPanel, isEnabled ? 1 : 2);
     }
 
     private void UpdateClock()
@@ -186,14 +196,37 @@ public sealed partial class IdleExpandedView : UserControl
 
     private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
     {
-        if (args.Previous.General.Clock == args.Current.General.Clock)
+        var clockChanged = args.Previous.General.Clock != args.Current.General.Clock;
+        var focusVisibilityChanged =
+            args.Previous.Focus.IsEnabled != args.Current.Focus.IsEnabled;
+        if (!clockChanged && !focusVisibilityChanged)
         {
             return;
         }
 
-        UpdateClock();
-        UpdateMediaVisibility();
-        ScheduleNextMinute();
+        void ApplyChanges()
+        {
+            if (focusVisibilityChanged)
+            {
+                UpdateFocusVisibility();
+            }
+
+            if (clockChanged)
+            {
+                UpdateClock();
+                UpdateMediaVisibility();
+                ScheduleNextMinute();
+            }
+        }
+
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            ApplyChanges();
+        }
+        else
+        {
+            DispatcherQueue.TryEnqueue(ApplyChanges);
+        }
     }
 
     private ClockDisplaySettings ClockSettings =>

@@ -16,6 +16,24 @@ public sealed partial class HotKeyRecorderControl : UserControl
         typeof(HotKeyRecorderControl),
         new PropertyMetadata(null, OnGestureChanged));
 
+    public static readonly DependencyProperty DefaultGestureProperty = DependencyProperty.Register(
+        nameof(DefaultGesture),
+        typeof(HotKeyGestureSetting),
+        typeof(HotKeyRecorderControl),
+        new PropertyMetadata(null));
+
+    public static readonly DependencyProperty StatusTextProperty = DependencyProperty.Register(
+        nameof(StatusText),
+        typeof(string),
+        typeof(HotKeyRecorderControl),
+        new PropertyMetadata(string.Empty));
+
+    public static readonly DependencyProperty AccessibleNameProperty = DependencyProperty.Register(
+        nameof(AccessibleName),
+        typeof(string),
+        typeof(HotKeyRecorderControl),
+        new PropertyMetadata("Global kısayolu kaydet"));
+
     private bool _recording;
 
     public HotKeyRecorderControl()
@@ -28,6 +46,24 @@ public sealed partial class HotKeyRecorderControl : UserControl
     {
         get => (HotKeyGestureSetting?)GetValue(GestureProperty);
         set => SetValue(GestureProperty, value);
+    }
+
+    public HotKeyGestureSetting? DefaultGesture
+    {
+        get => (HotKeyGestureSetting?)GetValue(DefaultGestureProperty);
+        set => SetValue(DefaultGestureProperty, value);
+    }
+
+    public string StatusText
+    {
+        get => (string)GetValue(StatusTextProperty);
+        set => SetValue(StatusTextProperty, value);
+    }
+
+    public string AccessibleName
+    {
+        get => (string)GetValue(AccessibleNameProperty);
+        set => SetValue(AccessibleNameProperty, value);
     }
 
     private static void OnGestureChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
@@ -43,6 +79,13 @@ public sealed partial class HotKeyRecorderControl : UserControl
     private void OnRecorderKeyDown(object sender, KeyRoutedEventArgs args)
     {
         if (!_recording) return;
+
+        if (args.Key == VirtualKey.Tab)
+        {
+            StopRecording();
+            return;
+        }
+
         args.Handled = true;
         if (args.Key == VirtualKey.Escape)
         {
@@ -57,6 +100,12 @@ public sealed partial class HotKeyRecorderControl : UserControl
             return;
         }
 
+        if (args.Key is VirtualKey.Control or VirtualKey.Menu or VirtualKey.Shift or
+            VirtualKey.LeftWindows or VirtualKey.RightWindows)
+        {
+            return;
+        }
+
         var modifiers = HotKeyModifiers.None;
         if (IsDown(VirtualKey.Control)) modifiers |= HotKeyModifiers.Control;
         if (IsDown(VirtualKey.Menu)) modifiers |= HotKeyModifiers.Alt;
@@ -64,9 +113,8 @@ public sealed partial class HotKeyRecorderControl : UserControl
         var gesture = new HotKeyGestureSetting(modifiers, (int)args.Key);
         if (!HotKeyGestureValidator.IsValid(gesture))
         {
-            RecorderButton.Content = args.Key == VirtualKey.F12
-                ? "F12 kullanılamaz"
-                : "Ctrl, Alt veya Shift ekleyin";
+            Gesture = gesture;
+            StopRecording();
             return;
         }
 
@@ -80,6 +128,14 @@ public sealed partial class HotKeyRecorderControl : UserControl
     }
 
     private void OnClearClicked(object sender, RoutedEventArgs args) => Gesture = null;
+
+    private void OnRestoreDefaultClicked(object sender, RoutedEventArgs args)
+    {
+        if (DefaultGesture is not null)
+        {
+            Gesture = DefaultGesture;
+        }
+    }
 
     private void StopRecording()
     {

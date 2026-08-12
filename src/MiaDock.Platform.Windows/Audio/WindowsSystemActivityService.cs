@@ -18,6 +18,7 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
     private static readonly Guid EventContext = new("1C7FD31E-7D88-45CA-BA36-56DFEA691D08");
     private const int MaximumQueuedWorkItems = 256;
     private static readonly TimeSpan MixerMeterInterval = TimeSpan.FromMilliseconds(125);
+    private static readonly TimeSpan AudioTopologyDebounceInterval = TimeSpan.FromMilliseconds(250);
 
     private readonly IUiDispatcher _dispatcher;
     private readonly IMediaSessionService _media;
@@ -27,6 +28,7 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
     private readonly CoalescingActionScheduler _refreshScheduler;
     private readonly CoalescingActionScheduler _rebindScheduler;
     private readonly CoalescingActionScheduler _mixerSampleScheduler;
+    private readonly Timer _audioRebindTimer;
     private readonly Timer _mixerMeterTimer;
     private readonly object _stateGate = new();
     private readonly object _startGate = new();
@@ -76,6 +78,11 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         _refreshScheduler = new CoalescingActionScheduler(Post, RefreshAndPublish);
         _rebindScheduler = new CoalescingActionScheduler(Post, RebindAudio);
         _mixerSampleScheduler = new CoalescingActionScheduler(Post, SampleMixerAndPublish);
+        _audioRebindTimer = new Timer(
+            _ => _rebindScheduler.Request(),
+            null,
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan);
         _mixerMeterTimer = new Timer(
             _ => _mixerSampleScheduler.Request(),
             null,
@@ -279,13 +286,64 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
             return;
         }
 
+        // Block new work and managed callbacks before tearing down Core Audio.
         _disposed = true;
         _media.SnapshotChanged -= OnMediaSnapshotChanged;
         _media.StateChanged -= OnMediaStateChanged;
-        _mixerMeterTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-        _mixerMeterTimer.Dispose();
+        try
+        {
+            _audioRebindTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            _audioRebindTimer.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        try
+        {
+            _mixerMeterTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            _mixerMeterTimer.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+
+        if (_worker is null)
+        {
+            _workItems.CompleteAdding();
+            _workItems.Dispose();
+            return;
+        }
+
+        // Unregister COM notifications on the audio worker before the queue ends so
+        // late volume/session callbacks cannot observe half-disposed bindings.
+        var nativeCleanup = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        if (!Post(() =>
+            {
+                try
+                {
+                    CleanupCamera();
+                    CleanupAudio();
+                }
+                finally
+                {
+                    nativeCleanup.TrySetResult();
+                }
+            }))
+        {
+            nativeCleanup.TrySetResult();
+        }
+
         _workItems.CompleteAdding();
-        if (_worker is not null && _worker.IsAlive)
+        try
+        {
+            await nativeCleanup.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        }
+        catch (TimeoutException)
+        {
+        }
+
+        if (_worker.IsAlive)
         {
             await Task.Run(() => _worker.Join(TimeSpan.FromSeconds(5)));
         }
@@ -340,7 +398,7 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         try
         {
             _deviceEnumerator = (IMMDeviceEnumerator)(object)new MMDeviceEnumeratorComObject();
-            _deviceNotification = new EndpointNotificationCallback(PostRebindAudio);
+            _deviceNotification = new EndpointNotificationCallback(() => !_disposed, PostRebindAudio);
             CoreAudioNative.ThrowIfFailed(
                 _deviceEnumerator.RegisterEndpointNotificationCallback(_deviceNotification));
             RebindAudio();
@@ -354,8 +412,14 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
 
     private void RebindAudio()
     {
+        if (_disposed)
+        {
+            return;
+        }
+
+        LogAudioRebindCheckpoint();
         CleanupAudioBindings();
-        if (_deviceEnumerator is null)
+        if (_disposed || _deviceEnumerator is null)
         {
             return;
         }
@@ -370,12 +434,12 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
             (_defaultOutputDeviceId, _defaultOutputDeviceName) =
                 ReadDeviceIdentity(_renderDevice);
             _endpointVolume = Activate<IAudioEndpointVolume>(_renderDevice, CoreAudioNative.EndpointVolumeId);
-            _endpointVolumeCallback = new EndpointVolumeCallback(RequestRefresh);
+            _endpointVolumeCallback = new EndpointVolumeCallback(() => !_disposed, RequestRefresh);
             CoreAudioNative.ThrowIfFailed(
                 _endpointVolume.RegisterControlChangeNotify(_endpointVolumeCallback));
             _renderSessionManager = Activate<IAudioSessionManager2>(
                 _renderDevice, CoreAudioNative.SessionManagerId);
-            _renderSessionNotification = new SessionNotificationCallback(PostRebindAudio);
+            _renderSessionNotification = new SessionNotificationCallback(() => !_disposed, PostRebindAudio);
             CoreAudioNative.ThrowIfFailed(
                 _renderSessionManager.RegisterSessionNotification(_renderSessionNotification));
             EnumerateSessions(_renderSessionManager, AudioDataFlow.Render);
@@ -384,6 +448,7 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         catch (Exception exception) when (exception is COMException or InvalidCastException)
         {
             _audioAvailable = false;
+            LogAudioRebindFailure("render", exception);
         }
 
         try
@@ -395,7 +460,7 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
                 out _captureDevice));
             _captureSessionManager = Activate<IAudioSessionManager2>(
                 _captureDevice, CoreAudioNative.SessionManagerId);
-            _captureSessionNotification = new SessionNotificationCallback(PostRebindAudio);
+            _captureSessionNotification = new SessionNotificationCallback(() => !_disposed, PostRebindAudio);
             CoreAudioNative.ThrowIfFailed(
                 _captureSessionManager.RegisterSessionNotification(_captureSessionNotification));
             EnumerateSessions(_captureSessionManager, AudioDataFlow.Capture);
@@ -404,10 +469,50 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         catch (Exception exception) when (exception is COMException or InvalidCastException)
         {
             _captureAvailable = false;
+            LogAudioRebindFailure("capture", exception);
         }
 
+        _log.Write(
+            TechnicalLogLevel.Information,
+            TechnicalEventIds.AudioTopologyRebind,
+            "SystemActivity",
+            "Core Audio topology rebind completed.",
+            properties: new Dictionary<string, object?>
+            {
+                ["phase"] = "completed",
+                ["sessionCount"] = _sessions.Count,
+                ["state"] = $"render={_audioAvailable};capture={_captureAvailable}"
+            });
         RefreshAndPublish();
     }
+
+    private void LogAudioRebindCheckpoint()
+    {
+        _log.Write(
+            TechnicalLogLevel.Information,
+            TechnicalEventIds.AudioTopologyRebind,
+            "SystemActivity",
+            "Core Audio topology rebind is starting.",
+            properties: new Dictionary<string, object?>
+            {
+                ["phase"] = "before-session-enumeration",
+                ["sessionCount"] = _sessions.Count
+            });
+    }
+
+    private void LogAudioRebindFailure(string phase, Exception exception) =>
+        _log.Write(
+            TechnicalLogLevel.Warning,
+            TechnicalEventIds.AudioTopologyRebind,
+            "SystemActivity",
+            "A Core Audio topology section failed safely.",
+            exception,
+            new Dictionary<string, object?>
+            {
+                ["phase"] = phase,
+                ["hresult"] = exception.HResult,
+                ["sessionCount"] = _sessions.Count
+            });
 
     private void EnumerateSessions(IAudioSessionManager2 manager, AudioDataFlow flow)
     {
@@ -430,13 +535,13 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
                 }
                 catch (Exception)
                 {
-                    ReleaseComObject(control);
+                    control = null;
                 }
             }
         }
         finally
         {
-            ReleaseComObject(enumerator);
+            enumerator = null!;
         }
     }
 
@@ -885,12 +990,42 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         }
     }
 
-    private void RequestRefresh() => _refreshScheduler.Request();
+    private void RequestRefresh()
+    {
+        if (_disposed)
+        {
+            return;
+        }
 
-    private void PostRebindAudio() => _rebindScheduler.Request();
+        _refreshScheduler.Request();
+    }
+
+    private void PostRebindAudio()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        try
+        {
+            _audioRebindTimer.Change(
+                AudioTopologyDebounceInterval,
+                Timeout.InfiniteTimeSpan);
+        }
+        catch (ObjectDisposedException)
+        {
+            // A late native callback can race with shutdown.
+        }
+    }
 
     private void OnMediaSnapshotChanged(object? sender, MediaSnapshot snapshot)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         var nextSourceId = ResolveSelectedMediaSourceId();
         var previousSourceId = Interlocked.Exchange(ref _selectedMediaSourceId, nextSourceId);
         if (!string.Equals(previousSourceId, nextSourceId, StringComparison.OrdinalIgnoreCase))
@@ -901,6 +1036,11 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
 
     private void OnMediaStateChanged(object? sender, MediaServiceState state)
     {
+        if (_disposed)
+        {
+            return;
+        }
+
         Interlocked.Exchange(ref _selectedMediaSourceId, ResolveSelectedMediaSourceId());
         RequestRefresh();
     }
@@ -977,7 +1117,7 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         }
         finally
         {
-            ReleaseComObject(properties);
+            properties = null;
         }
 
         return (id, string.IsNullOrWhiteSpace(name) ? null : name.Trim());
@@ -1009,24 +1149,22 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
 
         if (_renderSessionManager is not null && _renderSessionNotification is not null)
         {
-            _renderSessionManager.UnregisterSessionNotification(_renderSessionNotification);
+            try { _renderSessionManager.UnregisterSessionNotification(_renderSessionNotification); }
+            catch (Exception exception) when (exception is COMException or InvalidComObjectException) { }
         }
 
         if (_captureSessionManager is not null && _captureSessionNotification is not null)
         {
-            _captureSessionManager.UnregisterSessionNotification(_captureSessionNotification);
+            try { _captureSessionManager.UnregisterSessionNotification(_captureSessionNotification); }
+            catch (Exception exception) when (exception is COMException or InvalidComObjectException) { }
         }
 
         if (_endpointVolume is not null && _endpointVolumeCallback is not null)
         {
-            _endpointVolume.UnregisterControlChangeNotify(_endpointVolumeCallback);
+            try { _endpointVolume.UnregisterControlChangeNotify(_endpointVolumeCallback); }
+            catch (Exception exception) when (exception is COMException or InvalidComObjectException) { }
         }
 
-        ReleaseComObject(_renderSessionManager);
-        ReleaseComObject(_captureSessionManager);
-        ReleaseComObject(_endpointVolume);
-        ReleaseComObject(_renderDevice);
-        ReleaseComObject(_captureDevice);
         _renderSessionManager = null;
         _captureSessionManager = null;
         _endpointVolume = null;
@@ -1042,10 +1180,10 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         CleanupAudioBindings();
         if (_deviceEnumerator is not null && _deviceNotification is not null)
         {
-            _deviceEnumerator.UnregisterEndpointNotificationCallback(_deviceNotification);
+            try { _deviceEnumerator.UnregisterEndpointNotificationCallback(_deviceNotification); }
+            catch (Exception exception) when (exception is COMException or InvalidComObjectException) { }
         }
 
-        ReleaseComObject(_deviceEnumerator);
         _deviceEnumerator = null;
         _deviceNotification = null;
     }
@@ -1072,70 +1210,79 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         }
     }
 
-    private static void ReleaseComObject(object? value)
-    {
-        if (value is not null && Marshal.IsComObject(value))
-        {
-            try
-            {
-                Marshal.FinalReleaseComObject(value);
-            }
-            catch (InvalidComObjectException)
-            {
-            }
-        }
-    }
-
     [ComVisible(true)]
-    private sealed class EndpointVolumeCallback(Action refreshRequested) : IAudioEndpointVolumeCallback
+    private sealed class EndpointVolumeCallback(Func<bool> isActive, Action refreshRequested)
+        : IAudioEndpointVolumeCallback
     {
         public int OnNotify(nint notificationData)
         {
-            refreshRequested();
+            if (isActive())
+            {
+                refreshRequested();
+            }
+
             return 0;
         }
     }
 
     [ComVisible(true)]
-    private sealed class EndpointNotificationCallback(Action rebindRequested) : IMMNotificationClient
+    private sealed class EndpointNotificationCallback(Func<bool> isActive, Action rebindRequested)
+        : IMMNotificationClient
     {
         public int OnDeviceStateChanged(string deviceId, uint newState)
         {
-            rebindRequested();
+            if (isActive())
+            {
+                rebindRequested();
+            }
+
             return 0;
         }
 
         public int OnDeviceAdded(string deviceId)
         {
-            rebindRequested();
+            if (isActive())
+            {
+                rebindRequested();
+            }
+
             return 0;
         }
 
         public int OnDeviceRemoved(string deviceId)
         {
-            rebindRequested();
+            if (isActive())
+            {
+                rebindRequested();
+            }
+
             return 0;
         }
 
         public int OnDefaultDeviceChanged(AudioDataFlow flow, AudioDeviceRole role, string? defaultDeviceId)
         {
-            rebindRequested();
+            if (isActive())
+            {
+                rebindRequested();
+            }
+
             return 0;
         }
 
-        public int OnPropertyValueChanged(string deviceId, PropertyKey key)
-        {
-            rebindRequested();
-            return 0;
-        }
+        public int OnPropertyValueChanged(string deviceId, PropertyKey key) => 0;
     }
 
     [ComVisible(true)]
-    private sealed class SessionNotificationCallback(Action rebindRequested) : IAudioSessionNotification
+    private sealed class SessionNotificationCallback(Func<bool> isActive, Action rebindRequested)
+        : IAudioSessionNotification
     {
         public int OnSessionCreated(IAudioSessionControl newSession)
         {
-            rebindRequested();
+            if (isActive())
+            {
+                rebindRequested();
+            }
+
             return 0;
         }
     }

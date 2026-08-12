@@ -36,13 +36,21 @@ public static class ModuleServiceDisclosureCatalog
                     "Varsayılan çıkış aygıtının ses seviyesini ve sessiz durumunu cihazda okur ve kullanıcı komutuyla değiştirir.",
                     "Reads the default output device's volume and mute state on this device and changes it only on user command."),
                 false),
+            "privacy" => new(
+                moduleId,
+                L("Gizlilik", "Privacy"),
+                "Windows Capability Access Manager ConsentStore",
+                L(
+                    "Mikrofon ve kamerayı kullanan uygulamaları yerel olarak gösterir. Ses veya görüntü içeriği okunmaz ve hiçbir veri gönderilmez.",
+                    "Locally shows which apps are using the microphone and camera. Audio or video content is never read and nothing is sent off-device."),
+                false),
             "system-activity" => new(
                 moduleId,
-                L("Mikrofon, kamera ve arama", "Microphone, camera and calls"),
-                "Windows Core Audio sessions · MediaCapture access status",
+                L("Arama etkinliği", "Call activity"),
+                "Windows Core Audio sessions",
                 L(
-                    "Mikrofon ses oturumu etkinliğini, kamera cihazı/izin durumunu ve sınırlı yerel arama çıkarımını işler. Görüşme içeriği okunmaz.",
-                    "Processes microphone audio-session activity, camera device/access status, and limited local call inference. Call content is never read."),
+                    "Mikrofon ve iletişim sesi oturumlarından sınırlı yerel arama çıkarımı yapar. Görüşme içeriği okunmaz.",
+                    "Infers limited local call activity from microphone and communication audio sessions. Call content is never read."),
                 false),
             "battery" => new(
                 moduleId,

@@ -19,29 +19,28 @@ public sealed class OnboardingWindowTests
     }
 
     [TestMethod]
-    public void Wizard_DefinesAllNineRequiredSteps()
+    public void Wizard_DefinesFiveTaskFocusedSteps()
     {
         var files = Directory.GetFiles(Path.Combine(AppContext.BaseDirectory, "Onboarding"), "*StepView.xaml");
 
-        Assert.AreEqual(9, files.Length);
+        Assert.AreEqual(5, files.Length);
         CollectionAssert.IsSubsetOf(
             new[]
             {
-                "WelcomeStepView.xaml", "StartupStepView.xaml", "AppearanceStepView.xaml", "MediaStepView.xaml",
-                "DisplayStepView.xaml", "InteractionStepView.xaml", "FullscreenStepView.xaml",
-                "ModulesStepView.xaml", "SummaryStepView.xaml"
+                "WelcomeStepView.xaml", "PersonalizationStepView.xaml", "UsageStepView.xaml",
+                "FeaturesAndPrivacyStepView.xaml", "ReadyStepView.xaml"
             },
             files.Select(Path.GetFileName).ToArray());
     }
 
     [TestMethod]
-    public void ModulesStep_ExplainsThatSelectedServicesRequireConsent()
+    public void FeaturesAndPrivacyStep_DefersWindowsPermissions()
     {
-        var document = Load("Onboarding", "ModulesStepView.xaml");
+        var document = Load("Onboarding", "FeaturesAndPrivacyStepView.xaml");
         var text = document.ToString();
 
-        StringAssert.Contains(text, "kullanılan servisler açıklanır");
-        StringAssert.Contains(text, "onayınız istenir");
+        StringAssert.Contains(text, "İzinler ertelenir");
+        StringAssert.Contains(text, "ilk kullanıldığında");
         StringAssert.Contains(text, "CanSelectDuringOnboarding");
     }
 

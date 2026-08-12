@@ -29,17 +29,27 @@ public sealed partial class BatteryModuleViewModel : ObservableObject, IDisposab
     [NotifyPropertyChangedFor(nameof(BatteryGlyph))]
     private BatteryStatusSnapshot _snapshot;
 
-    public string ChargeText => Snapshot.IsBatteryPresent
-        ? $"%{Snapshot.ChargePercent}"
-        : Text("Battery.None", "Pil yok");
+    public string ChargeText => Snapshot.Availability switch
+    {
+        BatteryAvailabilityState.Available => $"%{Snapshot.ChargePercent}",
+        BatteryAvailabilityState.TransientError when Snapshot.IsBatteryPresent => $"%{Snapshot.ChargePercent}",
+        BatteryAvailabilityState.NotPresent => Text("Battery.None", "Pil yok"),
+        _ => Text("Battery.Unknown", "Pil durumu bilinmiyor")
+    };
 
-    public string StatusText => !Snapshot.IsBatteryPresent
-        ? Text("Battery.NotDetected", "Bu cihazda pil algılanmadı")
-        : Snapshot.IsCharging
+    public string StatusText => Snapshot.Availability switch
+    {
+        BatteryAvailabilityState.NotPresent => Text("Battery.NotDetected", "Bu cihazda pil algılanmadı"),
+        BatteryAvailabilityState.ApiUnavailable => Text("Battery.Unavailable", "Pil bilgisi kullanılamıyor"),
+        BatteryAvailabilityState.AccessDenied => Text("Battery.AccessDenied", "Pil bilgisine erişilemiyor"),
+        BatteryAvailabilityState.TransientError => Text("Battery.TransientError", "Pil bilgisi geçici olarak okunamadı"),
+        BatteryAvailabilityState.Unknown => Text("Battery.Unknown", "Pil durumu bilinmiyor"),
+        _ => Snapshot.IsCharging
             ? Text("Battery.Charging", "Şarj oluyor")
             : Snapshot.IsEnergySaverOn
                 ? Text("Battery.EnergySaver", "Enerji tasarrufu açık")
-                : Text("Battery.OnBattery", "Pilde çalışıyor");
+                : Text("Battery.OnBattery", "Pilde çalışıyor")
+    };
 
     public string PowerText => Snapshot.IsBatteryPresent
         ? Snapshot.PowerSource switch
@@ -49,7 +59,9 @@ public sealed partial class BatteryModuleViewModel : ObservableObject, IDisposab
             "USB" => Text("Battery.PowerSource.USB", "USB gücü"),
             _ => Text("Battery.PowerSource.Unknown", "Güç kaynağı bilinmiyor")
         }
-        : Text("Battery.DesktopPower", "Masaüstü güç sistemi");
+        : Snapshot.Availability == BatteryAvailabilityState.NotPresent
+            ? Text("Battery.DesktopPower", "Masaüstü güç sistemi")
+            : Text("Battery.PowerSource.Unknown", "Güç kaynağı bilinmiyor");
 
     public string BatteryGlyph => Snapshot.IsCharging ? "\uE83E" : "\uE850";
 

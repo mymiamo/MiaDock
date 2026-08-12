@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Windows.Foundation;
@@ -5,6 +6,7 @@ using Windows.Foundation.Metadata;
 using Windows.Media.Control;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.Services;
+using MiaDock.Core.Logging;
 
 namespace MiaDock.Platform.Windows.Media;
 
@@ -18,20 +20,26 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
     private readonly SemaphoreSlim _initializeGate = new(1, 1);
     private readonly WindowsAppIdentityResolver _identityResolver;
     private readonly WindowsMediaMapper _mapper;
+    private readonly ILogService? _log;
     private readonly CoalescingRefreshQueue _topologyQueue;
     private readonly CoalescingRefreshQueue _snapshotQueue;
+    private readonly GenerationSessionAccessCoordinator<GlobalSystemMediaTransportControlsSession> _sessionAccess = new();
     private GlobalSystemMediaTransportControlsSessionManager? _manager;
     private GlobalSystemMediaTransportControlsSession? _selectedSession;
+    private GenerationSessionAccessCoordinator<GlobalSystemMediaTransportControlsSession>.SessionLease? _selectedLease;
     private MediaSourceInfo? _selectedSource;
     private CancellationTokenSource? _metadataValidationCancellation;
     private long _refreshGeneration;
+    private long _topologyGeneration;
     private long _trackRevision;
     private long _artworkAttemptedRevision = -1;
     private long _publishedSequence;
+    private long _diagnosticSnapshotLeaseGeneration = -1;
     private bool _isDisposed;
 
-    public WindowsMediaSessionService(MediaImageCache imageCache)
+    public WindowsMediaSessionService(MediaImageCache imageCache, ILogService? log = null)
     {
+        _log = log;
         var imageReader = new MediaImageReader(imageCache);
         _identityResolver = new WindowsAppIdentityResolver(imageReader);
         _mapper = new WindowsMediaMapper(imageReader);
@@ -89,20 +97,23 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
                 await _topologyQueue.WaitForIdleAsync().ConfigureAwait(false);
                 await _snapshotQueue.WaitForIdleAsync().ConfigureAwait(false);
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException exception)
             {
+                LogFailure("initialize", exception);
                 SetState(MediaServiceState.AccessDenied);
             }
             catch (COMException exception) when (exception.HResult == AccessDeniedHResult)
             {
+                LogFailure("initialize", exception);
                 SetState(MediaServiceState.AccessDenied);
             }
             catch (OperationCanceledException)
             {
                 throw;
             }
-            catch
+            catch (Exception exception)
             {
+                LogFailure("initialize", exception);
                 SetState(MediaServiceState.Faulted);
             }
         }
@@ -131,38 +142,31 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
     public async Task<bool> TogglePlaybackAsync(CancellationToken cancellationToken = default)
     {
-        var session = GetSelectedSession();
-        if (session is null)
+        var lease = _sessionAccess.Capture();
+        if (lease is null)
         {
             return false;
         }
 
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var playbackInfo = session.GetPlaybackInfo();
-            var controls = playbackInfo.Controls;
-            bool succeeded;
-            if (controls.IsPlayPauseToggleEnabled)
-            {
-                succeeded = await session.TryTogglePlayPauseAsync();
-            }
-            else if (playbackInfo.PlaybackStatus ==
-                     GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing &&
-                     controls.IsPauseEnabled)
-            {
-                succeeded = await session.TryPauseAsync();
-            }
-            else if (controls.IsPlayEnabled)
-            {
-                succeeded = await session.TryPlayAsync();
-            }
-            else
-            {
-                return false;
-            }
-
-            cancellationToken.ThrowIfCancellationRequested();
+            var succeeded = await _sessionAccess.ExecuteAsync(
+                lease,
+                async (session, token) =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    var playbackInfo = session.GetPlaybackInfo();
+                    var controls = playbackInfo.Controls;
+                    IAsyncOperation<bool>? command = controls.IsPlayPauseToggleEnabled
+                        ? session.TryTogglePlayPauseAsync()
+                        : playbackInfo.PlaybackStatus == GlobalSystemMediaTransportControlsSessionPlaybackStatus.Playing && controls.IsPauseEnabled
+                            ? session.TryPauseAsync()
+                            : controls.IsPlayEnabled
+                                ? session.TryPlayAsync()
+                                : null;
+                    return command is not null && await command.AsTask(token).ConfigureAwait(false);
+                },
+                cancellationToken).ConfigureAwait(false);
             if (succeeded)
             {
                 _snapshotQueue.Request();
@@ -170,12 +174,17 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
             return succeeded;
         }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
         catch (OperationCanceledException)
         {
             throw;
         }
-        catch
+        catch (Exception exception)
         {
+            LogTransportFailure("toggle-playback", exception, lease.Generation);
             return false;
         }
     }
@@ -194,37 +203,32 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
     public async Task<bool> SeekAsync(TimeSpan position, CancellationToken cancellationToken = default)
     {
-        var session = GetSelectedSession();
-        if (session is null)
+        var lease = _sessionAccess.Capture();
+        if (lease is null)
         {
             return false;
         }
 
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            var playbackInfo = session.GetPlaybackInfo();
-            if (!playbackInfo.Controls.IsPlaybackPositionEnabled)
-            {
-                return false;
-            }
-
-            var timeline = session.GetTimelineProperties();
-            var target = timeline.StartTime + (position < TimeSpan.Zero ? TimeSpan.Zero : position);
-            var minimum = timeline.MinSeekTime;
-            var maximum = timeline.MaxSeekTime > minimum ? timeline.MaxSeekTime : timeline.EndTime;
-            if (target < minimum)
-            {
-                target = minimum;
-            }
-
-            if (maximum > minimum && target > maximum)
-            {
-                target = maximum;
-            }
-
-            var succeeded = await session.TryChangePlaybackPositionAsync(target.Ticks);
-            cancellationToken.ThrowIfCancellationRequested();
+            var succeeded = await _sessionAccess.ExecuteAsync(
+                lease,
+                async (session, token) =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    var playbackInfo = session.GetPlaybackInfo();
+                    if (!playbackInfo.Controls.IsPlaybackPositionEnabled) return false;
+                    var timeline = session.GetTimelineProperties();
+                    var target = timeline.StartTime + (position < TimeSpan.Zero ? TimeSpan.Zero : position);
+                    var minimum = timeline.MinSeekTime;
+                    var maximum = timeline.MaxSeekTime > minimum ? timeline.MaxSeekTime : timeline.EndTime;
+                    if (target < minimum) target = minimum;
+                    if (maximum > minimum && target > maximum) target = maximum;
+                    return await session.TryChangePlaybackPositionAsync(target.Ticks)
+                        .AsTask(token)
+                        .ConfigureAwait(false);
+                },
+                cancellationToken).ConfigureAwait(false);
             if (succeeded)
             {
                 _snapshotQueue.Request();
@@ -232,12 +236,17 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
             return succeeded;
         }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
         catch (OperationCanceledException)
         {
             throw;
         }
-        catch
+        catch (Exception exception)
         {
+            LogTransportFailure("seek", exception, lease.Generation);
             return false;
         }
     }
@@ -247,22 +256,23 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         Func<GlobalSystemMediaTransportControlsSession, IAsyncOperation<bool>> execute,
         CancellationToken cancellationToken)
     {
-        var session = GetSelectedSession();
-        if (session is null)
+        var lease = _sessionAccess.Capture();
+        if (lease is null)
         {
             return false;
         }
 
         try
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            if (!isEnabled(session.GetPlaybackInfo().Controls))
-            {
-                return false;
-            }
-
-            var succeeded = await execute(session);
-            cancellationToken.ThrowIfCancellationRequested();
+            var succeeded = await _sessionAccess.ExecuteAsync(
+                lease,
+                async (session, token) =>
+                {
+                    token.ThrowIfCancellationRequested();
+                    if (!isEnabled(session.GetPlaybackInfo().Controls)) return false;
+                    return await execute(session).AsTask(token).ConfigureAwait(false);
+                },
+                cancellationToken).ConfigureAwait(false);
             if (succeeded)
             {
                 _snapshotQueue.Request();
@@ -270,12 +280,17 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
             return succeeded;
         }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return false;
+        }
         catch (OperationCanceledException)
         {
             throw;
         }
-        catch
+        catch (Exception exception)
         {
+            LogTransportFailure("transport-command", exception, lease.Generation);
             return false;
         }
     }
@@ -283,9 +298,11 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
     private async Task RebuildSessionsAsync(CancellationToken cancellationToken)
     {
         GlobalSystemMediaTransportControlsSessionManager? manager;
+        long topologyGeneration;
         lock (_sync)
         {
             manager = _manager;
+            topologyGeneration = _topologyGeneration;
         }
 
         if (manager is null)
@@ -293,11 +310,38 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             return;
         }
 
-        var sessions = manager.GetSessions().ToArray();
-        var systemCurrent = manager.GetCurrentSession();
+        GlobalSystemMediaTransportControlsSession[] sessions;
+        GlobalSystemMediaTransportControlsSession? systemCurrent;
+        try
+        {
+            sessions = manager.GetSessions().ToArray();
+            systemCurrent = manager.GetCurrentSession();
+        }
+        catch (Exception exception)
+        {
+            LogFailure("copy-topology", exception, topologyGeneration);
+            return;
+        }
+
+        var sessionLookup = new Dictionary<string, GlobalSystemMediaTransportControlsSession>(StringComparer.Ordinal);
+        var descriptors = new List<MediaSessionDescriptor>(sessions.Length);
+        foreach (var session in sessions)
+        {
+            try
+            {
+                var sessionKey = CreateSessionKey(session);
+                sessionLookup[sessionKey] = session;
+                descriptors.Add(CreateDescriptor(sessionKey, session, systemCurrent));
+            }
+            catch
+            {
+                // The session vanished while the native topology was being copied.
+            }
+        }
+
         var resolvedSources = new Dictionary<string, MediaSourceInfo>(StringComparer.Ordinal);
-        foreach (var sourceId in sessions
-                     .Select(item => item.SourceAppUserModelId)
+        foreach (var sourceId in descriptors
+                     .Select(item => item.SourceId)
                      .Where(item => !string.IsNullOrWhiteSpace(item))
                      .Distinct(StringComparer.Ordinal))
         {
@@ -305,15 +349,15 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             resolvedSources[sourceId] = await _identityResolver.ResolveAsync(
                 sourceId,
                 cancellationToken).ConfigureAwait(false);
-        }
-
-        var sessionLookup = new Dictionary<string, GlobalSystemMediaTransportControlsSession>(StringComparer.Ordinal);
-        var descriptors = new List<MediaSessionDescriptor>(sessions.Length);
-        foreach (var session in sessions)
-        {
-            var sessionKey = CreateSessionKey(session);
-            sessionLookup[sessionKey] = session;
-            descriptors.Add(CreateDescriptor(sessionKey, session, systemCurrent));
+            lock (_sync)
+            {
+                if (_isDisposed ||
+                    topologyGeneration != _topologyGeneration ||
+                    !ReferenceEquals(manager, _manager))
+                {
+                    return;
+                }
+            }
         }
 
         var selectedDescriptor = MediaSessionSelector.Select(descriptors, Selection);
@@ -321,12 +365,42 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         var selectedSource = selectedDescriptor is null
             ? null
             : resolvedSources.GetValueOrDefault(selectedDescriptor.SourceId);
-        SwitchSelectedSession(selectedSession, selectedSource);
+        var sessionChanged = SwitchSelectedSession(selectedSession, selectedSource);
 
         Sources = resolvedSources.Values
             .OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
         SourcesChanged?.Invoke(this, Sources);
+
+        _log?.Write(
+            TechnicalLogLevel.Information,
+            TechnicalEventIds.MediaTopologyRebuilt,
+            "Media",
+            "Media session topology was rebuilt.",
+            properties: new Dictionary<string, object?>
+            {
+                ["topologyGeneration"] = topologyGeneration,
+                ["sessionCount"] = sessions.Length,
+                ["count"] = Sources.Count,
+                ["selected"] = selectedSession is not null,
+                ["state"] = sessionChanged ? "session-changed" : "session-unchanged"
+            });
+
+        if (sessionChanged)
+        {
+            _log?.Write(
+                TechnicalLogLevel.Information,
+                TechnicalEventIds.MediaSessionChanged,
+                "Media",
+                "The selected Windows media session changed.",
+                properties: new Dictionary<string, object?>
+                {
+                    ["generation"] = _selectedLease?.Generation ?? 0,
+                    ["selected"] = selectedSession is not null,
+                    ["trackRevision"] = _trackRevision
+                });
+            await FlushDiagnosticCheckpointAsync().ConfigureAwait(false);
+        }
 
         if (selectedSession is null || selectedSource is null)
         {
@@ -334,41 +408,62 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         }
         else
         {
-            _snapshotQueue.Request();
+            await RefreshSnapshotAsync(cancellationToken).ConfigureAwait(false);
         }
     }
 
     private async Task RefreshSnapshotAsync(CancellationToken cancellationToken)
     {
-        GlobalSystemMediaTransportControlsSession? session;
+        GenerationSessionAccessCoordinator<GlobalSystemMediaTransportControlsSession>.SessionLease? lease;
         MediaSourceInfo? source;
         long generation;
         long trackRevision;
         lock (_sync)
         {
-            session = _selectedSession;
+            lease = _selectedLease;
             source = _selectedSource;
             generation = _refreshGeneration;
             trackRevision = _trackRevision;
         }
 
-        if (session is null || source is null)
+        if (lease is null || source is null)
         {
             SetCurrent(MediaSnapshot.Empty);
             return;
         }
 
+        if (Interlocked.Exchange(ref _diagnosticSnapshotLeaseGeneration, lease.Generation) != lease.Generation)
+        {
+            _log?.Write(
+                TechnicalLogLevel.Information,
+                TechnicalEventIds.MediaSnapshotStarted,
+                "Media",
+                "The first snapshot read for the selected media session is starting.",
+                properties: new Dictionary<string, object?>
+                {
+                    ["phase"] = "before-native-read",
+                    ["generation"] = lease.Generation,
+                    ["trackRevision"] = trackRevision
+                });
+            await FlushDiagnosticCheckpointAsync().ConfigureAwait(false);
+        }
+
+        var started = Stopwatch.GetTimestamp();
         try
         {
-            var snapshot = await _mapper.MapAsync(
-                session,
-                source,
-                cancellationToken,
-                includeArtwork: false).ConfigureAwait(false);
+            var snapshot = await _sessionAccess.ExecuteAsync(
+                lease,
+                (session, token) => _mapper.MapAsync(
+                    session,
+                    source,
+                    token,
+                    includeArtwork: false),
+                cancellationToken).ConfigureAwait(false);
             EventHandler<MediaSnapshot>? changed;
             lock (_sync)
             {
-                if (!IsSameSession(session, _selectedSession) ||
+                if (!ReferenceEquals(lease, _selectedLease) ||
+                    !_sessionAccess.IsCurrent(lease) ||
                     generation != _refreshGeneration ||
                     trackRevision != _trackRevision ||
                     _isDisposed)
@@ -395,7 +490,9 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             var shouldRefreshArtwork = false;
             lock (_sync)
             {
-                if (snapshot.Track.Artwork is null &&
+                if (ReferenceEquals(lease, _selectedLease) &&
+                    _sessionAccess.IsCurrent(lease) &&
+                    snapshot.Track.Artwork is null &&
                     snapshot.HasMedia &&
                     _artworkAttemptedRevision != trackRevision)
                 {
@@ -407,25 +504,42 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             if (shouldRefreshArtwork)
             {
                 await RefreshArtworkAsync(
-                    session,
+                    lease,
                     source,
                     TrackIdentity.From(snapshot),
                     trackRevision,
                     cancellationToken).ConfigureAwait(false);
             }
         }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            // The selected session changed. The retired generation is discarded.
+        }
         catch (OperationCanceledException)
         {
             throw;
         }
-        catch
+        catch (Exception exception)
         {
+            _log?.Write(
+                TechnicalLogLevel.Warning,
+                TechnicalEventIds.MediaSnapshotFailed,
+                "Media",
+                "A media snapshot read failed; the topology will be refreshed.",
+                exception,
+                new Dictionary<string, object?>
+                {
+                    ["phase"] = "snapshot-read",
+                    ["generation"] = lease.Generation,
+                    ["trackRevision"] = trackRevision,
+                    ["durationMs"] = Stopwatch.GetElapsedTime(started).TotalMilliseconds
+                });
             _topologyQueue.Request();
         }
     }
 
     private async Task RefreshArtworkAsync(
-        GlobalSystemMediaTransportControlsSession session,
+        GenerationSessionAccessCoordinator<GlobalSystemMediaTransportControlsSession>.SessionLease lease,
         MediaSourceInfo source,
         TrackIdentity? expectedIdentity,
         long expectedTrackRevision,
@@ -436,12 +550,23 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             return;
         }
 
-        var mapped = await _mapper.MapAsync(
-            session,
-            source,
-            cancellationToken,
-            includeArtwork: true,
-            artworkRevision: expectedTrackRevision).ConfigureAwait(false);
+        MediaSnapshot mapped;
+        try
+        {
+            mapped = await _sessionAccess.ExecuteAsync(
+                lease,
+                (session, token) => _mapper.MapAsync(
+                    session,
+                    source,
+                    token,
+                    includeArtwork: true,
+                    artworkRevision: expectedTrackRevision),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            return;
+        }
         if (mapped.Track.Artwork is null)
         {
             return;
@@ -450,7 +575,8 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         MediaSnapshot updated;
         lock (_sync)
         {
-            if (!IsSameSession(session, _selectedSession) ||
+            if (!ReferenceEquals(lease, _selectedLease) ||
+                !_sessionAccess.IsCurrent(lease) ||
                 expectedTrackRevision != _trackRevision ||
                 TrackIdentity.From(Current) != expectedIdentity ||
                 TrackIdentity.From(mapped) != expectedIdentity)
@@ -474,36 +600,47 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         TrackRevision = trackRevision
     };
 
-    private void SwitchSelectedSession(
+    private bool SwitchSelectedSession(
         GlobalSystemMediaTransportControlsSession? session,
         MediaSourceInfo? source)
     {
+        CancellationTokenSource? previousValidation = null;
+        var sessionChanged = false;
         lock (_sync)
         {
             if (IsSameSession(_selectedSession, session))
             {
                 _selectedSource = source;
-                return;
+                return false;
             }
 
             if (_selectedSession is not null)
             {
-                _selectedSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
-                _selectedSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
-                _selectedSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
+                DetachSessionEvents(_selectedSession);
             }
 
             _selectedSession = session;
             _selectedSource = source;
+            _selectedLease = _sessionAccess.Switch(session);
+            previousValidation = _metadataValidationCancellation;
+            _metadataValidationCancellation = null;
             _refreshGeneration++;
             _trackRevision++;
+            sessionChanged = true;
             if (_selectedSession is not null)
             {
-                _selectedSession.MediaPropertiesChanged += OnMediaPropertiesChanged;
-                _selectedSession.PlaybackInfoChanged += OnPlaybackInfoChanged;
-                _selectedSession.TimelinePropertiesChanged += OnTimelinePropertiesChanged;
+                AttachSessionEvents(_selectedSession);
             }
         }
+
+        previousValidation?.Cancel();
+        previousValidation?.Dispose();
+        if (sessionChanged)
+        {
+            SetCurrent(MediaSnapshot.Empty);
+        }
+
+        return sessionChanged;
     }
 
     private static MediaSessionDescriptor CreateDescriptor(
@@ -538,14 +675,20 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
     private static bool IsSameSession(
         GlobalSystemMediaTransportControlsSession? left,
         GlobalSystemMediaTransportControlsSession? right) =>
-        ReferenceEquals(left, right) || (left is not null && left.Equals(right));
+        ReferenceEquals(left, right);
 
-    private GlobalSystemMediaTransportControlsSession? GetSelectedSession()
+    private void AttachSessionEvents(GlobalSystemMediaTransportControlsSession session)
     {
-        lock (_sync)
-        {
-            return _selectedSession;
-        }
+        try { session.MediaPropertiesChanged += OnMediaPropertiesChanged; } catch { }
+        try { session.PlaybackInfoChanged += OnPlaybackInfoChanged; } catch { }
+        try { session.TimelinePropertiesChanged += OnTimelinePropertiesChanged; } catch { }
+    }
+
+    private void DetachSessionEvents(GlobalSystemMediaTransportControlsSession session)
+    {
+        try { session.MediaPropertiesChanged -= OnMediaPropertiesChanged; } catch { }
+        try { session.PlaybackInfoChanged -= OnPlaybackInfoChanged; } catch { }
+        try { session.TimelinePropertiesChanged -= OnTimelinePropertiesChanged; } catch { }
     }
 
     private void SetCurrent(MediaSnapshot snapshot)
@@ -568,17 +711,89 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
     private void SetState(MediaServiceState state)
     {
+        var previous = State;
         State = state;
+        _log?.Write(
+            state is MediaServiceState.Faulted or MediaServiceState.AccessDenied
+                ? TechnicalLogLevel.Warning
+                : TechnicalLogLevel.Information,
+            TechnicalEventIds.MediaServiceStateChanged,
+            "Media",
+            "The Windows media service state changed.",
+            properties: new Dictionary<string, object?>
+            {
+                ["state"] = state.ToString(),
+                ["reason"] = previous.ToString()
+            });
         StateChanged?.Invoke(this, state);
+    }
+
+    private void LogFailure(string phase, Exception exception, long generation = 0) =>
+        _log?.Write(
+            TechnicalLogLevel.Warning,
+            TechnicalEventIds.MediaSnapshotFailed,
+            "Media",
+            "A Windows media operation failed safely.",
+            exception,
+            new Dictionary<string, object?>
+            {
+                ["phase"] = phase,
+                ["generation"] = generation,
+                ["hresult"] = exception.HResult
+            });
+
+    private void LogTransportFailure(string operation, Exception exception, long generation) =>
+        _log?.Write(
+            TechnicalLogLevel.Warning,
+            TechnicalEventIds.MediaTransportFailed,
+            "Media",
+            "A media transport command failed safely.",
+            exception,
+            new Dictionary<string, object?>
+            {
+                ["operation"] = operation,
+                ["generation"] = generation,
+                ["hresult"] = exception.HResult
+            });
+
+    private async Task FlushDiagnosticCheckpointAsync()
+    {
+        if (_log is null)
+        {
+            return;
+        }
+
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            await _log.FlushAsync(timeout.Token).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is OperationCanceledException or IOException)
+        {
+            // Diagnostics must never block media recovery.
+        }
     }
 
     private void OnSessionsChanged(
         GlobalSystemMediaTransportControlsSessionManager sender,
-        SessionsChangedEventArgs args) => _topologyQueue.Request();
+        SessionsChangedEventArgs args) => RequestTopologyRefresh(sender);
 
     private void OnCurrentSessionChanged(
         GlobalSystemMediaTransportControlsSessionManager sender,
-        CurrentSessionChangedEventArgs args) => _topologyQueue.Request();
+        CurrentSessionChangedEventArgs args) => RequestTopologyRefresh(sender);
+
+    private void RequestTopologyRefresh(GlobalSystemMediaTransportControlsSessionManager sender)
+    {
+        lock (_sync)
+        {
+            if (_isDisposed || !ReferenceEquals(sender, _manager))
+            {
+                return;
+            }
+            _topologyGeneration++;
+        }
+        _topologyQueue.Request();
+    }
 
     private void OnMediaPropertiesChanged(
         GlobalSystemMediaTransportControlsSession sender,
@@ -587,7 +802,7 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         MediaSnapshot? invalidatedArtwork = null;
         lock (_sync)
         {
-            if (!IsSameSession(sender, _selectedSession))
+            if (_isDisposed || !IsSameSession(sender, _selectedSession))
             {
                 return;
             }
@@ -610,6 +825,14 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             SetCurrent(invalidatedArtwork);
         }
 
+        lock (_sync)
+        {
+            if (_isDisposed)
+            {
+                return;
+            }
+        }
+
         _snapshotQueue.Request();
         ScheduleMetadataValidation();
     }
@@ -626,7 +849,7 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
     {
         lock (_sync)
         {
-            if (!IsSameSession(sender, _selectedSession))
+            if (_isDisposed || !IsSameSession(sender, _selectedSession))
             {
                 return;
             }
@@ -685,30 +908,33 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
     public async ValueTask DisposeAsync()
     {
-        if (_isDisposed)
-        {
-            return;
-        }
-
         CancellationTokenSource? metadataValidation;
+        GenerationSessionAccessCoordinator<GlobalSystemMediaTransportControlsSession>.SessionLease? drainingLease;
         lock (_sync)
         {
+            if (_isDisposed)
+            {
+                return;
+            }
+
+            // 1) Stop callbacks. 2) Retire the lease so in-flight work cancels.
+            // 3) Drain queues/native calls before the process tears down COM.
             _isDisposed = true;
             metadataValidation = _metadataValidationCancellation;
             _metadataValidationCancellation = null;
             if (_manager is not null)
             {
-                _manager.SessionsChanged -= OnSessionsChanged;
-                _manager.CurrentSessionChanged -= OnCurrentSessionChanged;
+                try { _manager.SessionsChanged -= OnSessionsChanged; } catch { }
+                try { _manager.CurrentSessionChanged -= OnCurrentSessionChanged; } catch { }
             }
 
             if (_selectedSession is not null)
             {
-                _selectedSession.MediaPropertiesChanged -= OnMediaPropertiesChanged;
-                _selectedSession.PlaybackInfoChanged -= OnPlaybackInfoChanged;
-                _selectedSession.TimelinePropertiesChanged -= OnTimelinePropertiesChanged;
+                DetachSessionEvents(_selectedSession);
             }
 
+            drainingLease = _selectedLease;
+            _selectedLease = _sessionAccess.Switch(null);
             _manager = null;
             _selectedSession = null;
             _selectedSource = null;
@@ -718,6 +944,12 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         metadataValidation?.Dispose();
         await _topologyQueue.DisposeAsync().ConfigureAwait(false);
         await _snapshotQueue.DisposeAsync().ConfigureAwait(false);
+        if (drainingLease is not null)
+        {
+            await drainingLease.WaitForIdleAsync().ConfigureAwait(false);
+        }
+
+        await _sessionAccess.DisposeAsync().ConfigureAwait(false);
         _initializeGate.Dispose();
     }
 }

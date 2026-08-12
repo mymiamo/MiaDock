@@ -27,6 +27,15 @@ public sealed partial class TimerExpandedView : UserControl
     private void OnDurationEditorLostFocus(object sender, RoutedEventArgs args) =>
         DockInteractionSession.End(sender);
 
+    private void OnPresetClick(object sender, RoutedEventArgs args)
+    {
+        if (sender is Button { DataContext: TimerPresetOption preset } &&
+            _viewModel?.StartPresetCommand.CanExecute(preset) == true)
+        {
+            _viewModel.StartPresetCommand.Execute(preset);
+        }
+    }
+
     private void OnDataContextChanged(FrameworkElement sender, DataContextChangedEventArgs args)
     {
         DetachViewModel();

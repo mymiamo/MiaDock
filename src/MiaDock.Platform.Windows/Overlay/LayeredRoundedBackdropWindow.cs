@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using MiaDock.Core.Overlay;
+using MiaDock.Core.Presentation;
 using MiaDock.Platform.Windows.Interop;
 
 namespace MiaDock.Platform.Windows.Overlay;
@@ -51,7 +52,7 @@ internal sealed class LayeredRoundedBackdropWindow : IDisposable
 
     internal void Update(
         OverlayPlacement placement,
-        double radius,
+        DockCornerRadii radii,
         double edgeThickness,
         uint argb,
         nint mainWindow,
@@ -62,7 +63,7 @@ internal sealed class LayeredRoundedBackdropWindow : IDisposable
         var pixels = RoundedRectangleRasterizer.RenderPremultipliedBgra(
             placement.Width,
             placement.Height,
-            radius,
+            radii,
             argb,
             edgeThickness);
         var screenDc = GetDC(0);

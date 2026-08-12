@@ -1,0 +1,1189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Keyed UI strings resolved through ILocalizationService.Get(key). Add a new language by copying this folder and translating every value. -->
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a2c561934e089</value>
+  </resheader>
+  <data name="Common.Available" xml:space="preserve">
+    <value>Disponible</value>
+  </data>
+  <data name="Common.Unavailable" xml:space="preserve">
+    <value>No disponible</value>
+  </data>
+  <data name="Common.Unknown" xml:space="preserve">
+    <value>Desconocido</value>
+  </data>
+  <data name="Common.Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Common.Close" xml:space="preserve">
+    <value>Cerrar</value>
+  </data>
+  <data name="Dialog.Crash.Detected.Title" xml:space="preserve">
+    <value>Accidente detectado</value>
+  </data>
+  <data name="Dialog.Crash.Detected.Description" xml:space="preserve">
+    <value>MiaDock se cerró inesperadamente. Puede crear un informe de fallos para enviarlo o cerrarlo y continuar normalmente.</value>
+  </data>
+  <data name="Dialog.Crash.Report" xml:space="preserve">
+    <value>Informe</value>
+  </data>
+  <data name="Dialog.Crash.Redirect.Title" xml:space="preserve">
+    <value>Informe de error</value>
+  </data>
+  <data name="Dialog.Crash.Redirect.Description" xml:space="preserve">
+    <value>Serás redirigido a mymiamo.net/bug para enviar el informe.</value>
+  </data>
+  <data name="Dialog.Crash.Continue" xml:space="preserve">
+    <value>Continuar</value>
+  </data>
+  <data name="Dialog.Link.OpenFailed.Title" xml:space="preserve">
+    <value>No se pudo abrir el enlace</value>
+  </data>
+  <data name="Dialog.BugReport.OpenFailed.Description" xml:space="preserve">
+    <value>No se pudo abrir la página del informe de errores. Puedes abrir mymiamo.net/bug en tu navegador.</value>
+  </data>
+  <data name="Focus.OpenWindowsSettings" xml:space="preserve">
+    <value>Abra Windows Configuración de enfoque</value>
+  </data>
+  <data name="Common.Start" xml:space="preserve">
+    <value>Comenzar</value>
+  </data>
+  <data name="Common.Pause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="Common.Resume" xml:space="preserve">
+    <value>Reanudar</value>
+  </data>
+  <data name="Common.Play" xml:space="preserve">
+    <value>Reproducir</value>
+  </data>
+  <data name="Common.Reset" xml:space="preserve">
+    <value>Reiniciar</value>
+  </data>
+  <data name="Common.Lap" xml:space="preserve">
+    <value>Regazo</value>
+  </data>
+  <data name="Common.None" xml:space="preserve">
+    <value>Ninguno</value>
+  </data>
+  <data name="Common.Disabled" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="Theme.AppleLike" xml:space="preserve">
+    <value>parecido a una manzana</value>
+  </data>
+  <data name="Theme.OledBlack" xml:space="preserve">
+    <value>OLED Negro</value>
+  </data>
+  <data name="Theme.Windows11Mica" xml:space="preserve">
+    <value>Windows 11 Mica</value>
+  </data>
+  <data name="Theme.Windows11MicaAlt" xml:space="preserve">
+    <value>Windows 11 Mica Alt.</value>
+  </data>
+  <data name="Theme.Windows11Acrylic" xml:space="preserve">
+    <value>Windows 11 Acrylic</value>
+  </data>
+  <data name="Theme.Windows11AcrylicThin" xml:space="preserve">
+    <value>Windows 11 Acrylic Delgado</value>
+  </data>
+  <data name="Theme.BlurredGlass" xml:space="preserve">
+    <value>Vidrio borroso</value>
+  </data>
+  <data name="Theme.NeutralFrostedGlass" xml:space="preserve">
+    <value>Vidrio esmerilado neutro</value>
+  </data>
+  <data name="Theme.AdaptiveFluent" xml:space="preserve">
+    <value>Fluidez adaptativa</value>
+  </data>
+  <data name="Theme.CustomSolidColor" xml:space="preserve">
+    <value>Color sólido personalizado</value>
+  </data>
+  <data name="Module.media.Name" xml:space="preserve">
+    <value>Música</value>
+  </data>
+  <data name="Module.volume.Name" xml:space="preserve">
+    <value>Volumen</value>
+  </data>
+  <data name="Module.privacy.Name" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Privacy_Title" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Privacy_MicrophoneInUse" xml:space="preserve">
+    <value>Micrófono en uso</value>
+  </data>
+  <data name="Privacy_CameraInUse" xml:space="preserve">
+    <value>Cámara en uso</value>
+  </data>
+  <data name="Privacy_CameraAndMicrophoneInUse" xml:space="preserve">
+    <value>Cámara y micrófono en uso</value>
+  </data>
+  <data name="Privacy_NoActiveDevices" xml:space="preserve">
+    <value>Sin uso activo de privacidad</value>
+  </data>
+  <data name="Privacy_ActiveApplications" xml:space="preserve">
+    <value>Aplicaciones activas</value>
+  </data>
+  <data name="System.Call.IdleDetail" xml:space="preserve">
+    <value>Inferencia local de llamadas</value>
+  </data>
+  <data name="Module.system-activity.Name" xml:space="preserve">
+    <value>Llamada</value>
+  </data>
+  <data name="Module.battery.Name" xml:space="preserve">
+    <value>Batería</value>
+  </data>
+  <data name="Module.network.Name" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Module.bluetooth.Name" xml:space="preserve">
+    <value>bluetooth</value>
+  </data>
+  <data name="Module.timer.Name" xml:space="preserve">
+    <value>Tiempo</value>
+  </data>
+  <data name="Module.notifications.Name" xml:space="preserve">
+    <value>Notificaciones</value>
+  </data>
+  <data name="Module.transfers.Name" xml:space="preserve">
+    <value>Transferencias</value>
+  </data>
+  <data name="Dock.Home" xml:space="preserve">
+    <value>Muelle de inicio</value>
+  </data>
+  <data name="Dock.Show" xml:space="preserve">
+    <value>Mostrar dock</value>
+  </data>
+  <data name="Dock.Hide" xml:space="preserve">
+    <value>Ocultar dock</value>
+  </data>
+  <data name="Dock.NoActiveEvent" xml:space="preserve">
+    <value>Ningún evento activo</value>
+  </data>
+  <data name="Dock.NoActiveEvent.Description" xml:space="preserve">
+    <value>La nueva actividad aparecerá aquí.</value>
+  </data>
+  <data name="Dock.ModuleUnavailable" xml:space="preserve">
+    <value>Esta sección no está disponible actualmente.</value>
+  </data>
+  <data name="Dock.NowPlaying" xml:space="preserve">
+    <value>Ahora jugando</value>
+  </data>
+  <data name="Dock.Music" xml:space="preserve">
+    <value>Música</value>
+  </data>
+  <data name="Dock.PreviousTrack" xml:space="preserve">
+    <value>Pista anterior</value>
+  </data>
+  <data name="Dock.PlayPause" xml:space="preserve">
+    <value>Reproducir o pausar</value>
+  </data>
+  <data name="Dock.NextTrack" xml:space="preserve">
+    <value>Siguiente pista</value>
+  </data>
+  <data name="Dock.Settings" xml:space="preserve">
+    <value>Configuración</value>
+  </data>
+  <data name="Dock.SystemSession" xml:space="preserve">
+    <value>audio del sistema</value>
+  </data>
+  <data name="Dock.CallPossible" xml:space="preserve">
+    <value>Posible actividad de llamada</value>
+  </data>
+  <data name="Dock.Progress" xml:space="preserve">
+    <value>Progreso</value>
+  </data>
+  <data name="Dock.PreviousModule" xml:space="preserve">
+    <value>Módulo anterior</value>
+  </data>
+  <data name="Dock.NextModule" xml:space="preserve">
+    <value>Siguiente módulo</value>
+  </data>
+  <data name="Dock.SwitchModules" xml:space="preserve">
+    <value>Cambiar entre módulos</value>
+  </data>
+  <data name="Dock.Empty.Timer" xml:space="preserve">
+    <value>Sin temporizador activo</value>
+  </data>
+  <data name="Dock.Empty.Bluetooth" xml:space="preserve">
+    <value>No hay ningún dispositivo Bluetooth conectado</value>
+  </data>
+  <data name="Dock.Empty.Transfers" xml:space="preserve">
+    <value>No se encontró ninguna transferencia</value>
+  </data>
+  <data name="Dock.Clock" xml:space="preserve">
+    <value>Hora {0}, {1}</value>
+  </data>
+  <data name="Dock.Clock.Short" xml:space="preserve">
+    <value>Hora {0}</value>
+  </data>
+  <data name="Dock.Home.Automation" xml:space="preserve">
+    <value>Muelle de inicio, {0}</value>
+  </data>
+  <data name="Dock.MicrophoneInUse" xml:space="preserve">
+    <value>Micrófono en uso</value>
+  </data>
+  <data name="Dock.SpeakerInUse" xml:space="preserve">
+    <value>Altavoz en uso</value>
+  </data>
+  <data name="Dock.NoAudioActivity" xml:space="preserve">
+    <value>Sin actividad de audio</value>
+  </data>
+  <data name="Dock.Media.Previous.Help" xml:space="preserve">
+    <value>Salta a la pista anterior</value>
+  </data>
+  <data name="Dock.Media.PlayPause.Help" xml:space="preserve">
+    <value>Reproduce o pausa la pista actual</value>
+  </data>
+  <data name="Dock.Media.Next.Help" xml:space="preserve">
+    <value>Salta a la siguiente pista</value>
+  </data>
+  <data name="Focus.Title" xml:space="preserve">
+    <value>Enfocar</value>
+  </data>
+  <data name="Focus.Profile.Work.Name" xml:space="preserve">
+    <value>Trabajar</value>
+  </data>
+  <data name="Focus.Profile.Gaming.Name" xml:space="preserve">
+    <value>Juego de azar</value>
+  </data>
+  <data name="Focus.Profile.Sleep.Name" xml:space="preserve">
+    <value>Dormir</value>
+  </data>
+  <data name="Focus.Profile.DoNotDisturb.Name" xml:space="preserve">
+    <value>No molestar</value>
+  </data>
+  <data name="Focus.Profile.Custom.Name" xml:space="preserve">
+    <value>Enfoque personalizado</value>
+  </data>
+  <data name="Focus.Status.Off" xml:space="preserve">
+    <value>El enfoque está apagado</value>
+  </data>
+  <data name="Focus.Status.Active" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Focus.Duration" xml:space="preserve">
+    <value>Cambiar duración</value>
+  </data>
+  <data name="Focus.Duration.15Minutes" xml:space="preserve">
+    <value>15 minutos</value>
+  </data>
+  <data name="Focus.Duration.30Minutes" xml:space="preserve">
+    <value>30 minutos</value>
+  </data>
+  <data name="Focus.Duration.1Hour" xml:space="preserve">
+    <value>1 hora</value>
+  </data>
+  <data name="Focus.Duration.2Hours" xml:space="preserve">
+    <value>2 horas</value>
+  </data>
+  <data name="Focus.Duration.UntilTurnedOff" xml:space="preserve">
+    <value>hasta que se apague</value>
+  </data>
+  <data name="Focus.Duration.MinutesRemaining" xml:space="preserve">
+    <value>Quedan {0} minutos</value>
+  </data>
+  <data name="Focus.TurnOff" xml:space="preserve">
+    <value>Desactivar el enfoque</value>
+  </data>
+  <data name="Focus.Settings.ProfileCount" xml:space="preserve">
+    <value>{0} de {1} perfiles</value>
+  </data>
+  <data name="Focus.Settings.ProfileSummary" xml:space="preserve">
+    <value>{0} · {1}</value>
+  </data>
+  <data name="Focus.Settings.ProfileSummary.OneAutomation" xml:space="preserve">
+    <value>{0} · {1} · 1 automatización</value>
+  </data>
+  <data name="Focus.Settings.ProfileSummary.Automated" xml:space="preserve">
+    <value>{0} · {1} · {2} automatizaciones</value>
+  </data>
+  <data name="Focus.Settings.AutomationConflict" xml:space="preserve">
+    <value>{0} objetivos de automatización están asignados a varios perfiles. Para igualdad de prioridad, se utiliza el primer perfil coincidente de la lista.</value>
+  </data>
+  <data name="Focus.Settings.Minutes" xml:space="preserve">
+    <value>{0} minutos</value>
+  </data>
+  <data name="Focus.Visibility.Global" xml:space="preserve">
+    <value>Usar configuración global</value>
+  </data>
+  <data name="Focus.Visibility.Always" xml:space="preserve">
+    <value>Siempre visible</value>
+  </data>
+  <data name="Focus.Visibility.EventsOnly" xml:space="preserve">
+    <value>Solo eventos</value>
+  </data>
+  <data name="Focus.Visibility.Hidden" xml:space="preserve">
+    <value>Oculto</value>
+  </data>
+  <data name="Focus.Priority.Low" xml:space="preserve">
+    <value>Bajo</value>
+  </data>
+  <data name="Focus.Priority.Normal" xml:space="preserve">
+    <value>Normal</value>
+  </data>
+  <data name="Focus.Priority.Elevated" xml:space="preserve">
+    <value>Elevado</value>
+  </data>
+  <data name="Focus.Priority.High" xml:space="preserve">
+    <value>Alto</value>
+  </data>
+  <data name="Focus.Priority.Critical" xml:space="preserve">
+    <value>Crítico</value>
+  </data>
+  <data name="Focus.Icon.briefcase" xml:space="preserve">
+    <value>Trabajar</value>
+  </data>
+  <data name="Focus.Icon.game-controller" xml:space="preserve">
+    <value>Juego de azar</value>
+  </data>
+  <data name="Focus.Icon.moon" xml:space="preserve">
+    <value>Luna</value>
+  </data>
+  <data name="Focus.Icon.do-not-disturb" xml:space="preserve">
+    <value>No molestar</value>
+  </data>
+  <data name="Focus.Icon.star" xml:space="preserve">
+    <value>Estrella</value>
+  </data>
+  <data name="Focus.Icon.book" xml:space="preserve">
+    <value>Libro</value>
+  </data>
+  <data name="Focus.Icon.fitness" xml:space="preserve">
+    <value>Aptitud física</value>
+  </data>
+  <data name="Focus.Icon.leaf" xml:space="preserve">
+    <value>Hoja</value>
+  </data>
+  <data name="Focus.Settings.Editor.NewTitle" xml:space="preserve">
+    <value>Nuevo perfil de enfoque</value>
+  </data>
+  <data name="Focus.Settings.Editor.EditTitle" xml:space="preserve">
+    <value>Editar perfil de enfoque</value>
+  </data>
+  <data name="Focus.Settings.Editor.Save" xml:space="preserve">
+    <value>Ahorrar</value>
+  </data>
+  <data name="Focus.Settings.Error.Name" xml:space="preserve">
+    <value>El nombre del perfil debe tener entre 1 y 40 caracteres.</value>
+  </data>
+  <data name="Focus.Settings.Error.Color" xml:space="preserve">
+    <value>El color debe utilizar el formato #RRGGBB.</value>
+  </data>
+  <data name="Focus.Settings.Error.Duration" xml:space="preserve">
+    <value>La duración debe estar entre 1 y 1440 minutos.</value>
+  </data>
+  <data name="Focus.Settings.Error.Modules" xml:space="preserve">
+    <value>Permita todos los módulos o seleccione al menos un módulo.</value>
+  </data>
+  <data name="Focus.Settings.Error.ScheduleDays" xml:space="preserve">
+    <value>Seleccione al menos un día para cada horario.</value>
+  </data>
+  <data name="Focus.Settings.Error.AutomationTarget" xml:space="preserve">
+    <value>Seleccione una aplicación para esta automatización.</value>
+  </data>
+  <data name="Focus.Settings.Error.DuplicateName" xml:space="preserve">
+    <value>Ya existe un perfil personalizado con este nombre.</value>
+  </data>
+  <data name="Focus.Settings.Error.Limit" xml:space="preserve">
+    <value>Puede crear hasta 12 perfiles de Focus personalizados.</value>
+  </data>
+  <data name="Focus.Settings.Error.Invalid" xml:space="preserve">
+    <value>No se pudo guardar el perfil. Revisa los campos.</value>
+  </data>
+  <data name="Focus.Settings.Delete.Title" xml:space="preserve">
+    <value>¿Eliminar el perfil de Focus?</value>
+  </data>
+  <data name="Focus.Settings.Delete.Message" xml:space="preserve">
+    <value>Este perfil personalizado se eliminará permanentemente.</value>
+  </data>
+  <data name="Focus.Settings.Delete.ActiveMessage" xml:space="preserve">
+    <value>Este perfil está actualmente activo. El foco se apagará cuando se elimine.</value>
+  </data>
+  <data name="Focus.Settings.Delete.Action" xml:space="preserve">
+    <value>Eliminar perfil</value>
+  </data>
+  <data name="Focus.Settings.Reset.Title" xml:space="preserve">
+    <value>¿Restablecer el perfil a los valores predeterminados?</value>
+  </data>
+  <data name="Focus.Settings.Reset.Message" xml:space="preserve">
+    <value>Se restablecerán los cambios de color, duración y comportamiento de este perfil integrado.</value>
+  </data>
+  <data name="Focus.Automation.Kind.Foreground" xml:space="preserve">
+    <value>Cuando la aplicación está en primer plano</value>
+  </data>
+  <data name="Focus.Automation.Kind.Fullscreen" xml:space="preserve">
+    <value>Cuando la aplicación está en pantalla completa</value>
+  </data>
+  <data name="Focus.Automation.Kind.Running" xml:space="preserve">
+    <value>Mientras la aplicación se está ejecutando</value>
+  </data>
+  <data name="Focus.Automation.AnyApplication" xml:space="preserve">
+    <value>Cualquier aplicación</value>
+  </data>
+  <data name="Focus.Automation.ProcessUnavailable" xml:space="preserve">
+    <value>La supervisión de aplicaciones en ejecución no está disponible en este dispositivo. Las reglas de primer plano y pantalla completa siguen funcionando.</value>
+  </data>
+  <data name="Battery.None" xml:space="preserve">
+    <value>Sin batería</value>
+  </data>
+  <data name="Battery.NotPresent" xml:space="preserve">
+    <value>No hay batería presente</value>
+  </data>
+  <data name="Battery.NotDetected" xml:space="preserve">
+    <value>No se detectó batería en este dispositivo</value>
+  </data>
+  <data name="Battery.Unknown" xml:space="preserve">
+    <value>Se desconoce el estado de la batería</value>
+  </data>
+  <data name="Battery.Unavailable" xml:space="preserve">
+    <value>La información de la batería no está disponible</value>
+  </data>
+  <data name="Battery.AccessDenied" xml:space="preserve">
+    <value>No se puede acceder a la información de la batería</value>
+  </data>
+  <data name="Battery.TransientError" xml:space="preserve">
+    <value>La información de la batería no se pudo leer temporalmente</value>
+  </data>
+  <data name="Battery.Charging" xml:space="preserve">
+    <value>Cargando</value>
+  </data>
+  <data name="Battery.Charging.Title" xml:space="preserve">
+    <value>Carga de batería</value>
+  </data>
+  <data name="Battery.EnergySaver" xml:space="preserve">
+    <value>El ahorro de energía está activado.</value>
+  </data>
+  <data name="Battery.OnBattery" xml:space="preserve">
+    <value>En energía de la batería</value>
+  </data>
+  <data name="Battery.DesktopPower" xml:space="preserve">
+    <value>Potencia de escritorio</value>
+  </data>
+  <data name="Battery.PowerSource.AC" xml:space="preserve">
+    <value>alimentación de CA</value>
+  </data>
+  <data name="Battery.PowerSource.DC" xml:space="preserve">
+    <value>Energía de la batería</value>
+  </data>
+  <data name="Battery.PowerSource.USB" xml:space="preserve">
+    <value>alimentación USB</value>
+  </data>
+  <data name="Battery.PowerSource.Unknown" xml:space="preserve">
+    <value>Fuente de energía desconocida</value>
+  </data>
+  <data name="Battery.Level" xml:space="preserve">
+    <value>Nivel de batería</value>
+  </data>
+  <data name="Battery.Percent" xml:space="preserve">
+    <value>Batería {0}%</value>
+  </data>
+  <data name="Battery.Percent.Automation" xml:space="preserve">
+    <value>Batería {0} por ciento</value>
+  </data>
+  <data name="Battery.Percent.Charging.Automation" xml:space="preserve">
+    <value>Batería {0} por ciento, cargando</value>
+  </data>
+  <data name="Battery.Percent.Saver.Automation" xml:space="preserve">
+    <value>Batería {0} por ciento, el ahorro de energía está activado</value>
+  </data>
+  <data name="Network.Internet" xml:space="preserve">
+    <value>Conectado a internet</value>
+  </data>
+  <data name="Network.Constrained" xml:space="preserve">
+    <value>Internet limitado</value>
+  </data>
+  <data name="Network.Local" xml:space="preserve">
+    <value>Sólo red local</value>
+  </data>
+  <data name="Network.Offline" xml:space="preserve">
+    <value>Desconectado</value>
+  </data>
+  <data name="Network.Cellular" xml:space="preserve">
+    <value>Celular</value>
+  </data>
+  <data name="Network.Other" xml:space="preserve">
+    <value>Otra conexión</value>
+  </data>
+  <data name="Network.None" xml:space="preserve">
+    <value>Sin conexión</value>
+  </data>
+  <data name="Network.Metered" xml:space="preserve">
+    <value>Conexión medida</value>
+  </data>
+  <data name="Network.Unmetered" xml:space="preserve">
+    <value>Conexión no medida</value>
+  </data>
+  <data name="Network.Download" xml:space="preserve">
+    <value>Descargar</value>
+  </data>
+  <data name="Network.Upload" xml:space="preserve">
+    <value>Subir</value>
+  </data>
+  <data name="Network.Rate.Megabytes" xml:space="preserve">
+    <value>{0:0.0} MB/s</value>
+  </data>
+  <data name="Network.Rate.Kilobytes" xml:space="preserve">
+    <value>{0:0} KB/s</value>
+  </data>
+  <data name="Network.Throughput.Sampling" xml:space="preserve">
+    <value>Medición…</value>
+  </data>
+  <data name="Network.Throughput.Ready" xml:space="preserve">
+    <value>velocidad en vivo</value>
+  </data>
+  <data name="Network.Throughput.Unavailable" xml:space="preserve">
+    <value>Velocidad no disponible</value>
+  </data>
+  <data name="Network.Throughput.Inactive" xml:space="preserve">
+    <value>Medido mientras esta vista está abierta</value>
+  </data>
+  <data name="Network.WiFi.Connected" xml:space="preserve">
+    <value>Wi-Fi conectado</value>
+  </data>
+  <data name="Network.WiFi.Metered" xml:space="preserve">
+    <value>Wi-Fi, conexión medida</value>
+  </data>
+  <data name="Network.Ethernet.Connected" xml:space="preserve">
+    <value>Ethernet conectado</value>
+  </data>
+  <data name="Network.Ethernet.Metered" xml:space="preserve">
+    <value>Ethernet, conexión medida</value>
+  </data>
+  <data name="Network.Cellular.Connected" xml:space="preserve">
+    <value>Conectado al celular</value>
+  </data>
+  <data name="Network.Constrained.Full" xml:space="preserve">
+    <value>Conexión a internet limitada</value>
+  </data>
+  <data name="Network.Local.Full" xml:space="preserve">
+    <value>Conexión de red local únicamente</value>
+  </data>
+  <data name="Bluetooth.Unavailable" xml:space="preserve">
+    <value>Bluetooth no disponible</value>
+  </data>
+  <data name="Bluetooth.Off" xml:space="preserve">
+    <value>Bluetooth está apagado</value>
+  </data>
+  <data name="Bluetooth.Unknown" xml:space="preserve">
+    <value>El estado de Bluetooth es desconocido</value>
+  </data>
+  <data name="Bluetooth.Faulted" xml:space="preserve">
+    <value>Error de monitoreo de Bluetooth</value>
+  </data>
+  <data name="Bluetooth.Searching" xml:space="preserve">
+    <value>Buscando dispositivos</value>
+  </data>
+  <data name="Bluetooth.None" xml:space="preserve">
+    <value>No hay dispositivos conectados</value>
+  </data>
+  <data name="Bluetooth.Count" xml:space="preserve">
+    <value>{0} dispositivos conectados</value>
+  </data>
+  <data name="Bluetooth.Connected" xml:space="preserve">
+    <value>Dispositivo Bluetooth conectado</value>
+  </data>
+  <data name="Bluetooth.Disconnected" xml:space="preserve">
+    <value>Dispositivo Bluetooth desconectado</value>
+  </data>
+  <data name="Bluetooth.None.Automation" xml:space="preserve">
+    <value>No hay dispositivos Bluetooth conectados</value>
+  </data>
+  <data name="Bluetooth.One.Automation" xml:space="preserve">
+    <value>Un dispositivo Bluetooth conectado</value>
+  </data>
+  <data name="Bluetooth.Many.Automation" xml:space="preserve">
+    <value>{0} dispositivos Bluetooth conectados</value>
+  </data>
+  <data name="System.Unavailable" xml:space="preserve">
+    <value>Indisponible</value>
+  </data>
+  <data name="System.NoApplication" xml:space="preserve">
+    <value>Ninguna aplicación seleccionada</value>
+  </data>
+  <data name="System.SessionNotFound" xml:space="preserve">
+    <value>Sesión de audio no encontrada</value>
+  </data>
+  <data name="System.Microphone.Active" xml:space="preserve">
+    <value>Micrófono activo</value>
+  </data>
+  <data name="System.Microphone.Idle" xml:space="preserve">
+    <value>Micrófono inactivo</value>
+  </data>
+  <data name="System.Microphone.Unavailable" xml:space="preserve">
+    <value>Micrófono no disponible</value>
+  </data>
+  <data name="System.Camera.Unavailable" xml:space="preserve">
+    <value>Estado del dispositivo de la cámara no disponible</value>
+  </data>
+  <data name="System.Camera.NotFound" xml:space="preserve">
+    <value>No se encontró ninguna cámara</value>
+  </data>
+  <data name="System.Camera.Allowed" xml:space="preserve">
+    <value>Cámara disponible · acceso permitido</value>
+  </data>
+  <data name="System.Camera.DeniedUser" xml:space="preserve">
+    <value>Cámara disponible · bloqueada por el usuario</value>
+  </data>
+  <data name="System.Camera.DeniedSystem" xml:space="preserve">
+    <value>Cámara disponible · bloqueada por el sistema</value>
+  </data>
+  <data name="System.Camera.Prompt" xml:space="preserve">
+    <value>Cámara disponible · permiso no solicitado</value>
+  </data>
+  <data name="System.Camera.NotDeclared" xml:space="preserve">
+    <value>Cámara disponible · capacidad no declarada</value>
+  </data>
+  <data name="System.Camera.Unknown" xml:space="preserve">
+    <value>Cámara disponible · acceso desconocido</value>
+  </data>
+  <data name="System.Call.None" xml:space="preserve">
+    <value>No se detectó ninguna llamada</value>
+  </data>
+  <data name="System.Call.Ended" xml:space="preserve">
+    <value>La actividad de la llamada finalizó</value>
+  </data>
+  <data name="System.Call.Detail" xml:space="preserve">
+    <value>Micrófono y audio de comunicación activos.</value>
+  </data>
+  <data name="System.Privacy.None" xml:space="preserve">
+    <value>Sin actividad de privacidad</value>
+  </data>
+  <data name="System.Privacy.Summary" xml:space="preserve">
+    <value>Micrófono, cámara y estado de llamada</value>
+  </data>
+  <data name="System.AudioSession.State" xml:space="preserve">
+    <value>Windows estado de la sesión de audio</value>
+  </data>
+  <data name="System.Audio.Muted" xml:space="preserve">
+    <value>Audio silenciado</value>
+  </data>
+  <data name="System.Audio.Master" xml:space="preserve">
+    <value>audio del sistema</value>
+  </data>
+  <data name="System.Audio.Master.Down" xml:space="preserve">
+    <value>Disminuir el volumen maestro</value>
+  </data>
+  <data name="System.Audio.Master.Toggle" xml:space="preserve">
+    <value>Silenciar o reactivar el volumen principal</value>
+  </data>
+  <data name="System.Audio.Master.Up" xml:space="preserve">
+    <value>Aumentar el volumen maestro</value>
+  </data>
+  <data name="System.Audio.Application.Toggle" xml:space="preserve">
+    <value>Silenciar o reactivar el volumen de la aplicación</value>
+  </data>
+  <data name="System.Audio.Application.Muted" xml:space="preserve">
+    <value>Audio de la aplicación silenciado</value>
+  </data>
+  <data name="System.Audio.Application" xml:space="preserve">
+    <value>audio de la aplicación</value>
+  </data>
+  <data name="System.Audio.SelectedMedia" xml:space="preserve">
+    <value>Aplicación de medios seleccionados</value>
+  </data>
+  <data name="Volume.Master" xml:space="preserve">
+    <value>volumen maestro</value>
+  </data>
+  <data name="Volume.Muted" xml:space="preserve">
+    <value>Apagado</value>
+  </data>
+  <data name="Volume.WindowsAudio" xml:space="preserve">
+    <value>Windows volumen maestro</value>
+  </data>
+  <data name="Volume.ToggleMute" xml:space="preserve">
+    <value>Silenciar o reactivar</value>
+  </data>
+  <data name="Volume.OpenSettings" xml:space="preserve">
+    <value>Abra la configuración de sonido Windows</value>
+  </data>
+  <data name="Volume.OutputDevice.Unavailable" xml:space="preserve">
+    <value>Dispositivo de salida no disponible</value>
+  </data>
+  <data name="Volume.OutputDevice.Changed" xml:space="preserve">
+    <value>Dispositivo de salida cambiado</value>
+  </data>
+  <data name="Mixer.SystemSounds" xml:space="preserve">
+    <value>Sonidos del sistema</value>
+  </data>
+  <data name="Mixer.UnknownSession" xml:space="preserve">
+    <value>Sesión de audio desconocida</value>
+  </data>
+  <data name="Mixer.SessionControllable" xml:space="preserve">
+    <value>Control de volumen disponible</value>
+  </data>
+  <data name="Mixer.SessionUnsupported" xml:space="preserve">
+    <value>Esta sesión no se puede controlar.</value>
+  </data>
+  <data name="Mixer.Unavailable" xml:space="preserve">
+    <value>Mezclador de audio no disponible</value>
+  </data>
+  <data name="Mixer.NoActiveSessions" xml:space="preserve">
+    <value>No hay audio de aplicación activo</value>
+  </data>
+  <data name="Mixer.ActiveSessionCount" xml:space="preserve">
+    <value>{0} aplicaciones de audio activas</value>
+  </data>
+  <data name="Mixer.SessionVolumeAutomation" xml:space="preserve">
+    <value>{0} nivel de volumen</value>
+  </data>
+  <data name="Mixer.SessionMuteAutomation" xml:space="preserve">
+    <value>Silenciar {0}</value>
+  </data>
+  <data name="Mixer.SessionUnmuteAutomation" xml:space="preserve">
+    <value>Activar el silencio {0}</value>
+  </data>
+  <data name="System.Camera.Changed" xml:space="preserve">
+    <value>La disponibilidad de la cámara cambió</value>
+  </data>
+  <data name="Timer.Tools" xml:space="preserve">
+    <value>herramientas de tiempo</value>
+  </data>
+  <data name="Timer.TimerAndStopwatch" xml:space="preserve">
+    <value>Temporizador y cronómetro</value>
+  </data>
+  <data name="Timer.Running" xml:space="preserve">
+    <value>Temporizador funcionando</value>
+  </data>
+  <data name="Timer.Paused" xml:space="preserve">
+    <value>Temporizador en pausa</value>
+  </data>
+  <data name="Timer.Completed" xml:space="preserve">
+    <value>El tiempo ha terminado</value>
+  </data>
+  <data name="Timer.SelectDuration" xml:space="preserve">
+    <value>Elige una duración</value>
+  </data>
+  <data name="Timer.Completed.Description" xml:space="preserve">
+    <value>Temporizador completado</value>
+  </data>
+  <data name="Timer.StopwatchRunning" xml:space="preserve">
+    <value>Cronómetro funcionando</value>
+  </data>
+  <data name="Timer.StopwatchPaused" xml:space="preserve">
+    <value>Cronómetro en pausa</value>
+  </data>
+  <data name="Timer.Cancel" xml:space="preserve">
+    <value>Cancelar temporizador</value>
+  </data>
+  <data name="Timer.StopAlarm" xml:space="preserve">
+    <value>Silenciar alarma</value>
+  </data>
+  <data name="Timer.AlarmRepeats" xml:space="preserve">
+    <value>La alarma suena hasta 5 veces cuando finaliza el cronómetro.</value>
+  </data>
+  <data name="Timer.ResetStopwatch" xml:space="preserve">
+    <value>Reiniciar cronómetro</value>
+  </data>
+  <data name="Timer.PauseResume" xml:space="preserve">
+    <value>Pausar o reanudar</value>
+  </data>
+  <data name="Timer.Lap" xml:space="preserve">
+    <value>Vuelta {0} {1}</value>
+  </data>
+  <data name="Timer.MinuteShort" xml:space="preserve">
+    <value>mín.</value>
+  </data>
+  <data name="Transfer.Title" xml:space="preserve">
+    <value>Transferencias de archivos</value>
+  </data>
+  <data name="Transfer.None" xml:space="preserve">
+    <value>No hay transferencias activas</value>
+  </data>
+  <data name="Transfer.Waiting" xml:space="preserve">
+    <value>esperando transferencia</value>
+  </data>
+  <data name="Transfer.Active.One" xml:space="preserve">
+    <value>1 transferencia activa</value>
+  </data>
+  <data name="Transfer.Active.Many" xml:space="preserve">
+    <value>{0} transferencias activas</value>
+  </data>
+  <data name="Transfer.Queued" xml:space="preserve">
+    <value>En cola</value>
+  </data>
+  <data name="Transfer.Running" xml:space="preserve">
+    <value>Transferencia</value>
+  </data>
+  <data name="Transfer.Paused" xml:space="preserve">
+    <value>En pausa</value>
+  </data>
+  <data name="Transfer.ProviderWaiting" xml:space="preserve">
+    <value>Esperando proveedor</value>
+  </data>
+  <data name="Transfer.Completed" xml:space="preserve">
+    <value>Terminado</value>
+  </data>
+  <data name="Transfer.Failed" xml:space="preserve">
+    <value>Fallido</value>
+  </data>
+  <data name="Transfer.Cancelled" xml:space="preserve">
+    <value>Cancelado</value>
+  </data>
+  <data name="Transfer.Disconnected" xml:space="preserve">
+    <value>Desconectado</value>
+  </data>
+  <data name="Tray.Previous" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
+  <data name="Tray.Next" xml:space="preserve">
+    <value>Siguiente</value>
+  </data>
+  <data name="Tray.MediaNotFound" xml:space="preserve">
+    <value>No se encontró ninguna aplicación de medios</value>
+  </data>
+  <data name="Tray.PrimaryMonitor" xml:space="preserve">
+    <value>Monitor principal</value>
+  </data>
+  <data name="Tray.ActiveMonitor" xml:space="preserve">
+    <value>Monitor de la ventana activa</value>
+  </data>
+  <data name="Tray.DefaultMedia" xml:space="preserve">
+    <value>Aplicación de medios predeterminada</value>
+  </data>
+  <data name="Tray.StartWithWindows" xml:space="preserve">
+    <value>Ejecutar al iniciar Windows</value>
+  </data>
+  <data name="Tray.FullscreenBehavior" xml:space="preserve">
+    <value>Comportamiento en pantalla completa</value>
+  </data>
+  <data name="Tray.Fullscreen.Show" xml:space="preserve">
+    <value>Mostrar notificaciones en pantalla completa</value>
+  </data>
+  <data name="Tray.Fullscreen.Minimal" xml:space="preserve">
+    <value>Vista mínima</value>
+  </data>
+  <data name="Tray.Fullscreen.Controls" xml:space="preserve">
+    <value>Ver con controles</value>
+  </data>
+  <data name="Tray.SelectMonitor" xml:space="preserve">
+    <value>Seleccionar monitor</value>
+  </data>
+  <data name="Tray.TemporaryNotifications" xml:space="preserve">
+    <value>Mostrar notificaciones temporales</value>
+  </data>
+  <data name="Tray.FocusTurnOff" xml:space="preserve">
+    <value>Desactivar enfoque · {0}</value>
+  </data>
+  <data name="Tray.Exit" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="Dialog.Close.Title" xml:space="preserve">
+    <value>¿Cerrar MiaDock?</value>
+  </data>
+  <data name="Dialog.Close.Description" xml:space="preserve">
+    <value>Elija qué sucede cuando selecciona el botón cerrar.</value>
+  </data>
+  <data name="Dialog.Close.Minimize" xml:space="preserve">
+    <value>Minimizar a la bandeja del sistema</value>
+  </data>
+  <data name="Dialog.Close.Exit" xml:space="preserve">
+    <value>Salir de la aplicación</value>
+  </data>
+  <data name="Dialog.Close.Remember" xml:space="preserve">
+    <value>Recuerda mi elección</value>
+  </data>
+  <data name="Dialog.Apply" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="Dialog.Permission.Notification.Title" xml:space="preserve">
+    <value>¿Permitir acceso a notificaciones?</value>
+  </data>
+  <data name="Dialog.Permission.Notification.Summary" xml:space="preserve">
+    <value>MiaDock leerá la aplicación fuente y el título de la notificación. El texto del cuerpo está oculto a menos que se habilite por separado y el contenido nunca se escribe en registros técnicos.</value>
+  </data>
+  <data name="Dialog.Permission.Notification.Detail" xml:space="preserve">
+    <value>MiaDock leerá los nombres y títulos de las aplicaciones desde el Centro de notificaciones Windows. El texto del cuerpo está habilitado por aplicación; el contenido no se registra y las notificaciones nunca se eliminan ni se marcan como leídas.</value>
+  </data>
+  <data name="Dialog.Permission.Request" xml:space="preserve">
+    <value>Solicitar permiso Windows</value>
+  </data>
+  <data name="Dialog.Permission.Cancel" xml:space="preserve">
+    <value>Ahora no</value>
+  </data>
+  <data name="Dialog.Logs.Clear.Title" xml:space="preserve">
+    <value>¿Borrar registros locales?</value>
+  </data>
+  <data name="Dialog.Logs.Clear.Description" xml:space="preserve">
+    <value>Esto elimina permanentemente los archivos de registro técnicos actuales.</value>
+  </data>
+  <data name="Dialog.Logs.Clear.Action" xml:space="preserve">
+    <value>Borrar registros</value>
+  </data>
+  <data name="Onboarding.Step.Welcome" xml:space="preserve">
+    <value>Bienvenido</value>
+  </data>
+  <data name="Onboarding.Step.Personalization" xml:space="preserve">
+    <value>Personaliza tu muelle</value>
+  </data>
+  <data name="Onboarding.Step.Interaction" xml:space="preserve">
+    <value>Uso</value>
+  </data>
+  <data name="Onboarding.Step.FeaturesAndPrivacy" xml:space="preserve">
+    <value>Funciones y privacidad</value>
+  </data>
+  <data name="Onboarding.Step.Ready" xml:space="preserve">
+    <value>Listo</value>
+  </data>
+  <data name="Onboarding.Option.Theme.Apple" xml:space="preserve">
+    <value>parecido a una manzana</value>
+  </data>
+  <data name="Onboarding.Option.Theme.Glass" xml:space="preserve">
+    <value>Vidrio borroso</value>
+  </data>
+  <data name="Onboarding.Option.Theme.Solid" xml:space="preserve">
+    <value>Color sólido personalizado</value>
+  </data>
+  <data name="Onboarding.Option.Monitor.Primary" xml:space="preserve">
+    <value>monitor primario</value>
+  </data>
+  <data name="Onboarding.Option.Monitor.Active" xml:space="preserve">
+    <value>Monitor de ventana activa</value>
+  </data>
+  <data name="Onboarding.Option.Monitor.Fixed" xml:space="preserve">
+    <value>monitor fijo</value>
+  </data>
+  <data name="Onboarding.Option.Position.TopCenter" xml:space="preserve">
+    <value>Centro superior</value>
+  </data>
+  <data name="Onboarding.Option.Position.TopLeft" xml:space="preserve">
+    <value>Arriba a la izquierda</value>
+  </data>
+  <data name="Onboarding.Option.Position.TopRight" xml:space="preserve">
+    <value>Arriba a la derecha</value>
+  </data>
+  <data name="Onboarding.Option.Position.BottomCenter" xml:space="preserve">
+    <value>Centro inferior</value>
+  </data>
+  <data name="Onboarding.Option.Position.BottomLeft" xml:space="preserve">
+    <value>Abajo a la izquierda</value>
+  </data>
+  <data name="Onboarding.Option.Position.BottomRight" xml:space="preserve">
+    <value>Abajo a la derecha</value>
+  </data>
+  <data name="Onboarding.Option.Interaction.Hover" xml:space="preserve">
+    <value>Al pasar el puntero</value>
+  </data>
+  <data name="Onboarding.Option.Interaction.Click" xml:space="preserve">
+    <value>Al hacer clic</value>
+  </data>
+  <data name="Onboarding.Option.Interaction.Both" xml:space="preserve">
+    <value>Coloca el cursor y haz clic</value>
+  </data>
+  <data name="Onboarding.Option.Fullscreen.Minimal" xml:space="preserve">
+    <value>Mínimo</value>
+  </data>
+  <data name="Onboarding.Option.Fullscreen.Controls" xml:space="preserve">
+    <value>Con controles</value>
+  </data>
+  <data name="Onboarding.Option.Media.Auto" xml:space="preserve">
+    <value>Selección automática</value>
+  </data>
+  <data name="Onboarding.Summary.Theme" xml:space="preserve">
+    <value>Tema: {0}</value>
+  </data>
+  <data name="Onboarding.Summary.Media" xml:space="preserve">
+    <value>Medios: {0}</value>
+  </data>
+  <data name="Onboarding.Summary.Monitor" xml:space="preserve">
+    <value>Monitorear: {0}</value>
+  </data>
+  <data name="Onboarding.Summary.Position" xml:space="preserve">
+    <value>Posición: {0}</value>
+  </data>
+  <data name="Onboarding.Summary.Interaction" xml:space="preserve">
+    <value>Interacción: {0}</value>
+  </data>
+  <data name="Onboarding.Summary.Fullscreen" xml:space="preserve">
+    <value>Pantalla completa: {0}</value>
+  </data>
+  <data name="Onboarding.Summary.Modules" xml:space="preserve">
+    <value>Módulos: {0}</value>
+  </data>
+  <data name="Onboarding.Startup.Unavailable" xml:space="preserve">
+    <value>Comenzar con Windows está disponible después de instalar el paquete MSIX.</value>
+  </data>
+  <data name="Onboarding.Startup.Failed" xml:space="preserve">
+    <value>No se pudo cambiar la configuración de inicio. Verifique Windows Configuración de aplicaciones de inicio.</value>
+  </data>
+  <data name="Onboarding.Startup.DisabledByUser" xml:space="preserve">
+    <value>Windows deshabilitó esta tarea de inicio.</value>
+  </data>
+  <data name="Onboarding.Startup.DisabledByPolicy" xml:space="preserve">
+    <value>La tarea de inicio está bloqueada por la política del sistema.</value>
+  </data>
+  <data name="Onboarding.Startup.EnabledByPolicy" xml:space="preserve">
+    <value>La tarea de inicio está habilitada por la política del sistema.</value>
+  </data>
+  <data name="Onboarding.Startup.Enabled" xml:space="preserve">
+    <value>MiaDock comenzará con Windows.</value>
+  </data>
+  <data name="Onboarding.Startup.Disabled" xml:space="preserve">
+    <value>MiaDock no comenzará con Windows.</value>
+  </data>
+  <data name="Onboarding.Validation.FixedMonitor" xml:space="preserve">
+    <value>Seleccione una pantalla conectada para usar un monitor fijo.</value>
+  </data>
+  <data name="Onboarding.Module.Media.Title" xml:space="preserve">
+    <value>Medios de comunicación</value>
+  </data>
+  <data name="Onboarding.Module.Media.Description" xml:space="preserve">
+    <value>Windows sesiones multimedia y controles de reproducción.</value>
+  </data>
+  <data name="Onboarding.Module.Volume.Title" xml:space="preserve">
+    <value>Windows volumen maestro</value>
+  </data>
+  <data name="Onboarding.Module.Volume.Description" xml:space="preserve">
+    <value>Muestra cambios de volumen y controla el volumen principal.</value>
+  </data>
+  <data name="Onboarding.Module.Privacy.Title" xml:space="preserve">
+    <value>Privacidad</value>
+  </data>
+  <data name="Onboarding.Module.Privacy.Description" xml:space="preserve">
+    <value>Muestra qué aplicaciones usan el micrófono y la cámara.</value>
+  </data>
+  <data name="Onboarding.Module.System.Title" xml:space="preserve">
+    <value>Actividad de llamadas</value>
+  </data>
+  <data name="Onboarding.Module.System.Description" xml:space="preserve">
+    <value>Supervisa la inferencia local de llamadas; el contenido no se lee.</value>
+  </data>
+  <data name="Onboarding.Module.Battery.Title" xml:space="preserve">
+    <value>Batería</value>
+  </data>
+  <data name="Onboarding.Module.Battery.Description" xml:space="preserve">
+    <value>Eventos de carga, ahorro de energía y batería baja.</value>
+  </data>
+  <data name="Onboarding.Module.Network.Title" xml:space="preserve">
+    <value>Red</value>
+  </data>
+  <data name="Onboarding.Module.Network.Description" xml:space="preserve">
+    <value>Tipo de conexión y vista de rendimiento opcional.</value>
+  </data>
+  <data name="Onboarding.Module.Bluetooth.Title" xml:space="preserve">
+    <value>bluetooth</value>
+  </data>
+  <data name="Onboarding.Module.Bluetooth.Description" xml:space="preserve">
+    <value>Cambios de conexión para dispositivos emparejados.</value>
+  </data>
+  <data name="Onboarding.Module.Timer.Title" xml:space="preserve">
+    <value>Temporizador y cronómetro</value>
+  </data>
+  <data name="Onboarding.Module.Timer.Description" xml:space="preserve">
+    <value>Herramientas de hora local y eventos de finalización.</value>
+  </data>
+  <data name="Onboarding.Module.Transfers.Title" xml:space="preserve">
+    <value>Transferencias de archivos</value>
+  </data>
+  <data name="Onboarding.Module.Transfers.Description" xml:space="preserve">
+    <value>Transferir el progreso de los proveedores locales.</value>
+  </data>
+  <data name="Onboarding.Module.Notifications.Title" xml:space="preserve">
+    <value>Windows notificaciones</value>
+  </data>
+  <data name="Onboarding.Module.Notifications.Description" xml:space="preserve">
+    <value>Dado que se requiere permiso del usuario, habilítelo desde la página Módulos después de la configuración.</value>
+  </data>
+  <data name="Onboarding.Button.Next" xml:space="preserve">
+    <value>Próximo</value>
+  </data>
+  <data name="Onboarding.Button.Finish" xml:space="preserve">
+    <value>Finalizar</value>
+  </data>
+  <data name="Onboarding.Button.Next.Automation" xml:space="preserve">
+    <value>Siguiente paso de configuración</value>
+  </data>
+  <data name="Onboarding.Button.Finish.Automation" xml:space="preserve">
+    <value>Finalizar la configuración</value>
+  </data>
+  <data name="Onboarding.Dialog.Incomplete.Title" xml:space="preserve">
+    <value>La configuración no está completa</value>
+  </data>
+  <data name="Onboarding.Dialog.Incomplete.Description" xml:space="preserve">
+    <value>Si sale ahora, sus elecciones no se guardan, la vista previa en vivo se restaura y la configuración vuelve a aparecer la próxima vez.</value>
+  </data>
+  <data name="Onboarding.Dialog.Return" xml:space="preserve">
+    <value>Volver a la configuración</value>
+  </data>
+  <data name="Onboarding.Dialog.Exit" xml:space="preserve">
+    <value>Salir</value>
+  </data>
+  <data name="Update.Available" xml:space="preserve">
+    <value>Una nueva versión está disponible</value>
+  </data>
+  <data name="Update.VersionPair" xml:space="preserve">
+    <value>MiaDock {0} → {1}</value>
+  </data>
+  <data name="Update.OpenStore" xml:space="preserve">
+    <value>Abrir en Microsoft Store</value>
+  </data>
+  <data name="Update.Check" xml:space="preserve">
+    <value>Buscar actualizaciones</value>
+  </data>
+  <data name="Update.Checking" xml:space="preserve">
+    <value>Buscando actualizaciones</value>
+  </data>
+  <data name="Update.UpToDate" xml:space="preserve">
+    <value>MiaDock está actualizado</value>
+  </data>
+  <data name="Update.StoreOnly" xml:space="preserve">
+    <value>Disponible solo en la versión de Microsoft Store</value>
+  </data>
+  <data name="Update.Offline" xml:space="preserve">
+    <value>No se pudieron buscar actualizaciones: sin conexión</value>
+  </data>
+  <data name="Update.Failed" xml:space="preserve">
+    <value>No se pudo buscar actualizaciones</value>
+  </data>
+  <data name="KeyboardLock.OnFormat" xml:space="preserve">
+    <value>{0} activado</value>
+  </data>
+  <data name="KeyboardLock.ModuleName" xml:space="preserve">
+    <value>Bloqueos de teclado</value>
+  </data>
+  <data name="KeyboardLock.ScrollLock" xml:space="preserve">
+    <value>Bloq Despl</value>
+  </data>
+  <data name="KeyboardLock.Off" xml:space="preserve">
+    <value>Desactivado</value>
+  </data>
+  <data name="KeyboardLock.On" xml:space="preserve">
+    <value>Activado</value>
+  </data>
+  <data name="KeyboardLock.OffFormat" xml:space="preserve">
+    <value>{0} desactivado</value>
+  </data>
+  <data name="KeyboardLock.CapsLock" xml:space="preserve">
+    <value>Bloq Mayús</value>
+  </data>
+  <data name="KeyboardLock.NumLock" xml:space="preserve">
+    <value>Bloq Num</value>
+  </data>
+  <data name="UsbDevice.ModuleName" xml:space="preserve">
+    <value>Dispositivos USB</value>
+  </data>
+  <data name="UsbDevice.Connected" xml:space="preserve">
+    <value>Conectado</value>
+  </data>
+  <data name="UsbDevice.Disconnected" xml:space="preserve">
+    <value>Desconectado</value>
+  </data>
+  <data name="UsbDevice.ConnectedFormat" xml:space="preserve">
+    <value>{0} conectado</value>
+  </data>
+  <data name="UsbDevice.DisconnectedFormat" xml:space="preserve">
+    <value>{0} desconectado</value>
+  </data>
+</root>

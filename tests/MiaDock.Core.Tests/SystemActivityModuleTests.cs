@@ -22,8 +22,8 @@ public sealed class SystemActivityModuleTests
         Assert.AreEqual("system-activity", module.CurrentPresentation?.ModuleId);
         Assert.AreEqual(ModulePresentationKind.Status, module.CurrentPresentation?.PresentationKind);
         Assert.AreEqual(string.Empty, module.CurrentPresentation?.ValueText);
-        Assert.AreEqual("\uE83D", module.Descriptor.IconGlyph);
-        Assert.AreEqual(340, module.Descriptor.MinimumExpandedHeight);
+        Assert.AreEqual("\uE717", module.Descriptor.IconGlyph);
+        Assert.AreEqual(280, module.Descriptor.MinimumExpandedHeight);
         Assert.IsFalse(module.CurrentPresentation?.IsPersistentOverride);
     }
 
@@ -42,7 +42,7 @@ public sealed class SystemActivityModuleTests
     }
 
     [TestMethod]
-    public async Task MicrophoneAndCommunicationActivity_RaisesHighPriorityPrivacyEvent()
+    public async Task CallActivity_RaisesHighPriorityEvent()
     {
         var service = new FakeSystemActivityService(CreateSnapshot());
         var module = new SystemActivityModule(service, new SystemActivityViewModel(service));
@@ -65,7 +65,22 @@ public sealed class SystemActivityModuleTests
     }
 
     [TestMethod]
-    public async Task ApplicationVolumeChange_DoesNotLeakIntoPrivacyModule()
+    public async Task MicrophoneOnlyChange_DoesNotRaisePrivacyEventFromSystemModule()
+    {
+        var service = new FakeSystemActivityService(CreateSnapshot());
+        var module = new SystemActivityModule(service, new SystemActivityViewModel(service));
+        await module.ActivateAsync();
+        ModuleEvent? raised = null;
+        module.EventOccurred += (_, moduleEvent) => raised = moduleEvent;
+
+        service.Publish(CreateSnapshot() with { MicrophoneUsage = MicrophoneUsageState.Active });
+
+        Assert.IsNull(raised);
+        Assert.IsFalse(module.CurrentPresentation?.IsPersistentOverride);
+    }
+
+    [TestMethod]
+    public async Task ApplicationVolumeChange_DoesNotLeakIntoCallModule()
     {
         var service = new FakeSystemActivityService(CreateSnapshot());
         var module = new SystemActivityModule(service, new SystemActivityViewModel(service));

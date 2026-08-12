@@ -16,6 +16,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     private Thread? _worker;
     private bool _active;
     private volatile bool _needsRebind = true;
+    private int _diagnosticCheckpointPending = 1;
     private bool _disposed;
     private IMMDeviceEnumerator? _deviceEnumerator;
     private IMMNotificationClient? _deviceNotification;
@@ -95,7 +96,14 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 
                 if (_needsRebind || _meters.Count == 0)
                 {
-                    BindMeter();
+                    var diagnosticCheckpoint =
+                        Interlocked.Exchange(ref _diagnosticCheckpointPending, 0) != 0;
+                    if (diagnosticCheckpoint)
+                    {
+                        LogBindingCheckpoint();
+                    }
+
+                    BindMeter(diagnosticCheckpoint);
                 }
 
                 if (TryReadPeaks(out var leftPeak, out var rightPeak))
@@ -107,7 +115,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 {
                     _needsRebind = true;
                     Publish(_smoother.Reset());
-                    _wake.WaitOne(TimeSpan.FromMilliseconds(500));
+                    _wake.WaitOne(TimeSpan.FromSeconds(2));
                 }
             }
         }
@@ -142,17 +150,21 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     private void InitializeDeviceNotifications()
     {
         _deviceEnumerator = (IMMDeviceEnumerator)(object)new MMDeviceEnumeratorComObject();
-        _deviceNotification = new DeviceNotificationCallback(RequestRebind);
+        _deviceNotification = new DeviceNotificationCallback(() => !_disposed, RequestRebind);
         CoreAudioNative.ThrowIfFailed(_deviceEnumerator.RegisterEndpointNotificationCallback(_deviceNotification));
     }
 
-    private void BindMeter()
+    private void BindMeter(bool logResult)
     {
         CleanupBinding();
         _needsRebind = false;
         var sourceId = _media.Current.Source.Id;
         if (string.IsNullOrWhiteSpace(sourceId) || _deviceEnumerator is null)
         {
+            if (logResult)
+            {
+                LogBindingResult("no-media-source", 0, null);
+            }
             return;
         }
 
@@ -200,11 +212,66 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             {
                 sessions = null!;
             }
+
+            if (logResult)
+            {
+                LogBindingResult("ready", _meters.Count, null);
+            }
         }
         catch (Exception exception) when (exception is COMException or InvalidCastException)
         {
             CleanupBinding();
+            if (logResult)
+            {
+                LogBindingResult("failed", 0, exception);
+            }
         }
+    }
+
+    private void LogBindingCheckpoint()
+    {
+        if (_log is null)
+        {
+            return;
+        }
+
+        _log.Write(
+            TechnicalLogLevel.Information,
+            TechnicalEventIds.MediaAudioMeterBinding,
+            "MediaAudio",
+            "Media audio meter binding is starting.",
+            properties: new Dictionary<string, object?>
+            {
+                ["phase"] = "before-core-audio-enumeration",
+                ["selected"] = _media.Current.HasMedia
+            });
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(1));
+            _log.FlushAsync(timeout.Token).AsTask().GetAwaiter().GetResult();
+        }
+        catch (Exception exception) when (exception is OperationCanceledException or IOException)
+        {
+            // A diagnostic checkpoint must not prevent audio recovery.
+        }
+    }
+
+    private void LogBindingResult(string state, int matchedCount, Exception? exception)
+    {
+        _log?.Write(
+            exception is null ? TechnicalLogLevel.Information : TechnicalLogLevel.Warning,
+            exception is null
+                ? TechnicalEventIds.MediaAudioMeterBinding
+                : TechnicalEventIds.MediaAudioMeterFailed,
+            "MediaAudio",
+            "Media audio meter binding completed.",
+            exception,
+            new Dictionary<string, object?>
+            {
+                ["state"] = state,
+                ["matchedCount"] = matchedCount,
+                ["hresult"] = exception?.HResult
+            });
     }
 
     private static T Activate<T>(IMMDevice device, Guid interfaceId) where T : class
@@ -225,6 +292,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 
             _bindingIdentity = next;
             _needsRebind = true;
+            Interlocked.Exchange(ref _diagnosticCheckpointPending, 1);
             _wake.Set();
         }
     }
@@ -241,6 +309,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             }
 
             _needsRebind = true;
+            Interlocked.Exchange(ref _diagnosticCheckpointPending, 1);
             _wake.Set();
         }
     }
@@ -298,7 +367,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 
     private void Publish(MediaAudioLevelSnapshot snapshot)
     {
-        if (Current == snapshot)
+        if (_disposed || Current == snapshot)
         {
             return;
         }
@@ -395,13 +464,49 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     }
 
     [ComVisible(true)]
-    private sealed class DeviceNotificationCallback(Action changed) : IMMNotificationClient
+    private sealed class DeviceNotificationCallback(Func<bool> isActive, Action changed)
+        : IMMNotificationClient
     {
-        public int OnDeviceStateChanged(string deviceId, uint newState) { changed(); return 0; }
-        public int OnDeviceAdded(string deviceId) { changed(); return 0; }
-        public int OnDeviceRemoved(string deviceId) { changed(); return 0; }
+        public int OnDeviceStateChanged(string deviceId, uint newState)
+        {
+            if (isActive())
+            {
+                changed();
+            }
+
+            return 0;
+        }
+
+        public int OnDeviceAdded(string deviceId)
+        {
+            if (isActive())
+            {
+                changed();
+            }
+
+            return 0;
+        }
+
+        public int OnDeviceRemoved(string deviceId)
+        {
+            if (isActive())
+            {
+                changed();
+            }
+
+            return 0;
+        }
+
         public int OnDefaultDeviceChanged(AudioDataFlow flow, AudioDeviceRole role, string? defaultDeviceId)
-        { changed(); return 0; }
+        {
+            if (isActive())
+            {
+                changed();
+            }
+
+            return 0;
+        }
+
         public int OnPropertyValueChanged(string deviceId, PropertyKey key) => 0;
     }
 }

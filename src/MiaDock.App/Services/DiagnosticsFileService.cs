@@ -19,14 +19,24 @@ public sealed class DiagnosticsFileService(
         return await Launcher.LaunchFolderAsync(folder);
     }
 
+    public Task<bool> PickAndExportAsync(
+        Window owner,
+        CancellationToken cancellationToken = default) =>
+        PickAndExportAsync(
+            owner,
+            $"MiaDock-logs-{DateTime.Now:yyyyMMdd-HHmmss}",
+            cancellationToken);
+
     public async Task<bool> PickAndExportAsync(
         Window owner,
+        string suggestedFileName,
         CancellationToken cancellationToken = default)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(suggestedFileName);
         var picker = new FileSavePicker
         {
             SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-            SuggestedFileName = $"MiaDock-logs-{DateTime.Now:yyyyMMdd-HHmmss}"
+            SuggestedFileName = suggestedFileName
         };
         picker.FileTypeChoices.Add("ZIP arşivi", [".zip"]);
         WinRT.Interop.InitializeWithWindow.Initialize(

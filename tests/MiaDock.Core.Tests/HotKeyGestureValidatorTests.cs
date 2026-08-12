@@ -36,4 +36,33 @@ public sealed class HotKeyGestureValidatorTests
 
         Assert.HasCount(1, normalized.HotKeys.Bindings);
     }
+
+    [TestMethod]
+    public void DuplicateCheck_IgnoresTheActionBeingEdited()
+    {
+        var gesture = new HotKeyGestureSetting(HotKeyModifiers.Control, 0x4D);
+        var bindings = new Dictionary<HotKeyAction, HotKeyGestureSetting>
+        {
+            [HotKeyAction.ToggleDock] = gesture
+        };
+
+        Assert.IsFalse(HotKeyGestureValidator.IsDuplicate(
+            bindings,
+            HotKeyAction.ToggleDock,
+            gesture));
+        Assert.IsTrue(HotKeyGestureValidator.IsDuplicate(
+            bindings,
+            HotKeyAction.NextModule,
+            gesture));
+    }
+
+    [TestMethod]
+    public void RecommendedBindings_AreValidAndUnique()
+    {
+        var bindings = GlobalHotKeySettings.RecommendedBindings;
+
+        Assert.HasCount(Enum.GetValues<HotKeyAction>().Length, bindings);
+        Assert.IsTrue(bindings.Values.All(HotKeyGestureValidator.IsValid));
+        Assert.AreEqual(bindings.Count, bindings.Values.Distinct().Count());
+    }
 }

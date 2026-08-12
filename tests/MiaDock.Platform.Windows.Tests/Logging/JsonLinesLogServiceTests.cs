@@ -44,6 +44,9 @@ public sealed class JsonLinesLogServiceTests
         Assert.IsNotNull(properties);
         Assert.AreEqual("refresh", properties["operation"]);
         Assert.AreEqual("2", properties["count"]);
+        Assert.IsGreaterThan(0, entries[0].SequenceNumber);
+        Assert.AreEqual(Environment.ProcessId, entries[0].ProcessId);
+        Assert.IsGreaterThan(0, entries[0].ManagedThreadId);
     }
 
     [TestMethod]
@@ -130,7 +133,15 @@ public sealed class JsonLinesLogServiceTests
             await service.ExportAsync(archivePath);
             using var archive = ZipFile.OpenRead(archivePath);
             Assert.IsNotNull(archive.GetEntry("export-manifest.json"));
+            Assert.IsNotNull(archive.GetEntry("diagnostic-timeline.json"));
+            Assert.IsNotNull(archive.GetEntry("event-summary.json"));
+            Assert.IsNotNull(archive.GetEntry("BUG-REPORT-README.txt"));
             Assert.IsTrue(archive.Entries.Any(entry => entry.Name.EndsWith(".ndjson", StringComparison.Ordinal)));
+
+            using var manifestReader = new StreamReader(archive.GetEntry("export-manifest.json")!.Open());
+            var manifest = await manifestReader.ReadToEndAsync();
+            StringAssert.Contains(manifest, "MiaDock technical logs v2");
+            StringAssert.Contains(manifest, "DroppedEntryCount");
         }
         finally
         {

@@ -85,7 +85,7 @@ public sealed class DeviceStatusModuleTests
     [TestMethod]
     public async Task BluetoothModule_SuppressesInitialEnumerationAndMarksDeviceNameSensitive()
     {
-        var initial = new BluetoothStatusSnapshot(DeviceServiceState.Starting, false, Array.Empty<BluetoothDeviceState>());
+        var initial = new BluetoothStatusSnapshot(DeviceServiceState.Starting, false, Array.Empty<BluetoothDeviceState>(), BluetoothRadioState.On);
         var service = new FakeBluetoothService(initial);
         var module = new BluetoothModule(service, new BluetoothModuleViewModel(service));
         await module.ActivateAsync();
@@ -93,12 +93,35 @@ public sealed class DeviceStatusModuleTests
         module.EventOccurred += (_, value) => events.Add(value);
         var device = new BluetoothDeviceState("one", "Kulaklık", false, true);
 
-        service.Publish(new BluetoothStatusSnapshot(DeviceServiceState.Ready, true, new[] { device }));
-        service.Publish(new BluetoothStatusSnapshot(DeviceServiceState.Ready, true, new[] { device with { IsConnected = true } }));
+        service.Publish(new BluetoothStatusSnapshot(DeviceServiceState.Ready, true, new[] { device }, BluetoothRadioState.On));
+        service.Publish(new BluetoothStatusSnapshot(DeviceServiceState.Ready, true, new[] { device with { IsConnected = true } }, BluetoothRadioState.On));
 
         Assert.HasCount(1, events);
         Assert.IsTrue(events[0].Presentation.IsSensitive);
         Assert.IsFalse(events[0].IsFullscreenEligible);
+    }
+
+    [TestMethod]
+    public async Task BluetoothModule_RadioOffInvalidationDoesNotCreateFakeDisconnectEvent()
+    {
+        var connected = new BluetoothDeviceState("one", "Kulaklık", true, true);
+        var service = new FakeBluetoothService(new BluetoothStatusSnapshot(
+            DeviceServiceState.Ready,
+            true,
+            new[] { connected },
+            BluetoothRadioState.On));
+        var module = new BluetoothModule(service, new BluetoothModuleViewModel(service));
+        await module.ActivateAsync();
+        var events = new List<ModuleEvent>();
+        module.EventOccurred += (_, value) => events.Add(value);
+
+        service.Publish(new BluetoothStatusSnapshot(
+            DeviceServiceState.Ready,
+            false,
+            Array.Empty<BluetoothDeviceState>(),
+            BluetoothRadioState.Off));
+
+        Assert.IsEmpty(events);
     }
 
     [TestMethod]

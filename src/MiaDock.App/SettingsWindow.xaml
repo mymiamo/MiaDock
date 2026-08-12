@@ -6,7 +6,16 @@
 
   <Grid x:Name="Root"
         Background="{ThemeResource SettingsWindowBackgroundBrush}"
+        KeyboardAcceleratorPlacementMode="Hidden"
         SizeChanged="OnRootSizeChanged">
+    <Grid.KeyboardAccelerators>
+      <KeyboardAccelerator Key="F"
+                           Modifiers="Control"
+                           Invoked="OnSearchKeyboardAcceleratorInvoked" />
+      <KeyboardAccelerator Key="Left"
+                           Modifiers="Menu"
+                           Invoked="OnBackKeyboardAcceleratorInvoked" />
+    </Grid.KeyboardAccelerators>
     <Grid.RowDefinitions>
       <RowDefinition Height="52" />
       <RowDefinition Height="*" />
@@ -16,9 +25,8 @@
           Padding="16,0,150,0"
           Background="Transparent">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="190" />
+        <ColumnDefinition x:Name="TitleBrandColumn" Width="214" />
         <ColumnDefinition Width="*" />
-        <ColumnDefinition Width="140" />
       </Grid.ColumnDefinitions>
       <StackPanel Orientation="Horizontal"
                   Spacing="9"
@@ -35,7 +43,7 @@
       </StackPanel>
       <AutoSuggestBox x:Name="SettingsSearch"
                       Grid.Column="1"
-                      MinWidth="240"
+                      MinWidth="0"
                       MaxWidth="440"
                       HorizontalAlignment="Stretch"
                       VerticalAlignment="Center"
@@ -48,11 +56,15 @@
                       QuerySubmitted="OnSearchQuerySubmitted">
         <AutoSuggestBox.ItemTemplate>
           <DataTemplate>
-            <StackPanel Padding="2,4" Spacing="2">
+            <StackPanel Padding="2,5" Spacing="2">
               <TextBlock Text="{Binding Title}" FontWeight="SemiBold" />
+              <TextBlock Text="{Binding PathText}"
+                         FontSize="11"
+                         Opacity="0.72"
+                         TextTrimming="CharacterEllipsis" />
               <TextBlock Text="{Binding Description}"
                          FontSize="11"
-                         Opacity="0.68"
+                         Opacity="0.62"
                          TextTrimming="CharacterEllipsis" />
             </StackPanel>
           </DataTemplate>
@@ -64,132 +76,83 @@
                     Grid.Row="1"
                     PaneDisplayMode="Left"
                     CompactPaneLength="60"
-                    OpenPaneLength="240"
+                    OpenPaneLength="264"
                     IsPaneOpen="True"
                     IsPaneToggleButtonVisible="True"
-                    IsBackButtonVisible="Collapsed"
+                    IsBackButtonVisible="Auto"
+                    IsBackEnabled="False"
                     IsSettingsVisible="False"
                     Background="Transparent"
+                    AutomationProperties.Name="Ayarlar gezinmesi"
+                    BackRequested="OnNavigationBackRequested"
                     SelectionChanged="OnNavigationSelectionChanged">
       <NavigationView.MenuItems>
-        <NavigationViewItem Content="Ana sayfa"
-                            Tag="home"
-                            ToolTipService.ToolTip="Ana sayfa">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE80F;"
-                      Foreground="{ThemeResource SettingsGeneralIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Genel Bakış" Tag="home" ToolTipService.ToolTip="Genel Bakış">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE80F;" Foreground="{ThemeResource SettingsCategoryHomeBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
-        <NavigationViewItem Content="Genel"
-                            Tag="general"
-                            ToolTipService.ToolTip="Genel">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE713;"
-                      Foreground="{ThemeResource SettingsGeneralIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Kişiselleştir" Tag="personalization" ToolTipService.ToolTip="Kişiselleştir">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE771;" Foreground="{ThemeResource SettingsCategoryPersonalizationBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
-        <NavigationViewItem Content="Odak"
-                            Tag="focus"
-                            ToolTipService.ToolTip="Odak">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE734;"
-                      Foreground="{ThemeResource SettingsFocusIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Odak" Tag="focus" ToolTipService.ToolTip="Odak">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE734;" Foreground="{ThemeResource SettingsCategoryFocusBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
-        <NavigationViewItem Content="Modüller"
-                            Tag="modules"
-                            ToolTipService.ToolTip="Modüller">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE74C;"
-                      Foreground="{ThemeResource SettingsModulesIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Modüller" Tag="modules" ToolTipService.ToolTip="Modüller">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE74C;" Foreground="{ThemeResource SettingsCategoryModulesBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
-        <NavigationViewItem Content="Görünüm"
-                            Tag="appearance"
-                            ToolTipService.ToolTip="Görünüm">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE771;"
-                      Foreground="{ThemeResource SettingsAppearanceIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Kısayollar" Tag="shortcuts" ToolTipService.ToolTip="Kısayollar">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE765;" Foreground="{ThemeResource SettingsCategoryShortcutsBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
-        <NavigationViewItem Content="Medya"
-                            Tag="media"
-                            ToolTipService.ToolTip="Medya">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE8D6;"
-                      Foreground="{ThemeResource SettingsMediaIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Sistem" Tag="system" ToolTipService.ToolTip="Sistem">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE7F4;" Foreground="{ThemeResource SettingsCategorySystemBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
-        <NavigationViewItem Content="Bildirimler"
-                            Tag="notifications"
-                            ToolTipService.ToolTip="Bildirimler">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xEA8F;"
-                      Foreground="{ThemeResource SettingsNotificationIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Zaman ve kısayollar"
-                            Tag="time"
-                            ToolTipService.ToolTip="Zaman ve kısayollar">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE823;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Tam ekran"
-                            Tag="fullscreen"
-                            ToolTipService.ToolTip="Tam ekran">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE740;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Monitör"
-                            Tag="monitor"
-                            ToolTipService.ToolTip="Monitör">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE7F4;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Sistem tepsisi"
-                            Tag="tray"
-                            ToolTipService.ToolTip="Sistem tepsisi">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE712;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Başlangıç ve kapanış"
-                            Tag="startup"
-                            ToolTipService.ToolTip="Başlangıç ve kapanış">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE7E8;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Tanılama"
-                            Tag="diagnostics"
-                            ToolTipService.ToolTip="Tanılama">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE9D9;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
-        </NavigationViewItem>
-        <NavigationViewItem Content="Hakkında"
-                            Tag="about"
-                            ToolTipService.ToolTip="Hakkında">
-          <NavigationViewItem.Icon>
-            <FontIcon Glyph="&#xE946;"
-                      Foreground="{ThemeResource SettingsSystemIconBrush}" />
-          </NavigationViewItem.Icon>
+        <NavigationViewItem Content="Destek" Tag="support" ToolTipService.ToolTip="Destek">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE897;" Foreground="{ThemeResource SettingsCategorySupportBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
       </NavigationView.MenuItems>
+      <NavigationView.FooterMenuItems>
+        <NavigationViewItem Content="Yenilikler" Tag="whats-new" ToolTipService.ToolTip="Yenilikler">
+          <NavigationViewItem.Icon><FontIcon Glyph="&#xE8BD;" Foreground="{ThemeResource SettingsCategoryWhatsNewBrush}" /></NavigationViewItem.Icon>
+        </NavigationViewItem>
+      </NavigationView.FooterMenuItems>
 
       <Grid Background="Transparent">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid x:Name="SubpageNavigation"
+              Padding="28,18,28,4"
+              Visibility="Collapsed">
+          <Grid x:Name="SubpageTabs"
+                HorizontalAlignment="Left"
+                AutomationProperties.Name="Alt ayar sayfaları">
+            <StackPanel x:Name="SubpageTabPanel" Orientation="Horizontal" />
+          </Grid>
+
+          <ComboBox x:Name="SubpagePicker"
+                    ItemsSource="{x:Bind CurrentSubpages, Mode=OneTime}"
+                    DisplayMemberPath="Title"
+                    SelectedIndex="0"
+                    MinHeight="44"
+                    HorizontalAlignment="Stretch"
+                    Visibility="Collapsed"
+                    SelectionChanged="OnSubpagePickerSelectionChanged"
+                    AutomationProperties.Name="Alt ayar sayfası" />
+        </Grid>
+
         <ContentControl x:Name="PageHost"
+                        Grid.Row="1"
                         HorizontalContentAlignment="Stretch"
                         VerticalContentAlignment="Stretch" />
+
+        <TextBlock x:Name="NavigationAnnouncement"
+                   Grid.RowSpan="2"
+                   Width="1"
+                   Height="1"
+                   Opacity="0"
+                   IsHitTestVisible="False"
+                   AutomationProperties.LiveSetting="Assertive" />
       </Grid>
     </NavigationView>
   </Grid>

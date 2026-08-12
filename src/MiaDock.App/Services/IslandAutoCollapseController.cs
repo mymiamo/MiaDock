@@ -10,6 +10,7 @@ public sealed class IslandAutoCollapseController : IDisposable
     private readonly DispatcherQueueTimer _inactivityTimer;
     private readonly Dictionary<DispatcherQueueTimer, IslandTrigger> _timerTriggers = new();
     private bool _transientInteractionActive;
+    private bool _pointerInside;
     private bool _disposed;
 
     public IslandAutoCollapseController(DispatcherQueue dispatcherQueue, IslandMotionOptions options)
@@ -55,16 +56,15 @@ public sealed class IslandAutoCollapseController : IDisposable
     public void PointerEntered()
     {
         ThrowIfDisposed();
+        _pointerInside = true;
         _pointerExitTimer.Stop();
-        if (!_transientInteractionActive)
-        {
-            RestartIfRunning(_inactivityTimer);
-        }
+        _inactivityTimer.Stop();
     }
 
     public void PointerExited()
     {
         ThrowIfDisposed();
+        _pointerInside = false;
         if (!_transientInteractionActive)
         {
             Restart(_pointerExitTimer);
@@ -74,7 +74,9 @@ public sealed class IslandAutoCollapseController : IDisposable
     public void RegisterActivity(IslandVisualState state)
     {
         ThrowIfDisposed();
-        if (!_transientInteractionActive && state == IslandVisualState.ExpandedModule)
+        if (!_transientInteractionActive &&
+            !_pointerInside &&
+            state == IslandVisualState.ExpandedModule)
         {
             Restart(_inactivityTimer);
         }
@@ -88,14 +90,16 @@ public sealed class IslandAutoCollapseController : IDisposable
         _inactivityTimer.Stop();
     }
 
-    public void ResumeTransientInteraction(IslandVisualState state)
+    public void ResumeTransientInteraction(IslandVisualState state, bool pointerInside)
     {
         ThrowIfDisposed();
         _transientInteractionActive = false;
+        _pointerInside = pointerInside;
         _pointerExitTimer.Stop();
-        if (state == IslandVisualState.ExpandedModule)
+        _inactivityTimer.Stop();
+        if (!_pointerInside && state != IslandVisualState.ModuleNotification)
         {
-            Restart(_inactivityTimer);
+            Restart(_pointerExitTimer);
         }
     }
 
@@ -116,6 +120,7 @@ public sealed class IslandAutoCollapseController : IDisposable
         }
 
         if (!_transientInteractionActive &&
+            !_pointerInside &&
             transition.CurrentState == IslandVisualState.ExpandedModule)
         {
             Restart(_inactivityTimer);
@@ -166,14 +171,6 @@ public sealed class IslandAutoCollapseController : IDisposable
     {
         timer.Stop();
         timer.Start();
-    }
-
-    private static void RestartIfRunning(DispatcherQueueTimer timer)
-    {
-        if (timer.IsRunning)
-        {
-            Restart(timer);
-        }
     }
 
     private void DisposeTimer(DispatcherQueueTimer timer)

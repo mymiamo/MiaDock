@@ -7,84 +7,58 @@ namespace MiaDock.WinUI.Tests;
 public sealed class SettingsWindowTests
 {
     [TestMethod]
+    public void TrayPage_OffersConfigurableSingleClickAction()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "TraySettingsPage.xaml"));
+
+        StringAssert.Contains(source, "TrayPrimaryActions");
+        StringAssert.Contains(source, "TrayPrimaryActionIndex");
+        StringAssert.Contains(source, "Tray tek tık davranışı");
+    }
+
+    [TestMethod]
     public void DockControlStaticText_HasEnglishLocalizationEntry()
     {
-        var localizationSource = File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory,
-            "Localization",
-            "AppLocalizationService.cs"));
-        var missing = Directory.GetFiles(
-                Path.Combine(AppContext.BaseDirectory, "Controls"),
-                "*.xaml")
-            .SelectMany(file => Regex.Matches(
-                    File.ReadAllText(file),
-                    "(?:Text|Content|Header|PlaceholderText|ToolTipService\\.ToolTip|AutomationProperties\\.Name|AutomationProperties\\.HelpText)=\"([^\"]*[A-Za-zÇĞİÖŞÜçğıöşü][^\"]*)\"")
-                .Select(match => match.Groups[1].Value))
-            .Where(value => !value.StartsWith("{Binding", StringComparison.Ordinal))
-            .Distinct(StringComparer.Ordinal)
-            .Where(value => !Regex.IsMatch(
-                localizationSource,
-                $"(?m)^\\s*\\[\"{Regex.Escape(value)}\"\\]\\s*=\\s*\""))
-            .OrderBy(value => value, StringComparer.Ordinal)
-            .ToArray();
+        var missing = LocalizationTables.FindUntranslatedMarkupText(
+            "Controls",
+            "(?:Text|Content|Header|PlaceholderText|ToolTipService\\.ToolTip|AutomationProperties\\.Name|AutomationProperties\\.HelpText)=\"([^\"]*[A-Za-zÇĞİÖŞÜçğıöşü][^\"]*)\"");
 
         Assert.HasCount(0, missing, $"Missing English entries: {string.Join(", ", missing)}");
     }
 
     [TestMethod]
-    public void FirstSetup_StartsWithPersistentBilingualLanguageChoice()
+    public void FirstSetup_UsesBilingualLanguageChoiceAndCommitsWithTheDraft()
     {
         var welcome = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
             "Onboarding",
             "WelcomeStepView.xaml"));
         var text = welcome.ToString();
-        var firstContent = welcome.Root!
-            .Elements()
-            .Single()
-            .Elements()
-            .First();
         var viewModelSource = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "ViewModels",
             "OnboardingViewModel.cs"));
 
-        Assert.AreEqual("Border", firstContent.Name.LocalName);
         StringAssert.Contains(text, "Dil / Language");
         StringAssert.Contains(text, "ItemsSource=\"{Binding Languages}\"");
         StringAssert.Contains(text, "SelectedIndex=\"{Binding LanguageIndex, Mode=TwoWay}\"");
-        StringAssert.Contains(viewModelSource, "General = settings.General with { Language = value }");
-        StringAssert.Contains(viewModelSource, "FlushLanguagePreferenceAsync");
+        StringAssert.Contains(viewModelSource, "Language = Language");
+        Assert.DoesNotContain("FlushLanguagePreferenceAsync", viewModelSource, StringComparison.Ordinal);
         StringAssert.Contains(viewModelSource, "_localization.SetLanguage(value)");
     }
 
     [TestMethod]
     public void OnboardingStaticText_HasEnglishLocalizationEntry()
     {
-        var localizationSource = File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory,
-            "Localization",
-            "AppLocalizationService.cs"));
-        var bilingualText = new HashSet<string>(StringComparer.Ordinal)
-        {
+        var missing = LocalizationTables.FindUntranslatedMarkupText(
+            "Onboarding",
+            "(?:Text|Content|Header|OnContent|OffContent|PlaceholderText|ToolTipService\\.ToolTip|AutomationProperties\\.Name|AutomationProperties\\.HelpText|Title|Message)=\"([^\"]*[A-Za-zÇĞİÖŞÜçğıöşü][^\"]*)\"",
+            // Shown before a language is chosen, so both languages are on screen.
             "Dil / Language",
-            "Devam etmek istediğiniz dili seçin / Choose your language"
-        };
-        var missing = Directory.GetFiles(
-                Path.Combine(AppContext.BaseDirectory, "Onboarding"),
-                "*.xaml")
-            .SelectMany(file => Regex.Matches(
-                    File.ReadAllText(file),
-                    "(?:Text|Content|Header|OnContent|OffContent|PlaceholderText|ToolTipService\\.ToolTip|AutomationProperties\\.Name|AutomationProperties\\.HelpText|Title|Message)=\"([^\"]*[A-Za-zÇĞİÖŞÜçğıöşü][^\"]*)\"")
-                .Select(match => match.Groups[1].Value))
-            .Where(value => !value.StartsWith("{Binding", StringComparison.Ordinal))
-            .Where(value => !bilingualText.Contains(value))
-            .Distinct(StringComparer.Ordinal)
-            .Where(value => !Regex.IsMatch(
-                localizationSource,
-                $"(?m)^\\s*\\[\"{Regex.Escape(value)}\"\\]\\s*=\\s*\""))
-            .OrderBy(value => value, StringComparer.Ordinal)
-            .ToArray();
+            "Devam etmek istediğiniz dili seçin / Choose your language");
 
         Assert.HasCount(0, missing, $"Missing onboarding English entries: {string.Join(", ", missing)}");
     }
@@ -102,8 +76,15 @@ public sealed class SettingsWindowTests
             .ToArray();
 
         CollectionAssert.AreEquivalent(
-            new[] { "home", "general", "focus", "modules", "appearance", "media", "time", "notifications", "fullscreen", "monitor", "tray", "startup", "diagnostics", "about" },
+            new[] { "home", "personalization", "focus", "modules", "shortcuts", "system", "support", "whats-new" },
             tags);
+
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory, "Windows", "SettingsWindow.xaml.cs"));
+        foreach (var subpage in new[] { "home", "general", "appearance", "monitor", "fullscreen", "focus", "modules", "media", "notifications", "optional", "shortcuts", "tray", "startup", "diagnostics", "whats-new", "about" })
+        {
+            StringAssert.Contains(source, $"[\"{subpage}\"]");
+        }
     }
 
     [TestMethod]
@@ -153,9 +134,10 @@ public sealed class SettingsWindowTests
             "SettingsWindow.xaml.cs"));
 
         StringAssert.Contains(source, "ApplyNavigationLocalization()");
-        StringAssert.Contains(source, "Navigation.MenuItems.OfType<NavigationViewItem>()");
-        StringAssert.Contains(source, "item.Content = text");
-        StringAssert.Contains(source, "ToolTipService.SetToolTip(item, text)");
+        StringAssert.Contains(source, "EnumerateNavigationItems()");
+        StringAssert.Contains(source, "FooterMenuItems");
+        StringAssert.Contains(source, "item.Content = category.Title");
+        StringAssert.Contains(source, "ToolTipService.SetToolTip(item, category.Title)");
     }
 
     [TestMethod]
@@ -180,7 +162,7 @@ public sealed class SettingsWindowTests
 
         foreach (var moduleId in new[]
                  {
-                     "media", "volume", "system-activity", "battery",
+                     "media", "volume", "privacy", "system-activity", "battery",
                      "network", "bluetooth", "timer", "notifications",
                      "transfers"
                  })
@@ -195,27 +177,28 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(dialog, "Service used:");
         StringAssert.Contains(settings, "ModuleServiceConsentDialog");
         StringAssert.Contains(settings, "!disclosure.RequiresWindowsPermission");
-        StringAssert.Contains(onboarding, "OnboardingStep.Modules");
+        StringAssert.Contains(onboarding, "OnboardingStep.FeaturesAndPrivacy");
         StringAssert.Contains(onboarding, "_approvedModuleIds");
         StringAssert.Contains(onboarding, "!disclosure.RequiresWindowsPermission");
     }
 
     [TestMethod]
-    public void HomePage_ProvidesResponsiveStatusAndQuickSettingsCards()
+    public void HomePage_ProvidesPremiumStatusQuickSettingsAndHealthStrip()
     {
         var text = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
             "Settings",
             "HomeSettingsPage.xaml")).ToString();
 
-        StringAssert.Contains(text, "AdaptiveTrigger MinWindowWidth=\"760\"");
-        StringAssert.Contains(text, "Hızlı dock ayarları");
+        StringAssert.Contains(text, "Dock hazır");
+        StringAssert.Contains(text, "Hızlı ayarlar");
         StringAssert.Contains(text, "StartupStatusMessage");
         StringAssert.Contains(text, "EnabledModuleSummary");
-        StringAssert.Contains(text, "Microsoft Store güncellemeleri");
+        StringAssert.Contains(text, "Güncelleme");
+        StringAssert.Contains(text, "Aktif modüller");
+        StringAssert.Contains(text, "İzinler");
         StringAssert.Contains(text, "CheckForUpdatesCommand");
-        StringAssert.Contains(text, "OpenStoreCommand");
-        StringAssert.Contains(text, "SettingsCardBorderStyle");
+        StringAssert.Contains(text, "SettingsRowBorderStyle");
     }
 
     [TestMethod]
@@ -236,31 +219,12 @@ public sealed class SettingsWindowTests
     [TestMethod]
     public void SettingsStaticText_HasEnglishLocalizationEntry()
     {
-        var localizationSource = File.ReadAllText(Path.Combine(
-            AppContext.BaseDirectory,
-            "Localization",
-            "AppLocalizationService.cs"));
-        var invariantText = new HashSet<string>(StringComparer.Ordinal)
-        {
+        var missing = LocalizationTables.FindUntranslatedMarkupText(
+            "Settings",
+            "(?:Text|Content|Header|OnContent|OffContent|PlaceholderText|ToolTipService\\.ToolTip|AutomationProperties\\.Name|AutomationProperties\\.HelpText|Title|Message)=\"([^\"]*[A-Za-zÇĞİÖŞÜçğıöşü][^\"]*)\"",
             "#FFFFFF",
             "MiaDock",
-            "v"
-        };
-        var missing = Directory.GetFiles(
-                Path.Combine(AppContext.BaseDirectory, "Settings"),
-                "*.xaml")
-            .SelectMany(file => Regex.Matches(
-                    File.ReadAllText(file),
-                    "(?:Text|Content|Header|OnContent|OffContent|PlaceholderText|ToolTipService\\.ToolTip|AutomationProperties\\.Name|AutomationProperties\\.HelpText|Title|Message)=\"([^\"]*[A-Za-zÇĞİÖŞÜçğıöşü][^\"]*)\"")
-                .Select(match => match.Groups[1].Value))
-            .Where(value => !value.StartsWith("{Binding", StringComparison.Ordinal))
-            .Where(value => !invariantText.Contains(value))
-            .Distinct(StringComparer.Ordinal)
-            .Where(value => !Regex.IsMatch(
-                localizationSource,
-                $"(?m)^\\s*\\[\"{Regex.Escape(value)}\"\\]\\s*=\\s*\""))
-            .OrderBy(value => value, StringComparer.Ordinal)
-            .ToArray();
+            "v");
 
         Assert.HasCount(0, missing, $"Missing Settings English entries: {string.Join(", ", missing)}");
     }
@@ -305,7 +269,23 @@ public sealed class SettingsWindowTests
             "FullscreenSettingsPage.xaml")).ToString();
 
         Assert.DoesNotContain("ShowTrackChanges", text, StringComparison.Ordinal);
-        StringAssert.Contains(text, "Şarkı değişimi dock'u kendiliğinden genişletmez.");
+        StringAssert.Contains(text, "FullscreenBehaviors");
+        StringAssert.Contains(text, "FullscreenBehaviorIndex");
+        StringAssert.Contains(text, "Tamamen gizle hiçbir olay göstermeden dock'u kapatır.");
+    }
+
+    [TestMethod]
+    public void FullscreenPage_ExposesAccessibleFourModeLiveBehavior()
+    {
+        var text = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "FullscreenSettingsPage.xaml")).ToString();
+
+        StringAssert.Contains(text, "Tam ekran dock davranışı");
+        StringAssert.Contains(text, "aynı monitörde");
+        StringAssert.Contains(text, "Kenarda gizle");
+        StringAssert.Contains(text, "AutomationProperties.HelpText");
     }
 
     [TestMethod]
@@ -327,7 +307,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.2.1.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.4.0.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -360,7 +340,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.2.1.0", packageVersion);
+        Assert.AreEqual("1.4.0.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 
@@ -410,6 +390,19 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "OnOpenFolderClick");
         StringAssert.Contains(text, "OnExportClick");
         StringAssert.Contains(text, "OnClearClick");
+        StringAssert.Contains(text, "OnReportBugClick");
+        StringAssert.Contains(text, "RuntimeSummaryText");
+        StringAssert.Contains(text, "SessionSummaryText");
+        StringAssert.Contains(text, "CorrelationText");
+        StringAssert.Contains(text, "ExceptionChain");
+        StringAssert.Contains(text, "PropertiesText");
+
+        var codeBehind = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "DiagnosticsSettingsPage.xaml.cs"));
+        StringAssert.Contains(codeBehind, "https://mymiamo.net/bug");
+        StringAssert.Contains(codeBehind, "LaunchUriAsync");
     }
 
     [TestMethod]
@@ -435,11 +428,15 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "MotionContentDelayMilliseconds");
         StringAssert.Contains(text, "MotionParallax");
         StringAssert.Contains(text, "MotionTransientBlur");
-        StringAssert.Contains(text, "PreviewDock");
-        StringAssert.Contains(text, "CompactPreviewContent");
-        StringAssert.Contains(text, "HoverPreviewContent");
-        StringAssert.Contains(text, "ExpandedPreviewContent");
-        StringAssert.Contains(text, "OnTestAnimationClick");
+        StringAssert.Contains(text, "AnimationKinds");
+        Assert.DoesNotContain("PreviewDock", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Canlı dock önizlemesi", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("OnTestAnimationClick", text, StringComparison.Ordinal);
+        StringAssert.Contains(text, "IsAttachedToScreenEdge");
+        StringAssert.Contains(text, "HasScreenEdgeSpacing");
+        StringAssert.Contains(text, "LinkCornerRadii");
+        StringAssert.Contains(text, "CornerRadius");
+        StringAssert.Contains(text, "ConverterParameter=Invert");
         StringAssert.Contains(text, "ResetAppearanceCommand");
     }
 
@@ -570,15 +567,44 @@ public sealed class SettingsWindowTests
     [TestMethod]
     public void AboutPage_ExposesStoreUpdateStatusAndActions()
     {
-        var text = XDocument.Load(Path.Combine(
+        var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
             "Settings",
-            "AboutSettingsPage.xaml")).ToString();
+            "AboutSettingsPage.xaml"));
+        var text = document.ToString();
 
         StringAssert.Contains(text, "StoreUpdateStatusMessage");
         StringAssert.Contains(text, "StoreUpdateVersionText");
         StringAssert.Contains(text, "CheckForUpdatesCommand");
         StringAssert.Contains(text, "OpenStoreCommand");
+        StringAssert.Contains(text, "SettingsLinkCardButtonStyle");
+        StringAssert.Contains(text, "ExternalLinkError");
+        StringAssert.Contains(text, "AutomationProperties.LiveSetting=\"Assertive\"");
+        Assert.HasCount(3, document.Descendants()
+            .Where(element => element.Name.LocalName == "Button" &&
+                              element.Attribute("Tag") is not null));
+    }
+
+    [TestMethod]
+    public void AboutPage_UsesAllowlistedHttpsSocialLinksAndSearchTerms()
+    {
+        var pageCode = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "AboutSettingsPage.xaml.cs"));
+        var windowCode = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "SettingsWindow.xaml.cs"));
+
+        StringAssert.Contains(pageCode, "https://github.com/mymiamo/MiaDock");
+        StringAssert.Contains(pageCode, "https://www.instagram.com/mymiamonet/");
+        StringAssert.Contains(pageCode, "https://mymiamo.net");
+        StringAssert.Contains(pageCode, "IExternalUriLauncher");
+        StringAssert.Contains(pageCode, "ShowLaunchFailure");
+        StringAssert.Contains(windowCode, "github repository repo source code kaynak kod depo");
+        StringAssert.Contains(windowCode, "instagram social social media sosyal sosyal medya");
+        StringAssert.Contains(windowCode, "website web web sitesi mymiamo mymiamo.net");
     }
 
     [TestMethod]
@@ -595,18 +621,61 @@ public sealed class SettingsWindowTests
     }
 
     [TestMethod]
-    public void TimePage_ExposesTimerGuidanceAndGlobalHotKeys()
+    public void ShortcutsPage_ExposesGlobalHotKeys()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
             "Settings",
-            "TimeAndHotKeysSettingsPage.xaml"));
+            "HotKeysSettingsPage.xaml"));
         var text = document.ToString();
 
-        StringAssert.Contains(text, "Zamanlayıcı ve kronometre");
         StringAssert.Contains(text, "HotKeysEnabled");
+        StringAssert.Contains(text, "HotKeysOnText");
+        StringAssert.Contains(text, "HotKeysOffText");
         StringAssert.Contains(text, "ToggleDockHotKey");
         StringAssert.Contains(text, "TimerPauseResumeHotKey");
+        StringAssert.Contains(text, "ToggleDockHotKeyStatus");
+        StringAssert.Contains(text, "TimerPauseResumeHotKeyStatus");
+        StringAssert.Contains(text, "RestoreDefaultHotKeysCommand");
+        StringAssert.Contains(text, "DefaultGesture");
+        StringAssert.Contains(text, "AccessibleName");
+    }
+
+    [TestMethod]
+    public void OptionalModulesPage_ExposesKeyboardLocksAndTimerGuidance()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "OptionalModulesSettingsPage.xaml"));
+        var text = document.ToString();
+
+        StringAssert.Contains(text, "ShowKeyboardLockEvents");
+        StringAssert.Contains(text, "Klavye kilitleri");
+        StringAssert.Contains(text, "ShowUsbDeviceEvents");
+        StringAssert.Contains(text, "USB cihazları");
+        StringAssert.Contains(text, "Zamanlayıcı");
+        StringAssert.Contains(text, "Zamanlayıcı ve kronometreyi");
+    }
+
+    [TestMethod]
+    public void HotKeyFlow_RejectsDuplicatesAndDispatchesCommandsSafely()
+    {
+        var viewModel = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "ViewModels",
+            "SettingsViewModel.cs"));
+        var coordinator = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Services",
+            "GlobalHotKeyCoordinator.cs"));
+
+        StringAssert.Contains(viewModel, "HotKeyGestureValidator.IsDuplicate");
+        StringAssert.Contains(viewModel, "RestoreDefaultHotKeys");
+        StringAssert.Contains(viewModel, "ResolveHotKeyStatus");
+        StringAssert.Contains(coordinator, "_dispatcher.TryEnqueue");
+        StringAssert.Contains(coordinator, "ExecuteSafelyAsync");
+        StringAssert.Contains(coordinator, "TechnicalEventIds.HotKeyCommandFailed");
     }
 
     [TestMethod]
@@ -681,7 +750,7 @@ public sealed class SettingsWindowTests
 
         StringAssert.Contains(text, "Zamanlayıcı");
         StringAssert.Contains(text, "Kronometre");
-        StringAssert.Contains(text, "StartPresetCommand");
+        StringAssert.Contains(text, "PresetDurations");
         StringAssert.Contains(text, "AddLapCommand");
     }
 
@@ -717,8 +786,37 @@ public sealed class SettingsWindowTests
         Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "TabView"));
         StringAssert.Contains(text, "TimerPanel");
         StringAssert.Contains(text, "StopwatchPanel");
-        StringAssert.Contains(text, "CommandParameter=\"5\"");
+        StringAssert.Contains(text, "ItemsSource=\"{Binding PresetDurations}\"");
+        StringAssert.Contains(text, "SpinButtonPlacementMode=\"Compact\"");
+        StringAssert.Contains(text, "OnPresetClick");
         StringAssert.Contains(text, "TimerSecondaryText");
         StringAssert.Contains(text, "AccentButtonStyle");
+    }
+
+    [TestMethod]
+    public void AppearancePage_ExposesLiveEdgeSpacingAndFourAccessibleCornerControls()
+    {
+        var text = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "AppearanceSettingsPage.xaml"));
+
+        StringAssert.Contains(text, "Value=\"{Binding EdgeMargin, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "IsOn=\"{Binding LinkCornerRadii, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "Value=\"{Binding CornerRadius, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "Slider Minimum=\"0\"");
+        StringAssert.Contains(text, "NumberBox Minimum=\"0\" Maximum=\"48\"");
+        foreach (var property in new[]
+                 {
+                     "TopLeftCornerRadius",
+                     "TopRightCornerRadius",
+                     "BottomRightCornerRadius",
+                     "BottomLeftCornerRadius"
+                 })
+        {
+            StringAssert.Contains(text, $"Value=\"{{Binding {property}, Mode=TwoWay}}\"");
+        }
+
+        StringAssert.Contains(text, "AutomationProperties.HelpText");
     }
 }

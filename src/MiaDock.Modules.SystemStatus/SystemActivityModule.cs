@@ -39,7 +39,6 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
         "SystemActivityExpandedView",
         new HashSet<ModuleEventKind>
         {
-            ModuleEventKind.ValueChanged,
             ModuleEventKind.StatusChanged
         },
         TimeSpan.FromSeconds(3),
@@ -47,8 +46,8 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
         "SystemActivityNotificationView",
         persistentPriority: 0,
         isPersistent: false,
-        iconGlyph: "\uE83D",
-        minimumExpandedHeight: 340);
+        iconGlyph: "\uE717",
+        minimumExpandedHeight: 280);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
 
@@ -125,50 +124,23 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     private ModuleEvent? CreateEvent(SystemActivitySnapshot previous, SystemActivitySnapshot current)
     {
+        if (previous.CallActivity == current.CallActivity)
+        {
+            return null;
+        }
+
         var now = DateTimeOffset.UtcNow;
-        if (previous.CallActivity != current.CallActivity)
-        {
-            return CreateStatusEvent(
-                current.CallActivity == CallActivityState.Possible
-                    ? Text("Dock.CallPossible", "Olası arama etkinliği")
-                    : Text("System.Call.Ended", "Arama etkinliği sona erdi"),
-                current.CallActivity == CallActivityState.Possible
-                    ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
-                    : string.Empty,
-                "\uE717",
-                ModuleEventPriority.High,
-                "system:call",
-                now);
-        }
-
-        if (previous.MicrophoneUsage != current.MicrophoneUsage)
-        {
-            return CreateStatusEvent(
-                current.MicrophoneUsage == MicrophoneUsageState.Active
-                    ? Text("System.Microphone.Active", "Mikrofon etkin")
-                    : Text("System.Microphone.Idle", "Mikrofon boşta"),
-                Text("System.AudioSession.State", "Windows ses oturumu durumu"),
-                "\uE720",
-                ModuleEventPriority.High,
-                "system:microphone",
-                now);
-        }
-
-        if (previous.CameraDeviceAvailability != current.CameraDeviceAvailability ||
-            previous.CameraAccess != current.CameraAccess)
-        {
-            return CreateStatusEvent(
-                current.CameraDeviceAvailability == CameraDeviceAvailability.Available
-                    ? Text("System.Camera.Changed", "Kamera kullanılabilirliği değişti")
-                    : _viewModel.CameraText,
-                _viewModel.CameraText,
-                "\uE714",
-                ModuleEventPriority.Normal,
-                "system:camera",
-                now);
-        }
-
-        return null;
+        return CreateStatusEvent(
+            current.CallActivity == CallActivityState.Possible
+                ? Text("Dock.CallPossible", "Olası arama etkinliği")
+                : Text("System.Call.Ended", "Arama etkinliği sona erdi"),
+            current.CallActivity == CallActivityState.Possible
+                ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
+                : string.Empty,
+            "\uE717",
+            ModuleEventPriority.High,
+            "system:call",
+            now);
     }
 
     private ModuleEvent CreateStatusEvent(
@@ -194,17 +166,13 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     private ModulePresentation CreatePresentation(SystemActivitySnapshot snapshot)
     {
-        var hasOngoingActivity =
-            snapshot.CallActivity == CallActivityState.Possible ||
-            snapshot.MicrophoneUsage == MicrophoneUsageState.Active;
+        var hasOngoingActivity = snapshot.CallActivity == CallActivityState.Possible;
         return new ModulePresentation(
             ModuleId,
             _viewModel.ActivityTitle,
             _viewModel.ActivityDetail,
             _viewModel.ActivityGlyph,
-            snapshot.MicrophoneUsage == MicrophoneUsageState.Active
-                ? ModuleIndicatorKind.ActivityBars
-                : ModuleIndicatorKind.None,
+            hasOngoingActivity ? ModuleIndicatorKind.StatusDot : ModuleIndicatorKind.None,
             valueText: string.Empty,
             presentationKind: ModulePresentationKind.Status,
             commands: [],

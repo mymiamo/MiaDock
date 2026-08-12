@@ -20,6 +20,7 @@ public sealed class FocusAutomationService : IFocusAutomationService
     private readonly HashSet<string> _suppressedTriggers = new(StringComparer.Ordinal);
     private ITimer? _scheduleTimer;
     private bool _updatingFocus;
+    private bool _runtimeActive;
     private bool _disposed;
 
     public FocusAutomationService(
@@ -59,16 +60,8 @@ public sealed class FocusAutomationService : IFocusAutomationService
 
             IsStarted = true;
             _settings.SettingsChanged += OnSettingsChanged;
-            _focus.FocusChanged += OnFocusChanged;
-            _applications.ActivityChanged += OnApplicationActivityChanged;
-            _fullscreen.StateChanged += OnFullscreenChanged;
-            _systemResume.Resumed += OnSystemResumed;
         }
-
-        _applications.Start();
-        _fullscreen.Start();
-        _systemResume.Start();
-        Refresh();
+        ApplyEnabledState(_settings.Current.Focus.IsEnabled);
     }
 
     public void Refresh()
@@ -76,7 +69,7 @@ public sealed class FocusAutomationService : IFocusAutomationService
         lock (_gate)
         {
             ObjectDisposedException.ThrowIf(_disposed, this);
-            if (!IsStarted)
+            if (!IsStarted || !_runtimeActive || !_settings.Current.Focus.IsEnabled)
             {
                 return;
             }
@@ -137,10 +130,7 @@ public sealed class FocusAutomationService : IFocusAutomationService
             if (IsStarted)
             {
                 _settings.SettingsChanged -= OnSettingsChanged;
-                _focus.FocusChanged -= OnFocusChanged;
-                _applications.ActivityChanged -= OnApplicationActivityChanged;
-                _fullscreen.StateChanged -= OnFullscreenChanged;
-                _systemResume.Resumed -= OnSystemResumed;
+                DetachRuntimeLocked();
                 IsStarted = false;
             }
 
@@ -225,6 +215,8 @@ public sealed class FocusAutomationService : IFocusAutomationService
             _scheduleTimer = null;
             if (_disposed ||
                 !IsStarted ||
+                !_runtimeActive ||
+                !_settings.Current.Focus.IsEnabled ||
                 !_settings.Current.Focus.Profiles.Any(profile =>
                     profile.Schedules.Any(schedule => schedule.IsEnabled)))
             {
@@ -251,7 +243,7 @@ public sealed class FocusAutomationService : IFocusAutomationService
     {
         lock (_gate)
         {
-            if (_disposed || !IsStarted)
+            if (_disposed || !IsStarted || !_runtimeActive)
             {
                 return;
             }
@@ -275,14 +267,79 @@ public sealed class FocusAutomationService : IFocusAutomationService
 
     private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
     {
-        if (args.Previous.Focus != args.Current.Focus)
+        if (args.Previous.Focus.IsEnabled != args.Current.Focus.IsEnabled)
+        {
+            ApplyEnabledState(args.Current.Focus.IsEnabled);
+        }
+        else if (args.Current.Focus.IsEnabled && args.Previous.Focus != args.Current.Focus)
         {
             Refresh();
         }
     }
 
+    private void ApplyEnabledState(bool enabled)
+    {
+        var shouldStartDependencies = false;
+        lock (_gate)
+        {
+            if (_disposed || !IsStarted)
+            {
+                return;
+            }
+
+            if (!enabled)
+            {
+                DetachRuntimeLocked();
+                _suppressedTriggers.Clear();
+                _scheduleTimer?.Dispose();
+                _scheduleTimer = null;
+                return;
+            }
+
+            if (_runtimeActive)
+            {
+                return;
+            }
+
+            _runtimeActive = true;
+            _focus.FocusChanged += OnFocusChanged;
+            _applications.ActivityChanged += OnApplicationActivityChanged;
+            _fullscreen.StateChanged += OnFullscreenChanged;
+            _systemResume.Resumed += OnSystemResumed;
+            shouldStartDependencies = true;
+        }
+
+        if (shouldStartDependencies)
+        {
+            _applications.Start();
+            _fullscreen.Start();
+            _systemResume.Start();
+            Refresh();
+        }
+    }
+
+    private void DetachRuntimeLocked()
+    {
+        if (!_runtimeActive)
+        {
+            return;
+        }
+        _runtimeActive = false;
+        _focus.FocusChanged -= OnFocusChanged;
+        _applications.ActivityChanged -= OnApplicationActivityChanged;
+        _fullscreen.StateChanged -= OnFullscreenChanged;
+        _systemResume.Resumed -= OnSystemResumed;
+    }
+
     private void OnFocusChanged(object? sender, FocusChangedEventArgs args)
     {
+        lock (_gate)
+        {
+            if (_disposed || !_runtimeActive)
+            {
+                return;
+            }
+        }
         if (!_updatingFocus &&
             args.Reason == FocusChangeReason.Deactivated &&
             args.Previous.IsActive)

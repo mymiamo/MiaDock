@@ -12,6 +12,12 @@ param(
     [ValidateRange(1, 1024)]
     [int]$MaximumWorkingSetGrowthMb = 20,
 
+    [ValidateRange(0, 4096)]
+    [int]$MaximumHandleGrowth = 64,
+
+    [ValidateRange(0, 256)]
+    [int]$MaximumThreadGrowth = 8,
+
     [string]$ExecutablePath,
 
     [string]$ResultsDirectory,
@@ -35,7 +41,7 @@ if (-not (Test-Path -LiteralPath $ExecutablePath -PathType Leaf)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.2.1\runtime"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.4.0.0\phase5-runtime"
 }
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
 New-Item -ItemType Directory -Path $ResultsDirectory -Force | Out-Null
@@ -67,6 +73,9 @@ try {
     }
 
     $initialWorkingSet = $process.WorkingSet64
+    $initialPrivateMemory = $process.PrivateMemorySize64
+    $initialHandleCount = $process.HandleCount
+    $initialThreadCount = $process.Threads.Count
     $previousCpu = $process.TotalProcessorTime
     $previousSampleAt = [DateTimeOffset]::UtcNow
     $deadline = $previousSampleAt.AddSeconds($DurationSeconds)
@@ -92,6 +101,8 @@ try {
             cpuPercent = [Math]::Round($cpuPercent, 3)
             workingSetBytes = $process.WorkingSet64
             privateMemoryBytes = $process.PrivateMemorySize64
+            handleCount = $process.HandleCount
+            threadCount = $process.Threads.Count
             responding = $process.Responding
         })
         $previousCpu = $process.TotalProcessorTime
@@ -105,9 +116,14 @@ try {
         0
     }
     $workingSetGrowth = $process.WorkingSet64 - $initialWorkingSet
+    $privateMemoryGrowth = $process.PrivateMemorySize64 - $initialPrivateMemory
+    $handleGrowth = $process.HandleCount - $initialHandleCount
+    $threadGrowth = $process.Threads.Count - $initialThreadCount
     $notRespondingSamples = @($samples | Where-Object { -not $_.responding }).Count
     $passed = $averageCpu -le $MaximumAverageCpuPercent -and
         $workingSetGrowth -le ($MaximumWorkingSetGrowthMb * 1MB) -and
+        $handleGrowth -le $MaximumHandleGrowth -and
+        $threadGrowth -le $MaximumThreadGrowth -and
         $notRespondingSamples -eq 0
 
     $result = [ordered]@{
@@ -121,10 +137,21 @@ try {
         initialWorkingSetBytes = $initialWorkingSet
         finalWorkingSetBytes = $process.WorkingSet64
         workingSetGrowthBytes = $workingSetGrowth
+        initialPrivateMemoryBytes = $initialPrivateMemory
+        finalPrivateMemoryBytes = $process.PrivateMemorySize64
+        privateMemoryGrowthBytes = $privateMemoryGrowth
+        initialHandleCount = $initialHandleCount
+        finalHandleCount = $process.HandleCount
+        handleGrowth = $handleGrowth
+        initialThreadCount = $initialThreadCount
+        finalThreadCount = $process.Threads.Count
+        threadGrowth = $threadGrowth
         notRespondingSamples = $notRespondingSamples
         thresholds = [ordered]@{
             maximumAverageCpuPercent = $MaximumAverageCpuPercent
             maximumWorkingSetGrowthMb = $MaximumWorkingSetGrowthMb
+            maximumHandleGrowth = $MaximumHandleGrowth
+            maximumThreadGrowth = $MaximumThreadGrowth
         }
         samples = $samples
     }
@@ -135,6 +162,9 @@ try {
     Write-Host "Runtime stability result: $resultPath"
     Write-Host "Average CPU: $([Math]::Round($averageCpu, 3))%"
     Write-Host "Working-set growth: $([Math]::Round($workingSetGrowth / 1MB, 2)) MB"
+    Write-Host "Private-memory growth: $([Math]::Round($privateMemoryGrowth / 1MB, 2)) MB"
+    Write-Host "Handle growth: $handleGrowth"
+    Write-Host "Thread growth: $threadGrowth"
     Write-Host "Not-responding samples: $notRespondingSamples"
 
     if (-not $passed) {

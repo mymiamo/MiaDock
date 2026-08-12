@@ -23,13 +23,18 @@
     <Content Include="..\..\src\MiaDock.App\Controls\ModuleNotificationHost.xaml.cs" Link="Controls\ModuleNotificationHost.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\IdleCompactView.xaml.cs" Link="Controls\IdleCompactView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\MusicCompactView.xaml.cs" Link="Controls\MusicCompactView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Controls\IdleExpandedView.xaml.cs" Link="Controls\IdleExpandedView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Animations\IslandAnimationCoordinator.cs" Link="Animations\IslandAnimationCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\src\MiaDock.App\Animations\CompositionAnimationFactory.cs" Link="Animations\CompositionAnimationFactory.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Animations\IslandBoundsAnimator.cs" Link="Animations\IslandBoundsAnimator.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Animations\BoundsEasingProfile.cs" Link="Animations\BoundsEasingProfile.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Animations\IslandAnimationProfile.cs" Link="Animations\IslandAnimationProfile.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Animations\ToolkitAnimationFactory.cs" Link="Animations\ToolkitAnimationFactory.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.UI\Services\ThemeService.cs" Link="Services\ThemeService.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\VolumeExpandedView.xaml.cs" Link="Controls\VolumeExpandedView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OverlayWindow.xaml" Link="Windows\OverlayWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OverlayWindow.xaml.cs" Link="Windows\OverlayWindow.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\IslandShell.xaml.cs" Link="Controls\IslandShell.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Controls\ColorlessGlassBackdrop.cs" Link="Controls\ColorlessGlassBackdrop.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\SettingsWindow.xaml" Link="Windows\SettingsWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\SettingsWindow.xaml.cs" Link="Windows\SettingsWindow.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OnboardingWindow.xaml" Link="Windows\OnboardingWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
@@ -38,16 +43,30 @@
     <Content Include="..\..\src\MiaDock.App\app.manifest" Link="app.manifest" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\MiaDock.App.csproj" Link="MiaDock.App.csproj" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\*.xaml" Link="Settings\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Views\Settings\AboutSettingsPage.xaml.cs" Link="Settings\AboutSettingsPage.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Views\Settings\DiagnosticsSettingsPage.xaml.cs" Link="Settings\DiagnosticsSettingsPage.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Dialogs\*.xaml" Link="Dialogs\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Onboarding\*.xaml" Link="Onboarding\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Services\AppLocalizationService.cs" Link="Localization\AppLocalizationService.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Strings\**\*.resw" Link="Strings\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Services\AppExceptionCoordinator.cs" Link="Services\AppExceptionCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Services\ModuleSettingsCoordinator.cs" Link="Services\ModuleSettingsCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\App.xaml.cs" Link="Windows\App.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Services\GlobalHotKeyCoordinator.cs" Link="Services\GlobalHotKeyCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Services\ModuleServiceDisclosureCatalog.cs" Link="Services\ModuleServiceDisclosureCatalog.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Services\TrayMenuCoordinator.cs" Link="Services\TrayMenuCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Dialogs\ModuleServiceConsentDialog.cs" Link="Dialogs\ModuleServiceConsentDialog.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\ModulesSettingsPage.xaml.cs" Link="Settings\ModulesSettingsPage.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.Platform.Windows\Startup\WindowsStartupTaskService.cs" Link="Platform\WindowsStartupTaskService.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\ViewModels\OnboardingViewModel.cs" Link="ViewModels\OnboardingViewModel.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\ViewModels\SettingsViewModel.cs" Link="ViewModels\SettingsViewModel.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.Modules.SystemStatus\ViewModels\VolumeModuleViewModel.cs" Link="ViewModels\VolumeModuleViewModel.cs" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- The real loader runs against the real tables, embedded under the same
+         logical names the app uses, so the lookup path is covered end to end. -->
+    <Compile Include="..\..\src\MiaDock.App\Localization\LocalizedStringTables.cs" Link="Localization\LocalizedStringTables.cs" />
+    <EmbeddedResource Include="..\..\src\MiaDock.App\Strings\**\*.resw" LogicalName="MiaDock.App.Strings/%(RecursiveDir)%(Filename)%(Extension)" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />

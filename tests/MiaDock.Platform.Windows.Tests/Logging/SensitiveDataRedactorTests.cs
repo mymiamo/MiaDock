@@ -29,6 +29,10 @@ public sealed class SensitiveDataRedactorTests
         {
             ["operation"] = "refresh",
             ["count"] = 3,
+            ["isFullscreen"] = true,
+            ["source"] = "Recovery",
+            ["generation"] = 42,
+            ["phase"] = "before-native-read",
             ["title"] = "Private song title",
             ["artist"] = "Private artist",
             ["filePath"] = @"C:\Users\someone\Music\private.mp3"
@@ -37,6 +41,10 @@ public sealed class SensitiveDataRedactorTests
         Assert.IsNotNull(result);
         Assert.AreEqual("refresh", result["operation"]);
         Assert.AreEqual("3", result["count"]);
+        Assert.AreEqual("True", result["isFullscreen"]);
+        Assert.AreEqual("Recovery", result["source"]);
+        Assert.AreEqual("42", result["generation"]);
+        Assert.AreEqual("before-native-read", result["phase"]);
         Assert.IsFalse(result.ContainsKey("title"));
         Assert.IsFalse(result.ContainsKey("artist"));
         Assert.IsFalse(result.ContainsKey("filePath"));

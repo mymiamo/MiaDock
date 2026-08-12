@@ -6,5 +6,12 @@ public interface IDiagnosticsFileService
 {
     Task<bool> OpenLogFolderAsync(CancellationToken cancellationToken = default);
 
-    Task<bool> PickAndExportAsync(Window owner, CancellationToken cancellationToken = default);
+    Task<bool> PickAndExportAsync(
+        Window owner,
+        CancellationToken cancellationToken = default);
+
+    Task<bool> PickAndExportAsync(
+        Window owner,
+        string suggestedFileName,
+        CancellationToken cancellationToken = default);
 }

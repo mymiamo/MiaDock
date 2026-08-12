@@ -8,7 +8,11 @@ public sealed partial class SensitiveDataRedactor
     private static readonly HashSet<string> AllowedPropertyKeys = new(StringComparer.Ordinal)
     {
         "api", "count", "durationMs", "eventKind", "hresult", "moduleId", "operation",
-        "reason", "state", "status", "windowKind", "displayMode", "droppedCount"
+        "reason", "state", "status", "windowKind", "displayMode", "droppedCount",
+        "isFullscreen", "source", "phase", "generation", "topologyGeneration",
+        "trackRevision", "sequence", "sessionCount", "selected", "matchedCount",
+        "failureCount", "retry", "cancellationReason", "packageVersion",
+        "osVersion", "architecture", "processArchitecture"
     };
 
     private readonly string _userName = Environment.UserName;

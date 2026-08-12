@@ -2,12 +2,10 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:controls="using:MiaDock.App.Controls">
-  <ScrollViewer Padding="28,20,28,40"
-                HorizontalScrollMode="Disabled"
-                HorizontalScrollBarVisibility="Disabled"
+  <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}"
                 HorizontalContentAlignment="Stretch">
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
-      <StackPanel Spacing="5" Margin="0,0,0,8">
+      <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
         <TextBlock Text="Modüller" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Dock'ta çalışacak özellikleri, olay sürelerini ve tam ekran davranışını yönetin."
                    Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
@@ -33,7 +31,7 @@
         </ItemsControl.ItemTemplate>
       </ItemsControl>
 
-      <TextBlock Text="Windows ana sesi" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TextBlock Text="Windows ana sesi" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" Margin="0,8,0,0" />
       <TextBlock Text="Ses kartında varsayılan çıkış aygıtının nasıl gösterileceğini seçin."
                  TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
 
@@ -47,7 +45,7 @@
           <FontIcon Glyph="&#xE7F5;" FontSize="19" VerticalAlignment="Center"
                     Foreground="{ThemeResource SystemAccentColor}" />
           <StackPanel Grid.Column="1">
-            <TextBlock Text="Çıkış aygıtı adını göster" FontWeight="SemiBold" />
+            <TextBlock Text="Çıkış aygıtı adını göster" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
             <TextBlock Text="Geçici ses kartında hoparlör veya kulaklık adını gösterir."
                        TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
           </StackPanel>
@@ -57,7 +55,7 @@
         </Grid>
       </Border>
 
-      <TextBlock Text="Hassas içerik" FontSize="17" FontWeight="SemiBold" Margin="0,8,0,0" />
+      <TextBlock Text="Hassas içerik" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" Margin="0,8,0,0" />
       <TextBlock Text="Bildirim ve aktarım gibi hassas içerikler için iki koruma da varsayılan olarak kapalıdır."
                  TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
 

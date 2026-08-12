@@ -23,22 +23,23 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     private DispatcherQueueTimer? _clockTimer;
     private readonly MusicModuleViewModel? _music;
     private readonly SystemActivityViewModel? _systemActivity;
+    private readonly PrivacyModuleViewModel? _privacy;
     private readonly ILocalizationService? _localization;
     private readonly ISettingsService? _settings;
     private readonly UISettings _uiSettings = new();
     private readonly Brush _microphoneBrush =
-        new SolidColorBrush(Color.FromArgb(255, 245, 158, 11));
-    private readonly Brush _speakerBrush =
         new SolidColorBrush(Color.FromArgb(255, 74, 222, 128));
+    private readonly Brush _cameraBrush =
+        new SolidColorBrush(Color.FromArgb(255, 245, 158, 11));
     private bool _isLoaded;
     private bool _musicRefreshPending;
     private bool _isPresentationActive;
 
-    public IdleCompactView() : this(null, null, null, null, null)
+    public IdleCompactView() : this(null, null, null, null, null, null)
     {
     }
 
-    public IdleCompactView(MusicModuleViewModel? music) : this(music, null, null, null, null)
+    public IdleCompactView(MusicModuleViewModel? music) : this(music, null, null, null, null, null)
     {
     }
 
@@ -47,10 +48,12 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
         SystemActivityViewModel? systemActivity,
         ILocalizationService? localization = null,
         ISettingsService? settings = null,
-        FocusDockViewModel? focus = null)
+        FocusDockViewModel? focus = null,
+        PrivacyModuleViewModel? privacy = null)
     {
         _music = music;
         _systemActivity = systemActivity;
+        _privacy = privacy;
         _localization = localization;
         _settings = settings;
         InitializeComponent();
@@ -81,6 +84,10 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
         if (_systemActivity is not null)
         {
             _systemActivity.PropertyChanged += OnSystemActivityPropertyChanged;
+        }
+        if (_privacy is not null)
+        {
+            _privacy.PropertyChanged += OnPrivacyPropertyChanged;
         }
         if (_localization is not null)
         {
@@ -122,6 +129,10 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
         {
             _systemActivity.PropertyChanged -= OnSystemActivityPropertyChanged;
         }
+        if (_privacy is not null)
+        {
+            _privacy.PropertyChanged -= OnPrivacyPropertyChanged;
+        }
         if (_localization is not null)
         {
             _localization.LanguageChanged -= OnLanguageChanged;
@@ -145,8 +156,7 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     {
         var shouldRun = _isLoaded && _isPresentationActive;
         _music?.SetAudioMeterActive(this, shouldRun);
-        var hasActivity = _systemActivity?.Snapshot.MicrophoneUsage == MicrophoneUsageState.Active ||
-                          _music?.HasAudioActivity == true;
+        var hasActivity = _privacy?.HasActiveUsage == true;
         if (shouldRun && hasActivity && _uiSettings.AnimationsEnabled)
         {
             IdlePulseStoryboard.Begin();
@@ -162,7 +172,6 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
         if (args.PropertyName == nameof(MusicModuleViewModel.Current))
         {
             UpdateMusicActivity();
-            UpdateActivityDot();
             return;
         }
 
@@ -193,7 +202,6 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
                 }
 
                 UpdateMusicActivity();
-                UpdateActivityDot();
             }))
         {
             _musicRefreshPending = false;
@@ -221,6 +229,16 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
         if (args.PropertyName == nameof(SystemActivityViewModel.Snapshot))
         {
             UpdateCallActivity();
+        }
+    }
+
+    private void OnPrivacyPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName is nameof(PrivacyModuleViewModel.State)
+            or nameof(PrivacyModuleViewModel.Indicator)
+            or nameof(PrivacyModuleViewModel.HasActiveUsage)
+            or nameof(PrivacyModuleViewModel.SummaryText))
+        {
             UpdateActivityDot();
         }
     }
@@ -235,22 +253,23 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     {
         Brush brush;
         string status;
+        var indicator = _privacy?.Indicator ?? PrivacyIndicatorKind.Idle;
 
-        if (_systemActivity?.Snapshot.MicrophoneUsage == MicrophoneUsageState.Active)
+        switch (indicator)
         {
-            brush = _microphoneBrush;
-            status = Text("Dock.MicrophoneInUse", "Mikrofon kullanılıyor");
-        }
-        else if (_music?.HasAudioActivity == true)
-        {
-            brush = _speakerBrush;
-            status = Text("Dock.SpeakerInUse", "Hoparlör kullanılıyor");
-        }
-        else
-        {
-            brush = Application.Current.Resources["IslandStyleAccentBrush"] as Brush
-                    ?? new SolidColorBrush(Color.FromArgb(255, 255, 255, 255));
-            status = Text("Dock.NoAudioActivity", "Ses etkinliği yok");
+            case PrivacyIndicatorKind.Camera:
+                brush = _cameraBrush;
+                status = Text("Privacy_CameraInUse", "Kamera kullanılıyor");
+                break;
+            case PrivacyIndicatorKind.Microphone:
+                brush = _microphoneBrush;
+                status = Text("Privacy_MicrophoneInUse", "Mikrofon kullanılıyor");
+                break;
+            default:
+                brush = Application.Current.Resources["IslandStyleAccentBrush"] as Brush
+                        ?? new SolidColorBrush(Color.FromArgb(255, 255, 255, 255));
+                status = Text("Privacy_NoActiveDevices", "Aktif gizlilik kullanımı yok");
+                break;
         }
 
         if (!ReferenceEquals(IdlePulse.Fill, brush))

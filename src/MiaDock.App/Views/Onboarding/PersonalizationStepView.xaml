@@ -1,0 +1,85 @@
+<UserControl x:Class="MiaDock.App.Views.Onboarding.PersonalizationStepView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+  <StackPanel Spacing="18" MaxWidth="760" HorizontalAlignment="Stretch">
+    <StackPanel Spacing="5">
+      <TextBlock Text="Kişiselleştirin" FontSize="32" FontWeight="SemiBold"
+                 AutomationProperties.HeadingLevel="Level1" />
+      <TextBlock Text="MiaDock'un görünümünü ve ekrandaki yerini seçin."
+                 TextWrapping="Wrap" Opacity="0.72" />
+    </StackPanel>
+
+    <Grid ColumnSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <StackPanel Spacing="7">
+        <TextBlock Text="Dock teması" FontWeight="SemiBold" />
+        <ComboBox ItemsSource="{Binding Themes}"
+                  ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+                  SelectedIndex="{Binding ThemeIndex, Mode=TwoWay}"
+                  MinHeight="44" HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="Dock teması" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Spacing="7">
+        <TextBlock Text="Dock konumu" FontWeight="SemiBold" />
+        <ComboBox ItemsSource="{Binding Positions}"
+                  ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+                  SelectedIndex="{Binding PositionIndex, Mode=TwoWay}"
+                  MinHeight="44" HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="Dock konumu" />
+      </StackPanel>
+    </Grid>
+
+    <StackPanel Spacing="7">
+      <TextBlock Text="Canlı dock önizlemesi" FontWeight="SemiBold" />
+      <Border Height="138" CornerRadius="12"
+              Background="{ThemeResource LayerFillColorDefaultBrush}"
+              BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+              BorderThickness="1">
+        <Grid>
+          <Border Width="310" Height="48" CornerRadius="24"
+                  Background="#D91B1B1B" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <Grid Padding="16,0" ColumnSpacing="12">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <Ellipse Width="7" Height="7" Fill="#FF71D88A" />
+              <TextBlock Grid.Column="1" Text="MiaDock hazır" Foreground="White"
+                         FontWeight="SemiBold" VerticalAlignment="Center" />
+              <FontIcon Grid.Column="2" Glyph="&#xE7F4;" Foreground="#FF73A9FF" FontSize="16" />
+            </Grid>
+          </Border>
+        </Grid>
+      </Border>
+      <TextBlock Text="Tema değişikliği anında önizlenir; kurulum iptal edilirse geri alınır."
+                 FontSize="12" Opacity="0.68" TextWrapping="Wrap" />
+    </StackPanel>
+
+    <Grid ColumnSpacing="12">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <StackPanel Spacing="7">
+        <TextBlock Text="Monitör davranışı" FontWeight="SemiBold" />
+        <ComboBox ItemsSource="{Binding MonitorModes}"
+                  ItemTemplate="{StaticResource SettingOptionItemTemplate}"
+                  SelectedIndex="{Binding MonitorModeIndex, Mode=TwoWay}"
+                  MinHeight="44" HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="Monitör davranışı" />
+      </StackPanel>
+      <StackPanel Grid.Column="1" Spacing="7">
+        <TextBlock Text="Sabit monitör" FontWeight="SemiBold" />
+        <ComboBox ItemsSource="{Binding Displays}"
+                  ItemTemplate="{StaticResource DisplayNameItemTemplate}"
+                  SelectedIndex="{Binding FixedMonitorIndex, Mode=TwoWay}"
+                  MinHeight="44" HorizontalAlignment="Stretch"
+                  AutomationProperties.Name="Sabit monitör" />
+      </StackPanel>
+    </Grid>
+  </StackPanel>
+</UserControl>

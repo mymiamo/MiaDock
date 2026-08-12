@@ -34,6 +34,7 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
     [NotifyPropertyChangedFor(nameof(IsApplicationVolumeAvailable))]
     [NotifyPropertyChangedFor(nameof(MicrophoneText))]
     [NotifyPropertyChangedFor(nameof(CameraText))]
+    [NotifyPropertyChangedFor(nameof(IsCameraInUse))]
     [NotifyPropertyChangedFor(nameof(CallText))]
     [NotifyPropertyChangedFor(nameof(MasterVolumeGlyph))]
     [NotifyPropertyChangedFor(nameof(ActivityTitle))]
@@ -78,23 +79,23 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
         }
     };
 
+    public bool IsCameraInUse =>
+        Snapshot.CameraDeviceAvailability == CameraDeviceAvailability.Available &&
+        Snapshot.CallActivity == CallActivityState.Possible;
+
     public string CallText => Snapshot.CallActivity == CallActivityState.Possible
         ? Text("Dock.CallPossible", "Olası arama etkinliği")
         : Text("System.Call.None", "Arama algılanmadı");
 
     public string ActivityTitle => Snapshot.CallActivity == CallActivityState.Possible
         ? Text("Dock.CallPossible", "Olası arama etkinliği")
-        : Snapshot.MicrophoneUsage == MicrophoneUsageState.Active
-            ? Text("System.Microphone.Active", "Mikrofon etkin")
-            : Text("System.Privacy.None", "Gizlilik etkinliği yok");
+        : Text("System.Call.None", "Arama algılanmadı");
 
     public string ActivityDetail => Snapshot.CallActivity == CallActivityState.Possible
         ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
-        : Text("System.Privacy.Summary", "Mikrofon, kamera ve arama durumu");
+        : Text("System.Call.IdleDetail", "Yerel arama çıkarımı");
 
-    public string ActivityGlyph => Snapshot.CallActivity == CallActivityState.Possible
-        ? "\uE717"
-        : Snapshot.MicrophoneUsage == MicrophoneUsageState.Active ? "\uE720" : "\uE83D";
+    public string ActivityGlyph => "\uE717";
 
     public string MasterVolumeGlyph => Snapshot.IsMasterMuted || Snapshot.MasterVolume <= 0
         ? "\uE74F"

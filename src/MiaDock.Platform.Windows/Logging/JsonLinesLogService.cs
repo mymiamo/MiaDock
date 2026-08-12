@@ -1,4 +1,6 @@
 using System.IO.Compression;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Channels;
@@ -22,6 +24,7 @@ public sealed class JsonLinesLogService : ILogService, ILogReader, ILogArchiveSe
     private readonly string _sessionId = Guid.NewGuid().ToString("N")[..12];
     private DateTimeOffset _lastMaintenanceUtc = DateTimeOffset.MinValue;
     private long _droppedEntryCount;
+    private long _sequenceNumber;
     private bool _disposed;
 
     public JsonLinesLogService(
@@ -81,7 +84,11 @@ public sealed class JsonLinesLogService : ILogService, ILogReader, ILogArchiveSe
                 exception?.GetType().FullName,
                 exception?.HResult,
                 _redactor.Redact(exception?.StackTrace),
-                _redactor.SanitizeProperties(properties));
+                _redactor.SanitizeProperties(properties),
+                Interlocked.Increment(ref _sequenceNumber),
+                Environment.ProcessId,
+                Environment.CurrentManagedThreadId,
+                BuildExceptionChain(exception));
             if (!_queue.Writer.TryWrite(QueueItem.ForEntry(entry)))
             {
                 Interlocked.Increment(ref _droppedEntryCount);
@@ -204,14 +211,73 @@ public sealed class JsonLinesLogService : ILogService, ILogReader, ILogArchiveSe
                 await source.CopyToAsync(destination, cancellationToken);
             }
 
-            var manifest = archive.CreateEntry("export-manifest.json", CompressionLevel.Fastest);
-            await using var manifestStream = manifest.Open();
-            await JsonSerializer.SerializeAsync(manifestStream, new
+            var entries = ReadEntriesForExport(files, cancellationToken);
+            var appVersion = Assembly.GetEntryAssembly()?.GetName().Version?.ToString()
+                ?? "unknown";
+            await WriteJsonEntryAsync(archive, "export-manifest.json", new
             {
                 ExportedAtUtc = DateTimeOffset.UtcNow,
                 FileCount = files.Length,
-                Format = "MiaDock technical logs v1"
-            }, cancellationToken: cancellationToken);
+                EntryCount = entries.Count,
+                SessionCount = entries.Select(item => item.SessionId).Distinct(StringComparer.Ordinal).Count(),
+                DroppedEntryCount,
+                Format = "MiaDock technical logs v2",
+                Product = "MiaDock",
+                AppVersion = appVersion,
+                Runtime = RuntimeInformation.FrameworkDescription,
+                OperatingSystem = RuntimeInformation.OSDescription,
+                OSArchitecture = RuntimeInformation.OSArchitecture.ToString(),
+                ProcessArchitecture = RuntimeInformation.ProcessArchitecture.ToString(),
+                Is64BitProcess = Environment.Is64BitProcess,
+                Culture = System.Globalization.CultureInfo.CurrentCulture.Name,
+                UICulture = System.Globalization.CultureInfo.CurrentUICulture.Name,
+                LoggingFailure = LastFailure is null
+                    ? null
+                    : new { Type = LastFailure.GetType().FullName, HResult = $"0x{LastFailure.HResult:X8}" }
+            }, cancellationToken);
+
+            var latest = entries
+                .OrderByDescending(item => item.TimestampUtc)
+                .ThenByDescending(item => item.SequenceNumber)
+                .Take(250)
+                .OrderBy(item => item.TimestampUtc)
+                .ThenBy(item => item.SequenceNumber)
+                .ToArray();
+            await WriteJsonEntryAsync(archive, "diagnostic-timeline.json", latest, cancellationToken);
+
+            var eventSummary = entries
+                .GroupBy(item => new { item.Level, item.EventId })
+                .Select(group => new
+                {
+                    Level = group.Key.Level.ToString(),
+                    group.Key.EventId,
+                    Count = group.Count(),
+                    LastSeenUtc = group.Max(item => item.TimestampUtc)
+                })
+                .OrderByDescending(item => item.LastSeenUtc)
+                .ToArray();
+            await WriteJsonEntryAsync(archive, "event-summary.json", eventSummary, cancellationToken);
+
+            var report = archive.CreateEntry("BUG-REPORT-README.txt", CompressionLevel.Fastest);
+            await using var reportStream = report.Open();
+            await using var writer = new StreamWriter(reportStream, new UTF8Encoding(false), leaveOpen: false);
+            await writer.WriteAsync($"""
+MiaDock güvenli tanılama paketi / safe diagnostics bundle
+
+Uygulama sürümü / app version: {appVersion}
+İşletim sistemi / operating system: {RuntimeInformation.OSDescription}
+Mimari / architecture: OS={RuntimeInformation.OSArchitecture}, Process={RuntimeInformation.ProcessArchitecture}
+Kayıt / entries: {entries.Count}; Oturum / sessions: {entries.Select(item => item.SessionId).Distinct(StringComparer.Ordinal).Count()}
+Düşürülen kayıt / dropped entries: {DroppedEntryCount}
+
+Hata bildirirken ekleyin / include with the bug report:
+1. Sorunu yeniden oluşturma adımları / reproduction steps
+2. Beklenen ve gerçekleşen davranış / expected and actual behavior
+3. Yaklaşık hata saati ve saat dilimi / approximate failure time and time zone
+4. Bu ZIP dosyası / this ZIP file
+
+Gizlilik / privacy: medya başlığı, sanatçı, bildirim içeriği, kullanıcı adı ve kişisel dosya yolları kaydedilmez.
+""");
         }
         finally
         {
@@ -358,6 +424,59 @@ public sealed class JsonLinesLogService : ILogService, ILogReader, ILogArchiveSe
     private string[] GetLogFiles() => Directory.Exists(LogDirectoryPath)
         ? Directory.GetFiles(LogDirectoryPath, "miadock-*.ndjson")
         : Array.Empty<string>();
+
+    private string? BuildExceptionChain(Exception? exception)
+    {
+        if (exception is null)
+        {
+            return null;
+        }
+
+        var parts = new List<string>(5);
+        for (var current = exception; current is not null && parts.Count < 5; current = current.InnerException)
+        {
+            parts.Add($"{current.GetType().FullName} (0x{current.HResult:X8})");
+        }
+
+        return _redactor.Redact(string.Join(" -> ", parts));
+    }
+
+    private static List<TechnicalLogEntry> ReadEntriesForExport(
+        IEnumerable<string> files,
+        CancellationToken cancellationToken)
+    {
+        var entries = new List<TechnicalLogEntry>();
+        foreach (var file in files)
+        {
+            foreach (var line in File.ReadLines(file))
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                try
+                {
+                    if (JsonSerializer.Deserialize<TechnicalLogEntry>(line, SerializerOptions) is { } entry)
+                    {
+                        entries.Add(entry);
+                    }
+                }
+                catch (JsonException)
+                {
+                }
+            }
+        }
+
+        return entries;
+    }
+
+    private static async Task WriteJsonEntryAsync<T>(
+        ZipArchive archive,
+        string name,
+        T value,
+        CancellationToken cancellationToken)
+    {
+        var entry = archive.CreateEntry(name, CompressionLevel.Fastest);
+        await using var stream = entry.Open();
+        await JsonSerializer.SerializeAsync(stream, value, SerializerOptions, cancellationToken);
+    }
 
     private sealed record QueueItem(TechnicalLogEntry? Entry, TaskCompletionSource? FlushCompletion)
     {

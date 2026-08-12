@@ -24,9 +24,9 @@ public sealed class OverlayWindowTests
         Assert.IsNotNull(island.Attribute("Tapped"));
         Assert.IsNotNull(island.Attribute("KeyDown"));
         Assert.AreEqual("OnDefaultModuleRequested", island.Attribute("DefaultModuleRequested")?.Value);
-        Assert.IsTrue(document.Descendants().Any(element =>
-            element.Name.LocalName == "MenuFlyoutItem" &&
-            element.Attribute("Text")?.Value == "Ayarlar"));
+        Assert.IsNotNull(island.Attribute("RightTapped"));
+        Assert.IsFalse(document.Descendants().Any(element =>
+            element.Name.LocalName is "MenuFlyout" or "MenuFlyoutItem"));
     }
 
     [TestMethod]
@@ -48,13 +48,7 @@ public sealed class OverlayWindowTests
         StringAssert.Contains(expanded, "Snapshot.MasterVolumePercent");
         StringAssert.Contains(expanded, "ToggleMuteCommand");
         StringAssert.Contains(expanded, "OpenSoundSettingsFromUiCommand");
-        StringAssert.Contains(expanded, "MixerSessions");
-        StringAssert.Contains(expanded, "Snapshot.PeakLevel");
-        StringAssert.Contains(expanded, "OnSessionVolumeChanged");
-        StringAssert.Contains(expanded, "Snapshot.CanControlVolume");
-        StringAssert.Contains(expanded, "VolumeAutomationName");
-        StringAssert.Contains(expanded, "MuteAutomationName");
-        StringAssert.Contains(expanded, "AutomationProperties.AccessibilityView=\"Raw\"");
+        StringAssert.Contains(expanded, "MixerStatusText");
         StringAssert.Contains(expanded, "AutomationProperties.LiveSetting=\"Polite\"");
         StringAssert.Contains(notification, "VolumeProgress");
         StringAssert.Contains(notification, "VolumeSlider");
@@ -79,13 +73,81 @@ public sealed class OverlayWindowTests
     [TestMethod]
     public void ColorlessGlassFallback_RemainsTransparentInsteadOfPaintingBlackRectangle()
     {
+        var overlay = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+        var glass = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "ColorlessGlassBackdrop.cs"));
+
+        StringAssert.Contains(glass, "FallbackColor = Color.FromArgb(0, 0, 0, 0)");
+        StringAssert.Contains(overlay, "ApplyTransparentWindowBackdrop();");
+    }
+
+    [TestMethod]
+    public void OverlayWindow_KeepsTheHwndTransparentSoNoBlackRectangleSurroundsTheDock()
+    {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "Windows",
             "OverlayWindow.xaml.cs"));
 
-        StringAssert.Contains(source, "theme.UsesColorlessGlass()");
-        StringAssert.Contains(source, "FallbackColor = Color.FromArgb(0, 0, 0, 0)");
-        StringAssert.Contains(source, "ApplyTransparentWindowBackdrop();");
+        // Window.SystemBackdrop shares the composition slot used for the manual
+        // transparency brush, so an unqualified assignment on the window itself
+        // leaves an opaque HWND rectangle around the dock.
+        var windowAssignments = source
+            .Split('\n')
+            .Where(line => line.Trim().StartsWith("SystemBackdrop =", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.IsEmpty(windowAssignments);
+        StringAssert.Contains(source, "_windowBackdropTarget.SystemBackdrop = _transparentWindowBackdrop;");
+    }
+
+    [TestMethod]
+    public void OverlayTeardown_NeverLetsManagedExceptionsEscapeClosed()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+
+        var onClosed = source.IndexOf("private void OnClosed(", StringComparison.Ordinal);
+        Assert.IsGreaterThanOrEqualTo(0, onClosed);
+        var bodyStart = source.IndexOf('{', onClosed);
+        var tryIndex = source.IndexOf("try", bodyStart, StringComparison.Ordinal);
+        var catchIndex = source.IndexOf("catch (Exception exception)", bodyStart, StringComparison.Ordinal);
+        Assert.IsGreaterThan(bodyStart, tryIndex);
+        Assert.IsGreaterThan(tryIndex, catchIndex);
+        StringAssert.Contains(source, "ClearTransparentWindowBackdrop");
+        StringAssert.Contains(
+            source,
+            "Detaching and disposing the manual transparent brush races with DWM");
+    }
+
+    [TestMethod]
+    public void DockMaterials_AreElementScopedSoRoundedCornersStayAntiAliased()
+    {
+        var overlay = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+        var shell = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml.cs"));
+        var glass = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "ColorlessGlassBackdrop.cs"));
+
+        // A window level material would paint the whole HWND rectangle, which
+        // only a 1-bit GDI region could round.
+        Assert.DoesNotContain("AddSystemBackdropTarget", overlay, StringComparison.Ordinal);
+        StringAssert.Contains(glass, "AddSystemBackdropTarget(connectedTarget)");
+        StringAssert.Contains(shell, "BackdropSurface.SystemBackdrop = theme switch");
+        StringAssert.Contains(shell, "new ColorlessGlassBackdrop()");
     }
 }

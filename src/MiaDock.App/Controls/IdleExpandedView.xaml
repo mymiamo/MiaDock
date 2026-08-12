@@ -103,7 +103,7 @@
 
     <Grid Grid.Row="2" ColumnSpacing="10">
       <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="170" />
+        <ColumnDefinition x:Name="FocusColumn" Width="170" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
 

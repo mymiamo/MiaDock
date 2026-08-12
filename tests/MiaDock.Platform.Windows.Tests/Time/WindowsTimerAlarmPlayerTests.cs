@@ -73,6 +73,51 @@ public sealed class WindowsTimerAlarmPlayerTests
     }
 
     [TestMethod]
+    public void MediaEnded_CallbackDefersReplayUntilNativeCallbackHasReturned()
+    {
+        var session = new RecordingSession();
+        var callbacks = new Queue<Action>();
+        using var player = new WindowsTimerAlarmPlayer(
+            @"C:\MiaDock\Assets\miadock-ringtone.wav",
+            () => session,
+            _ => true,
+            () => { },
+            callbackScheduler: callbacks.Enqueue);
+
+        player.Play();
+        session.Complete();
+
+        Assert.AreEqual(1, session.PlayCount, "Replay must not run inside MediaEnded.");
+        Assert.HasCount(1, callbacks);
+
+        callbacks.Dequeue()();
+
+        Assert.AreEqual(2, session.PlayCount);
+        Assert.IsFalse(session.IsDisposed);
+    }
+
+    [TestMethod]
+    public void DeferredMediaEnded_DoesNotReplayAfterStopDisposedTheSession()
+    {
+        var session = new RecordingSession();
+        var callbacks = new Queue<Action>();
+        using var player = new WindowsTimerAlarmPlayer(
+            @"C:\MiaDock\Assets\miadock-ringtone.wav",
+            () => session,
+            _ => true,
+            () => { },
+            callbackScheduler: callbacks.Enqueue);
+
+        player.Play();
+        session.Complete();
+        player.Stop();
+        callbacks.Dequeue()();
+
+        Assert.AreEqual(1, session.PlayCount);
+        Assert.IsTrue(session.IsDisposed);
+    }
+
+    [TestMethod]
     public void Stop_ImmediatelyDisposesCurrentAlarmAndCancelsRemainingRepeats()
     {
         var first = new RecordingSession();

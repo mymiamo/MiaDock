@@ -16,7 +16,7 @@ public sealed record MotionSettings(
         1,
         0.7,
         0.55,
-        35,
+        48,
         false,
         false);
 

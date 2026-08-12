@@ -9,9 +9,12 @@ internal static class TrayNative
     internal const uint WmDrawItem = 0x002B;
     internal const uint WmMeasureItem = 0x002C;
     internal const uint WmContextMenu = 0x007B;
+    internal const uint WmLButtonUp = 0x0202;
     internal const uint WmLButtonDoubleClick = 0x0203;
     internal const uint WmRButtonUp = 0x0205;
+    internal const uint NinSelect = 0x0400;
     internal const uint TrayCallbackMessage = WmApp + 42;
+    internal const uint TrayDispatchMessage = WmApp + 43;
 
     internal const uint NimAdd = 0x00000000;
     internal const uint NimModify = 0x00000001;
@@ -32,6 +35,15 @@ internal static class TrayNative
     internal const uint MfOwnerDraw = 0x00000100;
     internal const uint MfSeparator = 0x00000800;
     internal const uint MimBackground = 0x00000002;
+    internal const uint MiimState = 0x00000001;
+    internal const uint MiimId = 0x00000002;
+    internal const uint MiimSubmenu = 0x00000004;
+    internal const uint MiimData = 0x00000020;
+    internal const uint MiimFtype = 0x00000100;
+    internal const uint MftOwnerDraw = 0x00000100;
+    internal const uint MftSeparator = 0x00000800;
+    internal const uint MfsDisabled = 0x00000003;
+    internal const uint MfsChecked = 0x00000008;
     internal const uint OdtMenu = 1;
     internal const uint OdsSelected = 0x0001;
     internal const uint OdsGrayed = 0x0002;
@@ -72,6 +84,13 @@ internal static class TrayNative
     {
         internal int X;
         internal int Y;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct Size
+    {
+        internal int Width;
+        internal int Height;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -118,6 +137,23 @@ internal static class TrayNative
         internal nint BackgroundBrush;
         internal nuint ContextHelpId;
         internal nuint MenuData;
+    }
+
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct MenuItemInfo
+    {
+        internal uint Size;
+        internal uint Mask;
+        internal uint Type;
+        internal uint State;
+        internal uint Id;
+        internal nint SubMenu;
+        internal nint CheckedBitmap;
+        internal nint UncheckedBitmap;
+        internal nuint ItemData;
+        internal nint TypeData;
+        internal uint Length;
+        internal nint ItemBitmap;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -207,6 +243,13 @@ internal static class TrayNative
         nuint item,
         nint itemData);
 
+    [DllImport("user32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+    internal static extern bool InsertMenuItemW(
+        nint menu,
+        uint item,
+        [MarshalAs(UnmanagedType.Bool)] bool byPosition,
+        ref MenuItemInfo itemInfo);
+
     [DllImport("user32.dll")]
     internal static extern bool SetMenuInfo(nint menu, ref MenuInfo menuInfo);
 
@@ -273,4 +316,23 @@ internal static class TrayNative
         uint quality,
         uint pitchAndFamily,
         string faceName);
+
+    [DllImport("user32.dll")]
+    internal static extern uint GetDpiForWindow(nint windowHandle);
+
+    [DllImport("user32.dll")]
+    internal static extern uint GetDpiForSystem();
+
+    [DllImport("user32.dll")]
+    internal static extern nint GetDC(nint windowHandle);
+
+    [DllImport("user32.dll")]
+    internal static extern int ReleaseDC(nint windowHandle, nint deviceContext);
+
+    [DllImport("gdi32.dll", CharSet = CharSet.Unicode)]
+    internal static extern bool GetTextExtentPoint32W(
+        nint deviceContext,
+        string text,
+        int length,
+        out Size size);
 }

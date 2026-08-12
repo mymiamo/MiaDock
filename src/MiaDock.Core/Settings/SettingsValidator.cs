@@ -1,5 +1,6 @@
 using MiaDock.Core.Focus;
 using MiaDock.Core.Modules;
+using MiaDock.Core.Presentation;
 
 namespace MiaDock.Core.Settings;
 
@@ -25,7 +26,9 @@ public static class SettingsValidator
                 general.PassiveModuleReturnSeconds,
                 3,
                 30,
-                GeneralSettings.Default.PassiveModuleReturnSeconds)
+                GeneralSettings.Default.PassiveModuleReturnSeconds),
+            ShowKeyboardLockEvents = general.ShowKeyboardLockEvents,
+            ShowUsbDeviceEvents = general.ShowUsbDeviceEvents
         };
 
         var appearance = settings.Appearance ?? AppearanceSettings.Default;
@@ -40,6 +43,17 @@ public static class SettingsValidator
             Springiness = ClampFinite(motion.Springiness, 0, 1, MotionSettings.Default.Springiness),
             ContentDelayMilliseconds = Math.Clamp(motion.ContentDelayMilliseconds, 0, 120)
         };
+        var cornerRadii = appearance.EffectiveCornerRadii;
+        cornerRadii = new DockCornerRadii(
+            ClampFinite(cornerRadii.TopLeft, 0, 48, appearance.CornerRadius),
+            ClampFinite(cornerRadii.TopRight, 0, 48, appearance.CornerRadius),
+            ClampFinite(cornerRadii.BottomRight, 0, 48, appearance.CornerRadius),
+            ClampFinite(cornerRadii.BottomLeft, 0, 48, appearance.CornerRadius));
+        if (appearance.LinkCornerRadii)
+        {
+            cornerRadii = DockCornerRadii.Uniform(cornerRadii.TopLeft);
+        }
+
         appearance = appearance with
         {
             Theme = EnumValue(appearance.Theme, AppearanceSettings.Default.Theme),
@@ -51,7 +65,13 @@ public static class SettingsValidator
             ExpandedHeight = ClampFinite(appearance.ExpandedHeight, 360, 420, AppearanceSettings.Default.ExpandedHeight),
             NotificationWidth = ClampFinite(appearance.NotificationWidth, 240, 620, AppearanceSettings.Default.NotificationWidth),
             NotificationHeight = ClampFinite(appearance.NotificationHeight, 64, 180, AppearanceSettings.Default.NotificationHeight),
-            CornerRadius = ClampFinite(appearance.CornerRadius, 0, 48, AppearanceSettings.Default.CornerRadius),
+            CornerRadius = cornerRadii.TopLeft,
+            CornerRadii = cornerRadii,
+            EdgeMargin = ClampFinite(
+                appearance.EdgeMargin,
+                0,
+                96,
+                AppearanceSettings.Default.EdgeMargin),
             BackgroundColor = NormalizeColor(appearance.BackgroundColor, AppearanceSettings.Default.BackgroundColor),
             AccentColor = NormalizeColor(appearance.AccentColor, AppearanceSettings.Default.AccentColor),
             Opacity = ClampFinite(appearance.Opacity, 0.35, 1, AppearanceSettings.Default.Opacity),
@@ -156,7 +176,9 @@ public static class SettingsValidator
             }
         }
 
-        var activeState = NormalizeFocusActivationState(settings.ActiveState, profileIds);
+        var activeState = settings.IsEnabled
+            ? NormalizeFocusActivationState(settings.ActiveState, profileIds)
+            : null;
         var profilesUnchanged =
             settings.Profiles is not null &&
             normalizedProfiles.Count == settings.Profiles.Count &&
@@ -172,7 +194,8 @@ public static class SettingsValidator
         return new FocusSettings(
             FocusSettings.CurrentSchemaVersion,
             normalizedProfiles,
-            activeState);
+            activeState,
+            settings.IsEnabled);
     }
 
     private static FocusProfile MigrateFocusProfile(
@@ -580,6 +603,11 @@ public static class SettingsValidator
             changed = true;
         }
 
+        if (normalized.TryAdd("privacy", ModuleSettingsEnvelope.PrivacyDefault))
+        {
+            changed = true;
+        }
+
         if (normalized.TryAdd("system-activity", ModuleSettingsEnvelope.SystemActivityDefault))
         {
             changed = true;
@@ -658,8 +686,11 @@ public static class SettingsValidator
     private static FullscreenSettings NormalizeFullscreen(FullscreenSettings? value)
     {
         var settings = value ?? FullscreenSettings.Default;
+        var behavior = EnumValue(settings.Behavior, FullscreenSettings.Default.Behavior);
         return settings with
         {
+            Behavior = behavior,
+            Enabled = behavior != FullscreenDockBehavior.HideCompletely,
             Style = EnumValue(settings.Style, FullscreenSettings.Default.Style),
             NotificationSeconds = ClampFinite(
                 settings.NotificationSeconds,
@@ -732,6 +763,44 @@ public static class SettingsValidator
                     ? AppearanceSettings.Default.Opacity
                     : appearance.Opacity
             };
+        }
+
+        if (settings.SchemaVersion < 19)
+        {
+            var legacyRadius = ClampFinite(
+                appearance.CornerRadius,
+                0,
+                48,
+                AppearanceSettings.Default.CornerRadius);
+            appearance = appearance with
+            {
+                EdgeMargin = AppearanceSettings.Default.EdgeMargin,
+                CornerRadii = DockCornerRadii.Uniform(legacyRadius),
+                LinkCornerRadii = true
+            };
+
+            var legacyFullscreen = settings.Fullscreen ?? FullscreenSettings.Default;
+            settings = settings with
+            {
+                Fullscreen = legacyFullscreen with
+                {
+                    Behavior = legacyFullscreen.Enabled
+                        ? FullscreenDockBehavior.NotificationsOnly
+                        : FullscreenDockBehavior.HideCompletely
+                }
+            };
+        }
+
+        if (settings.SchemaVersion < 20)
+        {
+            general = general with { ShowKeyboardLockEvents = true };
+            settings = settings with { General = general };
+        }
+
+        if (settings.SchemaVersion < 22)
+        {
+            general = general with { ShowUsbDeviceEvents = true };
+            settings = settings with { General = general };
         }
 
         var modules = settings.Modules;

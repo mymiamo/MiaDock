@@ -11,6 +11,7 @@ public sealed record IslandMotionOptions(
     TimeSpan NotificationVisibleDuration,
     TimeSpan ExpandedInactivityDuration,
     MotionPreset Preset,
+    IslandAnimationKind AnimationKind,
     double Intensity,
     double Springiness,
     TimeSpan ContentDelay,
@@ -21,16 +22,17 @@ public sealed record IslandMotionOptions(
         TimeSpan.FromMilliseconds(170),
         TimeSpan.FromMilliseconds(240),
         TimeSpan.FromMilliseconds(180),
-        TimeSpan.FromMilliseconds(220),
-        TimeSpan.FromMilliseconds(160),
+        TimeSpan.FromMilliseconds(280),
+        TimeSpan.FromMilliseconds(200),
         TimeSpan.FromMilliseconds(120),
         TimeSpan.FromMilliseconds(250),
         TimeSpan.FromSeconds(5),
         TimeSpan.FromSeconds(8),
         MotionPreset.Balanced,
+        IslandAnimationKind.ScaleFade,
         0.7,
         0.55,
-        TimeSpan.FromMilliseconds(35),
+        TimeSpan.FromMilliseconds(48),
         false,
         false);
 
@@ -49,6 +51,10 @@ public sealed record IslandMotionOptions(
         if (!Enum.IsDefined(Preset))
         {
             throw new ArgumentOutOfRangeException(nameof(Preset));
+        }
+        if (!Enum.IsDefined(AnimationKind))
+        {
+            throw new ArgumentOutOfRangeException(nameof(AnimationKind));
         }
         if (!double.IsFinite(Intensity) || Intensity is < 0 or > 1)
         {

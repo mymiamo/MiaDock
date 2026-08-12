@@ -147,6 +147,75 @@ public sealed class FocusAutomationServiceTests
         Assert.IsFalse(context.Focus.Current.IsActive);
     }
 
+    [TestMethod]
+    public void DisabledFocus_DoesNotStartWatchersOrEvaluateAutomation()
+    {
+        var profile = Profile(
+            "automatic",
+            rules:
+            [
+                new FocusActivationRule(
+                    "fg",
+                    true,
+                    FocusActivationRuleKind.ApplicationForeground,
+                    "game.exe")
+            ]);
+        var context = CreateContext([profile]);
+        context.Applications.Set("game.exe", ["game.exe"], true);
+        context.Settings.Current = context.Settings.Current with
+        {
+            Focus = context.Settings.Current.Focus with { IsEnabled = false }
+        };
+        using var service = context.CreateService();
+
+        service.Start();
+
+        Assert.IsFalse(context.Focus.Current.IsActive);
+        Assert.AreEqual(0, context.Applications.StartCount);
+        Assert.AreEqual(0, context.Applications.SubscriberCount);
+        Assert.AreEqual(0, context.Fullscreen.StartCount);
+        Assert.AreEqual(0, context.Resume.StartCount);
+    }
+
+    [TestMethod]
+    public void ToggleFocus_ReattachesWatchersExactlyOnceAndKeepsProfiles()
+    {
+        var profile = Profile("automatic");
+        var context = CreateContext([profile]);
+        context.Settings.Current = context.Settings.Current with
+        {
+            Focus = context.Settings.Current.Focus with { IsEnabled = false }
+        };
+        using var service = context.CreateService();
+        service.Start();
+
+        context.Settings.Update(value => value with
+        {
+            Focus = value.Focus with { IsEnabled = true }
+        });
+        context.Settings.Update(value => value with
+        {
+            Focus = value.Focus with { IsEnabled = true }
+        });
+
+        Assert.AreEqual(1, context.Applications.StartCount);
+        Assert.AreEqual(1, context.Applications.SubscriberCount);
+        Assert.AreEqual(1, context.Fullscreen.StartCount);
+        Assert.AreEqual(1, context.Fullscreen.SubscriberCount);
+        Assert.AreEqual(1, context.Resume.StartCount);
+        Assert.AreEqual(1, context.Resume.SubscriberCount);
+        Assert.IsTrue(context.Settings.Current.Focus.Profiles.Any(item => item.Id == profile.Id));
+
+        context.Settings.Update(value => value with
+        {
+            Focus = value.Focus with { IsEnabled = false }
+        });
+
+        Assert.AreEqual(0, context.Applications.SubscriberCount);
+        Assert.AreEqual(0, context.Fullscreen.SubscriberCount);
+        Assert.AreEqual(0, context.Resume.SubscriberCount);
+    }
+
     private static TestContext CreateContext(IReadOnlyList<FocusProfile> profiles)
     {
         var settings = new FakeSettingsService
@@ -309,11 +378,19 @@ public sealed class FocusAutomationServiceTests
 
     private sealed class FakeApplicationActivityService : IApplicationActivityService
     {
+        private EventHandler<ApplicationActivitySnapshot>? _activityChanged;
+
         public ApplicationActivitySnapshot Current { get; private set; } =
             ApplicationActivitySnapshot.Empty;
         public Exception? LastFailure => null;
-        public event EventHandler<ApplicationActivitySnapshot>? ActivityChanged;
-        public void Start() { }
+        public int StartCount { get; private set; }
+        public int SubscriberCount => _activityChanged?.GetInvocationList().Length ?? 0;
+        public event EventHandler<ApplicationActivitySnapshot>? ActivityChanged
+        {
+            add => _activityChanged += value;
+            remove => _activityChanged -= value;
+        }
+        public void Start() => StartCount++;
         public void Refresh() { }
         public void Dispose() { }
 
@@ -327,34 +404,42 @@ public sealed class FocusAutomationServiceTests
                 running.ToHashSet(StringComparer.OrdinalIgnoreCase),
                 Array.Empty<FocusApplicationInfo>(),
                 processMonitoringAvailable);
-            ActivityChanged?.Invoke(this, Current);
+            _activityChanged?.Invoke(this, Current);
         }
 
-        public void PublishCurrent() => ActivityChanged?.Invoke(this, Current);
+        public void PublishCurrent() => _activityChanged?.Invoke(this, Current);
     }
 
     private sealed class FakeFullscreenService : IFullscreenDetectionService
     {
+        private EventHandler<FullscreenSnapshot>? _stateChanged;
+
         public FullscreenSnapshot Current { get; private set; } = FullscreenSnapshot.None;
         public Exception? LastFailure => null;
+        public int StartCount { get; private set; }
+        public int SubscriberCount => _stateChanged?.GetInvocationList().Length ?? 0;
         public event EventHandler<FullscreenSnapshot>? StateChanged
         {
-            add { }
-            remove { }
+            add => _stateChanged += value;
+            remove => _stateChanged -= value;
         }
-        public void Start() { }
+        public void Start() => StartCount++;
         public void Refresh() { }
         public void Dispose() { }
     }
 
     private sealed class FakeResumeService : ISystemResumeService
     {
+        private EventHandler? _resumed;
+
+        public int StartCount { get; private set; }
+        public int SubscriberCount => _resumed?.GetInvocationList().Length ?? 0;
         public event EventHandler? Resumed
         {
-            add { }
-            remove { }
+            add => _resumed += value;
+            remove => _resumed -= value;
         }
-        public void Start() { }
+        public void Start() => StartCount++;
         public void Dispose() { }
     }
 

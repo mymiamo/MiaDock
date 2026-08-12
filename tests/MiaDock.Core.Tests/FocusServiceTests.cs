@@ -122,6 +122,65 @@ public sealed class FocusServiceTests
     }
 
     [TestMethod]
+    public void DisabledFocus_DoesNotRestoreOrActivateAndCreatesNoTimer()
+    {
+        var time = new ManualTimeProvider(TestNow);
+        var settings = new FakeSettingsService
+        {
+            Current = WithActiveState(
+                MiaDockSettings.Default,
+                FocusProfileDefaults.WorkId,
+                TestNow.AddMinutes(-5),
+                TestNow.AddMinutes(25)) with
+            {
+                Focus = MiaDockSettings.Default.Focus with
+                {
+                    IsEnabled = false,
+                    ActiveState = new FocusActivationState(
+                        FocusProfileDefaults.WorkId,
+                        FocusActivationSource.Manual,
+                        TestNow.AddMinutes(-5),
+                        TestNow.AddMinutes(25))
+                }
+            }
+        };
+        using var service = CreateService(settings, time);
+
+        service.Start();
+
+        Assert.IsFalse(service.Current.IsActive);
+        Assert.IsFalse(service.Activate(FocusProfileDefaults.WorkId));
+        Assert.AreEqual(0, time.ActiveTimerCount);
+    }
+
+    [TestMethod]
+    public void ReenabledFocus_PreservesProfilesButDoesNotRestorePreviousActivation()
+    {
+        var custom = CreateCustom("reading", defaultDurationMinutes: 25);
+        var settings = new FakeSettingsService
+        {
+            Current = WithCustomProfile(MiaDockSettings.Default, custom) with
+            {
+                Focus = WithCustomProfile(MiaDockSettings.Default, custom).Focus with
+                {
+                    IsEnabled = false
+                }
+            }
+        };
+        using var service = CreateService(settings, new ManualTimeProvider(TestNow));
+        service.Start();
+
+        settings.Update(value => value with
+        {
+            Focus = value.Focus with { IsEnabled = true }
+        });
+
+        Assert.IsFalse(service.Current.IsActive);
+        Assert.IsTrue(service.Current.Profiles.Any(profile => profile.Id == custom.Id));
+        Assert.IsTrue(service.Activate(custom.Id));
+    }
+
+    [TestMethod]
     public void Activate_DifferentProfileRaisesSwitched()
     {
         var settings = new FakeSettingsService();

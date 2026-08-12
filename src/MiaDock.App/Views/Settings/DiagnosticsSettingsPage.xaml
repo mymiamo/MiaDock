@@ -1,7 +1,8 @@
 <UserControl x:Class="MiaDock.App.Views.Settings.DiagnosticsSettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-  <Grid Padding="32,24,32,40" RowSpacing="16">
+  <Grid Padding="{StaticResource SettingsPagePadding}" RowSpacing="16" MaxWidth="920"
+        HorizontalAlignment="Stretch">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="Auto" />
@@ -10,44 +11,64 @@
       <RowDefinition Height="*" />
     </Grid.RowDefinitions>
 
-    <StackPanel Spacing="8">
-      <TextBlock Text="Tanılama" Style="{ThemeResource TitleTextBlockStyle}" />
-      <TextBlock Text="Yerel teknik logları görüntüleyin ve yönetin." Opacity="0.68" />
+    <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
+      <TextBlock Text="Tanılama" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
+      <TextBlock Text="Yerel teknik logları görüntüleyin ve yönetin."
+                 Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
     </StackPanel>
 
     <InfoBar Grid.Row="1" IsOpen="True" Severity="Informational" Title="Gizlilik"
              Message="Loglar yalnızca bu cihazda tutulur. Şarkı, sanatçı, kullanıcı adı, kişisel yol ve medya geçmişi kaydedilmez." />
 
-    <Grid Grid.Row="2" ColumnSpacing="20">
-      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-      <TextBlock Text="{Binding FileCountText}" />
-      <TextBlock Grid.Column="1" Text="{Binding StorageSizeText}" />
-      <TextBlock Grid.Column="2" Text="{Binding StatusMessage}" TextWrapping="Wrap"
+    <StackPanel Grid.Row="2" Spacing="4">
+      <TextBlock Text="{Binding RuntimeSummaryText}" TextWrapping="Wrap" />
+      <TextBlock Text="{Binding SessionSummaryText}" TextWrapping="Wrap" Opacity="0.72" />
+      <StackPanel Orientation="Horizontal" Spacing="20">
+        <TextBlock Text="{Binding FileCountText}" />
+        <TextBlock Text="{Binding StorageSizeText}" />
+      </StackPanel>
+      <TextBlock Text="{Binding StatusMessage}" TextWrapping="Wrap"
                  AutomationProperties.LiveSetting="Polite" />
-    </Grid>
+    </StackPanel>
 
     <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
-      <Button Content="Yenile" Click="OnRefreshClick" />
-      <Button Content="Log klasörünü aç" Click="OnOpenFolderClick" />
-      <Button Content="ZIP olarak dışa aktar" Click="OnExportClick" />
-      <Button Content="Logları temizle" Click="OnClearClick" />
+      <Button Content="Yenile" Click="OnRefreshClick" Margin="0,0,8,8" />
+      <Button Content="Log klasörünü aç" Click="OnOpenFolderClick" Margin="0,0,8,8" />
+      <Button Content="ZIP olarak dışa aktar" Click="OnExportClick" Margin="0,0,8,8" />
+      <Button Content="Logları temizle" Click="OnClearClick" Margin="0,0,8,8" />
+      <Button Content="Hata bildir"
+              Click="OnReportBugClick"
+              AutomationProperties.Name="MiaDock hata bildirim sayfasını aç"
+              Margin="0,0,0,8" />
     </StackPanel>
 
     <ListView Grid.Row="4" ItemsSource="{Binding RecentEntries}"
               AutomationProperties.Name="Son teknik log kayıtları">
       <ListView.ItemTemplate>
         <DataTemplate>
-          <Grid Padding="8" ColumnSpacing="12">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="150"/><ColumnDefinition Width="90"/><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-            <TextBlock Text="{Binding TimestampUtc}" Opacity="0.68" />
-            <TextBlock Grid.Column="1" Text="{Binding Level}" FontWeight="SemiBold" />
-            <TextBlock Grid.Column="2" Text="{Binding Category}" TextTrimming="CharacterEllipsis" />
-            <StackPanel Grid.Column="3">
+          <StackPanel Padding="8" Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="12">
+              <TextBlock Text="{Binding TimestampUtc}" Opacity="0.68" />
+              <TextBlock Text="{Binding Level}" FontWeight="SemiBold" />
+            </StackPanel>
+            <TextBlock Text="{Binding Category}" TextTrimming="CharacterEllipsis" />
+            <StackPanel>
               <TextBlock Text="{Binding Message}" TextWrapping="Wrap" />
               <TextBlock Text="{Binding EventId}" Opacity="0.58" />
-              <TextBlock Text="{Binding ExceptionType}" Opacity="0.58" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding CorrelationText}" Opacity="0.58" TextWrapping="Wrap"
+                         IsTextSelectionEnabled="True" />
+              <TextBlock Text="{Binding ExceptionType}" Opacity="0.68" TextWrapping="Wrap"
+                         IsTextSelectionEnabled="True" />
+              <TextBlock Text="{Binding ExceptionChain}" Opacity="0.68" TextWrapping="Wrap"
+                         IsTextSelectionEnabled="True" />
+              <TextBlock Text="{Binding HResultText}" Opacity="0.68"
+                         IsTextSelectionEnabled="True" />
+              <TextBlock Text="{Binding PropertiesText}" Opacity="0.68" TextWrapping="Wrap"
+                         IsTextSelectionEnabled="True" />
+              <TextBlock Text="{Binding StackTrace}" Opacity="0.58" TextWrapping="Wrap"
+                         FontFamily="Consolas" IsTextSelectionEnabled="True" />
             </StackPanel>
-          </Grid>
+          </StackPanel>
         </DataTemplate>
       </ListView.ItemTemplate>
     </ListView>

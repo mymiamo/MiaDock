@@ -9,8 +9,15 @@ internal sealed class TestLocalizationService(
 {
     public AppLanguage CurrentLanguage { get; private set; } = AppLanguage.Turkish;
 
-    public CultureInfo CurrentCulture =>
-        new(CurrentLanguage == AppLanguage.English ? "en-US" : "tr-TR");
+    public CultureInfo CurrentCulture => CurrentLanguage switch
+    {
+        AppLanguage.English => new("en-US"),
+        AppLanguage.Azerbaijani => new("az-Latn-AZ"),
+        AppLanguage.SpanishSpain => new("es-ES"),
+        AppLanguage.SpanishMexico => new("es-MX"),
+        AppLanguage.PortugueseBrazil => new("pt-BR"),
+        _ => new("tr-TR")
+    };
 
     public event EventHandler? LanguageChanged;
 

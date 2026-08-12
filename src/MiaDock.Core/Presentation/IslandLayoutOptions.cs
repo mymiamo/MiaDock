@@ -9,12 +9,17 @@ public sealed record IslandLayoutOptions(
     double ExpandedHeight,
     double NotificationWidth,
     double NotificationHeight,
-    double CornerRadius)
+    double CornerRadius,
+    DockCornerRadii? CornerRadii = null)
 {
     public static IslandLayoutOptions Default { get; } = new(
         292, 46,
         300, 72,
         548, 360,
         440, 92,
-        23);
+        23,
+        DockCornerRadii.Uniform(23));
+
+    public DockCornerRadii EffectiveCornerRadii =>
+        CornerRadii ?? DockCornerRadii.Uniform(CornerRadius);
 }

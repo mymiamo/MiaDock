@@ -13,7 +13,6 @@
   </ContentDialog.Resources>
 
   <ScrollViewer MaxHeight="620"
-                MinWidth="580"
                 HorizontalScrollMode="Disabled"
                 HorizontalScrollBarVisibility="Disabled">
     <StackPanel Spacing="15">
@@ -22,32 +21,25 @@
                Severity="Error"
                Message="{Binding ErrorMessage}" />
 
-      <Grid ColumnSpacing="12">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="190" />
-        </Grid.ColumnDefinitions>
+      <StackPanel Spacing="10">
         <TextBox Header="Profil adı"
                  MaxLength="40"
                  Text="{Binding Name, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                  IsReadOnly="{Binding IsBuiltIn}"
                  AutomationProperties.Name="Odak profili adı" />
-        <ComboBox Grid.Column="1"
+        <ComboBox
                   Header="Simge"
                   ItemsSource="{Binding IconOptions}"
                   DisplayMemberPath="Label"
                   SelectedIndex="{Binding IconIndex, Mode=TwoWay}"
                   HorizontalAlignment="Stretch"
                   AutomationProperties.Name="Odak profili simgesi" />
-      </Grid>
+      </StackPanel>
 
-      <Grid ColumnSpacing="16">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+      <StackPanel Spacing="10">
         <ColorPicker x:Name="ProfileColorPicker"
-                     Width="250"
+                     MaxWidth="250"
+                     HorizontalAlignment="Left"
                      IsAlphaEnabled="False"
                      IsAlphaSliderVisible="False"
                      IsColorChannelTextInputVisible="False"
@@ -55,7 +47,7 @@
                      IsMoreButtonVisible="False"
                      ColorSpectrumShape="Ring"
                      ColorChanged="OnColorChanged" />
-        <StackPanel Grid.Column="1"
+        <StackPanel
                     VerticalAlignment="Center"
                     Spacing="6">
           <TextBlock Text="Profil rengi"
@@ -69,7 +61,7 @@
                      Opacity="0.65"
                      TextWrapping="Wrap" />
         </StackPanel>
-      </Grid>
+      </StackPanel>
 
       <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="10">
@@ -122,7 +114,10 @@
                               Click="OnRemoveScheduleClick" />
                     </Grid>
 
-                    <StackPanel Orientation="Horizontal" Spacing="4">
+                    <ItemsControl>
+                      <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate><ItemsWrapGrid Orientation="Horizontal" /></ItemsPanelTemplate>
+                      </ItemsControl.ItemsPanel>
                       <ToggleButton Content="Pzt" IsChecked="{Binding Monday, Mode=TwoWay}" />
                       <ToggleButton Content="Sal" IsChecked="{Binding Tuesday, Mode=TwoWay}" />
                       <ToggleButton Content="Çar" IsChecked="{Binding Wednesday, Mode=TwoWay}" />
@@ -130,21 +125,17 @@
                       <ToggleButton Content="Cum" IsChecked="{Binding Friday, Mode=TwoWay}" />
                       <ToggleButton Content="Cmt" IsChecked="{Binding Saturday, Mode=TwoWay}" />
                       <ToggleButton Content="Paz" IsChecked="{Binding Sunday, Mode=TwoWay}" />
-                    </StackPanel>
+                    </ItemsControl>
 
-                    <Grid ColumnSpacing="10">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                      </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="10">
                       <TimePicker Header="Başlangıç"
                                   ClockIdentifier="24HourClock"
                                   SelectedTime="{Binding StartTime, Mode=TwoWay}" />
-                      <TimePicker Grid.Column="1"
+                      <TimePicker
                                   Header="Bitiş"
                                   ClockIdentifier="24HourClock"
                                   SelectedTime="{Binding EndTime, Mode=TwoWay}" />
-                    </Grid>
+                    </StackPanel>
                   </StackPanel>
                 </Border>
               </DataTemplate>
@@ -188,23 +179,19 @@
                               Tag="{Binding}"
                               Click="OnRemoveAutomationRuleClick" />
                     </Grid>
-                    <Grid ColumnSpacing="10">
-                      <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="*" />
-                      </Grid.ColumnDefinitions>
+                    <StackPanel Spacing="10">
                       <ComboBox Header="Tetikleyici"
                                 ItemsSource="{Binding KindOptions}"
                                 DisplayMemberPath="Label"
                                 SelectedIndex="{Binding KindIndex, Mode=TwoWay}"
                                 HorizontalAlignment="Stretch" />
-                      <ComboBox Grid.Column="1"
+                      <ComboBox
                                 Header="Uygulama"
                                 ItemsSource="{Binding ApplicationOptions}"
                                 DisplayMemberPath="Label"
                                 SelectedIndex="{Binding ApplicationIndex, Mode=TwoWay}"
                                 HorizontalAlignment="Stretch" />
-                    </Grid>
+                    </StackPanel>
                     <InfoBar IsOpen="{Binding HasAvailabilityMessage}"
                              IsClosable="False"
                              Severity="Warning"
@@ -217,23 +204,19 @@
         </StackPanel>
       </Border>
 
-      <Grid ColumnSpacing="12">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="*" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
+      <StackPanel Spacing="10">
         <ComboBox Header="Dock görünürlüğü"
                   ItemsSource="{Binding DockVisibilityOptions}"
                   DisplayMemberPath="Label"
                   SelectedIndex="{Binding DockVisibilityIndex, Mode=TwoWay}"
                   HorizontalAlignment="Stretch" />
-        <ComboBox Grid.Column="1"
+        <ComboBox
                   Header="Minimum olay önceliği"
                   ItemsSource="{Binding PriorityOptions}"
                   DisplayMemberPath="Label"
                   SelectedIndex="{Binding MinimumPriorityIndex, Mode=TwoWay}"
                   HorizontalAlignment="Stretch" />
-      </Grid>
+      </StackPanel>
 
       <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="10">

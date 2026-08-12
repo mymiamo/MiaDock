@@ -15,6 +15,8 @@ public static class SettingsMapper
         IslandPositionSetting.BottomCenter => OverlayPosition.BottomCenter,
         IslandPositionSetting.BottomLeft => OverlayPosition.BottomLeft,
         IslandPositionSetting.BottomRight => OverlayPosition.BottomRight,
+        IslandPositionSetting.LeftCenter => OverlayPosition.LeftCenter,
+        IslandPositionSetting.RightCenter => OverlayPosition.RightCenter,
         _ => OverlayPosition.TopCenter
     };
 
@@ -27,7 +29,8 @@ public static class SettingsMapper
         settings.ExpandedHeight,
         settings.NotificationWidth,
         settings.NotificationHeight,
-        settings.CornerRadius);
+        settings.CornerRadius,
+        settings.EffectiveCornerRadii);
 
     public static IslandMotionOptions ToMotionOptions(MiaDockSettings settings)
     {
@@ -55,6 +58,7 @@ public static class SettingsMapper
             ContentRefreshDuration = Scale(defaults.ContentRefreshDuration, profileScale, speed),
             NotificationVisibleDuration = TimeSpan.FromSeconds(settings.Fullscreen.NotificationSeconds),
             Preset = motion.Preset,
+            AnimationKind = settings.Appearance.AnimationKind,
             Intensity = motion.Intensity,
             Springiness = motion.Springiness,
             ContentDelay = TimeSpan.FromMilliseconds(motion.ContentDelayMilliseconds),

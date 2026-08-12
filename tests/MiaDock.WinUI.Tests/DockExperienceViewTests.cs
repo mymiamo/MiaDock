@@ -246,10 +246,18 @@ public sealed class DockExperienceViewTests
             .ToArray();
         Assert.HasCount(3, numberBoxes);
         Assert.IsTrue(numberBoxes.All(box =>
-            box.Attribute("SpinButtonPlacementMode")?.Value == "Inline"));
+            box.Attribute("SpinButtonPlacementMode")?.Value == "Compact"));
         Assert.IsTrue(numberBoxes.All(box =>
             box.Attribute("GotFocus")?.Value == "OnDurationEditorGotFocus" &&
             box.Attribute("LostFocus")?.Value == "OnDurationEditorLostFocus"));
+
+        var presetList = FindNamedElement(document, "PresetList");
+        Assert.AreEqual("{Binding PresetDurations}", presetList.Attribute("ItemsSource")?.Value);
+        Assert.IsTrue(presetList.Descendants().Any(element =>
+            element.Name.LocalName == "StackPanel" &&
+            element.Attribute("Orientation")?.Value == "Horizontal"));
+        Assert.IsFalse(presetList.Descendants().Any(element =>
+            element.Name.LocalName == "ItemsWrapGrid"));
     }
 
     [TestMethod]
