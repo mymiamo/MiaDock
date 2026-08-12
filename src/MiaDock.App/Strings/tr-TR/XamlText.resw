@@ -2104,4 +2104,10 @@
   <data name="XamlText.0686" xml:space="preserve">
     <value>Klavye kilitleri, USB ve yardımcı özellikler</value>
   </data>
+  <data name="XamlText.0687" xml:space="preserve">
+    <value>Güncellemeler denetleniyor</value>
+  </data>
+  <data name="XamlText.0688" xml:space="preserve">
+    <value>Medya kaynakları hazırlanıyor…</value>
+  </data>
 </root>

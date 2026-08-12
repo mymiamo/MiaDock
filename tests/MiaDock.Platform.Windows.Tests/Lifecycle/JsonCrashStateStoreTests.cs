@@ -51,13 +51,37 @@ public sealed class JsonCrashStateStoreTests
     {
         using var paths = new TempSettingsPathProvider();
         var store = new JsonCrashStateStore(paths);
-        store.MarkCrashed(new InvalidOperationException("boom"));
+        Exception exception;
+        try
+        {
+            throw new InvalidOperationException("boom");
+        }
+        catch (InvalidOperationException captured)
+        {
+            exception = captured;
+        }
+        store.MarkCrashed(exception);
 
         Assert.IsTrue(store.TryConsumePendingCrash(out var record));
         Assert.IsTrue(record.PendingCrash);
         Assert.AreEqual(typeof(InvalidOperationException).FullName, record.ExceptionType);
         Assert.AreEqual("boom", record.ExceptionMessage);
+        Assert.AreEqual(exception.HResult, record.ExceptionHResult);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(record.ExceptionStackTrace));
         Assert.IsFalse(store.TryConsumePendingCrash(out _));
+    }
+
+    [TestMethod]
+    public void MarkCleanShutdown_RemovesSensitiveCrashContext()
+    {
+        using var paths = new TempSettingsPathProvider();
+        var store = new JsonCrashStateStore(paths);
+        store.MarkCrashed(new InvalidOperationException("boom"));
+        store.MarkCleanShutdown();
+
+        Assert.IsFalse(store.TryConsumePendingCrash(out var record));
+        Assert.IsNull(record.ExceptionStackTrace);
+        Assert.IsNull(record.ExceptionHResult);
     }
 
     [TestMethod]

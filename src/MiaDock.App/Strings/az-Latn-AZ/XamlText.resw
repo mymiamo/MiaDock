@@ -2106,4 +2106,10 @@
   <data name="XamlText.0686" xml:space="preserve">
     <value>Klaviatura kilidləri, USB və köməkçi xüsusiyyətlər</value>
   </data>
+  <data name="XamlText.0687" xml:space="preserve">
+    <value>Yeniləmələr yoxlanılır</value>
+  </data>
+  <data name="XamlText.0688" xml:space="preserve">
+    <value>Media mənbələri hazırlanır…</value>
+  </data>
 </root>

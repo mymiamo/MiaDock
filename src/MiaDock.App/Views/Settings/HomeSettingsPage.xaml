@@ -1,7 +1,11 @@
 <UserControl
     x:Class="MiaDock.App.Views.Settings.HomeSettingsPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </UserControl.Resources>
 
   <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}">
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}" Spacing="20">
@@ -157,8 +161,14 @@
               <TextBlock Text="Güncelleme" FontWeight="SemiBold" />
               <TextBlock Text="{Binding StoreUpdateStatusMessage}" FontSize="12" Opacity="0.68"
                          TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
-              <Button Content="Denetle" Command="{Binding CheckForUpdatesCommand}"
-                      Margin="0,8,0,0" MinHeight="44" HorizontalAlignment="Left" />
+              <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0">
+                <Button Content="Denetle" Command="{Binding CheckForUpdatesCommand}"
+                        MinHeight="44" HorizontalAlignment="Left" />
+                <ProgressRing Width="20" Height="20"
+                              IsActive="{Binding IsStoreUpdateChecking}"
+                              Visibility="{Binding IsStoreUpdateChecking, Converter={StaticResource BooleanToVisibilityConverter}}"
+                              AutomationProperties.Name="Güncellemeler denetleniyor" />
+              </StackPanel>
             </StackPanel>
           </StackPanel>
           <Rectangle Grid.Column="1" Fill="{ThemeResource DividerStrokeColorDefaultBrush}" />

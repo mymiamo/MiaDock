@@ -12,6 +12,7 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MiaDock.App.Dialogs;
+using MiaDock.App.Animations;
 using MiaDock.App.Infrastructure;
 using MiaDock.App.Models;
 using MiaDock.App.Services;
@@ -50,6 +51,7 @@ public sealed partial class SettingsWindow : Window
     private bool _isNarrow;
     private bool _syncingSubpageSelection;
     private bool _isNavigatingBack;
+    private CancellationTokenSource? _pageEntranceCancellation;
 
     public SettingsWindow(
         SettingsViewModel viewModel,
@@ -216,6 +218,9 @@ public sealed partial class SettingsWindow : Window
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
+        _pageEntranceCancellation?.Cancel();
+        _pageEntranceCancellation?.Dispose();
+        _pageEntranceCancellation = null;
         _localization.LanguageChanged -= OnLanguageChanged;
         _homePage.NavigationRequested -= OnHomeNavigationRequested;
         _modulesPage.DetailsRequested -= OnModuleDetailsRequested;
@@ -408,6 +413,9 @@ public sealed partial class SettingsWindow : Window
 
     private void ShowPage(UserControl page)
     {
+        _pageEntranceCancellation?.Cancel();
+        _pageEntranceCancellation?.Dispose();
+        _pageEntranceCancellation = new CancellationTokenSource();
         PageHost.Content = page;
         ElementCompositionPreview.SetIsTranslationEnabled(PageHost, true);
         var visual = ElementCompositionPreview.GetElementVisual(PageHost);
@@ -431,6 +439,18 @@ public sealed partial class SettingsWindow : Window
         translation.Duration = TimeSpan.FromMilliseconds(200);
         visual.StartAnimation("Opacity", opacity);
         visual.StartAnimation("Translation", translation);
+        _ = AnimatePageEntranceAsync(page, _pageEntranceCancellation.Token);
+    }
+
+    private static async Task AnimatePageEntranceAsync(UserControl page, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await SettingsEntranceAnimator.RunAsync(page, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
     }
 
     private void RefreshCurrentCategory()

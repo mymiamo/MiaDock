@@ -52,6 +52,12 @@ public sealed class ToolkitAnimationFactory
             return Task.CompletedTask;
         }
 
+        // Preserve a visual relationship between the two cached content hosts.
+        // This is deliberately best-effort: a source may already have been
+        // removed during a rapid state change, in which case the normal
+        // composition transition still supplies the final state.
+        TryStartConnectedTransition(incoming, outgoing);
+
         incomingVisual.CenterPoint = CenterOf(incoming);
 
         var safeIntensity = Math.Clamp(intensity, 0, 1);
@@ -324,6 +330,61 @@ public sealed class ToolkitAnimationFactory
             }
 
             Reset(visual);
+        }
+    }
+
+    /// <summary>
+    /// A short acknowledgement for live values such as media metadata and volume.
+    /// It only touches composition properties, so it does not invalidate XAML layout.
+    /// </summary>
+    public async Task AnimateMicroFeedbackAsync(
+        FrameworkElement element,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(element);
+        ElementCompositionPreview.SetIsTranslationEnabled(element, true);
+        var visual = ElementCompositionPreview.GetElementVisual(element);
+        Stop(visual);
+        visual.CenterPoint = CenterOf(element);
+
+        try
+        {
+            await AnimationBuilder.Create()
+                .Scale(1, from: 0.985, duration: TimeSpan.FromMilliseconds(140),
+                    easingType: EasingType.Cubic, easingMode: EasingMode.EaseOut)
+                .Opacity(1, from: 0.82, duration: TimeSpan.FromMilliseconds(140),
+                    easingType: EasingType.Cubic, easingMode: EasingMode.EaseOut)
+                .StartAsync(element, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        finally
+        {
+            Reset(visual);
+        }
+    }
+
+    private static void TryStartConnectedTransition(
+        FrameworkElement incoming,
+        FrameworkElement? outgoing)
+    {
+        if (outgoing is null || ReferenceEquals(incoming, outgoing))
+        {
+            return;
+        }
+
+        try
+        {
+            const string key = "MiaDock.Island.ContentContinuity";
+            var service = ConnectedAnimationService.GetForCurrentView();
+            service.PrepareToAnimate(key, outgoing);
+            service.GetAnimation(key)?.TryStart(incoming);
+        }
+        catch (Exception)
+        {
+            // Connected animation is polish only; never make state changes depend on it.
         }
     }
 

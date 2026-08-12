@@ -53,8 +53,9 @@ public sealed class CrashRecoveryCoordinator(
                 bool exported;
                 try
                 {
-                    exported = await diagnosticsFileService.PickAndExportAsync(
+                    exported = await diagnosticsFileService.PickAndExportCrashReportAsync(
                         owner,
+                        record,
                         $"MiaDock-crash-{DateTime.Now:yyyyMMdd-HHmmss}",
                         cancellationToken);
                 }
@@ -84,7 +85,11 @@ public sealed class CrashRecoveryCoordinator(
 
                 if (await ShowRedirectDialogAsync(xamlRoot))
                 {
-                    _ = await uriLauncher.LaunchAsync(BugReportUri, cancellationToken);
+                    var opened = await uriLauncher.LaunchAsync(BugReportUri, cancellationToken);
+                    if (!opened)
+                    {
+                        await ShowBugLinkFailureAsync(xamlRoot);
+                    }
                 }
 
                 break;
@@ -128,6 +133,20 @@ public sealed class CrashRecoveryCoordinator(
             DefaultButton = ContentDialogButton.Primary
         };
         return await dialog.ShowAsync() == ContentDialogResult.Primary;
+    }
+
+    private async Task ShowBugLinkFailureAsync(XamlRoot xamlRoot)
+    {
+        var dialog = new ContentDialog
+        {
+            XamlRoot = xamlRoot,
+            Title = Text("Dialog.Link.OpenFailed.Title", "Bağlantı açılamadı"),
+            Content = Text(
+                "Dialog.BugReport.OpenFailed.Description",
+                "Hata bildirim sayfası açılamadı. mymiamo.net/bug adresini tarayıcınızda açabilirsiniz."),
+            CloseButtonText = Text("Common.Close", "Kapat")
+        };
+        await dialog.ShowAsync();
     }
 
     private string Text(string key, string fallback)

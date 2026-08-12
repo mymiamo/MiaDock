@@ -40,7 +40,7 @@ if (-not [Environment]::UserInteractive) {
 if ([string]::IsNullOrWhiteSpace($ReportPath)) {
     $timestamp = [DateTimeOffset]::UtcNow.ToString("yyyyMMdd-HHmmss")
     $ReportPath = Join-Path $repositoryRoot (
-        "artifacts\validation\1.4.1.0\wack\wack-$timestamp.xml")
+        "artifacts\validation\1.4.2.0\wack\wack-$timestamp.xml")
 }
 
 $ReportPath = [System.IO.Path]::GetFullPath($ReportPath)
@@ -76,7 +76,7 @@ foreach ($pattern in $failurePatterns) {
 $summary = [ordered]@{
     SchemaVersion = 1
     Product = "MiaDock"
-    Version = "1.4.1.0"
+    Version = "1.4.2.0"
     CompletedAtUtc = [DateTimeOffset]::UtcNow.ToString("O")
     Result = "PassedNoDetectedFailures"
     PackageSha256 = (

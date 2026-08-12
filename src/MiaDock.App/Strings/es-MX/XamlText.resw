@@ -2106,4 +2106,10 @@
   <data name="XamlText.0686" xml:space="preserve">
     <value>Bloqueos de teclado, USB y funciones auxiliares</value>
   </data>
+  <data name="XamlText.0687" xml:space="preserve">
+    <value>Buscando actualizaciones</value>
+  </data>
+  <data name="XamlText.0688" xml:space="preserve">
+    <value>Preparando fuentes multimedia…</value>
+  </data>
 </root>

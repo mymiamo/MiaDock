@@ -1,6 +1,10 @@
 <UserControl x:Class="MiaDock.App.Views.Settings.MediaSettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+  </UserControl.Resources>
   <ScrollViewer Style="{StaticResource SettingsPageScrollViewerStyle}"
                 HorizontalContentAlignment="Stretch">
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
@@ -8,6 +12,11 @@
         <TextBlock Text="Medya" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
         <TextBlock Text="Windows medya oturumlarından kullanılacak kaynağı ve kontrol davranışını seçin."
                    Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
+        <StackPanel Orientation="Horizontal" Spacing="8"
+                    Visibility="{Binding IsMediaLoading, Converter={StaticResource BooleanToVisibilityConverter}}">
+          <ProgressRing Width="18" Height="18" IsActive="True" />
+          <TextBlock Text="Medya kaynakları hazırlanıyor…" VerticalAlignment="Center" Opacity="0.72" />
+        </StackPanel>
       </StackPanel>
 
       <Border Style="{StaticResource SettingsCardBorderStyle}">

@@ -46,6 +46,9 @@ public sealed class JsonCrashStateStore(ISettingsPathProvider settingsPathProvid
             state.PendingCrash = false;
             state.ExceptionType = null;
             state.ExceptionMessage = null;
+            state.ExceptionStackTrace = null;
+            state.ExceptionHResult = null;
+            state.ExceptionSource = null;
             state.CrashedAtUtc = null;
             SaveUnsafe(state);
         }
@@ -61,6 +64,9 @@ public sealed class JsonCrashStateStore(ISettingsPathProvider settingsPathProvid
             state.CrashedAtUtc = DateTimeOffset.UtcNow;
             state.ExceptionType = exception?.GetType().FullName;
             state.ExceptionMessage = Truncate(exception?.Message, 512);
+            state.ExceptionStackTrace = Truncate(exception?.StackTrace, 8192);
+            state.ExceptionHResult = exception?.HResult;
+            state.ExceptionSource = Truncate(exception?.Source, 256);
             SaveUnsafe(state);
         }
     }
@@ -121,6 +127,9 @@ public sealed class JsonCrashStateStore(ISettingsPathProvider settingsPathProvid
                 CrashedAtUtc = state.CrashedAtUtc,
                 ExceptionType = state.ExceptionType,
                 ExceptionMessage = state.ExceptionMessage,
+                ExceptionStackTrace = state.ExceptionStackTrace,
+                ExceptionHResult = state.ExceptionHResult,
+                ExceptionSource = state.ExceptionSource,
                 RestartCount = state.RestartCount,
                 LastRestartUtc = state.LastRestartUtc
             };
@@ -129,6 +138,9 @@ public sealed class JsonCrashStateStore(ISettingsPathProvider settingsPathProvid
             state.SessionActive = false;
             state.ExceptionType = null;
             state.ExceptionMessage = null;
+            state.ExceptionStackTrace = null;
+            state.ExceptionHResult = null;
+            state.ExceptionSource = null;
             state.CrashedAtUtc = null;
             SaveUnsafe(state);
             return true;

@@ -17,7 +17,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$expectedVersion = "1.4.1.0"
+$expectedVersion = "1.4.2.0"
 $repositoryRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot "..\.."))
 $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csproj"
@@ -27,7 +27,7 @@ $validationScript = Join-Path $repositoryRoot (
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
     $timestamp = [DateTimeOffset]::UtcNow.ToString("yyyyMMdd-HHmmss")
     $ResultsDirectory = Join-Path $repositoryRoot (
-        "artifacts\release\1.4.1.0\candidate-$timestamp")
+        "artifacts\release\1.4.2.0\candidate-$timestamp")
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)

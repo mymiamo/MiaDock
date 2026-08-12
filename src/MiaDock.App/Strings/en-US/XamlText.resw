@@ -2638,4 +2638,10 @@
   <data name="XamlText.0686" xml:space="preserve">
     <value>Keyboard locks, USB and helper features</value>
   </data>
+  <data name="XamlText.0687" xml:space="preserve">
+    <value>Checking for updates</value>
+  </data>
+  <data name="XamlText.0688" xml:space="preserve">
+    <value>Preparing media sources…</value>
+  </data>
 </root>

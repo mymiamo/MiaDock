@@ -22,7 +22,7 @@ using MiaDock.Core.Updates;
 
 namespace MiaDock.App.ViewModels;
 
-public sealed class SettingsViewModel : ObservableObject, IDisposable
+public sealed partial class SettingsViewModel : ObservableObject, IDisposable
 {
     private readonly ISettingsService _settingsService;
     private readonly MusicModuleViewModel _music;
@@ -114,7 +114,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     private bool _showSensitiveContentInFullscreen;
     private bool _showSensitiveContentWhenLocked;
     private bool _automaticUpdateChecksEnabled = true;
-    private StoreUpdateSnapshot _storeUpdateSnapshot =
+    [ObservableProperty]
+    public partial StoreUpdateSnapshot StoreUpdateSnapshot { get; set; } =
         StoreUpdateSnapshot.Unavailable(new Version(1, 1, 0, 0));
 
     public SettingsViewModel(
@@ -139,7 +140,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         _localization = localization ?? new AppLocalizationService();
         _moduleCatalog = moduleCatalog;
         _storeUpdates = storeUpdates;
-        _storeUpdateSnapshot = storeUpdates?.Current ?? _storeUpdateSnapshot;
+        StoreUpdateSnapshot = storeUpdates?.Current ?? StoreUpdateSnapshot;
         BuildModuleItems();
         RebuildLocalizedOptions();
         LoadFrom(settingsService.Current);
@@ -198,8 +199,9 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<TrayPrimaryAction>> TrayPrimaryActions { get; private set; } = [];
 
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
+    public bool IsMediaLoading => _music.ServiceState == MediaServiceState.Initializing;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.4.1.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.4.2.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
@@ -314,7 +316,7 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         }
     }
 
-    public StoreUpdateStatus StoreUpdateStatus => _storeUpdateSnapshot.Status;
+    public StoreUpdateStatus StoreUpdateStatus => StoreUpdateSnapshot.Status;
     public bool IsStoreUpdateChecking =>
         StoreUpdateStatus == StoreUpdateStatus.Checking;
     public bool IsStoreUpdateAvailable =>
@@ -329,12 +331,12 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         _ => _localization.Get("Update.StoreOnly")
     };
     public string StoreUpdateVersionText =>
-        _storeUpdateSnapshot.AvailableVersion is { } available
+        StoreUpdateSnapshot.AvailableVersion is { } available
             ? _localization.Get(
                 "Update.VersionPair",
-                _storeUpdateSnapshot.CurrentVersion,
+                StoreUpdateSnapshot.CurrentVersion,
                 available)
-            : $"MiaDock {_storeUpdateSnapshot.CurrentVersion}";
+            : $"MiaDock {StoreUpdateSnapshot.CurrentVersion}";
 
     public AppLanguage Language
     {
@@ -875,6 +877,10 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         {
             OnPropertyChanged(nameof(MediaSources));
             OnPropertyChanged(nameof(MediaSourceIndex));
+        }
+        else if (args.PropertyName == nameof(MusicModuleViewModel.ServiceState))
+        {
+            OnPropertyChanged(nameof(IsMediaLoading));
         }
     }
 
@@ -1491,7 +1497,11 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
 
     private void ApplyStoreUpdateSnapshot(StoreUpdateSnapshot snapshot)
     {
-        _storeUpdateSnapshot = snapshot;
+        StoreUpdateSnapshot = snapshot;
+    }
+
+    partial void OnStoreUpdateSnapshotChanged(StoreUpdateSnapshot value)
+    {
         foreach (var propertyName in new[]
                  {
                      nameof(StoreUpdateStatus),
@@ -1503,8 +1513,8 @@ public sealed class SettingsViewModel : ObservableObject, IDisposable
         {
             OnPropertyChanged(propertyName);
         }
-        CheckForUpdatesCommand.NotifyCanExecuteChanged();
-        OpenStoreCommand.NotifyCanExecuteChanged();
+        CheckForUpdatesCommand?.NotifyCanExecuteChanged();
+        OpenStoreCommand?.NotifyCanExecuteChanged();
     }
 
     private async Task CheckForUpdatesAsync()

@@ -97,6 +97,25 @@ public sealed class PerformanceGuardTests
     }
 
     [TestMethod]
+    public void PremiumPolish_UsesCancelableCompositionMotionAndVisibleLoadingFeedback()
+    {
+        var factory = Read("Animations", "ToolkitAnimationFactory.cs");
+        var entrance = Read("Animations", "SettingsEntranceAnimator.cs");
+        var music = Read("Controls", "MusicCompactView.xaml.cs");
+        var home = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Settings", "HomeSettingsPage.xaml"));
+        var media = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Settings", "MediaSettingsPage.xaml"));
+
+        StringAssert.Contains(factory, "AnimateMicroFeedbackAsync");
+        StringAssert.Contains(factory, "ConnectedAnimationService");
+        StringAssert.Contains(factory, "TryStartConnectedTransition");
+        StringAssert.Contains(music, "OnTrackChanged");
+        StringAssert.Contains(entrance, "Task.WhenAll(tasks)");
+        StringAssert.Contains(entrance, "new UISettings().AnimationsEnabled");
+        StringAssert.Contains(home, "IsStoreUpdateChecking");
+        StringAssert.Contains(media, "IsMediaLoading");
+    }
+
+    [TestMethod]
     public void ThemeRefresh_IsCoalescedAndKeepsCustomOverridesLast()
     {
         var source = Read("Services", "ThemeService.cs");
