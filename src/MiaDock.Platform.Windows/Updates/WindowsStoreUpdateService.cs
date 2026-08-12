@@ -58,10 +58,15 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
                     .Where(version => version.CompareTo(currentVersion) > 0)
                     .OrderDescending()
                     .FirstOrDefault();
+                // StoreContext has already filtered this collection to packages
+                // with updates available. Trust that signal even if a Store cache
+                // returns the installed package version in its metadata.
+                var storeReportedUpdate = versions.Count > 0;
+                availableVersion ??= storeReportedUpdate ? currentVersion : null;
                 var result = new StoreUpdateSnapshot(
-                    availableVersion is null
-                        ? StoreUpdateStatus.UpToDate
-                        : StoreUpdateStatus.UpdateAvailable,
+                    storeReportedUpdate
+                        ? StoreUpdateStatus.UpdateAvailable
+                        : StoreUpdateStatus.UpToDate,
                     currentVersion,
                     availableVersion,
                     DateTimeOffset.UtcNow);
@@ -73,7 +78,11 @@ public sealed class WindowsStoreUpdateService : IStoreUpdateService
                     properties: new Dictionary<string, object?>
                     {
                         ["status"] = result.Status.ToString(),
-                        ["count"] = versions.Count
+                        ["count"] = versions.Count,
+                        ["currentVersion"] = currentVersion.ToString(4),
+                        ["availableVersions"] = string.Join(",", versions.Select(version => StoreUpdateSnapshot.Normalize(version).ToString(4))),
+                        ["selectedVersion"] = result.AvailableVersion?.ToString(4),
+                        ["storeReportedUpdate"] = storeReportedUpdate
                     });
                 return Publish(result);
             }

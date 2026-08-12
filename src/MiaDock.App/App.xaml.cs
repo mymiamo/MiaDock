@@ -105,6 +105,7 @@ public partial class App : Application
 
         var settings = _services.GetRequiredService<ISettingsService>();
         await settings.InitializeAsync();
+        var launchMode = ResolveLaunchMode(args, settings.Current.StartupShutdown.LaunchMode);
         await _services.GetRequiredService<StartupTaskCoordinator>().ReconcileAsync();
         _services.GetRequiredService<IFocusService>().Start();
         _services.GetRequiredService<IFocusAutomationService>().Start();
@@ -135,6 +136,24 @@ public partial class App : Application
             .ShowIfNeededAsync(_overlayWindow);
         _services.GetRequiredService<ICrashStateStore>().MarkSessionStarted();
 
+        // Show the stable idle dock before probing media, audio, timers and
+        // optional modules. Windows has already started the process at sign-in;
+        // waiting for every provider made the dock appear unnecessarily late.
+        if (settings.Current.Onboarding.IsCompleted && launchMode == StartupLaunchMode.Island)
+        {
+            _overlayWindow.ShowNoActivate();
+            _log.Write(
+                TechnicalLogLevel.Information,
+                TechnicalEventIds.ApplicationStarting,
+                "Application",
+                "The dock was shown before deferred startup services completed.",
+                properties: new Dictionary<string, object?>
+                {
+                    ["phase"] = "early-dock-visible",
+                    ["launchMode"] = launchMode.ToString()
+                });
+        }
+
         var media = _services.GetRequiredService<IMediaSessionService>();
         await media.InitializeAsync();
         await media.SetSelectionAsync(SettingsMapper.ToMediaSelection(settings.Current.Media));
@@ -161,16 +180,7 @@ public partial class App : Application
         _services.GetRequiredService<GlobalHotKeyCoordinator>().Start();
         _services.GetRequiredService<IStoreUpdateCoordinator>().Start();
 
-        var showSettingsFromCommandLine = Environment.GetCommandLineArgs()
-            .Skip(1)
-            .Concat(args.Arguments.Split(
-                ' ',
-                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            .Any(argument => string.Equals(argument, "--settings", StringComparison.OrdinalIgnoreCase));
-
-        switch (showSettingsFromCommandLine
-                    ? StartupLaunchMode.Settings
-                    : settings.Current.StartupShutdown.LaunchMode)
+        switch (launchMode)
         {
             case StartupLaunchMode.Settings:
                 _overlayWindow.ShowNoActivate();
@@ -386,5 +396,20 @@ public partial class App : Application
         {
             return "Unavailable";
         }
+    }
+
+    private static StartupLaunchMode ResolveLaunchMode(
+        LaunchActivatedEventArgs args,
+        StartupLaunchMode configuredMode)
+    {
+        var showSettingsFromCommandLine = Environment.GetCommandLineArgs()
+            .Skip(1)
+            .Concat(args.Arguments.Split(
+                ' ',
+                StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            .Any(argument => string.Equals(argument, "--settings", StringComparison.OrdinalIgnoreCase));
+        return showSettingsFromCommandLine
+            ? StartupLaunchMode.Settings
+            : configuredMode;
     }
 }

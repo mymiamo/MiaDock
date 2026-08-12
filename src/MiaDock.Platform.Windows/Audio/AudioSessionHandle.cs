@@ -269,30 +269,21 @@ internal sealed class AudioSessionHandle : IDisposable
     {
         public int OnDisplayNameChanged(string displayName, ref Guid eventContext)
         {
-            if (!owner._disposed)
-            {
-                owner.RefreshRequested();
-            }
+            RunSafely(owner.RefreshRequested);
 
             return 0;
         }
 
         public int OnIconPathChanged(string iconPath, ref Guid eventContext)
         {
-            if (!owner._disposed)
-            {
-                owner.RefreshRequested();
-            }
+            RunSafely(owner.RefreshRequested);
 
             return 0;
         }
 
         public int OnSimpleVolumeChanged(float volume, bool isMuted, ref Guid eventContext)
         {
-            if (!owner._disposed)
-            {
-                owner.RefreshRequested();
-            }
+            RunSafely(owner.RefreshRequested);
 
             return 0;
         }
@@ -302,22 +293,28 @@ internal sealed class AudioSessionHandle : IDisposable
 
         public int OnStateChanged(AudioSessionState state)
         {
-            if (!owner._disposed)
-            {
-                owner.RebindRequested();
-            }
+            RunSafely(owner.RebindRequested);
 
             return 0;
         }
 
         public int OnSessionDisconnected(AudioSessionDisconnectReason reason)
         {
-            if (!owner._disposed)
-            {
-                owner.RebindRequested();
-            }
+            RunSafely(owner.RebindRequested);
 
             return 0;
+        }
+
+        private void RunSafely(Action callback)
+        {
+            try
+            {
+                if (!owner._disposed) callback();
+            }
+            catch
+            {
+                // Core Audio must always receive a successful callback return.
+            }
         }
     }
 }

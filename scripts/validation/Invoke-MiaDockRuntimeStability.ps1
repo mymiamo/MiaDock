@@ -41,7 +41,7 @@ if (-not (Test-Path -LiteralPath $ExecutablePath -PathType Leaf)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.4.0.0\phase5-runtime"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.4.1.0\phase5-runtime"
 }
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
 New-Item -ItemType Directory -Path $ResultsDirectory -Force | Out-Null

@@ -373,7 +373,17 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
         }
 
         Current = snapshot;
-        LevelChanged?.Invoke(this, snapshot);
+        foreach (EventHandler<MediaAudioLevelSnapshot> handler in LevelChanged?.GetInvocationList() ?? [])
+        {
+            try
+            {
+                handler(this, snapshot);
+            }
+            catch
+            {
+                // Meter consumers can be removed while Core Audio is publishing.
+            }
+        }
     }
 
     private void CleanupBinding()
@@ -469,44 +479,44 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     {
         public int OnDeviceStateChanged(string deviceId, uint newState)
         {
-            if (isActive())
-            {
-                changed();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnDeviceAdded(string deviceId)
         {
-            if (isActive())
-            {
-                changed();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnDeviceRemoved(string deviceId)
         {
-            if (isActive())
-            {
-                changed();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnDefaultDeviceChanged(AudioDataFlow flow, AudioDeviceRole role, string? defaultDeviceId)
         {
-            if (isActive())
-            {
-                changed();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnPropertyValueChanged(string deviceId, PropertyKey key) => 0;
+
+        private void RunSafely()
+        {
+            try
+            {
+                if (isActive()) changed();
+            }
+            catch
+            {
+                // Never let a Core Audio reverse P/Invoke callback fail-fast MiaDock.
+            }
+        }
     }
 }

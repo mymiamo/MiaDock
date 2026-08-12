@@ -17,12 +17,21 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
     private readonly string _windowClassName = $"MiaDock.UsbDevices.{Guid.NewGuid():N}";
     private readonly Dictionary<char, string> _knownLabels = new();
     private readonly object _gate = new();
+    private readonly Timer _reconciliationTimer;
     private nint _instance;
     private nint _windowHandle;
     private bool _running;
     private bool _disposed;
 
-    public WindowsUsbDeviceMonitor() => _windowProcedure = HandleWindowMessage;
+    public WindowsUsbDeviceMonitor()
+    {
+        _windowProcedure = HandleWindowMessage;
+        _reconciliationTimer = new Timer(
+            _ => ReconcileRemovableDrivesSafely(),
+            null,
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan);
+    }
 
     public event EventHandler<UsbDeviceChangedEventArgs>? DeviceChanged;
 
@@ -52,6 +61,7 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
             EnsureWindow();
             SeedKnownRemovableDrives();
             _running = true;
+            _reconciliationTimer.Change(TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
         }
 
         return ValueTask.CompletedTask;
@@ -64,6 +74,7 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
         {
             _running = false;
             _knownLabels.Clear();
+            _reconciliationTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
 
         return ValueTask.CompletedTask;
@@ -84,7 +95,9 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
             _running = false;
             _windowHandle = 0;
             _knownLabels.Clear();
+            _reconciliationTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
+        _reconciliationTimer.Dispose();
 
         return ValueTask.CompletedTask;
     }
@@ -154,7 +167,10 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
                 (wParam == DbtDeviceArrival || wParam == DbtDeviceRemoveComplete) &&
                 lParam != 0)
             {
-                HandleDeviceChange(wParam == DbtDeviceArrival, lParam);
+                // A message-only HWND does not receive every volume broadcast on
+                // all Windows builds. Reconcile on the worker-pool timer instead
+                // of touching drives or subscribers on this native callback stack.
+                _reconciliationTimer.Change(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(2));
                 return 0;
             }
         }
@@ -247,13 +263,7 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
             _knownLabels[letter] = displayName;
         }
 
-        DeviceChanged?.Invoke(
-            this,
-            new UsbDeviceChangedEventArgs(
-                true,
-                $"{letter}:",
-                displayName,
-                DateTimeOffset.UtcNow));
+        PublishDeviceChanged(true, letter, displayName);
         return true;
     }
 
@@ -273,13 +283,64 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
             }
         }
 
-        DeviceChanged?.Invoke(
-            this,
-            new UsbDeviceChangedEventArgs(
-                false,
-                $"{letter}:",
-                displayName,
-                DateTimeOffset.UtcNow));
+        PublishDeviceChanged(false, letter, displayName);
+    }
+
+    private void ReconcileRemovableDrivesSafely()
+    {
+        try
+        {
+            Dictionary<char, string> current = [];
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                if (!IsRemovableDrive(drive)) continue;
+                var letter = char.ToUpperInvariant(drive.Name[0]);
+                current[letter] = ResolveDisplayName(drive, letter);
+            }
+
+            List<(bool Connected, char Letter, string DisplayName)> changes = [];
+            lock (_gate)
+            {
+                if (!_running || _disposed) return;
+                foreach (var (letter, label) in _knownLabels)
+                {
+                    if (!current.ContainsKey(letter)) changes.Add((false, letter, label));
+                }
+
+                foreach (var (letter, label) in current)
+                {
+                    if (!_knownLabels.ContainsKey(letter)) changes.Add((true, letter, label));
+                }
+
+                _knownLabels.Clear();
+                foreach (var (letter, label) in current) _knownLabels[letter] = label;
+            }
+
+            foreach (var change in changes)
+            {
+                PublishDeviceChanged(change.Connected, change.Letter, change.DisplayName);
+            }
+        }
+        catch
+        {
+            // USB enumeration must not take down the process during device churn.
+        }
+    }
+
+    private void PublishDeviceChanged(bool connected, char letter, string displayName)
+    {
+        foreach (EventHandler<UsbDeviceChangedEventArgs> handler in DeviceChanged?.GetInvocationList() ?? [])
+        {
+            try
+            {
+                handler(this, new UsbDeviceChangedEventArgs(
+                    connected, $"{letter}:", displayName, DateTimeOffset.UtcNow));
+            }
+            catch
+            {
+                // Device subscribers can be shutting down concurrently.
+            }
+        }
     }
 
     private static bool TryGetRemovableDrive(char letter, out DriveInfo? drive)

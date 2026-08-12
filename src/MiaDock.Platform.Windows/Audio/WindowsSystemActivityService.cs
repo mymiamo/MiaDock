@@ -1216,12 +1216,21 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
     {
         public int OnNotify(nint notificationData)
         {
-            if (isActive())
-            {
-                refreshRequested();
-            }
+            RunSafely();
 
             return 0;
+        }
+
+        private void RunSafely()
+        {
+            try
+            {
+                if (isActive()) refreshRequested();
+            }
+            catch
+            {
+                // Core Audio callbacks must not let a managed exception cross COM.
+            }
         }
     }
 
@@ -1231,45 +1240,45 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
     {
         public int OnDeviceStateChanged(string deviceId, uint newState)
         {
-            if (isActive())
-            {
-                rebindRequested();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnDeviceAdded(string deviceId)
         {
-            if (isActive())
-            {
-                rebindRequested();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnDeviceRemoved(string deviceId)
         {
-            if (isActive())
-            {
-                rebindRequested();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnDefaultDeviceChanged(AudioDataFlow flow, AudioDeviceRole role, string? defaultDeviceId)
         {
-            if (isActive())
-            {
-                rebindRequested();
-            }
+            RunSafely();
 
             return 0;
         }
 
         public int OnPropertyValueChanged(string deviceId, PropertyKey key) => 0;
+
+        private void RunSafely()
+        {
+            try
+            {
+                if (isActive()) rebindRequested();
+            }
+            catch
+            {
+                // Core Audio callbacks must not let a managed exception cross COM.
+            }
+        }
     }
 
     [ComVisible(true)]
@@ -1278,9 +1287,13 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
     {
         public int OnSessionCreated(IAudioSessionControl newSession)
         {
-            if (isActive())
+            try
             {
-                rebindRequested();
+                if (isActive()) rebindRequested();
+            }
+            catch
+            {
+                // Core Audio callbacks must not let a managed exception cross COM.
             }
 
             return 0;

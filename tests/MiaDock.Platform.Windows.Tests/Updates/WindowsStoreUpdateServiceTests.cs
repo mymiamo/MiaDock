@@ -94,7 +94,7 @@ public sealed class WindowsStoreUpdateServiceTests
     }
 
     [TestMethod]
-    public async Task CheckAsync_WhenNoNewerVersion_IsUpToDate()
+    public async Task CheckAsync_WhenStoreReportsPackageUpdateWithCachedVersion_IsUpdateAvailable()
     {
         var client = new FakeClient
         {
@@ -111,8 +111,8 @@ public sealed class WindowsStoreUpdateServiceTests
 
         var result = await service.CheckAsync();
 
-        Assert.AreEqual(StoreUpdateStatus.UpToDate, result.Status);
-        Assert.IsNull(result.AvailableVersion);
+        Assert.AreEqual(StoreUpdateStatus.UpdateAvailable, result.Status);
+        Assert.AreEqual(new Version(1, 1, 0, 0), result.AvailableVersion);
     }
 
     [TestMethod]

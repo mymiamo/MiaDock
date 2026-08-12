@@ -370,7 +370,7 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
         Sources = resolvedSources.Values
             .OrderBy(item => item.DisplayName, StringComparer.CurrentCultureIgnoreCase)
             .ToArray();
-        SourcesChanged?.Invoke(this, Sources);
+        PublishSafely(SourcesChanged, Sources);
 
         _log?.Write(
             TechnicalLogLevel.Information,
@@ -485,7 +485,7 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
                 changed = SnapshotChanged;
             }
 
-            changed?.Invoke(this, snapshot);
+            PublishSafely(changed, snapshot);
 
             var shouldRefreshArtwork = false;
             lock (_sync)
@@ -706,7 +706,7 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
             changed = SnapshotChanged;
         }
 
-        changed?.Invoke(this, snapshot);
+        PublishSafely(changed, snapshot);
     }
 
     private void SetState(MediaServiceState state)
@@ -725,7 +725,7 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
                 ["state"] = state.ToString(),
                 ["reason"] = previous.ToString()
             });
-        StateChanged?.Invoke(this, state);
+        PublishSafely(StateChanged, state);
     }
 
     private void LogFailure(string phase, Exception exception, long generation = 0) =>
@@ -776,11 +776,11 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
     private void OnSessionsChanged(
         GlobalSystemMediaTransportControlsSessionManager sender,
-        SessionsChangedEventArgs args) => RequestTopologyRefresh(sender);
+        SessionsChangedEventArgs args) => RunNativeCallback(() => RequestTopologyRefresh(sender));
 
     private void OnCurrentSessionChanged(
         GlobalSystemMediaTransportControlsSessionManager sender,
-        CurrentSessionChangedEventArgs args) => RequestTopologyRefresh(sender);
+        CurrentSessionChangedEventArgs args) => RunNativeCallback(() => RequestTopologyRefresh(sender));
 
     private void RequestTopologyRefresh(GlobalSystemMediaTransportControlsSessionManager sender)
     {
@@ -798,6 +798,10 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
     private void OnMediaPropertiesChanged(
         GlobalSystemMediaTransportControlsSession sender,
         MediaPropertiesChangedEventArgs args)
+        => RunNativeCallback(() => OnMediaPropertiesChangedCore(sender));
+
+    private void OnMediaPropertiesChangedCore(
+        GlobalSystemMediaTransportControlsSession sender)
     {
         MediaSnapshot? invalidatedArtwork = null;
         lock (_sync)
@@ -839,11 +843,45 @@ public sealed class WindowsMediaSessionService : IMediaSessionService
 
     private void OnPlaybackInfoChanged(
         GlobalSystemMediaTransportControlsSession sender,
-        PlaybackInfoChangedEventArgs args) => RequestSnapshotRefresh(sender);
+        PlaybackInfoChangedEventArgs args) => RunNativeCallback(() => RequestSnapshotRefresh(sender));
 
     private void OnTimelinePropertiesChanged(
         GlobalSystemMediaTransportControlsSession sender,
-        TimelinePropertiesChangedEventArgs args) => RequestSnapshotRefresh(sender);
+        TimelinePropertiesChangedEventArgs args) => RunNativeCallback(() => RequestSnapshotRefresh(sender));
+
+    // Windows media events are reverse P/Invoke callbacks. An exception escaping
+    // one causes a native fail-fast, which bypasses AppDomain/WinUI handlers.
+    private static void RunNativeCallback(Action callback)
+    {
+        try
+        {
+            callback();
+        }
+        catch
+        {
+            // A provider can disappear while Windows is dispatching its event.
+        }
+    }
+
+    private void PublishSafely<T>(EventHandler<T>? handlers, T value)
+    {
+        if (handlers is null)
+        {
+            return;
+        }
+
+        foreach (EventHandler<T> handler in handlers.GetInvocationList())
+        {
+            try
+            {
+                handler(this, value);
+            }
+            catch
+            {
+                // A consumer must not take down the Windows media callback path.
+            }
+        }
+    }
 
     private void RequestSnapshotRefresh(GlobalSystemMediaTransportControlsSession sender)
     {
