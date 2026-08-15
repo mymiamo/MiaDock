@@ -241,6 +241,7 @@ public sealed class LifecycleUiTests
             .ToArray();
 
         CollectionAssert.Contains(capabilities, "radios");
+        CollectionAssert.Contains(capabilities, "bluetooth");
     }
 
     [TestMethod]

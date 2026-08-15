@@ -245,9 +245,7 @@ public sealed class DeviceHubService : IDeviceHubService
                 device.IsConnected ? DeviceHubConnectionState.Connected : DeviceHubConnectionState.Disconnected,
                 false,
                 device.BatteryPercentage,
-                device.BatteryPercentage is >= 0 and <= 100
-                    ? DeviceHubDeviceCapabilities.HasBattery | DeviceHubDeviceCapabilities.ManageInSettings
-                    : DeviceHubDeviceCapabilities.ManageInSettings,
+                BluetoothCapabilities(device),
                 Detail: Text(
                     "DeviceHub.BluetoothDetailFormat",
                     "{0} · {1}",
@@ -255,9 +253,10 @@ public sealed class DeviceHubService : IDeviceHubService
                     device.IsConnected
                         ? Text("DeviceHub.ConnectedState", "Connected")
                         : Text("DeviceHub.DisconnectedState", "Disconnected")),
-                NativeDeviceId: device.Id,
+                NativeDeviceId: device.EndpointId,
                 LastChangedAt: DateTimeOffset.UtcNow,
-                DeviceType: device.DeviceType))
+                DeviceType: device.DeviceType,
+                DeviceAddress: device.DeviceAddress))
             .ToArray() : [];
         var outputDevices = options.ShowAudioDevices ? outputs
             .OrderByDescending(device => device.IsDefault)
@@ -517,6 +516,18 @@ public sealed class DeviceHubService : IDeviceHubService
 
         if (_dispatcher is null || _dispatcher.HasThreadAccess) PublishCore();
         else _dispatcher.TryEnqueue(PublishCore);
+    }
+
+    private static DeviceHubDeviceCapabilities BluetoothCapabilities(BluetoothDeviceState device)
+    {
+        var capabilities = DeviceHubDeviceCapabilities.ManageInSettings;
+        if (device.BatteryPercentage is >= 0 and <= 100)
+            capabilities |= DeviceHubDeviceCapabilities.HasBattery;
+        if (string.IsNullOrWhiteSpace(device.EndpointId) && string.IsNullOrWhiteSpace(device.DeviceAddress))
+            return capabilities;
+        return capabilities | (device.IsConnected
+            ? DeviceHubDeviceCapabilities.Disconnect
+            : DeviceHubDeviceCapabilities.Connect);
     }
 
     private static string FormatBytes(long bytes)

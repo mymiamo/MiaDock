@@ -1231,6 +1231,14 @@
   <data name="DeviceHub.ConnectedState" xml:space="preserve"><value>Bağlı</value></data>
   <data name="DeviceHub.DisconnectedState" xml:space="preserve"><value>Bağlı değil</value></data>
   <data name="DeviceHub.ShowStorageEvents" xml:space="preserve"><value>Çıkarılabilir depolama bağlantı olaylarını göster</value></data>
+  <data name="DeviceHub.Connect" xml:space="preserve"><value>Bağlan</value></data>
+  <data name="DeviceHub.Disconnect" xml:space="preserve"><value>Ayır</value></data>
+  <data name="DeviceHub.ConnectSucceeded" xml:space="preserve"><value>{0} bağlandı.</value></data>
+  <data name="DeviceHub.DisconnectSucceeded" xml:space="preserve"><value>{0} ayrıldı.</value></data>
+  <data name="DeviceHub.ConnectFailed" xml:space="preserve"><value>{0} bağlanamadı.</value></data>
+  <data name="DeviceHub.DisconnectFailed" xml:space="preserve"><value>{0} ayrılamadı.</value></data>
+  <data name="DeviceHub.ConnectRadioOff" xml:space="preserve"><value>Bluetooth'u açıp yeniden deneyin.</value></data>
+  <data name="DeviceHub.ConnectUnsupported" xml:space="preserve"><value>{0} aygıtını yönetmek için Bluetooth ayarlarını kullanın.</value></data>
   <data name="ClipboardPeek.ComposeEmail" xml:space="preserve"><value>E-posta oluştur</value></data>
   <data name="ClipboardPeek.ShowInFolder" xml:space="preserve"><value>Klasörde göster</value></data>
   <data name="ClipboardPeek.MultipleItems" xml:space="preserve"><value>{0} öğe kopyalandı</value></data>

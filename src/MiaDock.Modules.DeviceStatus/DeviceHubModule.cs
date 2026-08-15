@@ -79,6 +79,9 @@ public sealed class DeviceHubModule : IIslandModule, IAsyncDisposable
             case NotificationActionKind.ManageSound:
                 await _viewModel.OpenSoundSettingsPageAsync();
                 break;
+            case NotificationActionKind.ConnectBluetooth:
+                await _viewModel.ConnectBluetoothDeviceAsync(action.Device);
+                break;
             default:
                 return false;
         }
@@ -157,6 +160,7 @@ public sealed class DeviceHubModule : IIslandModule, IAsyncDisposable
         {
             DeviceHubChangeKind.Connected when change.Device.Category == DeviceHubDeviceCategory.RemovableStorage => NotificationActionKind.OpenStorage,
             DeviceHubChangeKind.Connected when change.Device.Category == DeviceHubDeviceCategory.Bluetooth => NotificationActionKind.ManageBluetooth,
+            DeviceHubChangeKind.Disconnected when change.Device.Category == DeviceHubDeviceCategory.Bluetooth => NotificationActionKind.ConnectBluetooth,
             DeviceHubChangeKind.DefaultAudioOutputChanged => NotificationActionKind.ManageSound,
             _ => NotificationActionKind.None
         };
@@ -177,6 +181,7 @@ public sealed class DeviceHubModule : IIslandModule, IAsyncDisposable
             kind switch
             {
                 NotificationActionKind.OpenStorage => Text("DeviceHub.Open", "Aç"),
+                NotificationActionKind.ConnectBluetooth => Text("DeviceHub.Connect", "Connect"),
                 NotificationActionKind.ManageBluetooth => Text("DeviceHub.ManageBluetooth", "Bluetooth ayarlarında yönet"),
                 _ => Text("DeviceHub.ManageSound", "Ses ayarlarını aç")
             },
@@ -184,7 +189,7 @@ public sealed class DeviceHubModule : IIslandModule, IAsyncDisposable
             true);
     }
 
-    private enum NotificationActionKind { None, OpenStorage, ManageBluetooth, ManageSound }
+    private enum NotificationActionKind { None, OpenStorage, ManageBluetooth, ManageSound, ConnectBluetooth }
 
     private sealed record NotificationAction(NotificationActionKind Kind, DeviceHubDevice Device);
     private void OnLanguageChanged(object? sender, EventArgs e) => PresentationChanged?.Invoke(this, CurrentPresentation);

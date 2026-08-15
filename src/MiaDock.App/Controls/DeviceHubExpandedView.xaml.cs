@@ -51,7 +51,9 @@ public sealed partial class DeviceHubExpandedView : UserControl
     {
         if (args.PropertyName is nameof(DeviceHubViewModel.BatteryDevices) or
             nameof(DeviceHubViewModel.StorageOperationError) or
-            nameof(DeviceHubViewModel.StorageOperationOpen))
+            nameof(DeviceHubViewModel.StorageOperationOpen) or
+            nameof(DeviceHubViewModel.BluetoothOperationError) or
+            nameof(DeviceHubViewModel.BluetoothOperationOpen))
         {
             UpdateDynamicState();
         }
@@ -68,6 +70,9 @@ public sealed partial class DeviceHubExpandedView : UserControl
             ? Visibility.Visible
             : Visibility.Collapsed;
         StorageInfoBar.Severity = _viewModel.StorageOperationError
+            ? InfoBarSeverity.Error
+            : InfoBarSeverity.Success;
+        BluetoothInfoBar.Severity = _viewModel.BluetoothOperationError
             ? InfoBarSeverity.Error
             : InfoBarSeverity.Success;
     }

@@ -76,6 +76,14 @@ public static class ModuleServiceDisclosureCatalog
                     "Eşleştirilmiş Bluetooth cihazlarının bağlanma durumunu yerel olarak izler; eşleştirme veya bağlantı yönetimi yapmaz.",
                     "Locally monitors connection state for paired Bluetooth devices; it does not pair or manage connections."),
                 false),
+            "device-hub" => new(
+                moduleId,
+                "Device Hub",
+                "Windows DeviceWatcher · BluetoothAPIs",
+                L(
+                    "Eşli Bluetooth, ses ve USB aygıtlarını cihazda listeler. Kullanıcı komutuyla eşli Bluetooth cihazını bağlar veya ayırır; yeni eşleştirme yapmaz.",
+                    "Lists paired Bluetooth, audio, and USB devices on this device. Connects or disconnects a paired Bluetooth device only on user command; it does not pair new devices."),
+                false),
             "timer" => new(
                 moduleId,
                 L("Zamanlayıcı ve kronometre", "Timer and stopwatch"),

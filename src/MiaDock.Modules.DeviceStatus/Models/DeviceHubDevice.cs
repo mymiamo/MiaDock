@@ -36,7 +36,9 @@ public enum DeviceHubDeviceCapabilities
     OpenSettings = 2,
     HasBattery = 4,
     ManageInSettings = 8,
-    Eject = 16
+    Eject = 16,
+    Connect = 32,
+    Disconnect = 64
 }
 
 public sealed record DeviceHubDevice(
@@ -55,8 +57,11 @@ public sealed record DeviceHubDevice(
     long? TotalSpace = null,
     long? FreeSpace = null,
     bool CanEject = false,
-    string? DeviceInstanceId = null)
+    string? DeviceInstanceId = null,
+    string? DeviceAddress = null)
 {
     public bool HasBattery => BatteryPercentage is >= 0 and <= 100;
     public string? BatteryText => HasBattery ? $"{BatteryPercentage}%" : null;
+    public bool CanConnect => Capabilities.HasFlag(DeviceHubDeviceCapabilities.Connect);
+    public bool CanDisconnect => Capabilities.HasFlag(DeviceHubDeviceCapabilities.Disconnect);
 }

@@ -377,6 +377,11 @@ public sealed class DockExperienceViewTests
 
         var infoBar = FindNamedElement(document, "StorageInfoBar");
         Assert.AreEqual("Polite", AttributeValue(infoBar, "AutomationProperties.LiveSetting"));
+        var bluetoothInfoBar = FindNamedElement(document, "BluetoothInfoBar");
+        Assert.AreEqual("Polite", AttributeValue(bluetoothInfoBar, "AutomationProperties.LiveSetting"));
+        var text = document.ToString();
+        StringAssert.Contains(text, "ConnectBluetoothCommand");
+        StringAssert.Contains(text, "DisconnectBluetoothCommand");
 
         var codeBehind = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,

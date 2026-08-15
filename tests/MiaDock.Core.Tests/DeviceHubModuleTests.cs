@@ -68,6 +68,44 @@ public sealed class DeviceHubModuleTests
 
         Assert.AreEqual(MiaDock.Core.Modules.AudibleNotificationCue.LowBattery, events[0].AudibleCue);
         Assert.AreEqual(MiaDock.Core.Modules.AudibleNotificationCue.DeviceDisconnected, events[1].AudibleCue);
+        Assert.AreEqual("Connect", events[1].Presentation.Commands.Single().DisplayName);
+
+        await module.DisposeAsync();
+        viewModel.Dispose();
+    }
+
+    [TestMethod]
+    public async Task DisconnectNotification_ConnectCommand_UsesOpaqueIdAndCallsConnectionService()
+    {
+        var service = new FakeDeviceHubService();
+        var connection = new FakeBluetoothConnection();
+        var viewModel = new DeviceHubViewModel(service, new FakeStorage(), new FakeSettingsLauncher(), connection);
+        var module = new DeviceHubModule(service, viewModel, new FakeSettings());
+        MiaDock.Core.Modules.ModuleEvent? raised = null;
+        module.EventOccurred += (_, value) => raised = value;
+        await module.ActivateAsync();
+        var device = new DeviceHubDevice(
+            "bluetooth-secret",
+            "Headset",
+            DeviceHubDeviceCategory.Bluetooth,
+            DeviceHubConnectionState.Disconnected,
+            false,
+            null,
+            DeviceHubDeviceCapabilities.Connect,
+            NativeDeviceId: "endpoint-id",
+            DeviceType: DeviceHubDeviceType.Headset,
+            DeviceAddress: "AA:BB:CC:DD:EE:FF");
+
+        service.Publish(new DeviceHubChange(DeviceHubChangeKind.Disconnected, device));
+
+        Assert.IsNotNull(raised);
+        var command = raised.Presentation.Commands.Single();
+        Assert.DoesNotContain("bluetooth-secret", command.Id);
+        Assert.DoesNotContain("endpoint-id", command.Id);
+        Assert.IsTrue(await module.ExecuteCommandAsync(command.Id));
+        Assert.AreEqual("endpoint-id", connection.LastRequest?.EndpointId);
+        Assert.AreEqual("AA:BB:CC:DD:EE:FF", connection.LastRequest?.DeviceAddress);
+        Assert.IsTrue(connection.Connected);
 
         await module.DisposeAsync();
         viewModel.Dispose();
@@ -99,6 +137,31 @@ public sealed class DeviceHubModuleTests
         public Task<RemovableStorageEjectResult> EjectAsync(RemovableStorageInfo storage, CancellationToken cancellationToken = default) =>
             Task.FromResult(new RemovableStorageEjectResult(RemovableStorageEjectStatus.Succeeded));
         public Task<bool> OpenSafelyRemoveHardwareAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
+    }
+
+    private sealed class FakeBluetoothConnection : IBluetoothDeviceConnectionService
+    {
+        public BluetoothConnectionRequest? LastRequest { get; private set; }
+        public bool Connected { get; private set; }
+        public BluetoothConnectionResult Result { get; set; } = BluetoothConnectionResult.Succeeded;
+
+        public Task<BluetoothConnectionResult> ConnectAsync(
+            BluetoothConnectionRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            LastRequest = request;
+            Connected = true;
+            return Task.FromResult(Result);
+        }
+
+        public Task<BluetoothConnectionResult> DisconnectAsync(
+            BluetoothConnectionRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            LastRequest = request;
+            Connected = false;
+            return Task.FromResult(Result);
+        }
     }
 
     private sealed class FakeSettingsLauncher : IDeviceHubSettingsLauncher

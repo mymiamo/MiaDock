@@ -174,7 +174,7 @@ public sealed class SettingsWindowTests
         foreach (var moduleId in new[]
                  {
                      "media", "volume", "privacy", "system-activity", "battery",
-                     "network", "bluetooth", "timer", "notifications",
+                     "network", "bluetooth", "device-hub", "timer", "notifications",
                      "transfers"
                  })
         {
@@ -318,7 +318,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.5.3.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.5.4.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -351,7 +351,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.5.3.0", packageVersion);
+        Assert.AreEqual("1.5.4.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 

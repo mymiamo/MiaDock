@@ -28,7 +28,7 @@ $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csp
 $solution = Join-Path $repositoryRoot "MiaDock.sln"
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.3.0"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.4.0"
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
@@ -38,7 +38,7 @@ $steps = [System.Collections.Generic.List[object]]::new()
 $summary = [ordered]@{
     SchemaVersion = 1
     Product = "MiaDock"
-    Version = "1.5.3.0"
+    Version = "1.5.4.0"
     StartedAtUtc = [DateTimeOffset]::UtcNow.ToString("O")
     CompletedAtUtc = $null
     Result = "Running"
@@ -136,9 +136,9 @@ function Assert-ManifestConsistency {
         "//*[local-name()='StartupTask' and @TaskId='MiaDockStartupTask']")
 
     if ($null -eq $packageIdentity -or
-        $packageIdentity.Version -ne "1.5.3.0" -or
+        $packageIdentity.Version -ne "1.5.4.0" -or
         $packageIdentity.Name -ne "mymiamo.net.MiaDock") {
-        throw "Package identity or version is not the expected MiaDock 1.5.3.0 identity."
+        throw "Package identity or version is not the expected MiaDock 1.5.4.0 identity."
     }
 
     if ($null -eq $applicationIdentity -or
@@ -190,7 +190,7 @@ function Assert-TestPackageContents {
             "//*[local-name()='StartupTask' and @TaskId='MiaDockStartupTask']")
         if ($null -eq $identity -or
             $identity.Name -ne "mymiamo.net.MiaDock" -or
-            $identity.Version -ne "1.5.3.0" -or
+            $identity.Version -ne "1.5.4.0" -or
             $null -eq $startupTask) {
             throw "The packaged identity, version or StartupTask declaration is invalid."
         }

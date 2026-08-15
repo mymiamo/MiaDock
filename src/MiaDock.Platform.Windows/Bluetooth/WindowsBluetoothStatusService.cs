@@ -16,6 +16,7 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
     private const string BatteryLifeProperty = "System.Devices.BatteryLife";
     private const string CategoryIdsProperty = "System.Devices.CategoryIds";
     private const string AepCategoryProperty = "System.Devices.Aep.Category";
+    private const string DeviceAddressProperty = "System.Devices.Aep.DeviceAddress";
     private readonly IUiDispatcher _dispatcher;
     private readonly IBluetoothRadioStateProvider _radioProvider;
     private readonly ILogService? _log;
@@ -192,7 +193,8 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
                     ContainerIdProperty,
                     BatteryLifeProperty,
                     CategoryIdsProperty,
-                    AepCategoryProperty
+                    AepCategoryProperty,
+                    DeviceAddressProperty
                 },
                 DeviceInformationKind.AssociationEndpoint);
             _watcherGeneration++;
@@ -316,17 +318,35 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
     private static BluetoothDeviceState ToState(DeviceInformation device)
     {
         var container = GetGuid(device, ContainerIdProperty)?.ToString("N") ?? device.Id;
+        var reported = GetString(device, DeviceAddressProperty);
+        var address = BluetoothAddressParser.TryParse(reported, out _)
+            ? reported
+            : BluetoothAddressParser.TryExtractFromEndpointId(device.Id);
         return new BluetoothDeviceState(
             container,
             string.IsNullOrWhiteSpace(device.Name) ? "Bluetooth cihazı" : device.Name,
             GetBool(device, IsConnectedProperty),
             GetBool(device, IsPresentProperty),
             GetBatteryPercentage(device),
-            ClassifyDevice(device));
+            ClassifyDevice(device),
+            device.Id,
+            address);
     }
 
     private static bool GetBool(DeviceInformation device, string key) =>
         device.Properties.TryGetValue(key, out var value) && value is bool result && result;
+
+    private static string? GetString(DeviceInformation device, string key)
+    {
+        if (!device.Properties.TryGetValue(key, out var value) || value is null)
+            return null;
+        return value switch
+        {
+            string text when !string.IsNullOrWhiteSpace(text) => text,
+            ulong number => number.ToString("X12", System.Globalization.CultureInfo.InvariantCulture),
+            _ => null
+        };
+    }
 
     private static Guid? GetGuid(DeviceInformation device, string key) =>
         device.Properties.TryGetValue(key, out var value) && value is Guid result ? result : null;

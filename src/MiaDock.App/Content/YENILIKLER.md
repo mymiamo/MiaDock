@@ -1,10 +1,14 @@
 # What's New
 
-# MiaDock 1.5.3
+# MiaDock 1.5.4
 
-* Clipboard Peek converts copied colors to HEX, RGB, and HSL with one tap, and shows word and character counts for plain text.
+* Device Hub can connect and disconnect a paired Bluetooth device from the dock, without pairing new devices.
 
 ## Earlier updates
+
+### 1.5.3
+
+* Clipboard Peek converts copied colors to HEX, RGB, and HSL with one tap, and shows word and character counts for plain text.
 
 ### 1.5.2
 

@@ -11,17 +11,21 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     private readonly IDeviceHubService _service;
     private readonly IRemovableStorageService _storage;
     private readonly IDeviceHubSettingsLauncher _settingsLauncher;
+    private readonly IBluetoothDeviceConnectionService? _bluetoothConnection;
     private readonly ILocalizationService? _localization;
+    private int _bluetoothBusy;
 
     public DeviceHubViewModel(
         IDeviceHubService service,
         IRemovableStorageService storage,
         IDeviceHubSettingsLauncher settingsLauncher,
+        IBluetoothDeviceConnectionService? bluetoothConnection = null,
         ILocalizationService? localization = null)
     {
         _service = service;
         _storage = storage;
         _settingsLauncher = settingsLauncher;
+        _bluetoothConnection = bluetoothConnection;
         _localization = localization;
         _state = service.Current;
         service.StateChanged += OnStateChanged;
@@ -55,6 +59,9 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
         _ when State.IsInitialSnapshot => Text("DeviceHub.Loading", "Cihazlar hazırlanıyor."),
         _ => Text("DeviceHub.Ready", "Bağlı cihazlar güncel.")
     };
+    public string ConnectText => Text("DeviceHub.Connect", "Connect");
+    public string DisconnectText => Text("DeviceHub.Disconnect", "Disconnect");
+    public string ManageBluetoothText => Text("DeviceHub.ManageBluetooth", "Manage in Bluetooth settings");
 
     [ObservableProperty]
     private bool _storageOperationOpen;
@@ -65,6 +72,15 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     private string _storageOperationMessage = string.Empty;
 
+    [ObservableProperty]
+    private bool _bluetoothOperationOpen;
+
+    [ObservableProperty]
+    private bool _bluetoothOperationError;
+
+    [ObservableProperty]
+    private string _bluetoothOperationMessage = string.Empty;
+
     [RelayCommand]
     private Task OpenBluetoothSettingsAsync() => _settingsLauncher.OpenBluetoothSettingsAsync();
 
@@ -74,6 +90,20 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     private Task OpenSoundSettingsAsync() => _settingsLauncher.OpenSoundSettingsAsync();
 
     public Task OpenSoundSettingsPageAsync() => _settingsLauncher.OpenSoundSettingsAsync();
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private Task ConnectBluetoothAsync(DeviceHubDevice? device) =>
+        ChangeBluetoothAsync(device, connect: true);
+
+    public Task ConnectBluetoothDeviceAsync(DeviceHubDevice? device) =>
+        ChangeBluetoothAsync(device, connect: true);
+
+    [RelayCommand(AllowConcurrentExecutions = false)]
+    private Task DisconnectBluetoothAsync(DeviceHubDevice? device) =>
+        ChangeBluetoothAsync(device, connect: false);
+
+    public Task DisconnectBluetoothDeviceAsync(DeviceHubDevice? device) =>
+        ChangeBluetoothAsync(device, connect: false);
 
     [RelayCommand]
     private async Task OpenStorageAsync(DeviceHubDevice? device)
@@ -132,6 +162,47 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private Task OpenSafelyRemoveHardwareAsync() => _storage.OpenSafelyRemoveHardwareAsync();
 
+    private async Task ChangeBluetoothAsync(DeviceHubDevice? device, bool connect)
+    {
+        if (_bluetoothConnection is null ||
+            device is not { Category: DeviceHubDeviceCategory.Bluetooth })
+            return;
+        if (Interlocked.CompareExchange(ref _bluetoothBusy, 1, 0) != 0)
+            return;
+
+        try
+        {
+            BluetoothOperationOpen = false;
+            var request = new BluetoothConnectionRequest(device.NativeDeviceId, device.DeviceAddress, device.DeviceType);
+            var result = connect
+                ? await _bluetoothConnection.ConnectAsync(request)
+                : await _bluetoothConnection.DisconnectAsync(request);
+            BluetoothOperationError = result != BluetoothConnectionResult.Succeeded;
+            BluetoothOperationMessage = result switch
+            {
+                BluetoothConnectionResult.Succeeded when connect =>
+                    Text("DeviceHub.ConnectSucceeded", "Connected {0}.", device.DisplayName),
+                BluetoothConnectionResult.Succeeded =>
+                    Text("DeviceHub.DisconnectSucceeded", "Disconnected {0}.", device.DisplayName),
+                BluetoothConnectionResult.RadioOff =>
+                    Text("DeviceHub.ConnectRadioOff", "Turn Bluetooth on and try again."),
+                BluetoothConnectionResult.Unavailable or BluetoothConnectionResult.AccessDenied =>
+                    Text("DeviceHub.ConnectUnsupported", "Use Bluetooth settings to manage {0}.", device.DisplayName),
+                _ when connect =>
+                    Text("DeviceHub.ConnectFailed", "{0} could not be connected.", device.DisplayName),
+                _ =>
+                    Text("DeviceHub.DisconnectFailed", "{0} could not be disconnected.", device.DisplayName)
+            };
+            BluetoothOperationOpen = true;
+            if (result == BluetoothConnectionResult.Succeeded)
+                await _service.RefreshAsync();
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _bluetoothBusy, 0);
+        }
+    }
+
     private void OnStateChanged(object? sender, DeviceHubState state)
     {
         State = state;
@@ -143,6 +214,9 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     {
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(CompactSummary));
+        OnPropertyChanged(nameof(ConnectText));
+        OnPropertyChanged(nameof(DisconnectText));
+        OnPropertyChanged(nameof(ManageBluetoothText));
         _ = _service.RefreshAsync();
     }
 

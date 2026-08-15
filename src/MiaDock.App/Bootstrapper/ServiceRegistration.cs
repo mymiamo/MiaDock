@@ -106,6 +106,7 @@ public static class ServiceRegistration
         services.AddSingleton<IRadioToggleService, WindowsRadioToggleService>();
         services.AddSingleton<IBluetoothRadioStateProvider, WindowsBluetoothRadioStateProvider>();
         services.AddSingleton<IBluetoothStatusService, WindowsBluetoothStatusService>();
+        services.AddSingleton<IBluetoothDeviceConnectionService, WindowsBluetoothDeviceConnectionService>();
         services.AddSingleton<ISystemResumeService, WindowsSystemResumeService>();
         services.AddSingleton<ITimerStateStore, JsonTimerStateStore>();
         services.AddSingleton<ITimerAlarmPlayer, WindowsTimerAlarmPlayer>();

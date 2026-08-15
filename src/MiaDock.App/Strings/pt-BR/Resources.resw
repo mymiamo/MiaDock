@@ -1223,6 +1223,14 @@
   <data name="DeviceHub.ConnectedState" xml:space="preserve"><value>Conectado</value></data>
   <data name="DeviceHub.DisconnectedState" xml:space="preserve"><value>Desconectado</value></data>
   <data name="DeviceHub.ShowStorageEvents" xml:space="preserve"><value>Mostrar eventos de conexão de armazenamento removível</value></data>
+  <data name="DeviceHub.Connect" xml:space="preserve"><value>Conectar</value></data>
+  <data name="DeviceHub.Disconnect" xml:space="preserve"><value>Desconectar</value></data>
+  <data name="DeviceHub.ConnectSucceeded" xml:space="preserve"><value>{0} foi conectado.</value></data>
+  <data name="DeviceHub.DisconnectSucceeded" xml:space="preserve"><value>{0} foi desconectado.</value></data>
+  <data name="DeviceHub.ConnectFailed" xml:space="preserve"><value>Não foi possível conectar {0}.</value></data>
+  <data name="DeviceHub.DisconnectFailed" xml:space="preserve"><value>Não foi possível desconectar {0}.</value></data>
+  <data name="DeviceHub.ConnectRadioOff" xml:space="preserve"><value>Ative o Bluetooth e tente novamente.</value></data>
+  <data name="DeviceHub.ConnectUnsupported" xml:space="preserve"><value>Use as configurações de Bluetooth para gerenciar {0}.</value></data>
   <data name="ClipboardPeek.ComposeEmail" xml:space="preserve"><value>Escrever e-mail</value></data>
   <data name="ClipboardPeek.ShowInFolder" xml:space="preserve"><value>Mostrar na pasta</value></data>
   <data name="ClipboardPeek.MultipleItems" xml:space="preserve"><value>{0} itens copiados</value></data>

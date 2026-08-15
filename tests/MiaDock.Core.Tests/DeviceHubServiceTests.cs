@@ -13,7 +13,7 @@ public sealed class DeviceHubServiceTests
     public async Task InitialSnapshot_ListsDevicesWithoutConnectedEvents()
     {
         var bluetooth = new FakeBluetooth(new BluetoothStatusSnapshot(
-            DeviceServiceState.Ready, true, [new BluetoothDeviceState("headset", "Headset", true, true)], BluetoothRadioState.On));
+            DeviceServiceState.Ready, true, [new BluetoothDeviceState("headset", "Headset", true, true, EndpointId: "aep-headset")], BluetoothRadioState.On));
         await using var hub = CreateHub(bluetooth, new FakeAudioCatalog(), new FakeStorage());
         var events = new List<DeviceHubChange>();
         hub.DeviceChanged += (_, change) => events.Add(change);
@@ -22,6 +22,26 @@ public sealed class DeviceHubServiceTests
 
         Assert.HasCount(1, hub.Current.BluetoothDevices);
         Assert.IsEmpty(events);
+        Assert.IsTrue(hub.Current.BluetoothDevices[0].CanDisconnect);
+        Assert.IsFalse(hub.Current.BluetoothDevices[0].CanConnect);
+        Assert.AreEqual("aep-headset", hub.Current.BluetoothDevices[0].NativeDeviceId);
+    }
+
+    [TestMethod]
+    public async Task DisconnectedBluetooth_ExposesConnectWhenEndpointExists()
+    {
+        var bluetooth = new FakeBluetooth(new BluetoothStatusSnapshot(
+            DeviceServiceState.Ready,
+            true,
+            [new BluetoothDeviceState("buds", "Buds", false, true, EndpointId: "aep-buds")],
+            BluetoothRadioState.On));
+        await using var hub = CreateHub(bluetooth, new FakeAudioCatalog(), new FakeStorage());
+
+        await hub.StartAsync();
+
+        Assert.IsTrue(hub.Current.BluetoothDevices[0].CanConnect);
+        Assert.IsFalse(hub.Current.BluetoothDevices[0].CanDisconnect);
+        Assert.AreEqual("aep-buds", hub.Current.BluetoothDevices[0].NativeDeviceId);
     }
 
     [TestMethod]

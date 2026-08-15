@@ -2,8 +2,12 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls"
              Loaded="OnLoaded"
              Unloaded="OnUnloaded">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+  </UserControl.Resources>
   <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}">
     <ScrollViewer VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled"
@@ -115,14 +119,32 @@
                 </Expander.Header>
                 <StackPanel Spacing="6">
                   <TextBlock Text="{Binding Detail}" Style="{StaticResource DockCaptionTextStyle}" />
-                  <Button Content="Manage in Bluetooth settings"
+                  <Button Content="{Binding DataContext.ConnectText, ElementName=Root}"
+                          Command="{Binding DataContext.ConnectBluetoothCommand, ElementName=Root}"
+                          CommandParameter="{Binding}"
+                          MinHeight="44" HorizontalAlignment="Left"
+                          Visibility="{Binding CanConnect, Converter={StaticResource BooleanToVisibility}}"
+                          AutomationProperties.Name="{Binding DataContext.ConnectText, ElementName=Root}" />
+                  <Button Content="{Binding DataContext.DisconnectText, ElementName=Root}"
+                          Command="{Binding DataContext.DisconnectBluetoothCommand, ElementName=Root}"
+                          CommandParameter="{Binding}"
+                          MinHeight="44" HorizontalAlignment="Left"
+                          Visibility="{Binding CanDisconnect, Converter={StaticResource BooleanToVisibility}}"
+                          AutomationProperties.Name="{Binding DataContext.DisconnectText, ElementName=Root}" />
+                  <Button Content="{Binding DataContext.ManageBluetoothText, ElementName=Root}"
                           Command="{Binding DataContext.OpenBluetoothSettingsCommand, ElementName=Root}"
-                          MinHeight="44" HorizontalAlignment="Left" />
+                          MinHeight="44" HorizontalAlignment="Left"
+                          AutomationProperties.Name="{Binding DataContext.ManageBluetoothText, ElementName=Root}" />
                 </StackPanel>
               </Expander>
             </DataTemplate>
           </ItemsControl.ItemTemplate>
         </ItemsControl>
+        <InfoBar x:Name="BluetoothInfoBar"
+                 IsOpen="{Binding BluetoothOperationOpen}"
+                 IsClosable="True"
+                 Message="{Binding BluetoothOperationMessage}"
+                 AutomationProperties.LiveSetting="Polite" />
       </StackPanel>
 
       <StackPanel Spacing="5">
