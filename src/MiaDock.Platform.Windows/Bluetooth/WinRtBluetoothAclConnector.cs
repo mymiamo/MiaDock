@@ -45,7 +45,7 @@ internal sealed class WinRtBluetoothAclConnector : IBluetoothAclConnector
             var services = await device.GetRfcommServicesAsync(BluetoothCacheMode.Uncached)
                 .AsTask(cancellationToken)
                 .ConfigureAwait(false);
-            return services.Error is BluetoothError.Success or BluetoothError.AttributeNotFound;
+            return services.Error is BluetoothError.Success;
         }
         catch (ArgumentException)
         {
