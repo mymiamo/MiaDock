@@ -27,7 +27,11 @@ public interface IOverlayWindowController : IDisposable
 
     void SetInputActivationEnabled(bool enabled);
 
-    void SetEdgeRevealHidden(bool hidden, double visibleStripInDips = 2);
+    void SetEdgeRevealHidden(
+        bool hidden,
+        double visibleStripInDips = 2,
+        bool animate = false,
+        Action? transitionCompleted = null);
 
     bool IsPointerAtAttachedEdge(int activationThicknessInPixels = 3, int spanPaddingInPixels = 24);
 

@@ -1,0 +1,51 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+  <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#FFE4A0B0" />
+  <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#FFD48A9C" />
+  <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FF4A2430" />
+  <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FFFFF7F8" />
+  <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
+  <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#334A2430" />
+  <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#4D4A2430" />
+  <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FF3F1E28" />
+  <CornerRadius x:Key="IslandIconButtonCornerRadius">999</CornerRadius>
+
+  <ResourceDictionary.ThemeDictionaries>
+    <ResourceDictionary x:Key="Default">
+      <SolidColorBrush x:Key="IslandSurfaceBrush" Color="#FFE4A0B0" />
+      <SolidColorBrush x:Key="IslandSurfaceSecondaryBrush" Color="#FFD48A9C" />
+      <SolidColorBrush x:Key="IslandTextPrimaryBrush" Color="#FF2A1218" />
+      <SolidColorBrush x:Key="IslandTextSecondaryBrush" Color="#FF5A2B38" />
+      <SolidColorBrush x:Key="IslandAccentBrush" Color="#FF4A2430" />
+      <SolidColorBrush x:Key="IslandStrokeBrush" Color="#334A2430" />
+      <SolidColorBrush x:Key="IslandControlFillBrush" Color="#262A1218" />
+      <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#FFE4A0B0" />
+      <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#FFD48A9C" />
+      <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FF4A2430" />
+      <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FFFFF7F8" />
+      <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
+      <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#334A2430" />
+      <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#4D4A2430" />
+      <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FF3F1E28" />
+    </ResourceDictionary>
+    <ResourceDictionary x:Key="Light">
+      <SolidColorBrush x:Key="IslandSurfaceBrush" Color="#FFE4A0B0" />
+      <SolidColorBrush x:Key="IslandSurfaceSecondaryBrush" Color="#FFD48A9C" />
+      <SolidColorBrush x:Key="IslandTextPrimaryBrush" Color="#FF2A1218" />
+      <SolidColorBrush x:Key="IslandTextSecondaryBrush" Color="#FF5A2B38" />
+      <SolidColorBrush x:Key="IslandAccentBrush" Color="#FF4A2430" />
+      <SolidColorBrush x:Key="IslandStrokeBrush" Color="#334A2430" />
+      <SolidColorBrush x:Key="IslandControlFillBrush" Color="#262A1218" />
+      <SolidColorBrush x:Key="IslandStyleSurfaceBrush" Color="#FFE4A0B0" />
+      <SolidColorBrush x:Key="IslandStyleControlBrush" Color="#FFD48A9C" />
+      <SolidColorBrush x:Key="IslandStyleAccentBrush" Color="#FF4A2430" />
+      <SolidColorBrush x:Key="IslandAccentForegroundBrush" Color="#FFFFF7F8" />
+      <SolidColorBrush x:Key="IslandIconButtonRestBrush" Color="Transparent" />
+      <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#334A2430" />
+      <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#4D4A2430" />
+      <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FF3F1E28" />
+    </ResourceDictionary>
+  </ResourceDictionary.ThemeDictionaries>
+</ResourceDictionary>

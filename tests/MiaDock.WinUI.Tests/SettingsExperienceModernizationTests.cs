@@ -74,7 +74,7 @@ public sealed class SettingsExperienceModernizationTests
     }
 
     [TestMethod]
-    public void SettingsNavigation_MapsEightCategoriesToSixteenSearchableSubpages()
+    public void SettingsNavigation_MapsEightCategoriesToSeventeenSearchableSubpages()
     {
         var xaml = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory, "Windows", "SettingsWindow.xaml")).ToString();
@@ -83,7 +83,7 @@ public sealed class SettingsExperienceModernizationTests
 
         Assert.HasCount(8, XDocument.Parse(xaml).Descendants()
             .Where(element => element.Name.LocalName == "NavigationViewItem"));
-        Assert.HasCount(16, Regex.Matches(source, "Search\\(\\\"").Cast<Match>());
+        Assert.HasCount(17, Regex.Matches(source, "Search\\(\\\"").Cast<Match>());
         StringAssert.Contains(source, "CategoryId");
         StringAssert.Contains(source, "SubpageId");
         StringAssert.Contains(source, "FocusTarget");

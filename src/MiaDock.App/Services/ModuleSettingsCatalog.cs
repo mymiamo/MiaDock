@@ -68,6 +68,7 @@ public sealed class ModuleSettingsCatalog : IDisposable
             "battery" => FromBattery(_power.Current),
             "network" => FromDeviceState(_network.Current.State),
             "bluetooth" => FromDeviceState(_bluetooth.Current.State),
+            "device-hub" => FromDeviceState(_bluetooth.Current.State),
             "notifications" => FromNotifications(_notifications.AccessState),
             "transfers" => FromTransfers(_transfers.State),
             _ => new(ModuleAvailabilityState.Ready)

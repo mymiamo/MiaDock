@@ -177,6 +177,9 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
             var cost = profile?.GetConnectionCost().NetworkCostType.ToString();
             var metered = cost is "Fixed" or "Variable";
             var adapterId = profile?.NetworkAdapter?.NetworkAdapterId;
+            // A machine can retain disconnected VPN/tunnel profiles. Only the active
+            // Internet profile represents a VPN that should occupy compact dock space.
+            var vpnActive = profile is not null && IsVpnProfile(profile);
             var previous = Current;
             if (previous.AdapterId != adapterId)
             {
@@ -193,7 +196,8 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
                 previous.AdapterId == adapterId ? previous.UploadBytesPerSecond : null,
                 previous.AdapterId == adapterId
                     ? previous.ThroughputState
-                    : _samplingRequested ? NetworkThroughputState.Sampling : NetworkThroughputState.Inactive));
+                    : _samplingRequested ? NetworkThroughputState.Sampling : NetworkThroughputState.Inactive,
+                vpnActive));
         }
         catch (Exception)
         {
@@ -265,6 +269,12 @@ public sealed class WindowsNetworkStatusService : INetworkStatusService
             SnapshotChanged?.Invoke(this, snapshot);
         }
         if (_dispatcher.HasThreadAccess) Apply(); else _dispatcher.TryEnqueue(Apply);
+    }
+
+    private static bool IsVpnProfile(ConnectionProfile profile)
+    {
+        var adapterType = profile.NetworkAdapter?.IanaInterfaceType;
+        return adapterType is 23 or 53 or 131;
     }
 
     public void Dispose()

@@ -11,7 +11,8 @@ public sealed record ModuleEvent
         ModuleEventPriority priority = ModuleEventPriority.Normal,
         string? coalescingKey = null,
         DateTimeOffset? expiresAtUtc = null,
-        bool isFullscreenEligible = true)
+        bool isFullscreenEligible = true,
+        AudibleNotificationCue audibleCue = AudibleNotificationCue.None)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(moduleId);
         ArgumentNullException.ThrowIfNull(presentation);
@@ -31,6 +32,7 @@ public sealed record ModuleEvent
             : coalescingKey;
         ExpiresAtUtc = expiresAtUtc ?? occurredAt.ToUniversalTime().Add(displayDuration);
         IsFullscreenEligible = isFullscreenEligible;
+        AudibleCue = audibleCue;
     }
 
     public string ModuleId { get; }
@@ -42,4 +44,5 @@ public sealed record ModuleEvent
     public string CoalescingKey { get; }
     public DateTimeOffset ExpiresAtUtc { get; }
     public bool IsFullscreenEligible { get; }
+    public AudibleNotificationCue AudibleCue { get; }
 }

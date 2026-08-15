@@ -47,10 +47,12 @@
                 Orientation="Horizontal"
                 Spacing="10"
                 VerticalAlignment="Center">
-      <StackPanel x:Name="NetworkCard"
-                  Orientation="Horizontal"
-                  Spacing="6"
-                  VerticalAlignment="Center">
+      <Button x:Name="NetworkCard"
+              Padding="0"
+              Background="Transparent"
+              Command="{Binding ToggleWifiCommand}"
+              ToolTipService.ToolTip="{Binding NetworkStatus}">
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
         <FontIcon Glyph="{Binding NetworkGlyph}"
                   FontSize="14"
                   Foreground="{Binding NetworkStatusBrush}" />
@@ -59,21 +61,31 @@
                    MaxLines="1"
                    TextTrimming="CharacterEllipsis"
                    Style="{StaticResource DockStatusTextStyle}" />
-      </StackPanel>
+        </StackPanel>
+      </Button>
 
       <Border Width="1" Height="20" Background="{ThemeResource DockDividerBrush}" />
 
-      <StackPanel x:Name="BluetoothCard"
-                  Orientation="Horizontal"
-                  Spacing="6"
-                  VerticalAlignment="Center">
+      <Button x:Name="BluetoothCard"
+              Padding="0"
+              Background="Transparent"
+              Command="{Binding ToggleBluetoothCommand}"
+              ToolTipService.ToolTip="{Binding BluetoothStatus}">
+        <StackPanel Orientation="Horizontal" Spacing="6" VerticalAlignment="Center">
         <FontIcon Glyph="&#xE702;" FontSize="14" />
         <TextBlock Text="{Binding BluetoothStatus}"
                    MaxWidth="118"
                    MaxLines="1"
                    TextTrimming="CharacterEllipsis"
                    Style="{StaticResource DockStatusTextStyle}" />
-      </StackPanel>
+        </StackPanel>
+      </Button>
+
+      <FontIcon Glyph="&#xE72E;"
+                FontSize="14"
+                Visibility="{Binding VpnVisibility}"
+                ToolTipService.ToolTip="{Binding VpnStatus}"
+                AutomationProperties.Name="{Binding VpnStatus}" />
 
       <Border Width="1" Height="20" Background="{ThemeResource DockDividerBrush}" />
 

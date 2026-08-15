@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <Version>1.4.2.0</Version>
-    <AssemblyVersion>1.4.2.0</AssemblyVersion>
-    <FileVersion>1.4.2.0</FileVersion>
-    <InformationalVersion>1.4.2.0</InformationalVersion>
+    <Version>1.5.3.0</Version>
+    <AssemblyVersion>1.5.3.0</AssemblyVersion>
+    <FileVersion>1.5.3.0</FileVersion>
+    <InformationalVersion>1.5.3.0</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
@@ -59,6 +59,12 @@
     <Content Include="..\..\logo.ico" Link="Assets\logo.ico" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\*.png" />
     <Content Include="Assets\miadock-ringtone.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\sfx\connected-internet-none.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\sfx\connected-but-no-internet.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\sfx\low-battery.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\sfx\device-connected.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\sfx\device-left.wav" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="Assets\sfx\per-hour-per.wav" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Content\YENILIKLER.md" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\MiaDock.UI\Assets\Mock\*.svg" Link="Assets\Mock\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Page Include="..\MiaDock.UI\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" />

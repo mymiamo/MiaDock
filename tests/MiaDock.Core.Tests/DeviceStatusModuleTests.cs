@@ -40,6 +40,7 @@ public sealed class DeviceStatusModuleTests
         Assert.HasCount(2, events);
         Assert.IsTrue(events.All(value => value.CoalescingKey == "battery:low"));
         Assert.IsTrue(events.All(value => value.Priority == ModuleEventPriority.Normal));
+        Assert.IsTrue(events.All(value => value.AudibleCue == AudibleNotificationCue.LowBattery));
     }
 
     [TestMethod]
@@ -66,6 +67,25 @@ public sealed class DeviceStatusModuleTests
         service.Publish(service.Current with { DownloadBytesPerSecond = 42_000, UploadBytesPerSecond = 2_000 });
 
         Assert.IsNull(raised);
+    }
+
+    [TestMethod]
+    public async Task NetworkModule_MapsConnectivityLossToTypedAudibleCuesAndRecoveryToNone()
+    {
+        var service = new FakeNetworkService(Network(NetworkConnectivityKind.Internet));
+        var module = new NetworkModule(service, new NetworkModuleViewModel(service));
+        await module.ActivateAsync();
+        var events = new List<ModuleEvent>();
+        module.EventOccurred += (_, value) => events.Add(value);
+
+        service.Publish(Network(NetworkConnectivityKind.Offline) with { ConnectionKind = NetworkConnectionKind.None });
+        service.Publish(Network(NetworkConnectivityKind.LocalAccess) with { ConnectionKind = NetworkConnectionKind.WiFi });
+        service.Publish(Network(NetworkConnectivityKind.Internet) with { ConnectionKind = NetworkConnectionKind.WiFi });
+
+        Assert.HasCount(3, events);
+        Assert.AreEqual(AudibleNotificationCue.NetworkOffline, events[0].AudibleCue);
+        Assert.AreEqual(AudibleNotificationCue.ConnectedWithoutInternet, events[1].AudibleCue);
+        Assert.AreEqual(AudibleNotificationCue.None, events[2].AudibleCue);
     }
 
     [TestMethod]
@@ -99,6 +119,7 @@ public sealed class DeviceStatusModuleTests
         Assert.HasCount(1, events);
         Assert.IsTrue(events[0].Presentation.IsSensitive);
         Assert.IsFalse(events[0].IsFullscreenEligible);
+        Assert.AreEqual(AudibleNotificationCue.DeviceConnected, events[0].AudibleCue);
     }
 
     [TestMethod]
@@ -184,9 +205,14 @@ public sealed class DeviceStatusModuleTests
     {
         public BluetoothStatusSnapshot Current { get; private set; } = current;
         public event EventHandler<BluetoothStatusSnapshot>? SnapshotChanged;
-        public ValueTask StartAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
-        public ValueTask StopAsync(CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+        public ValueTask<IAsyncDisposable> AcquireAsync(CancellationToken cancellationToken = default) =>
+            ValueTask.FromResult<IAsyncDisposable>(new FakeBluetoothLease());
         public void Publish(BluetoothStatusSnapshot value) { Current = value; SnapshotChanged?.Invoke(this, value); }
         public void Dispose() { }
+    }
+
+    private sealed class FakeBluetoothLease : IAsyncDisposable
+    {
+        public ValueTask DisposeAsync() => ValueTask.CompletedTask;
     }
 }

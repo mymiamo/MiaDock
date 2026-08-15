@@ -86,4 +86,24 @@ public sealed class AppearanceThemePresetsTests
         Assert.AreEqual(AppearanceSettings.Default.Opacity, result.Opacity);
         Assert.AreEqual(AppearanceSettings.Default.ShadowIntensity, result.ShadowIntensity);
     }
+
+    [TestMethod]
+    public void TozPembe_AppliesDustyPinkPaletteEvenFromCustomColors()
+    {
+        var custom = AppearanceSettings.Default with
+        {
+            BackgroundColor = "#123456",
+            AccentColor = "#ABCDEF",
+            Opacity = 0.63,
+            ShadowIntensity = 0.8
+        };
+
+        var result = AppearanceThemePresets.ApplyWhenSafe(custom, ThemeStyle.TozPembe);
+
+        Assert.AreEqual(ThemeStyle.TozPembe, result.Theme);
+        Assert.AreEqual("#E4A0B0", result.BackgroundColor);
+        Assert.AreEqual("#4A2430", result.AccentColor);
+        Assert.AreEqual(1, result.Opacity, 0.001);
+        Assert.AreEqual(0.2, result.ShadowIntensity, 0.001);
+    }
 }

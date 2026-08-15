@@ -1,37 +1,58 @@
 # What's New
 
-# MiaDock 1.4.0.0
+# MiaDock 1.5.3
 
-## New Features and Improvements
+* Clipboard Peek converts copied colors to HEX, RGB, and HSL with one tap, and shows word and character counts for plain text.
 
-This update introduces smoother dock animations, new privacy features, and a completely reorganized Settings experience.
+## Earlier updates
 
-* Dock transitions and event notifications now use smoother, more natural animations.
-* Added a new **Privacy** module that locally shows which applications are using your microphone or camera.
-* The activity indicator appears white normally, green for microphone use, and orange for camera use.
-* Caps Lock, Num Lock, and Scroll Lock changes can now appear directly on the dock.
-* USB drive connection and removal events can now be shown on the dock.
-* Keyboard lock and USB notifications can be managed under **Modules → Optional**.
-* Settings have been completely reorganized into Overview, Personalization, Focus, Modules, Shortcuts, System, and Support.
-* Fullscreen options are now under Personalization, while global shortcuts have their own dedicated section.
-* Added a Settings back button and **Alt+Left** keyboard navigation.
-* System Activity has been simplified, with microphone and camera activity moved to the new Privacy module.
-* Onboarding is now simpler and more streamlined.
-* Improved overall interface fluidity and user experience.
+### 1.5.2
 
-## Additional Update
+* Refined the **Tozpembe** theme so the dock stays fully pink, with a transparent window around the rounded island.
+
+### 1.5.1
+
+* Added the **Tozpembe** theme: a dusty pink dock surface with dark, readable text.
+
+## Earlier updates
+
+### 1.5.0
+
+This update brings devices, clipboard, and optional alerts together on the dock.
+
+* **Device Hub** (on by default) shows Bluetooth, speakers, headphones, microphones, and USB storage in one place.
+* Get alerts when devices connect or disconnect, when audio output changes, and when a supported device battery is low.
+* Eject USB drives safely from the dock, and open Windows Bluetooth or sound settings when you need more control.
+* **Clipboard Peek** (off by default) can briefly show what you just copied: text, links, emails, colors, files, folders, and images.
+* Recent copies stay in memory only for this session and are cleared when MiaDock closes.
+* Passwords, keys, and similar secrets stay hidden until you choose to reveal them.
+* Choose Smart notifications, every copy, or none. Open links, compose email, save images, or show a file in its folder.
+* Optional **hourly reminder** (off by default) shows the time on the dock at the top of each hour.
+* **Notification sounds** can play for no network, connected without internet, low battery, device connect or disconnect, and the hourly reminder.
+* Preview each sound in Settings. One master switch under **Personalize → Notification Sounds** turns them all off. The timer alarm is separate and stays available.
+* The expanded idle dock can turn Wi-Fi and Bluetooth on or off.
+* Fullscreen edge-reveal now keeps a slim status strip so you can still find the dock.
+
+### 1.4.3
+
+* Redesigned the expanded Time view with a Fluent tab bar for Timer and Stopwatch.
+* Improved preset duration layout, custom duration entry, and stopwatch lap readability.
+* Kept timer and stopwatch states independent while switching between tabs.
 
 ### 1.4.2
 
-* Added lightweight composition micro-animations for live dock and media updates.
-* Improved visual continuity between cached compact and expanded dock content.
-* Added short, reduced-motion-aware Settings transitions and staggered surface animations.
 * Added clear loading feedback while media sources and Microsoft Store update status are being refreshed.
 * Improved Settings update-state handling for a more consistent experience.
 
 ### 1.4.1
 
 * Improved reliability when Windows brightness keys are used while a media application is active.
-* Strengthened Core Audio and Windows media handling so disappearing devices or media providers no longer cause MiaDock to close unexpectedly.
+* Strengthened audio and media handling so disappearing devices no longer close MiaDock unexpectedly.
 * Improved USB removable-drive detection and reliability.
-* Added more detailed diagnostics for Microsoft Store update checks.
+
+### 1.4.0
+
+* Smoother dock transitions and event notifications.
+* Privacy module shows which apps are using the microphone or camera.
+* Caps Lock, Num Lock, Scroll Lock, and USB events can appear on the dock.
+* Settings were reorganized, with a working back button.

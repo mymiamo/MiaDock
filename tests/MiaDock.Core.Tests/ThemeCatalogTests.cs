@@ -24,6 +24,7 @@ public sealed class ThemeCatalogTests
         var oled = ThemeCatalog.Get(ThemeStyle.OledBlack).Capabilities;
         var glass = ThemeCatalog.Get(ThemeStyle.NeutralFrostedGlass).Capabilities;
         var adaptive = ThemeCatalog.Get(ThemeStyle.AdaptiveFluent).Capabilities;
+        var tozPembe = ThemeCatalog.Get(ThemeStyle.TozPembe).Capabilities;
 
         Assert.AreEqual(ThemeBackdropKind.None, oled.Backdrop);
         Assert.IsTrue(oled.PrefersDarkContent);
@@ -33,6 +34,9 @@ public sealed class ThemeCatalogTests
         Assert.IsTrue(adaptive.FollowsSystemTheme);
         Assert.IsFalse(adaptive.SupportsBackgroundColor);
         Assert.IsFalse(adaptive.SupportsAccentColor);
+        Assert.AreEqual(ThemeBackdropKind.None, tozPembe.Backdrop);
+        Assert.IsFalse(tozPembe.PrefersDarkContent);
+        Assert.AreEqual("TozPembeTheme.xaml", ThemeCatalog.Get(ThemeStyle.TozPembe).ResourceFileName);
     }
 
     [TestMethod]

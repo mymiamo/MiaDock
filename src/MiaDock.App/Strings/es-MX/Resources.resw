@@ -109,6 +109,9 @@
   <data name="Theme.CustomSolidColor" xml:space="preserve">
     <value>Color sólido personalizado</value>
   </data>
+  <data name="Theme.TozPembe" xml:space="preserve">
+    <value>Tozpembe</value>
+  </data>
   <data name="Module.media.Name" xml:space="preserve">
     <value>Música</value>
   </data>
@@ -1186,4 +1189,99 @@
   <data name="UsbDevice.DisconnectedFormat" xml:space="preserve">
     <value>{0} desconectado</value>
   </data>
+  <data name="Module.device-hub.Name" xml:space="preserve"><value>Centro de dispositivos</value></data>
+  <data name="DeviceHub.Connected" xml:space="preserve"><value>Dispositivo conectado</value></data>
+  <data name="DeviceHub.Disconnected" xml:space="preserve"><value>Dispositivo desconectado</value></data>
+  <data name="DeviceHub.Loading" xml:space="preserve"><value>Preparando dispositivos.</value></data>
+  <data name="DeviceHub.Ready" xml:space="preserve"><value>Los dispositivos conectados están actualizados.</value></data>
+  <data name="DeviceHub.Unavailable" xml:space="preserve"><value>La información del dispositivo no está disponible.</value></data>
+  <data name="DeviceHub.BatteryLow" xml:space="preserve"><value>Batería baja</value></data>
+  <data name="DeviceHub.AudioOutputChanged" xml:space="preserve"><value>Salida de audio cambiada</value></data>
+  <data name="DeviceHub.SettingsTitle" xml:space="preserve"><value>Device Hub preferences</value></data><data name="DeviceHub.ShowConnectedEvents" xml:space="preserve"><value>Show device connection events</value></data><data name="DeviceHub.ShowDisconnectedEvents" xml:space="preserve"><value>Show device disconnection events</value></data><data name="DeviceHub.ShowBatteryWarnings" xml:space="preserve"><value>Show low battery warnings</value></data><data name="DeviceHub.ShowAudioOutputEvents" xml:space="preserve"><value>Show audio output changes</value></data><data name="DeviceHub.ShowBluetooth" xml:space="preserve"><value>Show Bluetooth devices</value></data><data name="DeviceHub.ShowAudioDevices" xml:space="preserve"><value>Show audio devices</value></data><data name="DeviceHub.ShowRemovableStorage" xml:space="preserve"><value>Show removable storage</value></data><data name="DeviceHub.BatteryWarningPercent" xml:space="preserve"><value>Battery warning threshold</value></data>
+  <data name="ClipboardPeek.Title" xml:space="preserve"><value>Vista del portapapeles</value></data><data name="ClipboardPeek.History" xml:space="preserve"><value>Copias recientes</value></data><data name="ClipboardPeek.ClearHistory" xml:space="preserve"><value>Borrar historial</value></data><data name="ClipboardPeek.Copy" xml:space="preserve"><value>Copiar</value></data><data name="ClipboardPeek.Open" xml:space="preserve"><value>Abrir</value></data><data name="ClipboardPeek.OpenFolder" xml:space="preserve"><value>Abrir carpeta</value></data><data name="ClipboardPeek.SaveImage" xml:space="preserve"><value>Guardar imagen</value></data><data name="ClipboardPeek.Reveal" xml:space="preserve"><value>Mostrar una vez</value></data><data name="ClipboardPeek.Empty" xml:space="preserve"><value>Copia algo para verlo aquí.</value></data><data name="ClipboardPeek.SensitiveContent" xml:space="preserve"><value>Contenido confidencial</value></data>
+  <data name="DeviceHub.CompactSummary" xml:space="preserve"><value>{0} conectados · {1} salidas de audio</value></data>
+  <data name="DeviceHub.SafeToRemove" xml:space="preserve"><value>Se puede extraer</value></data>
+  <data name="DeviceHub.Open" xml:space="preserve"><value>Abrir</value></data>
+  <data name="DeviceHub.ManageBluetooth" xml:space="preserve"><value>Administrar en configuración de Bluetooth</value></data>
+  <data name="DeviceHub.ManageSound" xml:space="preserve"><value>Abrir configuración de sonido</value></data>
+  <data name="DeviceHub.EjectSucceeded" xml:space="preserve"><value>Ya puedes extraer {0}.</value></data>
+  <data name="DeviceHub.EjectInUse" xml:space="preserve"><value>{0} está en uso. Cierra los archivos abiertos e inténtalo de nuevo.</value></data>
+  <data name="DeviceHub.EjectAccessDenied" xml:space="preserve"><value>Windows no permitió extraer {0}.</value></data>
+  <data name="DeviceHub.EjectNotFound" xml:space="preserve"><value>{0} ya no está disponible.</value></data>
+  <data name="DeviceHub.EjectUnsupported" xml:space="preserve"><value>Usa la configuración de Windows para extraer {0} de forma segura.</value></data>
+  <data name="DeviceHub.EjectFailed" xml:space="preserve"><value>No se pudo extraer {0} de forma segura.</value></data>
+  <data name="DeviceHub.Default" xml:space="preserve"><value>Predeterminado</value></data>
+  <data name="DeviceHub.FreeSpaceFormat" xml:space="preserve"><value>{0} libres</value></data>
+  <data name="DeviceHub.Type.Headphones" xml:space="preserve"><value>Audífonos</value></data>
+  <data name="DeviceHub.Type.Headset" xml:space="preserve"><value>Audífonos con micrófono</value></data>
+  <data name="DeviceHub.Type.Speaker" xml:space="preserve"><value>Bocina</value></data>
+  <data name="DeviceHub.Type.Mouse" xml:space="preserve"><value>Mouse</value></data>
+  <data name="DeviceHub.Type.Keyboard" xml:space="preserve"><value>Teclado</value></data>
+  <data name="DeviceHub.Type.Gamepad" xml:space="preserve"><value>Control de juego</value></data>
+  <data name="DeviceHub.Type.Other" xml:space="preserve"><value>Otro dispositivo</value></data>
+  <data name="DeviceHub.BluetoothDetailFormat" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="DeviceHub.ConnectedState" xml:space="preserve"><value>Conectado</value></data>
+  <data name="DeviceHub.DisconnectedState" xml:space="preserve"><value>Desconectado</value></data>
+  <data name="DeviceHub.ShowStorageEvents" xml:space="preserve"><value>Mostrar eventos de conexión de almacenamiento extraíble</value></data>
+  <data name="ClipboardPeek.ComposeEmail" xml:space="preserve"><value>Redactar correo</value></data>
+  <data name="ClipboardPeek.ShowInFolder" xml:space="preserve"><value>Mostrar en la carpeta</value></data>
+  <data name="ClipboardPeek.MultipleItems" xml:space="preserve"><value>{0} elementos copiados</value></data>
+  <data name="ClipboardPeek.Time.Now" xml:space="preserve"><value>Ahora</value></data>
+  <data name="ClipboardPeek.Time.Minutes" xml:space="preserve"><value>Hace {0} min</value></data>
+  <data name="ClipboardPeek.Time.Hours" xml:space="preserve"><value>Hace {0} h</value></data>
+  <data name="ClipboardPeek.Type.PlainText" xml:space="preserve"><value>Texto</value></data>
+  <data name="ClipboardPeek.Type.Url" xml:space="preserve"><value>Enlace</value></data>
+  <data name="ClipboardPeek.Type.Email" xml:space="preserve"><value>Correo</value></data>
+  <data name="ClipboardPeek.Type.Color" xml:space="preserve"><value>Color</value></data>
+  <data name="ClipboardPeek.Type.File" xml:space="preserve"><value>Archivo</value></data>
+  <data name="ClipboardPeek.Type.Folder" xml:space="preserve"><value>Carpeta</value></data>
+  <data name="ClipboardPeek.Type.Image" xml:space="preserve"><value>Imagen</value></data>
+  <data name="ClipboardPeek.Type.Unknown" xml:space="preserve"><value>Otro contenido</value></data>
+  <data name="ClipboardPeek.Type.Sensitive" xml:space="preserve"><value>Contenido confidencial</value></data>
+  <data name="ClipboardPeek.Action.Succeeded" xml:space="preserve"><value>Acción completada.</value></data>
+  <data name="ClipboardPeek.Action.Cancelled" xml:space="preserve"><value>Acción cancelada.</value></data>
+  <data name="ClipboardPeek.Action.Unavailable" xml:space="preserve"><value>Esta acción no está disponible ahora.</value></data>
+  <data name="ClipboardPeek.Action.AccessDenied" xml:space="preserve"><value>Acceso denegado.</value></data>
+  <data name="ClipboardPeek.Action.Unsupported" xml:space="preserve"><value>Este contenido no es compatible.</value></data>
+  <data name="ClipboardPeek.Action.Failed" xml:space="preserve"><value>No se pudo completar la acción.</value></data>
+  <data name="ClipboardPeek.Settings.Title" xml:space="preserve"><value>Vista del portapapeles</value></data>
+  <data name="ClipboardPeek.Settings.Description" xml:space="preserve"><value>El portapapeles solo se supervisa mientras el módulo está activado; el historial se borra al cerrar la aplicación.</value></data>
+  <data name="ClipboardPeek.Settings.HistoryLimit" xml:space="preserve"><value>Historial de la sesión</value></data>
+  <data name="ClipboardPeek.Settings.HistoryDescription" xml:space="preserve"><value>Las copias recientes solo se guardan en la RAM.</value></data>
+  <data name="ClipboardPeek.Settings.HistoryOff" xml:space="preserve"><value>Desactivado</value></data>
+  <data name="ClipboardPeek.Settings.EventMode" xml:space="preserve"><value>Notificaciones del dock</value></data>
+  <data name="ClipboardPeek.Settings.EventSmart" xml:space="preserve"><value>Inteligente</value></data>
+  <data name="ClipboardPeek.Settings.EventEverything" xml:space="preserve"><value>Todas las copias</value></data>
+  <data name="ClipboardPeek.Settings.EventNever" xml:space="preserve"><value>Nunca</value></data>
+  <data name="ClipboardPeek.Settings.ImageEvents" xml:space="preserve"><value>Mostrar notificaciones de imagen</value></data>
+  <data name="ClipboardPeek.Color.Hex" xml:space="preserve"><value>HEX {0}</value></data>
+  <data name="ClipboardPeek.Color.Rgb" xml:space="preserve"><value>RGB {0}</value></data>
+  <data name="ClipboardPeek.Color.Hsl" xml:space="preserve"><value>HSL {0}</value></data>
+  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} palabras · {1} caracteres</value></data>
+  <data name="HourlyNotification.ModuleName" xml:space="preserve"><value>Notificación horaria</value></data>
+  <data name="HourlyNotification.TimeFormat" xml:space="preserve"><value>Hora: {0}</value></data>
+  <data name="HourlyNotification.Description" xml:space="preserve"><value>Notificación horaria</value></data>
+  <data name="HourlyNotification.Settings.Title" xml:space="preserve"><value>Notificación horaria</value></data>
+  <data name="HourlyNotification.Settings.Description" xml:space="preserve"><value>Muestra un evento en el dock a cada hora en punto y reproduce un sonido breve cuando lo permiten los ajustes de sonido.</value></data>
+  <data name="HourlyNotification.Settings.Toggle" xml:space="preserve"><value>Mostrar la notificación horaria</value></data>
+  <data name="AudibleNotifications.Title" xml:space="preserve"><value>Sonidos de notificación</value></data>
+  <data name="AudibleNotifications.Description" xml:space="preserve"><value>Administra los sonidos breves de alertas de red, batería, dispositivos y avisos horarios.</value></data>
+  <data name="AudibleNotifications.MasterTitle" xml:space="preserve"><value>Activar sonidos de notificación</value></data>
+  <data name="AudibleNotifications.MasterDescription" xml:space="preserve"><value>Controla todos los sonidos de notificación de la aplicación excepto la alarma.</value></data>
+  <data name="AudibleNotifications.EventsTitle" xml:space="preserve"><value>Sonidos de eventos</value></data>
+  <data name="AudibleNotifications.NetworkOffline.Title" xml:space="preserve"><value>Sin conexión a Internet</value></data>
+  <data name="AudibleNotifications.NetworkOffline.Description" xml:space="preserve"><value>Suena cuando no hay una conexión Wi-Fi o Ethernet activa.</value></data>
+  <data name="AudibleNotifications.ConnectedWithoutInternet.Title" xml:space="preserve"><value>Conectado sin Internet</value></data>
+  <data name="AudibleNotifications.ConnectedWithoutInternet.Description" xml:space="preserve"><value>Suena cuando Wi-Fi o Ethernet está conectado sin acceso completo a Internet.</value></data>
+  <data name="AudibleNotifications.LowBattery.Title" xml:space="preserve"><value>Batería en nivel crítico</value></data>
+  <data name="AudibleNotifications.LowBattery.Description" xml:space="preserve"><value>Suena cuando la PC o un dispositivo compatible alcanza un nivel de batería bajo.</value></data>
+  <data name="AudibleNotifications.DeviceConnected.Title" xml:space="preserve"><value>Dispositivo conectado</value></data>
+  <data name="AudibleNotifications.DeviceConnected.Description" xml:space="preserve"><value>Suena al conectar un dispositivo Bluetooth o una unidad extraíble.</value></data>
+  <data name="AudibleNotifications.DeviceDisconnected.Title" xml:space="preserve"><value>Dispositivo desconectado</value></data>
+  <data name="AudibleNotifications.DeviceDisconnected.Description" xml:space="preserve"><value>Suena al desconectar un dispositivo Bluetooth o una unidad extraíble.</value></data>
+  <data name="AudibleNotifications.Hourly.Title" xml:space="preserve"><value>Aviso horario</value></data>
+  <data name="AudibleNotifications.Hourly.Description" xml:space="preserve"><value>Se reproduce a cada hora en punto cuando la notificación horaria está activada.</value></data>
+  <data name="AudibleNotifications.Preview" xml:space="preserve"><value>Reproducir sonido</value></data>
+  <data name="AudibleNotifications.Alarm.Title" xml:space="preserve"><value>La alarma del temporizador siempre está activa</value></data>
+  <data name="AudibleNotifications.Alarm.Description" xml:space="preserve"><value>Estos ajustes no afectan a la alarma; se detiene con el botón para silenciarla.</value></data>
 </root>

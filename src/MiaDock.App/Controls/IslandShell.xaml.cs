@@ -24,6 +24,7 @@ public sealed partial class IslandShell : UserControl
     private readonly CompactModuleHost _hoverView;
     private readonly ExpandedModuleHost _expandedView;
     private readonly ModuleNotificationHost _notificationView;
+    private FrameworkElement? _edgeRevealStatusView;
     private readonly IReadOnlyDictionary<IslandVisualState, FrameworkElement> _views;
     private IIslandAnimationCoordinator? _animationCoordinator;
     private IslandLayoutOptions _layoutOptions = IslandLayoutOptions.Default;
@@ -33,6 +34,8 @@ public sealed partial class IslandShell : UserControl
     private IslandVisualState _activeState = IslandVisualState.Collapsed;
     private ContentMotionRequestedEventArgs? _pendingContentMotion;
     private IslandVisualMetrics? _appliedMetrics;
+    private ThemeStyle _appliedTheme = ThemeStyle.AppleLike;
+    private bool _edgeRevealHidden;
     private long _lastParallaxTimestamp;
     private Vector3 _lastParallaxTranslation;
     public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
@@ -183,6 +186,8 @@ public sealed partial class IslandShell : UserControl
         _hoverView.Configure(viewRegistry);
         _expandedView.Configure(viewRegistry);
         _notificationView.Configure(viewRegistry);
+        _edgeRevealStatusView ??= viewRegistry.Create("EdgeRevealStatusView");
+        EdgeRevealStatusHost.Content = _edgeRevealStatusView;
     }
 
     public void ConfigureLocalization(ILocalizationService localization)
@@ -225,17 +230,28 @@ public sealed partial class IslandShell : UserControl
         ArgumentNullException.ThrowIfNull(appearance);
         var background = ColorParser.ParseRgb(appearance.BackgroundColor);
         var accent = ColorParser.ParseRgb(appearance.AccentColor);
-        RequestedTheme = appearance.Theme is ThemeStyle.OledBlack || appearance.Theme.UsesColorlessGlass()
+        RequestedTheme = appearance.Theme is ThemeStyle.TozPembe or ThemeStyle.OledBlack ||
+                         appearance.Theme.UsesColorlessGlass()
             ? ElementTheme.Dark
-            : appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.CustomSolidColor
+            : appearance.Theme.UsesAdaptiveSolidPalette()
             ? SolidThemeContrastPaletteFactory.Create(background, accent).Primary.R > 127
                 ? ElementTheme.Dark
                 : ElementTheme.Light
             : ElementTheme.Default;
+        Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+        LayoutRoot.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         if (appearance.Theme == ThemeStyle.AdaptiveFluent)
         {
             Surface.ClearValue(Border.BackgroundProperty);
             Surface.ClearValue(Border.BorderBrushProperty);
+            Surface.BorderThickness = new Thickness(0);
+        }
+        else if (appearance.Theme == ThemeStyle.TozPembe)
+        {
+            var fill = Color.FromArgb(255, background.R, background.G, background.B);
+            Surface.Background = new SolidColorBrush(fill);
+            Surface.BorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+            Surface.BorderThickness = new Thickness(0);
         }
         else
         {
@@ -253,14 +269,80 @@ public sealed partial class IslandShell : UserControl
                 37,
                 37,
                 37));
+            Surface.BorderThickness = new Thickness(0);
         }
-        Surface.BorderThickness = new Thickness(0);
-        Surface.Shadow = appearance.ShadowIntensity > 0.01 ? new ThemeShadow() : null;
-        Surface.Translation = appearance.ShadowIntensity > 0.01
-            ? new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24))
-            : Vector3.Zero;
+        Surface.Shadow = appearance.Theme == ThemeStyle.TozPembe
+            ? null
+            : appearance.ShadowIntensity > 0.01 ? new ThemeShadow() : null;
+        Surface.Translation = appearance.Theme == ThemeStyle.TozPembe || appearance.ShadowIntensity <= 0.01
+            ? Vector3.Zero
+            : new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24));
 
+        _appliedTheme = appearance.Theme;
+        SyncBackdropVisibility();
         ApplyCornerRadii(appearance.EffectiveCornerRadii);
+    }
+
+    public void SetEdgeRevealAppearance(bool hidden, OverlayPosition position)
+    {
+        var horizontal = position is OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight or
+            OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight;
+        _edgeRevealHidden = hidden;
+        Surface.Visibility = hidden ? Visibility.Collapsed : Visibility.Visible;
+        EdgeRevealSurface.Visibility = hidden ? Visibility.Visible : Visibility.Collapsed;
+        SyncBackdropVisibility();
+        if (_edgeRevealStatusView is IModuleViewActivationAware activationAware)
+        {
+            activationAware.SetPresentationActive(hidden && horizontal);
+        }
+        if (!hidden)
+        {
+            return;
+        }
+
+        EdgeRevealStatusHost.Visibility = horizontal ? Visibility.Visible : Visibility.Collapsed;
+        EdgeRevealGrip.Visibility = horizontal ? Visibility.Collapsed : Visibility.Visible;
+        EdgeRevealStatusHost.VerticalAlignment = position switch
+        {
+            OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight =>
+                VerticalAlignment.Bottom,
+            OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight =>
+                VerticalAlignment.Top,
+            _ => VerticalAlignment.Center
+        };
+        var radius = Math.Min(LayoutRoot.Height / 2, 30);
+        EdgeRevealSurface.CornerRadius = position switch
+        {
+            OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight =>
+                new CornerRadius(0, 0, radius, radius),
+            OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight =>
+                new CornerRadius(radius, radius, 0, 0),
+            OverlayPosition.LeftCenter => new CornerRadius(0, radius, radius, 0),
+            OverlayPosition.RightCenter => new CornerRadius(radius, 0, 0, radius),
+            _ => new CornerRadius(radius)
+        };
+        EdgeRevealGrip.Width = horizontal ? 42 : 3;
+        EdgeRevealGrip.Height = horizontal ? 3 : 42;
+        EdgeRevealGrip.HorizontalAlignment = position switch
+        {
+            OverlayPosition.LeftCenter => HorizontalAlignment.Right,
+            OverlayPosition.RightCenter => HorizontalAlignment.Left,
+            _ => HorizontalAlignment.Center
+        };
+        EdgeRevealGrip.VerticalAlignment = position switch
+        {
+            OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight => VerticalAlignment.Bottom,
+            OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight => VerticalAlignment.Top,
+            _ => VerticalAlignment.Center
+        };
+        EdgeRevealGrip.Margin = position switch
+        {
+            OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight => new Thickness(0, 0, 0, 4),
+            OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight => new Thickness(0, 4, 0, 0),
+            OverlayPosition.LeftCenter => new Thickness(0, 0, 4, 0),
+            OverlayPosition.RightCenter => new Thickness(4, 0, 0, 0),
+            _ => new Thickness(0)
+        };
     }
 
     public void ApplyCornerRadii(DockCornerRadii radii)
@@ -292,6 +374,8 @@ public sealed partial class IslandShell : UserControl
                 ColorlessGlassBackdrop.IsSupported ? new ColorlessGlassBackdrop() : null,
             _ => null
         };
+        _appliedTheme = theme;
+        SyncBackdropVisibility();
     }
 
     public void ClearSystemBackdrop()
@@ -305,6 +389,15 @@ public sealed partial class IslandShell : UserControl
             // Disconnecting Acrylic/Mica during HWND teardown can throw; the
             // element is about to disappear with the window either way.
         }
+
+        SyncBackdropVisibility();
+    }
+
+    private void SyncBackdropVisibility()
+    {
+        BackdropSurface.Visibility = !_edgeRevealHidden && _appliedTheme.UsesSystemBackdrop()
+            ? Visibility.Visible
+            : Visibility.Collapsed;
     }
 
     private static void OnStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -328,20 +421,34 @@ public sealed partial class IslandShell : UserControl
         var theme = Enum.TryParse<ThemeStyle>(themeName, out var parsed)
             ? parsed
             : ThemeStyle.AppleLike;
-        RequestedTheme = theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack || theme.UsesColorlessGlass()
+        RequestedTheme = theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack or ThemeStyle.TozPembe ||
+                         theme.UsesColorlessGlass()
             ? ElementTheme.Dark
             : ElementTheme.Default;
+        Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         var fallback = theme.UsesColorlessGlass()
             ? Color.FromArgb(0xFF, 0x14, 0x14, 0x14)
+            : theme is ThemeStyle.TozPembe
+            ? Color.FromArgb(0xFF, 0xE4, 0xA0, 0xB0)
             : theme.IsWindows11Style()
             ? Color.FromArgb(0xFF, 0x20, 0x21, 0x24)
             : Color.FromArgb(0xFF, 0x05, 0x05, 0x06);
         Surface.Background = CreateSurfaceBrush(theme, fallback, 1);
+        if (theme == ThemeStyle.TozPembe)
+        {
+            Surface.BorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+            Surface.BorderThickness = new Thickness(0);
+        }
+        else
+        {
+            Surface.BorderBrush = theme.UsesColorlessGlass()
+                ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
+                : new SolidColorBrush(Color.FromArgb(255, 37, 37, 37));
+            Surface.BorderThickness = new Thickness(0);
+        }
 
-        Surface.BorderBrush = theme.UsesColorlessGlass()
-            ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
-            : new SolidColorBrush(Color.FromArgb(255, 37, 37, 37));
-        Surface.BorderThickness = new Thickness(0);
+        _appliedTheme = theme;
+        SyncBackdropVisibility();
     }
 
     private static Brush CreateSurfaceBrush(ThemeStyle theme, Color color, double opacity)
@@ -355,6 +462,7 @@ public sealed partial class IslandShell : UserControl
             ThemeStyle.Windows11AcrylicThin => CreateAcrylic(color, 0.46, normalizedOpacity),
             ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass => CreateGlassOverlay(normalizedOpacity),
             ThemeStyle.OledBlack => new SolidColorBrush(Color.FromArgb(255, 0, 0, 0)),
+            ThemeStyle.TozPembe => new SolidColorBrush(Color.FromArgb(255, color.R, color.G, color.B)),
             _ => new SolidColorBrush(WithOpacity(color, normalizedOpacity))
         };
     }

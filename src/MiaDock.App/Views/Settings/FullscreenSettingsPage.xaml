@@ -8,7 +8,7 @@
       <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
         <TextBlock Text="Tam ekran"
                    Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
-        <TextBlock Text="Tam ekran uygulamalarda dock görünürlüğünü ve geçici bildirimleri yapılandırın."
+        <TextBlock Text="Tam ekran uygulamalarda, film ve video oynatıcılarda dock görünürlüğünü ve geçici bildirimleri yapılandırın."
                    Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
       </StackPanel>
 

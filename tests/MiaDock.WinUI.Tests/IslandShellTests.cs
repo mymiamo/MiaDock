@@ -193,12 +193,55 @@ public sealed class IslandShellTests
         Assert.AreEqual("FontIcon", network.Name.LocalName);
         Assert.AreEqual("{Binding NetworkStatusBrush}", network.Attribute("Foreground")?.Value);
         Assert.AreEqual("CallActivityIcon",
-            statusItems[1].Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value);
+            statusItems.Single(element => element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "CallActivityIcon")
+                .Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value);
         Assert.AreEqual("AudioActivityIndicator", musicActivity.Name.LocalName);
         Assert.AreEqual("14", musicActivity.Attribute("Height")?.Value);
         Assert.AreEqual(
             "{ThemeResource IslandTextPrimaryBrush}",
             musicActivity.Attribute("Foreground")?.Value);
+    }
+
+    [TestMethod]
+    public void EdgeRevealShelf_KeepsPrivacyGripAndSystemStatusVisible()
+    {
+        var shell = LoadControl("IslandShell.xaml");
+        var shelf = LoadControl("EdgeRevealStatusView.xaml");
+        var shellText = shell.ToString();
+        var shelfNames = shelf.Descendants()
+            .Attributes(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))
+            .Select(attribute => attribute.Value)
+            .ToHashSet(StringComparer.Ordinal);
+
+        StringAssert.Contains(shellText, "EdgeRevealStatusHost");
+        StringAssert.Contains(shellText, "RequestedTheme=\"Dark\"");
+        Assert.IsTrue(shelfNames.Contains("ActivityDot"));
+        Assert.IsTrue(shelfNames.Contains("RevealGrip"));
+        Assert.IsTrue(shelfNames.Contains("StatusTray"));
+        Assert.IsTrue(shelfNames.Contains("MusicActivity"));
+        Assert.AreEqual("15", shelf.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "LayoutRoot")
+            .Attribute("Height")?.Value);
+        Assert.AreEqual("42", shelf.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "RevealGrip")
+            .Attribute("Width")?.Value);
+        Assert.IsTrue(shelf.Descendants().Any(element =>
+            element.Attribute("Glyph")?.Value == "{Binding NetworkGlyph}"));
+
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml.cs"));
+        var overlay = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+        StringAssert.Contains(source, "activationAware.SetPresentationActive(hidden && horizontal)");
+        StringAssert.Contains(source, "EdgeRevealStatusHost.VerticalAlignment");
+        StringAssert.Contains(overlay, "EdgeRevealVisibleStripInDips");
+        StringAssert.Contains(overlay, "EdgeRevealStripThicknessInDips = 15");
+        StringAssert.Contains(overlay, "IslandVisibilityMode.EdgeReveal");
+        StringAssert.Contains(overlay, "IsEdgeRevealModeActive");
     }
 
     [TestMethod]

@@ -6,6 +6,5 @@ public interface IBluetoothStatusService : IDisposable
 {
     BluetoothStatusSnapshot Current { get; }
     event EventHandler<BluetoothStatusSnapshot>? SnapshotChanged;
-    ValueTask StartAsync(CancellationToken cancellationToken = default);
-    ValueTask StopAsync(CancellationToken cancellationToken = default);
+    ValueTask<IAsyncDisposable> AcquireAsync(CancellationToken cancellationToken = default);
 }

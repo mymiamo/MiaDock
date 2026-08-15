@@ -1,0 +1,41 @@
+<UserControl x:Class="MiaDock.App.Controls.ClipboardPeekNotificationView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+  </UserControl.Resources>
+  <Grid Style="{StaticResource DockNotificationLayoutStyle}"
+        AutomationProperties.Name="{Binding PrimaryText}"
+        AutomationProperties.LiveSetting="Polite">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <Grid Width="42" Height="42" Margin="0,0,10,0">
+      <Border Style="{StaticResource DockNotificationIconContainerStyle}">
+        <FontIcon Glyph="{Binding LeadingGlyph}" Style="{StaticResource DockModuleIconStyle}" />
+      </Border>
+      <Border CornerRadius="8" Background="{x:Bind Peek.ColorPreviewBrush, Mode=OneWay}"
+              Visibility="{x:Bind Peek.HasColorPreview, Mode=OneWay, Converter={StaticResource BooleanToVisibility}}" />
+      <Image Source="{x:Bind Peek.Thumbnail, Mode=OneWay}" Stretch="UniformToFill"
+             Visibility="{x:Bind Peek.HasThumbnail, Mode=OneWay, Converter={StaticResource BooleanToVisibility}}" />
+    </Grid>
+    <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="3">
+      <TextBlock Text="{Binding PrimaryText}" MaxLines="1" TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockTitleTextStyle}" />
+      <TextBlock Text="{Binding SecondaryText}" MaxLines="1" TextTrimming="CharacterEllipsis"
+                 Style="{StaticResource DockBodyTextStyle}" />
+    </StackPanel>
+    <ItemsControl Grid.Column="2" ItemsSource="{Binding Commands}" VerticalAlignment="Center">
+      <ItemsControl.ItemsPanel>
+        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Spacing="6" /></ItemsPanelTemplate>
+      </ItemsControl.ItemsPanel>
+      <ItemsControl.ItemTemplate>
+        <DataTemplate>
+          <Button Content="{Binding DisplayName}" Tag="{Binding Id}" IsEnabled="{Binding IsEnabled}"
+                  MinHeight="44" Click="OnCommandClick" AutomationProperties.Name="{Binding DisplayName}" />
+        </DataTemplate>
+      </ItemsControl.ItemTemplate>
+    </ItemsControl>
+  </Grid>
+</UserControl>

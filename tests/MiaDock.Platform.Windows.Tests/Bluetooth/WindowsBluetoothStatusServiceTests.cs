@@ -13,7 +13,7 @@ public sealed class WindowsBluetoothStatusServiceTests
         var radio = new FakeRadioProvider(BluetoothRadioState.Off);
         var service = new WindowsBluetoothStatusService(new ImmediateDispatcher(), radio);
 
-        await service.StartAsync();
+        await using var lease = await service.AcquireAsync();
         Assert.AreEqual(BluetoothRadioState.Off, service.Current.RadioState);
 
         radio.Publish(BluetoothRadioState.Unknown);
@@ -37,7 +37,7 @@ public sealed class WindowsBluetoothStatusServiceTests
     {
         var radio = new FakeRadioProvider(BluetoothRadioState.Off);
         var service = new WindowsBluetoothStatusService(new ImmediateDispatcher(), radio);
-        await service.StartAsync();
+        await using var lease = await service.AcquireAsync();
         var before = service.Current;
 
         service.Dispose();
@@ -45,6 +45,23 @@ public sealed class WindowsBluetoothStatusServiceTests
 
         Assert.AreSame(before, service.Current);
         Assert.AreEqual(1, radio.StopCount);
+    }
+
+    [TestMethod]
+    public async Task OverlappingLeases_KeepSharedWatcherAliveUntilFinalRelease()
+    {
+        var radio = new FakeRadioProvider(BluetoothRadioState.Off);
+        var service = new WindowsBluetoothStatusService(new ImmediateDispatcher(), radio);
+        var first = await service.AcquireAsync();
+        var second = await service.AcquireAsync();
+
+        Assert.AreEqual(1, radio.StartCount);
+        await first.DisposeAsync();
+        Assert.AreEqual(0, radio.StopCount);
+
+        await second.DisposeAsync();
+        Assert.AreEqual(1, radio.StopCount);
+        service.Dispose();
     }
 
     private sealed class ImmediateDispatcher : IUiDispatcher

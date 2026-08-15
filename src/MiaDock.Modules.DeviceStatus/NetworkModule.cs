@@ -74,7 +74,9 @@ public sealed class NetworkModule : IIslandModule, IDisposable
             return;
         }
 
-        var priority = current.Connectivity == NetworkConnectivityKind.Offline
+        var connectionLost = previous.Connectivity == NetworkConnectivityKind.Internet &&
+                             current.Connectivity != NetworkConnectivityKind.Internet;
+        var priority = connectionLost
             ? ModuleEventPriority.High
             : ModuleEventPriority.Normal;
         EventOccurred?.Invoke(this, new ModuleEvent(
@@ -84,7 +86,21 @@ public sealed class NetworkModule : IIslandModule, IDisposable
             Descriptor.DefaultDisplayDuration,
             DateTimeOffset.UtcNow,
             priority,
-            "network:connectivity"));
+            "network:connectivity",
+            isFullscreenEligible: connectionLost,
+            audibleCue: ResolveAudibleCue(current)));
+    }
+
+    private static AudibleNotificationCue ResolveAudibleCue(NetworkStatusSnapshot snapshot)
+    {
+        if (snapshot.Connectivity == NetworkConnectivityKind.Internet)
+        {
+            return AudibleNotificationCue.None;
+        }
+
+        return snapshot.ConnectionKind is NetworkConnectionKind.WiFi or NetworkConnectionKind.Ethernet
+            ? AudibleNotificationCue.ConnectedWithoutInternet
+            : AudibleNotificationCue.NetworkOffline;
     }
 
     private ModulePresentation CreatePresentation(NetworkStatusSnapshot snapshot) => new(

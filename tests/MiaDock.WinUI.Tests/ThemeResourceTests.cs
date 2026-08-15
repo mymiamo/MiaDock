@@ -178,6 +178,7 @@ public sealed class ThemeResourceTests
     [DataRow("OledBlackTheme.xaml")]
     [DataRow("NeutralFrostedGlassTheme.xaml")]
     [DataRow("AdaptiveFluentTheme.xaml")]
+    [DataRow("TozPembeTheme.xaml")]
     [TestMethod]
     public void StyleTheme_ProvidesRequiredSemanticOverrides(string fileName)
     {
@@ -242,6 +243,54 @@ public sealed class ThemeResourceTests
         Assert.AreEqual(palette.Control.G, palette.Control.B);
         Assert.IsGreaterThan((byte)0, palette.Control.R);
         Assert.IsLessThan((byte)64, palette.Control.R);
+    }
+
+    [TestMethod]
+    public void TozPembeTheme_UsesDustyPinkSurfaceAndDarkReadableIcons()
+    {
+        var document = LoadTheme("TozPembeTheme.xaml");
+        var resources = document.Root!.Elements()
+            .Where(element => element.Attribute(XamlNamespace + "Key") is not null)
+            .ToDictionary(
+                element => element.Attribute(XamlNamespace + "Key")!.Value,
+                element => element,
+                StringComparer.Ordinal);
+
+        Assert.AreEqual("#FFE4A0B0", resources["IslandStyleSurfaceBrush"].Attribute("Color")?.Value);
+        Assert.AreEqual("#FF4A2430", resources["IslandStyleAccentBrush"].Attribute("Color")?.Value);
+        Assert.AreEqual("#FF3F1E28", resources["IslandIconButtonForegroundBrush"].Attribute("Color")?.Value);
+        Assert.AreEqual("Transparent", resources["IslandIconButtonRestBrush"].Attribute("Color")?.Value);
+    }
+
+    [TestMethod]
+    public void TozPembePalette_MeetsReadableTextContrast()
+    {
+        var background = Windows.UI.Color.FromArgb(255, 0xE4, 0xA0, 0xB0);
+        var palette = MiaDock.UI.Services.SolidThemeContrastPaletteFactory.Create(
+            background,
+            Windows.UI.Color.FromArgb(255, 0x4A, 0x24, 0x30));
+
+        Assert.IsLessThan((byte)32, palette.Primary.R);
+        Assert.IsGreaterThanOrEqualTo(
+            7,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Primary,
+                background));
+        Assert.IsGreaterThanOrEqualTo(
+            4.5,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Secondary,
+                background));
+        Assert.IsGreaterThanOrEqualTo(
+            4.5,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.Accent,
+                background));
+        Assert.IsGreaterThanOrEqualTo(
+            4.5,
+            MiaDock.UI.Services.SolidThemeContrastPaletteFactory.ContrastRatio(
+                palette.AccentForeground,
+                palette.Accent));
     }
 
     [TestMethod]

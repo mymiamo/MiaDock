@@ -26,12 +26,12 @@ public sealed class FullscreenClassifierTests
     }
 
     [TestMethod]
-    public void Classify_StandardMaximizedBorderlessClient_IsNotFullscreen()
+    public void Classify_MaximizedVideoClientCoveringMonitor_IsFullscreen()
     {
         var full = new PixelBounds(0, 0, 1920, 1080);
         var input = CreateInput(full, full) with { IsStandardMaximizedWindow = true };
 
-        Assert.AreEqual(FullscreenDetectionReason.None, FullscreenClassifier.Classify(input));
+        Assert.AreEqual(FullscreenDetectionReason.WindowCoversMonitor, FullscreenClassifier.Classify(input));
     }
 
     [TestMethod]

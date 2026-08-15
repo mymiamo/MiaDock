@@ -7,6 +7,17 @@ namespace MiaDock.WinUI.Tests;
 public sealed class SettingsWindowTests
 {
     [TestMethod]
+    public void LocalizationTraversal_IsCycleSafeAndDoesNotUseRecursion()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory, "Localization", "AppLocalizationService.cs"));
+
+        StringAssert.Contains(source, "var visited = new HashSet<DependencyObject>");
+        StringAssert.Contains(source, "while (pending.Count > 0)");
+        Assert.DoesNotContain("Apply(VisualTreeHelper.GetChild", source, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
     public void TrayPage_OffersConfigurableSingleClickAction()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -307,7 +318,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.4.2.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.5.3.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -340,7 +351,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.4.2.0", packageVersion);
+        Assert.AreEqual("1.5.3.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 
@@ -642,7 +653,7 @@ public sealed class SettingsWindowTests
     }
 
     [TestMethod]
-    public void OptionalModulesPage_ExposesKeyboardLocksAndTimerGuidance()
+    public void OptionalModulesPage_ExposesKeyboardLocksHourlyNotificationAndTimerGuidance()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
@@ -654,6 +665,11 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "Klavye kilitleri");
         StringAssert.Contains(text, "ShowUsbDeviceEvents");
         StringAssert.Contains(text, "USB cihazları");
+        StringAssert.Contains(text, "HourlyNotificationEnabled");
+        StringAssert.Contains(text, "HourlyNotificationSettingsTitle");
+        StringAssert.Contains(text, "HourlyNotificationSettingsDescription");
+        StringAssert.Contains(text, "HourlyNotificationSettingsToggle");
+        StringAssert.Contains(text, "MinHeight=\"44\"");
         StringAssert.Contains(text, "Zamanlayıcı");
         StringAssert.Contains(text, "Zamanlayıcı ve kronometreyi");
     }
@@ -771,26 +787,26 @@ public sealed class SettingsWindowTests
     }
 
     [TestMethod]
-    public void TimerExpandedView_UsesAccessibleSegmentsAndIndependentPanels()
+    public void TimerExpandedView_UsesAccessibleTabsAndIndependentToolContent()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
             "Controls",
             "TimerExpandedView.xaml"));
-        var segments = document.Descendants()
-            .Where(element => element.Name.LocalName == "ToggleButton")
+        var tabs = document.Descendants()
+            .Where(element => element.Name.LocalName == "TabViewItem")
             .ToArray();
         var text = document.ToString();
 
-        Assert.HasCount(2, segments);
-        Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "TabView"));
-        StringAssert.Contains(text, "TimerPanel");
-        StringAssert.Contains(text, "StopwatchPanel");
+        Assert.HasCount(2, tabs);
+        Assert.IsTrue(document.Descendants().Any(element => element.Name.LocalName == "TabView"));
+        StringAssert.Contains(text, "SelectedToolIndex, Mode=TwoWay");
         StringAssert.Contains(text, "ItemsSource=\"{Binding PresetDurations}\"");
         StringAssert.Contains(text, "SpinButtonPlacementMode=\"Compact\"");
         StringAssert.Contains(text, "OnPresetClick");
         StringAssert.Contains(text, "TimerSecondaryText");
         StringAssert.Contains(text, "AccentButtonStyle");
+        StringAssert.Contains(text, "HasStopwatchActivity");
     }
 
     [TestMethod]
@@ -802,6 +818,7 @@ public sealed class SettingsWindowTests
             "AppearanceSettingsPage.xaml"));
 
         StringAssert.Contains(text, "Value=\"{Binding EdgeMargin, Mode=TwoWay}\"");
+        Assert.IsFalse(text.Contains("IsEdgeRevealShelfEnabled", StringComparison.Ordinal));
         StringAssert.Contains(text, "IsOn=\"{Binding LinkCornerRadii, Mode=TwoWay}\"");
         StringAssert.Contains(text, "Value=\"{Binding CornerRadius, Mode=TwoWay}\"");
         StringAssert.Contains(text, "Slider Minimum=\"0\"");
@@ -818,5 +835,25 @@ public sealed class SettingsWindowTests
         }
 
         StringAssert.Contains(text, "AutomationProperties.HelpText");
+    }
+
+    [TestMethod]
+    public void HomeVisibilityPicker_OffersEdgeRevealAsThirdMode()
+    {
+        var page = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Settings",
+            "HomeSettingsPage.xaml"));
+        var viewModel = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "ViewModels",
+            "SettingsViewModel.cs"));
+
+        StringAssert.Contains(page, "ItemsSource=\"{Binding VisibilityModes}\"");
+        StringAssert.Contains(page, "SelectedIndex=\"{Binding VisibilityModeIndex, Mode=TwoWay}\"");
+        StringAssert.Contains(viewModel, "IslandVisibilityMode.EdgeReveal");
+        StringAssert.Contains(viewModel, "Kenarda gizle");
+        StringAssert.Contains(viewModel, "Hide at edge");
+        Assert.IsFalse(viewModel.Contains("IsEdgeRevealShelfEnabled", StringComparison.Ordinal));
     }
 }

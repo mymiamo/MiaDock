@@ -100,6 +100,14 @@ public static class ModuleServiceDisclosureCatalog
                     "Yerel sağlayıcıların gönderdiği aktarım kimliği, durum ve byte ilerlemesini işler. Dosya yolu zorunlu değildir ve loglanmaz.",
                     "Processes transfer ID, state, and byte progress sent by local providers. File paths are optional and are never logged."),
                 false),
+            "clipboard-peek" => new(
+                moduleId,
+                "Clipboard Peek",
+                "Windows Clipboard API",
+                L(
+                    "Kopyalanan metin, dosya ve görselleri yalnız cihazda gösterir. Hassas içerik geçmişe eklenmez, içerik loglanmaz ve uygulama kapatılınca geçmiş temizlenebilir.",
+                    "Shows copied text, files, and images only on this device. Sensitive content is never added to history, content is not logged, and history can be cleared on exit."),
+                false),
             _ => new(
                 moduleId,
                 moduleId,

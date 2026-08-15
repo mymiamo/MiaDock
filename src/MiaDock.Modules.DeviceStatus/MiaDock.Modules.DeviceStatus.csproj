@@ -7,5 +7,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MiaDock.Core\MiaDock.Core.csproj" />
+    <ProjectReference Include="..\MiaDock.Modules.SystemStatus\MiaDock.Modules.SystemStatus.csproj" />
   </ItemGroup>
 </Project>

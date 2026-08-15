@@ -5,6 +5,7 @@ using MiaDock.Core.Localization;
 using MiaDock.Modules.DeviceStatus.Models;
 using MiaDock.Modules.DeviceStatus.Services;
 using MiaDock.Modules.DeviceStatus.ViewModels;
+using MiaDock.Modules.DeviceStatus.Settings;
 
 namespace MiaDock.Modules.DeviceStatus;
 
@@ -14,17 +15,21 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
     private readonly IBluetoothStatusService _service;
     private readonly BluetoothModuleViewModel _viewModel;
     private readonly ILocalizationService? _localization;
+    private readonly IDeviceHubSettings? _deviceHubSettings;
+    private IAsyncDisposable? _serviceLease;
     private BluetoothStatusSnapshot? _previous;
     private bool _isEnabled = true;
 
     public BluetoothModule(
         IBluetoothStatusService service,
         BluetoothModuleViewModel viewModel,
-        ILocalizationService? localization = null)
+        ILocalizationService? localization = null,
+        IDeviceHubSettings? deviceHubSettings = null)
     {
         _service = service;
         _viewModel = viewModel;
         _localization = localization;
+        _deviceHubSettings = deviceHubSettings;
         _service.SnapshotChanged += OnSnapshotChanged;
         if (_localization is not null)
         {
@@ -51,7 +56,7 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
 
     public async ValueTask ActivateAsync(CancellationToken cancellationToken = default)
     {
-        await _service.StartAsync(cancellationToken);
+        _serviceLease ??= await _service.AcquireAsync(cancellationToken);
         LifecycleState = ModuleLifecycleState.Active;
         _previous = _service.Current;
         PresentationChanged?.Invoke(this, CurrentPresentation);
@@ -60,7 +65,10 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
     public async ValueTask DeactivateAsync(CancellationToken cancellationToken = default)
     {
         LifecycleState = ModuleLifecycleState.Inactive;
-        await _service.StopAsync(cancellationToken);
+        if (Interlocked.Exchange(ref _serviceLease, null) is { } lease)
+        {
+            await lease.DisposeAsync();
+        }
         PresentationChanged?.Invoke(this, null);
     }
 
@@ -70,7 +78,7 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
         _previous = current;
         if (LifecycleState != ModuleLifecycleState.Active) return;
         PresentationChanged?.Invoke(this, CurrentPresentation);
-        if (previous is null ||
+        if (_deviceHubSettings?.Current.IsEnabled == true || previous is null ||
             previous.RadioState != BluetoothRadioState.On ||
             current.RadioState != BluetoothRadioState.On ||
             !previous.IsEnumerationComplete ||
@@ -104,7 +112,10 @@ public sealed class BluetoothModule : IIslandModule, IDisposable
             DateTimeOffset.UtcNow,
             ModuleEventPriority.Normal,
             $"bluetooth:device:{HashId(changed.Id)}",
-            isFullscreenEligible: false));
+            isFullscreenEligible: false,
+            audibleCue: changed.IsConnected
+                ? AudibleNotificationCue.DeviceConnected
+                : AudibleNotificationCue.DeviceDisconnected));
     }
 
     private ModulePresentation CreatePresentation(BluetoothStatusSnapshot snapshot) => new(

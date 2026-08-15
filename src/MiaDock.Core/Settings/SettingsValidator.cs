@@ -1,6 +1,7 @@
 using MiaDock.Core.Focus;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Presentation;
+using MiaDock.Core.Theming;
 
 namespace MiaDock.Core.Settings;
 
@@ -118,6 +119,7 @@ public static class SettingsValidator
             Privacy = settings.Privacy ?? PresentationPrivacySettings.Default,
             StoreUpdates = NormalizeStoreUpdates(settings.StoreUpdates),
             Focus = NormalizeFocus(settings.Focus),
+            AudibleNotifications = settings.AudibleNotifications ?? AudibleNotificationSettings.Default,
             Modules = NormalizeModules(settings.Modules)
         };
     }
@@ -659,7 +661,23 @@ public static class SettingsValidator
         if (normalized.TryAdd("battery", ModuleSettingsEnvelope.BatteryDefault)) changed = true;
         if (normalized.TryAdd("network", ModuleSettingsEnvelope.NetworkDefault)) changed = true;
         if (normalized.TryAdd("bluetooth", ModuleSettingsEnvelope.BluetoothDefault)) changed = true;
+        if (normalized.TryAdd("device-hub", ModuleSettingsEnvelope.DeviceHubDefault)) changed = true;
+        if (normalized.TryAdd("clipboard-peek", ModuleSettingsEnvelope.ClipboardPeekDefault))
+        {
+            changed = true;
+        }
+        else
+        {
+            var clipboard = normalized["clipboard-peek"];
+            var normalizedClipboard = NormalizeClipboardPeekEnvelope(clipboard);
+            if (normalizedClipboard != clipboard)
+            {
+                normalized["clipboard-peek"] = normalizedClipboard;
+                changed = true;
+            }
+        }
         if (normalized.TryAdd("timer", ModuleSettingsEnvelope.TimerDefault)) changed = true;
+        if (normalized.TryAdd("hourly-notification", ModuleSettingsEnvelope.HourlyNotificationDefault)) changed = true;
         if (normalized.TryAdd("notifications", ModuleSettingsEnvelope.NotificationsDefault)) changed = true;
         if (normalized.TryAdd("transfers", ModuleSettingsEnvelope.TransfersDefault)) changed = true;
 
@@ -703,6 +721,60 @@ public static class SettingsValidator
     private static double ClampFinite(double value, double minimum, double maximum, double fallback) =>
         double.IsFinite(value) ? Math.Clamp(value, minimum, maximum) : fallback;
 
+    private static ModuleSettingsEnvelope NormalizeClipboardPeekEnvelope(ModuleSettingsEnvelope envelope)
+    {
+        var source = envelope.Options ?? new Dictionary<string, System.Text.Json.JsonElement>();
+        var history = source.TryGetValue("historyLimit", out var historyValue) &&
+                      historyValue.ValueKind == System.Text.Json.JsonValueKind.Number &&
+                      historyValue.TryGetInt32(out var parsedHistory)
+            ? parsedHistory
+            : 5;
+        var mode = source.TryGetValue("eventMode", out var modeValue) &&
+                   modeValue.ValueKind == System.Text.Json.JsonValueKind.String &&
+                   modeValue.GetString() is "everything" or "never"
+            ? modeValue.GetString()!
+            : "smart";
+        var showImages = !source.TryGetValue("showImageEvents", out var imageValue) ||
+                         imageValue.ValueKind is not (System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False) ||
+                         imageValue.GetBoolean();
+        var normalizedHistory = NormalizeClipboardHistoryLimit(history);
+        var normalizedDuration = ClampFinite(envelope.EventDurationSeconds, 1, 10, 3);
+        var alreadyNormalized = source.Count == 3 &&
+                                source.TryGetValue("historyLimit", out var currentHistory) &&
+                                currentHistory.ValueKind == System.Text.Json.JsonValueKind.Number &&
+                                currentHistory.TryGetInt32(out var currentHistoryValue) &&
+                                currentHistoryValue == normalizedHistory &&
+                                source.TryGetValue("eventMode", out var currentMode) &&
+                                currentMode.ValueKind == System.Text.Json.JsonValueKind.String &&
+                                currentMode.GetString() == mode &&
+                                source.TryGetValue("showImageEvents", out var currentImages) &&
+                                currentImages.ValueKind is System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False &&
+                                currentImages.GetBoolean() == showImages &&
+                                normalizedDuration == envelope.EventDurationSeconds &&
+                                !envelope.ShowInFullscreen;
+        if (alreadyNormalized) return envelope;
+        var options = new Dictionary<string, System.Text.Json.JsonElement>(StringComparer.Ordinal)
+        {
+            ["historyLimit"] = System.Text.Json.JsonSerializer.SerializeToElement(normalizedHistory),
+            ["eventMode"] = System.Text.Json.JsonSerializer.SerializeToElement(mode),
+            ["showImageEvents"] = System.Text.Json.JsonSerializer.SerializeToElement(showImages)
+        };
+        return envelope with
+        {
+            EventDurationSeconds = normalizedDuration,
+            ShowInFullscreen = false,
+            Options = options
+        };
+    }
+
+    private static int NormalizeClipboardHistoryLimit(int value)
+    {
+        int[] allowed = [0, 5, 10, 20];
+        return allowed.OrderBy(candidate => Math.Abs(candidate - value))
+            .ThenByDescending(candidate => candidate)
+            .First();
+    }
+
     private static T EnumValue<T>(T value, T fallback) where T : struct, Enum =>
         Enum.IsDefined(value) ? value : fallback;
 
@@ -740,12 +812,17 @@ public static class SettingsValidator
         {
             general = general with { Clock = ClockDisplaySettings.Default };
         }
-
         var focus = settings.SchemaVersion < 15
             ? FocusSettings.Default
             : settings.Focus;
 
         var appearance = settings.Appearance ?? AppearanceSettings.Default;
+        if (appearance.Theme == ThemeStyle.TozPembe &&
+            string.Equals(appearance.BackgroundColor, "#F0C8D0", StringComparison.OrdinalIgnoreCase))
+        {
+            appearance = AppearanceThemePresets.ApplyWhenSafe(appearance, ThemeStyle.TozPembe);
+        }
+
         if (settings.SchemaVersion < 2 && appearance.CollapsedWidth == 184 && appearance.CollapsedHeight == 40)
         {
             appearance = appearance with
@@ -807,6 +884,47 @@ public static class SettingsValidator
         if (settings.SchemaVersion < 5 && (modules is null || modules.Count == 0))
         {
             modules = MiaDockSettings.Default.Modules;
+        }
+
+        if (settings.SchemaVersion < 26)
+        {
+            var migratedModules = new Dictionary<string, ModuleSettingsEnvelope>(
+                modules ?? MiaDockSettings.Default.Modules,
+                StringComparer.Ordinal);
+            var deviceHub = migratedModules.TryGetValue("device-hub", out var existingDeviceHub)
+                ? existingDeviceHub
+                : ModuleSettingsEnvelope.DeviceHubDefault;
+            var deviceHubOptions = new Dictionary<string, System.Text.Json.JsonElement>(
+                deviceHub.Options ?? new Dictionary<string, System.Text.Json.JsonElement>(),
+                StringComparer.Ordinal)
+            {
+                ["showStorageEvents"] = System.Text.Json.JsonSerializer.SerializeToElement(general.ShowUsbDeviceEvents)
+            };
+            migratedModules["device-hub"] = deviceHub with { Options = deviceHubOptions };
+            modules = migratedModules;
+        }
+
+        if (settings.SchemaVersion < 27)
+        {
+            var migratedModules = new Dictionary<string, ModuleSettingsEnvelope>(
+                modules ?? MiaDockSettings.Default.Modules,
+                StringComparer.Ordinal);
+            var clipboard = migratedModules.TryGetValue("clipboard-peek", out var existingClipboard)
+                ? existingClipboard
+                : ModuleSettingsEnvelope.ClipboardPeekDefault;
+            migratedModules["clipboard-peek"] = NormalizeClipboardPeekEnvelope(clipboard);
+            modules = migratedModules;
+        }
+
+        if (settings.SchemaVersion < 29)
+        {
+            settings = settings with
+            {
+                AudibleNotifications = (settings.AudibleNotifications ?? AudibleNotificationSettings.Default) with
+                {
+                    HourlyEnabled = true
+                }
+            };
         }
 
         return settings with

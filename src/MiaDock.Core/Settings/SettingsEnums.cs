@@ -9,7 +9,12 @@ public enum AppLanguage
     SpanishMexico,
     PortugueseBrazil
 }
-public enum IslandVisibilityMode { Always, EventsOnly }
+public enum IslandVisibilityMode
+{
+    Always,
+    EventsOnly,
+    EdgeReveal
+}
 public enum IslandInteractionMode { Hover, Click, HoverAndClick }
 public enum IslandPositionSetting
 {

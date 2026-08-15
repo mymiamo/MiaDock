@@ -13,6 +13,7 @@ public static class ThemeCatalog
         Create(ThemeStyle.BlurredGlass, "Theme.BlurredGlass", "BlurredGlassTheme.xaml", ThemeBackdropKind.ColorlessAcrylic, false, true, false, true, true),
         Create(ThemeStyle.NeutralFrostedGlass, "Theme.NeutralFrostedGlass", "NeutralFrostedGlassTheme.xaml", ThemeBackdropKind.ColorlessAcrylic, false, false, false, true, true),
         Create(ThemeStyle.AdaptiveFluent, "Theme.AdaptiveFluent", "AdaptiveFluentTheme.xaml", ThemeBackdropKind.Mica, false, false, true, false, false),
+        Create(ThemeStyle.TozPembe, "Theme.TozPembe", "TozPembeTheme.xaml", ThemeBackdropKind.None, true, true, false, false, false),
         Create(ThemeStyle.CustomSolidColor, "Theme.CustomSolidColor", "AppleLikeTheme.xaml", ThemeBackdropKind.None, true, true, false, false, false)
     ];
 

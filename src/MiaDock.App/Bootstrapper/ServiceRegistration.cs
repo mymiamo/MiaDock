@@ -24,6 +24,9 @@ using MiaDock.Platform.Windows.Lifecycle;
 using MiaDock.Platform.Windows.Startup;
 using MiaDock.Platform.Windows.Tray;
 using MiaDock.Core.Logging;
+using MiaDock.Core.Audio;
+using MiaDock.Core.Clipboard;
+using MiaDock.Platform.Windows.Clipboard;
 using MiaDock.Platform.Windows.Logging;
 using MiaDock.Modules.SystemStatus;
 using MiaDock.Modules.SystemStatus.Services;
@@ -84,6 +87,7 @@ public static class ServiceRegistration
         services.AddSingleton<IStartupTaskService, WindowsStartupTaskService>();
         services.AddSingleton<ITrayIconService>(_ => new WindowsTrayIconService(WindowBranding.IconPath));
         services.AddSingleton<IUiDispatcher, DispatcherQueueUiDispatcher>();
+        services.AddSingleton<IClipboardPeekService, WindowsClipboardPeekService>();
         services.AddSingleton<MediaImageCache>();
         services.AddSingleton<IMediaSessionService, WindowsMediaSessionService>();
         services.AddSingleton<IMediaAudioMeterService, WindowsMediaAudioMeterService>();
@@ -92,14 +96,20 @@ public static class ServiceRegistration
             (IAudioMixerService)provider.GetRequiredService<ISystemActivityService>());
         services.AddSingleton<IPrivacyUsageService, WindowsPrivacyUsageService>();
         services.AddSingleton<IAudioSettingsLauncher, WindowsAudioSettingsLauncher>();
+        services.AddSingleton<IAudioDeviceCatalog, WindowsAudioDeviceCatalog>();
+        services.AddSingleton<IRemovableStorageService, WindowsRemovableStorageService>();
+        services.AddSingleton<IDeviceHubSettingsLauncher, WindowsDeviceHubSettingsLauncher>();
+        services.AddSingleton<IDeviceHubService, DeviceHubService>();
         services.AddSingleton<IPrivacySettingsLauncher, WindowsPrivacySettingsLauncher>();
         services.AddSingleton<IPowerStatusService, WindowsPowerStatusService>();
         services.AddSingleton<INetworkStatusService, WindowsNetworkStatusService>();
+        services.AddSingleton<IRadioToggleService, WindowsRadioToggleService>();
         services.AddSingleton<IBluetoothRadioStateProvider, WindowsBluetoothRadioStateProvider>();
         services.AddSingleton<IBluetoothStatusService, WindowsBluetoothStatusService>();
         services.AddSingleton<ISystemResumeService, WindowsSystemResumeService>();
         services.AddSingleton<ITimerStateStore, JsonTimerStateStore>();
         services.AddSingleton<ITimerAlarmPlayer, WindowsTimerAlarmPlayer>();
+        services.AddSingleton<IAudibleNotificationPlayer, WindowsAudibleNotificationPlayer>();
         services.AddSingleton<ITimeToolsService, TimeToolsService>();
         services.AddSingleton<IGlobalHotKeyService, WindowsGlobalHotKeyService>();
         services.AddSingleton<ISystemNotificationService, WindowsSystemNotificationService>();
@@ -114,8 +124,12 @@ public static class ServiceRegistration
         services.AddSingleton<IIslandModule, SystemActivityModule>();
         services.AddSingleton<IIslandModule, BatteryModule>();
         services.AddSingleton<IIslandModule, NetworkModule>();
-        services.AddSingleton<IIslandModule, BluetoothModule>();
+        services.AddSingleton<IIslandModule, DeviceHubModule>();
+        services.AddSingleton<IIslandModule, ClipboardPeekModule>();
         services.AddSingleton<IIslandModule, TimerModule>();
+        services.AddSingleton<HourlyNotificationModule>();
+        services.AddSingleton<IIslandModule>(provider =>
+            provider.GetRequiredService<HourlyNotificationModule>());
         services.AddSingleton<IIslandModule, NotificationModule>();
         services.AddSingleton<IIslandModule, TransferModule>();
         services.AddSingleton<IKeyboardLockMonitor, WindowsKeyboardLockMonitor>();
@@ -151,6 +165,8 @@ public static class ServiceRegistration
                 });
 
             var idleDashboard = provider.GetRequiredService<IdleDashboardViewModel>();
+            Register("EdgeRevealStatusView", () =>
+                new Controls.EdgeRevealStatusView(music, system, privacy, localization, idleDashboard));
             Register("IdleCompactView", () =>
                 new Controls.IdleCompactView(music, system, localization, settings, focus, privacy) { DataContext = idleDashboard });
             Register("IdleHoverView", () =>
@@ -184,6 +200,16 @@ public static class ServiceRegistration
             var bluetooth = provider.GetRequiredService<BluetoothModuleViewModel>();
             Register("BluetoothCompactView", () => new Controls.BluetoothCompactView { DataContext = bluetooth });
             Register("BluetoothExpandedView", () => new Controls.BluetoothExpandedView { DataContext = bluetooth });
+            var deviceHub = provider.GetRequiredService<DeviceHubViewModel>();
+            Register("DeviceHubCompactView", () => new Controls.DeviceHubCompactView { DataContext = deviceHub });
+            Register("DeviceHubExpandedView", () => new Controls.DeviceHubExpandedView { DataContext = deviceHub });
+            Register("DeviceHubNotificationView", () => new Controls.DeviceHubNotificationView(
+                provider.GetRequiredService<IIslandModuleRegistry>()));
+            var clipboardPeek = provider.GetRequiredService<ClipboardPeekViewModel>();
+            Register("ClipboardPeekCompactView", () => new Controls.ClipboardPeekCompactView { DataContext = clipboardPeek });
+            Register("ClipboardPeekExpandedView", () => new Controls.ClipboardPeekExpandedView { DataContext = clipboardPeek });
+            Register("ClipboardPeekNotificationView", () => new Controls.ClipboardPeekNotificationView(
+                provider.GetRequiredService<IIslandModuleRegistry>(), clipboardPeek));
             var timeTools = provider.GetRequiredService<TimeToolsViewModel>();
             Register("TimerCompactView", () => new Controls.TimerCompactView { DataContext = timeTools });
             Register("TimerHoverView", () => new Controls.TimerHoverView { DataContext = timeTools });
@@ -218,6 +244,8 @@ public static class ServiceRegistration
         services.AddSingleton<ILogArchiveService>(provider => provider.GetRequiredService<JsonLinesLogService>());
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<OverlayWindowHandleProvider>();
+        services.AddSingleton<IOverlayWindowHandleProvider>(provider => provider.GetRequiredService<OverlayWindowHandleProvider>());
         services.AddSingleton<FocusService>();
         services.AddSingleton<IFocusService>(provider =>
             provider.GetRequiredService<FocusService>());
@@ -229,6 +257,10 @@ public static class ServiceRegistration
             provider.GetRequiredService<FocusAutomationService>());
         services.AddSingleton<BatteryModuleSettingsAdapter>();
         services.AddSingleton<IBatteryModuleSettings>(provider => provider.GetRequiredService<BatteryModuleSettingsAdapter>());
+        services.AddSingleton<DeviceHubSettingsAdapter>();
+        services.AddSingleton<IDeviceHubSettings>(provider => provider.GetRequiredService<DeviceHubSettingsAdapter>());
+        services.AddSingleton<ClipboardPeekSettingsAdapter>();
+        services.AddSingleton<IClipboardPeekSettings>(provider => provider.GetRequiredService<ClipboardPeekSettingsAdapter>());
         services.AddSingleton<VolumeModuleSettingsAdapter>();
         services.AddSingleton<IVolumeModuleSettings>(provider =>
             provider.GetRequiredService<VolumeModuleSettingsAdapter>());
@@ -244,6 +276,8 @@ public static class ServiceRegistration
         services.AddSingleton<BatteryModuleViewModel>();
         services.AddSingleton<NetworkModuleViewModel>();
         services.AddSingleton<BluetoothModuleViewModel>();
+        services.AddSingleton<DeviceHubViewModel>();
+        services.AddSingleton<ClipboardPeekViewModel>();
         services.AddSingleton<TimeToolsViewModel>();
         services.AddSingleton<TransferModuleViewModel>();
         services.AddSingleton<IdleDashboardViewModel>();

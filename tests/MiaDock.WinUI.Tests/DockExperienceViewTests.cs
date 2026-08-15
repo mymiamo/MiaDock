@@ -33,7 +33,8 @@ public sealed class DockExperienceViewTests
         var document = LoadControl("IdleCompactView.xaml");
         var indicator = FindNamedElement(document, "BluetoothStatusIndicator");
 
-        Assert.AreEqual("0", indicator.Attribute("Padding")?.Value);
+        Assert.AreEqual("StackPanel", indicator.Name.LocalName);
+        Assert.IsNull(indicator.Attribute("Padding"));
         Assert.IsNull(indicator.Attribute("Background"));
         Assert.IsNull(indicator.Attribute("CornerRadius"));
     }
@@ -48,7 +49,7 @@ public sealed class DockExperienceViewTests
         var statusItems = statusTray.Elements().ToArray();
 
         Assert.AreSame(statusItems[^1], mediaMeter);
-        Assert.AreSame(statusItems[1], callIndicator);
+        Assert.Contains(callIndicator, statusItems);
         Assert.AreEqual("Collapsed", callIndicator.Attribute("Visibility")?.Value);
         Assert.AreEqual("Olası arama etkinliği",
             AttributeValue(callIndicator, "AutomationProperties.Name"));
@@ -226,20 +227,20 @@ public sealed class DockExperienceViewTests
     }
 
     [TestMethod]
-    public void TimerExpandedView_UsesToggleButtonCompatibleSegmentStyle()
+    public void TimerExpandedView_UsesAccessibleFluentTabsAndAdaptivePresetLayout()
     {
         var document = LoadControl("TimerExpandedView.xaml");
-        var segments = document.Descendants()
-            .Where(element => element.Name.LocalName == "ToggleButton")
+        var tabs = document.Descendants()
+            .Where(element => element.Name.LocalName == "TabViewItem")
             .ToArray();
 
-        Assert.HasCount(2, segments);
-        Assert.IsTrue(segments.All(segment =>
-            segment.Attribute("Style")?.Value ==
-                "{StaticResource DockSegmentToggleButtonStyle}"));
-        Assert.IsFalse(segments.Any(segment =>
-            segment.Attribute("Style")?.Value ==
-                "{StaticResource DockInlineButtonStyle}"));
+        Assert.HasCount(2, tabs);
+        Assert.IsTrue(tabs.All(tab => tab.Attribute("IsClosable")?.Value == "False"));
+        var tabView = document.Descendants().Single(element => element.Name.LocalName == "TabView");
+        Assert.AreEqual("{Binding SelectedToolIndex, Mode=TwoWay}", tabView.Attribute("SelectedIndex")?.Value);
+        Assert.AreEqual("False", tabView.Attribute("IsAddTabButtonVisible")?.Value);
+        Assert.AreEqual("False", tabView.Attribute("CanDragTabs")?.Value);
+        Assert.AreEqual("False", tabView.Attribute("CanReorderTabs")?.Value);
 
         var numberBoxes = document.Descendants()
             .Where(element => element.Name.LocalName == "NumberBox")
@@ -254,10 +255,8 @@ public sealed class DockExperienceViewTests
         var presetList = FindNamedElement(document, "PresetList");
         Assert.AreEqual("{Binding PresetDurations}", presetList.Attribute("ItemsSource")?.Value);
         Assert.IsTrue(presetList.Descendants().Any(element =>
-            element.Name.LocalName == "StackPanel" &&
-            element.Attribute("Orientation")?.Value == "Horizontal"));
-        Assert.IsFalse(presetList.Descendants().Any(element =>
-            element.Name.LocalName == "ItemsWrapGrid"));
+            element.Name.LocalName == "UniformGridLayout"));
+        Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "ToggleButton"));
     }
 
     [TestMethod]
@@ -305,6 +304,7 @@ public sealed class DockExperienceViewTests
                      "BatteryExpandedView.xaml",
                      "NetworkExpandedView.xaml",
                      "BluetoothExpandedView.xaml",
+                     "DeviceHubExpandedView.xaml",
                      "TransferExpandedView.xaml",
                      "GenericExpandedModuleView.xaml"
                  })
@@ -324,6 +324,7 @@ public sealed class DockExperienceViewTests
                      "TimerNotificationView.xaml",
                      "TransferNotificationView.xaml",
                      "NotificationModuleNotificationView.xaml",
+                     "DeviceHubNotificationView.xaml",
                      "GenericModuleNotificationView.xaml",
                      "StoreUpdateNotificationView.xaml"
                  })
@@ -358,6 +359,30 @@ public sealed class DockExperienceViewTests
         Assert.AreEqual(
             "{Binding DisplayName}",
             AttributeValue(deviceName, "ToolTipService.ToolTip"));
+    }
+
+    [TestMethod]
+    public void DeviceHubExpandedView_OwnsScrollingAndProvidesAccessibleInlineActions()
+    {
+        var document = LoadControl("DeviceHubExpandedView.xaml");
+        var descendants = document.Descendants().ToArray();
+
+        Assert.HasCount(1, descendants.Where(element => element.Name.LocalName == "ScrollViewer").ToArray());
+        Assert.IsEmpty(descendants.Where(element => element.Name.LocalName == "ListView").ToArray());
+        Assert.IsGreaterThanOrEqualTo(4, descendants.Count(element => element.Name.LocalName == "ItemsControl"));
+        Assert.IsTrue(descendants.Where(element => element.Name.LocalName == "Expander").All(element =>
+            element.Attribute("Expanding")?.Value == "OnDeviceExpanding"));
+        Assert.IsTrue(descendants.Where(element => element.Name.LocalName == "Button").All(element =>
+            element.Attribute("MinHeight")?.Value == "44"));
+
+        var infoBar = FindNamedElement(document, "StorageInfoBar");
+        Assert.AreEqual("Polite", AttributeValue(infoBar, "AutomationProperties.LiveSetting"));
+
+        var codeBehind = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "DeviceHubExpandedView.xaml.cs"));
+        StringAssert.Contains(codeBehind, "_expandedDevice.IsExpanded = false");
     }
 
     private static XElement FindNamedElement(XDocument document, string name) =>

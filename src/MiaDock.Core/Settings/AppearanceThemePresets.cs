@@ -8,6 +8,11 @@ public static class AppearanceThemePresets
     {
         ArgumentNullException.ThrowIfNull(current);
         var next = current with { Theme = theme };
+        if (theme == ThemeStyle.TozPembe)
+        {
+            return ApplyTozPembe(next);
+        }
+
         if (!UsesBuiltInPreset(current))
         {
             return next;
@@ -78,9 +83,18 @@ public static class AppearanceThemePresets
                 Opacity = 0.94,
                 ShadowIntensity = 0.42
             },
+            ThemeStyle.TozPembe => ApplyTozPembe(next),
             _ => next
         };
     }
+
+    private static AppearanceSettings ApplyTozPembe(AppearanceSettings next) => next with
+    {
+        BackgroundColor = "#E4A0B0",
+        AccentColor = "#4A2430",
+        Opacity = 1,
+        ShadowIntensity = 0.2
+    };
 
     private static bool UsesBuiltInPreset(AppearanceSettings appearance) =>
         appearance.Theme switch
@@ -103,6 +117,8 @@ public static class AppearanceThemePresets
                 PaletteMatches(appearance, "#101010", "#FFFFFF", 0.78, 0.18),
             ThemeStyle.AdaptiveFluent =>
                 PaletteMatches(appearance, "#202124", "#60CDFF", 0.94, 0.42),
+            ThemeStyle.TozPembe =>
+                PaletteMatches(appearance, "#E4A0B0", "#4A2430", 1, 0.2),
             _ => false
         };
 

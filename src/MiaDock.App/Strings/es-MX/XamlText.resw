@@ -2112,4 +2112,46 @@
   <data name="XamlText.0688" xml:space="preserve">
     <value>Preparando fuentes multimedia…</value>
   </data>
+  <data name="XamlText.DeviceHub.Title" xml:space="preserve"><value>Centro de dispositivos</value></data>
+  <data name="XamlText.DeviceHub.Description" xml:space="preserve"><value>Dispositivos conectados en un solo lugar.</value></data>
+  <data name="XamlText.DeviceHub.Automation" xml:space="preserve"><value>Dispositivos conectados</value></data>
+  <data name="XamlText.DeviceHub.Connected" xml:space="preserve"><value>Conectado</value></data>
+  <data name="XamlText.DeviceHub.Empty" xml:space="preserve"><value>No hay ningún dispositivo Bluetooth conectado.</value></data>
+  <data name="XamlText.DeviceHub.Output" xml:space="preserve"><value>Salida de audio</value></data>
+  <data name="XamlText.DeviceHub.OutputAutomation" xml:space="preserve"><value>Dispositivos de salida de audio</value></data>
+  <data name="XamlText.DeviceHub.InputAutomation" xml:space="preserve"><value>Dispositivos de micrófono</value></data>
+  <data name="XamlText.DeviceHub.Storage" xml:space="preserve"><value>Almacenamiento extraíble</value></data>
+  <data name="XamlText.ClipboardPeek.Title" xml:space="preserve"><value>Vista del portapapeles</value></data>
+  <data name="XamlText.DeviceHub.Audio" xml:space="preserve"><value>Audio</value></data>
+  <data name="XamlText.DeviceHub.OpenSoundSettings" xml:space="preserve"><value>Abrir configuración de sonido</value></data>
+  <data name="XamlText.DeviceHub.OutputDevices" xml:space="preserve"><value>Dispositivos de salida de audio</value></data>
+  <data name="XamlText.DeviceHub.InputDevices" xml:space="preserve"><value>Dispositivos de micrófono</value></data>
+  <data name="XamlText.DeviceHub.OpenBluetoothSettings" xml:space="preserve"><value>Abrir configuración de Bluetooth</value></data>
+  <data name="XamlText.DeviceHub.BluetoothDevices" xml:space="preserve"><value>Dispositivos Bluetooth</value></data>
+  <data name="XamlText.DeviceHub.OpenSafelyRemove" xml:space="preserve"><value>Abrir extracción segura</value></data>
+  <data name="XamlText.DeviceHub.StorageDevices" xml:space="preserve"><value>Dispositivos de almacenamiento extraíble</value></data>
+  <data name="XamlText.DeviceHub.Open" xml:space="preserve"><value>Abrir</value></data>
+  <data name="XamlText.0689" xml:space="preserve"><value>Akıllı</value></data>
+  <data name="XamlText.0690" xml:space="preserve"><value>Asla</value></data>
+  <data name="XamlText.0698" xml:space="preserve"><value>Clipboard Peek olay davranışı</value></data>
+  <data name="XamlText.0699" xml:space="preserve"><value>Clipboard geçmiş limiti</value></data>
+  <data name="XamlText.0700" xml:space="preserve"><value>Clipboard geçmişini çıkışta temizle</value></data>
+  <data name="XamlText.0701" xml:space="preserve"><value>Dock bildirimi</value></data>
+  <data name="XamlText.0705" xml:space="preserve"><value>Geçmiş limiti</value></data>
+  <data name="XamlText.0706" xml:space="preserve"><value>Hassas Clipboard içeriğini gizle</value></data>
+  <data name="XamlText.0707" xml:space="preserve"><value>Hassas içeriği gizle</value></data>
+  <data name="XamlText.0709" xml:space="preserve"><value>Kopyalanan son öğeler yalnızca bu oturumda tutulur.</value></data>
+  <data name="XamlText.0714" xml:space="preserve"><value>Tam ekran uygulamalarda, film ve video oynatıcılarda dock görünürlüğünü ve geçici bildirimleri yapılandırın.</value></data>
+  <data name="XamlText.0715" xml:space="preserve"><value>Tüm kopyalar</value></data>
+  <data name="XamlText.0719" xml:space="preserve"><value>Çıkışta geçmişi temizle</value></data>
+  <data name="XamlText.0722" xml:space="preserve"><value>Vista del portapapeles</value></data>
+  <data name="XamlText.0723" xml:space="preserve"><value>Esta función es experimental y solo supervisa el portapapeles cuando está habilitada.</value></data>
+  <data name="XamlText.DeviceHub.Microphone" xml:space="preserve"><value>Micrófono</value></data>
+  <data name="XamlText.DeviceHub.SelectSound" xml:space="preserve"><value>Seleccionar en configuración de sonido</value></data>
+  <data name="XamlText.DeviceHub.SelectOutputAutomation" xml:space="preserve"><value>Seleccionar esta salida en configuración de sonido</value></data>
+  <data name="XamlText.DeviceHub.SelectMicrophoneAutomation" xml:space="preserve"><value>Seleccionar este micrófono en configuración de sonido</value></data>
+  <data name="XamlText.DeviceHub.ManageBluetooth" xml:space="preserve"><value>Administrar en configuración de Bluetooth</value></data>
+  <data name="XamlText.DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Opciones de extracción de Windows</value></data>
+  <data name="XamlText.DeviceHub.Eject" xml:space="preserve"><value>Expulsar de forma segura</value></data>
+  <data name="XamlText.DeviceHub.Batteries" xml:space="preserve"><value>Baterías de dispositivos</value></data>
 </root>

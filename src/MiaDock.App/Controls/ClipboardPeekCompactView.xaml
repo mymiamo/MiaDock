@@ -1,0 +1,27 @@
+<UserControl x:Class="MiaDock.App.Controls.ClipboardPeekCompactView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+  </UserControl.Resources>
+  <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
+        AutomationProperties.Name="{Binding CurrentDisplayText}">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="26" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <Grid Width="20" Height="20" VerticalAlignment="Center">
+      <FontIcon Glyph="&#xE8C8;" Style="{StaticResource DockModuleIconStyle}" />
+      <Border CornerRadius="4" Background="{Binding ColorPreviewBrush}"
+              Visibility="{Binding HasColorPreview, Converter={StaticResource BooleanToVisibility}}" />
+      <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"
+             Visibility="{Binding HasThumbnail, Converter={StaticResource BooleanToVisibility}}" />
+    </Grid>
+    <TextBlock Grid.Column="1" Text="{Binding CurrentDisplayText}" MaxLines="1"
+               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+               Style="{StaticResource DockBodyTextStyle}" />
+    <TextBlock Grid.Column="2" Text="{Binding CompactDetailText}" MaxLines="1" MaxWidth="90"
+               TextTrimming="CharacterEllipsis" VerticalAlignment="Center"
+               Style="{StaticResource DockStatusTextStyle}" />
+  </Grid>
+</UserControl>

@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Reflection;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MiaDock.App.Modules;
 using MiaDock.App.Services;
 using MiaDock.Core.Presentation;
 using MiaDock.Core.Settings;
@@ -19,6 +20,9 @@ using MiaDock.Modules.Notifications.Services;
 using MiaDock.Modules.Notifications.Settings;
 using MiaDock.Modules.SystemStatus.Settings;
 using MiaDock.Core.Updates;
+using MiaDock.Core.Clipboard;
+using MiaDock.Core.Audio;
+using MiaDock.Core.Modules;
 
 namespace MiaDock.App.ViewModels;
 
@@ -34,6 +38,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private readonly IAppLocalizationService _localization;
     private readonly ModuleSettingsCatalog? _moduleCatalog;
     private readonly IStoreUpdateCoordinator? _storeUpdates;
+    private readonly IClipboardPeekService? _clipboardPeek;
+    private readonly IAudibleNotificationPlayer? _audibleNotificationPlayer;
     private bool _synchronizing;
     private AppLanguage _language;
     private IslandVisibilityMode _visibilityMode;
@@ -95,9 +101,23 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private double _batteryCriticalThreshold;
     private double _batteryEmergencyThreshold;
     private bool _volumeShowOutputDeviceName = true;
+    private bool _deviceHubConnectedEvents = true;
+    private bool _deviceHubDisconnectedEvents = true;
+    private bool _deviceHubStorageEvents = true;
+    private bool _deviceHubBatteryWarnings = true;
+    private bool _deviceHubAudioOutputEvents = true;
+    private bool _deviceHubBluetooth = true;
+    private bool _deviceHubAudioDevices = true;
+    private bool _deviceHubRemovableStorage = true;
+    private double _deviceHubBatteryWarningPercent = 20;
+    private double _clipboardHistoryLimit = 5;
+    private int _clipboardEventModeIndex;
+    private bool _clipboardImageEvents = true;
+    private string _clipboardHistoryStatus = string.Empty;
     private bool _hotKeysEnabled;
     private bool _showKeyboardLockEvents;
     private bool _showUsbDeviceEvents;
+    private bool _hourlyNotificationEnabled;
     private HotKeyGestureSetting? _toggleDockHotKey;
     private HotKeyGestureSetting? _toggleExpandedHotKey;
     private HotKeyGestureSetting? _nextModuleHotKey;
@@ -114,6 +134,13 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private bool _showSensitiveContentInFullscreen;
     private bool _showSensitiveContentWhenLocked;
     private bool _automaticUpdateChecksEnabled = true;
+    private bool _audibleNotificationsEnabled = true;
+    private bool _networkOfflineSoundEnabled = true;
+    private bool _connectedWithoutInternetSoundEnabled = true;
+    private bool _lowBatterySoundEnabled = true;
+    private bool _deviceConnectedSoundEnabled = true;
+    private bool _deviceDisconnectedSoundEnabled = true;
+    private bool _hourlySoundEnabled = true;
     [ObservableProperty]
     public partial StoreUpdateSnapshot StoreUpdateSnapshot { get; set; } =
         StoreUpdateSnapshot.Unavailable(new Version(1, 1, 0, 0));
@@ -128,7 +155,9 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         IUiDispatcher? uiDispatcher = null,
         IAppLocalizationService? localization = null,
         ModuleSettingsCatalog? moduleCatalog = null,
-        IStoreUpdateCoordinator? storeUpdates = null)
+        IStoreUpdateCoordinator? storeUpdates = null,
+        IClipboardPeekService? clipboardPeek = null,
+        IAudibleNotificationPlayer? audibleNotificationPlayer = null)
     {
         _settingsService = settingsService;
         _music = music;
@@ -140,6 +169,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         _localization = localization ?? new AppLocalizationService();
         _moduleCatalog = moduleCatalog;
         _storeUpdates = storeUpdates;
+        _clipboardPeek = clipboardPeek;
+        _audibleNotificationPlayer = audibleNotificationPlayer;
         StoreUpdateSnapshot = storeUpdates?.Current ?? StoreUpdateSnapshot;
         BuildModuleItems();
         RebuildLocalizedOptions();
@@ -173,6 +204,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         OpenStoreCommand = new AsyncRelayCommand(
             OpenStoreAsync,
             () => IsStoreUpdateAvailable);
+        ClearClipboardHistoryCommand = new AsyncRelayCommand(ClearClipboardHistoryAsync);
         if (_storeUpdates is not null)
         {
             _storeUpdates.UpdateAvailabilityChanged += OnStoreUpdateAvailabilityChanged;
@@ -197,17 +229,95 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<StartupLaunchMode>> LaunchModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<CloseBehaviorSetting>> CloseBehaviors { get; private set; } = [];
     public IReadOnlyList<SettingOption<TrayPrimaryAction>> TrayPrimaryActions { get; private set; } = [];
+    public IReadOnlyList<SettingOption<int>> ClipboardHistoryLimits { get; private set; } = [];
+    public IReadOnlyList<SettingOption<int>> ClipboardEventModes { get; private set; } = [];
 
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public bool IsMediaLoading => _music.ServiceState == MediaServiceState.Initializing;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.4.2.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.5.3.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
     public IRelayCommand RestoreDefaultHotKeysCommand { get; }
     public IAsyncRelayCommand CheckForUpdatesCommand { get; }
     public IAsyncRelayCommand OpenStoreCommand { get; }
+    public IAsyncRelayCommand ClearClipboardHistoryCommand { get; }
+    public bool AudibleNotificationsEnabled
+    {
+        get => _audibleNotificationsEnabled;
+        set
+        {
+            Set(value, ref _audibleNotificationsEnabled, settings => settings with
+            {
+                AudibleNotifications = settings.AudibleNotifications with { IsEnabled = value }
+            });
+            OnPropertyChanged(nameof(AudibleNotificationControlsEnabled));
+        }
+    }
+    public bool AudibleNotificationControlsEnabled => AudibleNotificationsEnabled;
+    public bool NetworkOfflineSoundEnabled
+    {
+        get => _networkOfflineSoundEnabled;
+        set => SetAudibleNotification(value, ref _networkOfflineSoundEnabled,
+            options => options with { NetworkOfflineEnabled = value });
+    }
+    public bool ConnectedWithoutInternetSoundEnabled
+    {
+        get => _connectedWithoutInternetSoundEnabled;
+        set => SetAudibleNotification(value, ref _connectedWithoutInternetSoundEnabled,
+            options => options with { ConnectedWithoutInternetEnabled = value });
+    }
+    public bool LowBatterySoundEnabled
+    {
+        get => _lowBatterySoundEnabled;
+        set => SetAudibleNotification(value, ref _lowBatterySoundEnabled,
+            options => options with { LowBatteryEnabled = value });
+    }
+    public bool DeviceConnectedSoundEnabled
+    {
+        get => _deviceConnectedSoundEnabled;
+        set => SetAudibleNotification(value, ref _deviceConnectedSoundEnabled,
+            options => options with { DeviceConnectedEnabled = value });
+    }
+    public bool DeviceDisconnectedSoundEnabled
+    {
+        get => _deviceDisconnectedSoundEnabled;
+        set => SetAudibleNotification(value, ref _deviceDisconnectedSoundEnabled,
+            options => options with { DeviceDisconnectedEnabled = value });
+    }
+    public bool HourlySoundEnabled
+    {
+        get => _hourlySoundEnabled;
+        set => SetAudibleNotification(value, ref _hourlySoundEnabled,
+            options => options with { HourlyEnabled = value });
+    }
+    public string AudibleNotificationsTitle => SoundText("AudibleNotifications.Title");
+    public string AudibleNotificationsDescription => SoundText("AudibleNotifications.Description");
+    public string AudibleNotificationsMasterTitle => SoundText("AudibleNotifications.MasterTitle");
+    public string AudibleNotificationsMasterDescription => SoundText("AudibleNotifications.MasterDescription");
+    public string AudibleNotificationsEventsTitle => SoundText("AudibleNotifications.EventsTitle");
+    public string NetworkOfflineSoundTitle => SoundText("AudibleNotifications.NetworkOffline.Title");
+    public string NetworkOfflineSoundDescription => SoundText("AudibleNotifications.NetworkOffline.Description");
+    public string ConnectedWithoutInternetSoundTitle => SoundText("AudibleNotifications.ConnectedWithoutInternet.Title");
+    public string ConnectedWithoutInternetSoundDescription => SoundText("AudibleNotifications.ConnectedWithoutInternet.Description");
+    public string LowBatterySoundTitle => SoundText("AudibleNotifications.LowBattery.Title");
+    public string LowBatterySoundDescription => SoundText("AudibleNotifications.LowBattery.Description");
+    public string DeviceConnectedSoundTitle => SoundText("AudibleNotifications.DeviceConnected.Title");
+    public string DeviceConnectedSoundDescription => SoundText("AudibleNotifications.DeviceConnected.Description");
+    public string DeviceDisconnectedSoundTitle => SoundText("AudibleNotifications.DeviceDisconnected.Title");
+    public string DeviceDisconnectedSoundDescription => SoundText("AudibleNotifications.DeviceDisconnected.Description");
+    public string HourlySoundTitle => SoundText("AudibleNotifications.Hourly.Title");
+    public string HourlySoundDescription => SoundText("AudibleNotifications.Hourly.Description");
+    public string PreviewSoundText => SoundText("AudibleNotifications.Preview");
+    public string NetworkOfflineSoundPreviewName => PreviewName(NetworkOfflineSoundTitle);
+    public string ConnectedWithoutInternetSoundPreviewName => PreviewName(ConnectedWithoutInternetSoundTitle);
+    public string LowBatterySoundPreviewName => PreviewName(LowBatterySoundTitle);
+    public string DeviceConnectedSoundPreviewName => PreviewName(DeviceConnectedSoundTitle);
+    public string DeviceDisconnectedSoundPreviewName => PreviewName(DeviceDisconnectedSoundTitle);
+    public string HourlySoundPreviewName => PreviewName(HourlySoundTitle);
+    public string AlarmSoundTitle => SoundText("AudibleNotifications.Alarm.Title");
+    public string AlarmSoundDescription => SoundText("AudibleNotifications.Alarm.Description");
     public bool IsStartupTaskAvailable { get => _isStartupTaskAvailable; private set => SetProperty(ref _isStartupTaskAvailable, value); }
     public string StartupStatusMessage { get => _startupStatusMessage; private set => SetProperty(ref _startupStatusMessage, value); }
     public double BatteryLowThreshold { get => _batteryLowThreshold; set => SetBatteryThreshold(value, ref _batteryLowThreshold, ThresholdKind.Low); }
@@ -235,6 +345,24 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             ref _showUsbDeviceEvents,
             s => s with { General = s.General with { ShowUsbDeviceEvents = value } });
     }
+    public bool HourlyNotificationEnabled
+    {
+        get => _hourlyNotificationEnabled;
+        set
+        {
+            if (!SetProperty(ref _hourlyNotificationEnabled, value) || _synchronizing)
+            {
+                return;
+            }
+
+            UpdateModuleEnvelope(
+                HourlyNotificationModule.ModuleId,
+                envelope => envelope with { IsEnabled = value });
+        }
+    }
+    public string HourlyNotificationSettingsTitle => SoundText("HourlyNotification.Settings.Title");
+    public string HourlyNotificationSettingsDescription => SoundText("HourlyNotification.Settings.Description");
+    public string HourlyNotificationSettingsToggle => SoundText("HourlyNotification.Settings.Toggle");
     public HotKeyGestureSetting? ToggleDockHotKey { get => _toggleDockHotKey; set => SetHotKey(HotKeyAction.ToggleDock, value, ref _toggleDockHotKey, nameof(ToggleDockHotKey)); }
     public HotKeyGestureSetting? ToggleExpandedHotKey { get => _toggleExpandedHotKey; set => SetHotKey(HotKeyAction.ToggleExpanded, value, ref _toggleExpandedHotKey, nameof(ToggleExpandedHotKey)); }
     public HotKeyGestureSetting? NextModuleHotKey { get => _nextModuleHotKey; set => SetHotKey(HotKeyAction.NextModule, value, ref _nextModuleHotKey, nameof(NextModuleHotKey)); }
@@ -398,6 +526,54 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         get => _showClockWeekday;
         set => SetClock(value, ref _showClockWeekday, clock => clock with { ShowWeekday = value });
     }
+    public double ClipboardHistoryLimit
+    {
+        get => _clipboardHistoryLimit;
+        set
+        {
+            var normalized = NormalizeClipboardHistoryLimit((int)Math.Round(value));
+            SetClipboardOption("historyLimit", normalized, ref _clipboardHistoryLimit, normalized);
+            OnPropertyChanged(nameof(ClipboardHistoryLimitIndex));
+        }
+    }
+    public int ClipboardHistoryLimitIndex
+    {
+        get => IndexOf(ClipboardHistoryLimits, (int)ClipboardHistoryLimit);
+        set => ClipboardHistoryLimit = ValueAt(ClipboardHistoryLimits, value, 5);
+    }
+    public int ClipboardEventModeIndex
+    {
+        get => _clipboardEventModeIndex;
+        set => SetClipboardOption("eventMode", value switch { 1 => "everything", 2 => "never", _ => "smart" }, ref _clipboardEventModeIndex, Math.Clamp(value, 0, 2));
+    }
+    public bool ClipboardImageEvents { get => _clipboardImageEvents; set => SetClipboardOption("showImageEvents", value, ref _clipboardImageEvents, value); }
+    public string ClipboardHistoryStatus { get => _clipboardHistoryStatus; private set => SetProperty(ref _clipboardHistoryStatus, value); }
+    public string ClipboardSettingsTitle => ClipboardText("ClipboardPeek.Settings.Title");
+    public string ClipboardSettingsDescription => ClipboardText("ClipboardPeek.Settings.Description");
+    public string ClipboardHistoryLimitText => ClipboardText("ClipboardPeek.Settings.HistoryLimit");
+    public string ClipboardHistoryDescriptionText => ClipboardText("ClipboardPeek.Settings.HistoryDescription");
+    public string ClipboardEventModeText => ClipboardText("ClipboardPeek.Settings.EventMode");
+    public string ClipboardImageEventsText => ClipboardText("ClipboardPeek.Settings.ImageEvents");
+    public string ClipboardClearHistoryText => ClipboardText("ClipboardPeek.ClearHistory");
+    public bool DeviceHubConnectedEvents { get => _deviceHubConnectedEvents; set => SetDeviceHubOption(value, ref _deviceHubConnectedEvents, options => options with { ShowConnectedEvents = value }); }
+    public bool DeviceHubDisconnectedEvents { get => _deviceHubDisconnectedEvents; set => SetDeviceHubOption(value, ref _deviceHubDisconnectedEvents, options => options with { ShowDisconnectedEvents = value }); }
+    public bool DeviceHubStorageEvents { get => _deviceHubStorageEvents; set => SetDeviceHubOption(value, ref _deviceHubStorageEvents, options => options with { ShowStorageEvents = value }); }
+    public bool DeviceHubBatteryWarnings { get => _deviceHubBatteryWarnings; set => SetDeviceHubOption(value, ref _deviceHubBatteryWarnings, options => options with { ShowBatteryWarnings = value }); }
+    public bool DeviceHubAudioOutputEvents { get => _deviceHubAudioOutputEvents; set => SetDeviceHubOption(value, ref _deviceHubAudioOutputEvents, options => options with { ShowAudioOutputEvents = value }); }
+    public bool DeviceHubBluetooth { get => _deviceHubBluetooth; set => SetDeviceHubOption(value, ref _deviceHubBluetooth, options => options with { ShowBluetooth = value }); }
+    public bool DeviceHubAudioDevices { get => _deviceHubAudioDevices; set => SetDeviceHubOption(value, ref _deviceHubAudioDevices, options => options with { ShowAudioDevices = value }); }
+    public bool DeviceHubRemovableStorage { get => _deviceHubRemovableStorage; set => SetDeviceHubOption(value, ref _deviceHubRemovableStorage, options => options with { ShowRemovableStorage = value }); }
+    public double DeviceHubBatteryWarningPercent { get => _deviceHubBatteryWarningPercent; set => SetDeviceHubOption(value, ref _deviceHubBatteryWarningPercent, options => options with { BatteryWarningPercent = (int)Math.Round(value) }); }
+    public string DeviceHubSettingsTitle => DeviceHubText("DeviceHub.SettingsTitle");
+    public string DeviceHubShowConnectedEventsText => DeviceHubText("DeviceHub.ShowConnectedEvents");
+    public string DeviceHubShowDisconnectedEventsText => DeviceHubText("DeviceHub.ShowDisconnectedEvents");
+    public string DeviceHubShowStorageEventsText => DeviceHubText("DeviceHub.ShowStorageEvents");
+    public string DeviceHubShowBatteryWarningsText => DeviceHubText("DeviceHub.ShowBatteryWarnings");
+    public string DeviceHubShowAudioOutputEventsText => DeviceHubText("DeviceHub.ShowAudioOutputEvents");
+    public string DeviceHubShowBluetoothText => DeviceHubText("DeviceHub.ShowBluetooth");
+    public string DeviceHubShowAudioDevicesText => DeviceHubText("DeviceHub.ShowAudioDevices");
+    public string DeviceHubShowRemovableStorageText => DeviceHubText("DeviceHub.ShowRemovableStorage");
+    public string DeviceHubBatteryWarningPercentText => DeviceHubText("DeviceHub.BatteryWarningPercent");
     public ThemeStyle Theme
     {
         get => _theme;
@@ -448,6 +624,9 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         ThemeStyle.CustomSolidColor => _localization.Text(
             "Seçtiğiniz arka plan ve vurgu renklerini kullanan düz yüzey.",
             "A solid surface using your selected background and accent colors."),
+        ThemeStyle.TozPembe => _localization.Text(
+            "Tozpembe yüzey; koyu ve okunaklı yazılar.",
+            "Dusty pink surface with dark, readable text."),
         _ => string.Empty
     };
     public bool IsBlurredGlassTheme => Theme.UsesColorlessGlass();
@@ -695,6 +874,15 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         _settingsService.Update(update);
     }
 
+    private void SetAudibleNotification(
+        bool value,
+        ref bool field,
+        Func<AudibleNotificationSettings, AudibleNotificationSettings> update) =>
+        Set(value, ref field, settings => settings with
+        {
+            AudibleNotifications = update(settings.AudibleNotifications)
+        });
+
     private void SetClock<T>(
         T value,
         ref T field,
@@ -746,7 +934,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         VisibilityModes =
         [
             new(IslandVisibilityMode.Always, L("Her zaman görünür", "Always visible")),
-            new(IslandVisibilityMode.EventsOnly, L("Yalnızca olaylarda", "Events only"))
+            new(IslandVisibilityMode.EventsOnly, L("Yalnızca olaylarda", "Events only")),
+            new(IslandVisibilityMode.EdgeReveal, L("Kenarda gizle", "Hide at edge"))
         ];
         InteractionModes =
         [
@@ -786,6 +975,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             new(ThemeStyle.BlurredGlass, L("Bulanık Cam", "Blurred Glass")),
             new(ThemeStyle.NeutralFrostedGlass, L("Nötr Buzlu Cam", "Neutral Frosted Glass")),
             new(ThemeStyle.AdaptiveFluent, "Adaptive Fluent"),
+            new(ThemeStyle.TozPembe, "Tozpembe"),
             new(ThemeStyle.CustomSolidColor, L("Özel Düz Renk", "Custom solid color"))
         ];
         AnimationKinds =
@@ -847,6 +1037,19 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             new(CloseBehaviorSetting.MinimizeToTray, L("Sistem tepsisine küçült", "Minimize to system tray")),
             new(CloseBehaviorSetting.Exit, L("Uygulamadan çık", "Exit the app"))
         ];
+        ClipboardHistoryLimits =
+        [
+            new(0, ClipboardText("ClipboardPeek.Settings.HistoryOff")),
+            new(5, "5"),
+            new(10, "10"),
+            new(20, "20")
+        ];
+        ClipboardEventModes =
+        [
+            new(0, ClipboardText("ClipboardPeek.Settings.EventSmart")),
+            new(1, ClipboardText("ClipboardPeek.Settings.EventEverything")),
+            new(2, ClipboardText("ClipboardPeek.Settings.EventNever"))
+        ];
 
         foreach (var propertyName in new[]
                  {
@@ -860,7 +1063,26 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
                      nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex), nameof(FullscreenBehaviorIndex),
                      nameof(MonitorModeIndex), nameof(LaunchModeIndex), nameof(CloseBehaviorIndex),
                      nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable), nameof(IsAccentColorEditable),
-                     nameof(StoreUpdateStatusMessage), nameof(StoreUpdateVersionText)
+                     nameof(StoreUpdateStatusMessage), nameof(StoreUpdateVersionText),
+                     nameof(ClipboardHistoryLimits), nameof(ClipboardEventModes), nameof(ClipboardHistoryLimitIndex),
+                     nameof(ClipboardSettingsTitle), nameof(ClipboardSettingsDescription), nameof(ClipboardHistoryLimitText),
+                     nameof(ClipboardHistoryDescriptionText), nameof(ClipboardEventModeText), nameof(ClipboardImageEventsText),
+                     nameof(ClipboardClearHistoryText),
+                     nameof(AudibleNotificationsTitle), nameof(AudibleNotificationsDescription),
+                     nameof(AudibleNotificationsMasterTitle), nameof(AudibleNotificationsMasterDescription),
+                     nameof(AudibleNotificationsEventsTitle), nameof(NetworkOfflineSoundTitle),
+                     nameof(NetworkOfflineSoundDescription), nameof(ConnectedWithoutInternetSoundTitle),
+                     nameof(ConnectedWithoutInternetSoundDescription), nameof(LowBatterySoundTitle),
+                     nameof(LowBatterySoundDescription), nameof(DeviceConnectedSoundTitle),
+                     nameof(DeviceConnectedSoundDescription), nameof(DeviceDisconnectedSoundTitle),
+                     nameof(DeviceDisconnectedSoundDescription), nameof(HourlySoundTitle),
+                     nameof(HourlySoundDescription), nameof(PreviewSoundText),
+                     nameof(NetworkOfflineSoundPreviewName), nameof(ConnectedWithoutInternetSoundPreviewName),
+                     nameof(LowBatterySoundPreviewName), nameof(DeviceConnectedSoundPreviewName),
+                     nameof(DeviceDisconnectedSoundPreviewName), nameof(HourlySoundPreviewName),
+                     nameof(HourlyNotificationSettingsTitle), nameof(HourlyNotificationSettingsDescription),
+                     nameof(HourlyNotificationSettingsToggle),
+                     nameof(AlarmSoundTitle), nameof(AlarmSoundDescription)
                  })
         {
             OnPropertyChanged(propertyName);
@@ -963,6 +1185,13 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             StartWithWindows = settings.StartupShutdown.StartWithWindows;
             LaunchMode = settings.StartupShutdown.LaunchMode;
             CloseBehavior = settings.StartupShutdown.CloseBehavior;
+            AudibleNotificationsEnabled = settings.AudibleNotifications.IsEnabled;
+            NetworkOfflineSoundEnabled = settings.AudibleNotifications.NetworkOfflineEnabled;
+            ConnectedWithoutInternetSoundEnabled = settings.AudibleNotifications.ConnectedWithoutInternetEnabled;
+            LowBatterySoundEnabled = settings.AudibleNotifications.LowBatteryEnabled;
+            DeviceConnectedSoundEnabled = settings.AudibleNotifications.DeviceConnectedEnabled;
+            DeviceDisconnectedSoundEnabled = settings.AudibleNotifications.DeviceDisconnectedEnabled;
+            HourlySoundEnabled = settings.AudibleNotifications.HourlyEnabled;
             var batteryOptions = BatteryModuleOptions.FromEnvelope(
                 settings.Modules.TryGetValue("battery", out var batteryEnvelope) ? batteryEnvelope : null);
             BatteryLowThreshold = batteryOptions.LowThresholdPercent;
@@ -973,10 +1202,36 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
                     ? volumeEnvelope
                     : null);
             VolumeShowOutputDeviceName = volumeOptions.ShowOutputDeviceName;
+            var deviceHubOptions = DeviceHubOptions.FromEnvelope(
+                settings.Modules.TryGetValue("device-hub", out var deviceHubEnvelope) ? deviceHubEnvelope : null);
+            DeviceHubConnectedEvents = deviceHubOptions.ShowConnectedEvents;
+            DeviceHubDisconnectedEvents = deviceHubOptions.ShowDisconnectedEvents;
+            DeviceHubStorageEvents = deviceHubOptions.ShowStorageEvents;
+            DeviceHubBatteryWarnings = deviceHubOptions.ShowBatteryWarnings;
+            DeviceHubAudioOutputEvents = deviceHubOptions.ShowAudioOutputEvents;
+            DeviceHubBluetooth = deviceHubOptions.ShowBluetooth;
+            DeviceHubAudioDevices = deviceHubOptions.ShowAudioDevices;
+            DeviceHubRemovableStorage = deviceHubOptions.ShowRemovableStorage;
+            DeviceHubBatteryWarningPercent = deviceHubOptions.BatteryWarningPercent;
+            var clipboardOptions = settings.Modules.TryGetValue("clipboard-peek", out var clipboardEnvelope)
+                ? clipboardEnvelope.Options : null;
+            ClipboardHistoryLimit = ReadClipboardInt(clipboardOptions, "historyLimit", 5);
+            ClipboardEventModeIndex = ReadClipboardString(clipboardOptions, "eventMode") switch
+            {
+                "everything" => 1,
+                "never" => 2,
+                _ => 0
+            };
+            ClipboardImageEvents = ReadClipboardBool(clipboardOptions, "showImageEvents", true);
             _hotKeyEditIssues.Clear();
             HotKeysEnabled = settings.HotKeys.IsEnabled;
             ShowKeyboardLockEvents = settings.General.ShowKeyboardLockEvents;
             ShowUsbDeviceEvents = settings.General.ShowUsbDeviceEvents;
+            HourlyNotificationEnabled = settings.Modules.TryGetValue(
+                HourlyNotificationModule.ModuleId,
+                out var hourlyEnvelope)
+                    ? hourlyEnvelope.IsEnabled
+                    : ModuleSettingsEnvelope.HourlyNotificationDefault.IsEnabled;
             ToggleDockHotKey = GetHotKey(settings, HotKeyAction.ToggleDock);
             ToggleExpandedHotKey = GetHotKey(settings, HotKeyAction.ToggleExpanded);
             NextModuleHotKey = GetHotKey(settings, HotKeyAction.NextModule);
@@ -1379,7 +1634,10 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         "battery" => ModuleSettingsEnvelope.BatteryDefault,
         "network" => ModuleSettingsEnvelope.NetworkDefault,
         "bluetooth" => ModuleSettingsEnvelope.BluetoothDefault,
+        "device-hub" => ModuleSettingsEnvelope.DeviceHubDefault,
+        "clipboard-peek" => ModuleSettingsEnvelope.ClipboardPeekDefault,
         "timer" => ModuleSettingsEnvelope.TimerDefault,
+        HourlyNotificationModule.ModuleId => ModuleSettingsEnvelope.HourlyNotificationDefault,
         "notifications" => ModuleSettingsEnvelope.NotificationsDefault,
         "transfers" => ModuleSettingsEnvelope.TransfersDefault,
         _ => ModuleSettingsEnvelope.MediaDefault
@@ -1393,7 +1651,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         new("system-activity", "Arama etkinliği", "Call activity", "Yerel arama çıkarımını izler; görüşme içeriği okunmaz.", "Monitors local call inference; call content is never read.", "\uE717"),
         new("battery", "Pil", "Battery", "Şarj, enerji tasarrufu ve pil eşiklerini gösterir.", "Shows charging, energy saver and battery thresholds.", "\uE850"),
         new("network", "Ağ", "Network", "Bağlantı türünü ve görünürken aktarım hızını gösterir.", "Shows connection type and throughput while visible.", "\uE968"),
-        new("bluetooth", "Bluetooth", "Bluetooth", "Eşleştirilmiş cihaz bağlantı durumlarını izler.", "Monitors paired device connection states.", "\uE702"),
+        new("device-hub", "Device Hub", "Device Hub", "Bağlı Bluetooth, ses ve çıkarılabilir depolama aygıtlarını tek yerde gösterir.", "Shows connected Bluetooth, audio and removable storage devices in one place.", "\uE7F4"),
+        new("clipboard-peek", "Clipboard Peek", "Clipboard Peek", "Kopyalanan içeriği oturum içi geçmiş ve gizlilik korumasıyla gösterir.", "Shows copied content with session-only history and privacy protection.", "\uE8C8"),
         new("timer", "Zamanlayıcı ve kronometre", "Timer and stopwatch", "Geri sayım ve kronometre araçlarını dock'a ekler.", "Adds countdown and stopwatch tools to the dock.", "\uE823"),
         new("notifications", "Windows bildirimleri", "Windows notifications", "İzin verdiğiniz uygulama başlıklarını geçici gösterir.", "Temporarily shows titles from apps you allow.", "\uEA8F"),
         new("transfers", "Dosya aktarımları", "File transfers", "Yerel sağlayıcıların bildirdiği aktarım ilerlemesini gösterir.", "Shows transfer progress reported by local providers.", "\uE898")
@@ -1498,6 +1757,107 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private void ApplyStoreUpdateSnapshot(StoreUpdateSnapshot snapshot)
     {
         StoreUpdateSnapshot = snapshot;
+    }
+
+    private void SetDeviceHubOption<T>(
+        T value,
+        ref T field,
+        Func<DeviceHubOptions, DeviceHubOptions> update)
+    {
+        if (!SetProperty(ref field, value) || _synchronizing) return;
+        UpdateModuleEnvelope("device-hub", envelope =>
+        {
+            var options = update(DeviceHubOptions.FromEnvelope(envelope));
+            return envelope with
+            {
+                Options = new Dictionary<string, System.Text.Json.JsonElement>(StringComparer.Ordinal)
+                {
+                    ["showConnectedEvents"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowConnectedEvents),
+                    ["showDisconnectedEvents"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowDisconnectedEvents),
+                    ["showStorageEvents"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowStorageEvents),
+                    ["showBatteryWarnings"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowBatteryWarnings),
+                    ["showAudioOutputEvents"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowAudioOutputEvents),
+                    ["showBluetooth"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowBluetooth),
+                    ["showAudioDevices"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowAudioDevices),
+                    ["showRemovableStorage"] = System.Text.Json.JsonSerializer.SerializeToElement(options.ShowRemovableStorage),
+                    ["batteryWarningPercent"] = System.Text.Json.JsonSerializer.SerializeToElement(options.BatteryWarningPercent)
+                }
+            };
+        });
+    }
+
+    private string DeviceHubText(string key) => _localization.Get(key);
+
+    private string ClipboardText(string key) => _localization.Get(key);
+
+    private string SoundText(string key) => _localization.Get(key);
+
+    private string PreviewName(string title) => $"{PreviewSoundText}: {title}";
+
+    [RelayCommand]
+    private void PreviewNetworkOfflineSound() =>
+        _audibleNotificationPlayer?.Preview(AudibleNotificationCue.NetworkOffline);
+
+    [RelayCommand]
+    private void PreviewConnectedWithoutInternetSound() =>
+        _audibleNotificationPlayer?.Preview(AudibleNotificationCue.ConnectedWithoutInternet);
+
+    [RelayCommand]
+    private void PreviewLowBatterySound() =>
+        _audibleNotificationPlayer?.Preview(AudibleNotificationCue.LowBattery);
+
+    [RelayCommand]
+    private void PreviewDeviceConnectedSound() =>
+        _audibleNotificationPlayer?.Preview(AudibleNotificationCue.DeviceConnected);
+
+    [RelayCommand]
+    private void PreviewDeviceDisconnectedSound() =>
+        _audibleNotificationPlayer?.Preview(AudibleNotificationCue.DeviceDisconnected);
+
+    [RelayCommand]
+    private void PreviewHourlySound() =>
+        _audibleNotificationPlayer?.Preview(AudibleNotificationCue.Hourly);
+
+    private void SetClipboardOption<T>(string key, object serializedValue, ref T field, T value)
+    {
+        if (!SetProperty(ref field, value) || _synchronizing) return;
+        UpdateModuleEnvelope("clipboard-peek", envelope =>
+        {
+            var options = new Dictionary<string, System.Text.Json.JsonElement>(
+                envelope.Options ?? new Dictionary<string, System.Text.Json.JsonElement>(), StringComparer.Ordinal)
+            {
+                [key] = System.Text.Json.JsonSerializer.SerializeToElement(serializedValue)
+            };
+            return envelope with { Options = options };
+        });
+    }
+
+    private static int ReadClipboardInt(IReadOnlyDictionary<string, System.Text.Json.JsonElement>? options, string key, int fallback) =>
+        options?.TryGetValue(key, out var value) == true && value.ValueKind == System.Text.Json.JsonValueKind.Number && value.TryGetInt32(out var number)
+            ? Math.Clamp(number, 0, 20) : fallback;
+    private static string? ReadClipboardString(IReadOnlyDictionary<string, System.Text.Json.JsonElement>? options, string key) =>
+        options?.TryGetValue(key, out var value) == true && value.ValueKind == System.Text.Json.JsonValueKind.String ? value.GetString() : null;
+    private static bool ReadClipboardBool(IReadOnlyDictionary<string, System.Text.Json.JsonElement>? options, string key, bool fallback) =>
+        options?.TryGetValue(key, out var value) == true && value.ValueKind is System.Text.Json.JsonValueKind.True or System.Text.Json.JsonValueKind.False
+            ? value.GetBoolean() : fallback;
+
+    private static int NormalizeClipboardHistoryLimit(int value)
+    {
+        int[] allowed = [0, 5, 10, 20];
+        return allowed.OrderBy(candidate => Math.Abs(candidate - value))
+            .ThenByDescending(candidate => candidate)
+            .First();
+    }
+
+    private async Task ClearClipboardHistoryAsync()
+    {
+        if (_clipboardPeek is null)
+        {
+            ClipboardHistoryStatus = ClipboardText("ClipboardPeek.Action.Unavailable");
+            return;
+        }
+        var result = await _clipboardPeek.ClearHistoryAsync();
+        ClipboardHistoryStatus = ClipboardText($"ClipboardPeek.Action.{result}");
     }
 
     partial void OnStoreUpdateSnapshotChanged(StoreUpdateSnapshot value)

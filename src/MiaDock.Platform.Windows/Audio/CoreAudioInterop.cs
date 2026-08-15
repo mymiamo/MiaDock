@@ -81,7 +81,10 @@ internal sealed class MMDeviceEnumeratorComObject
 internal interface IMMDeviceEnumerator
 {
     [PreserveSig]
-    int EnumAudioEndpoints(AudioDataFlow dataFlow, uint stateMask, out nint devices);
+    int EnumAudioEndpoints(
+        AudioDataFlow dataFlow,
+        uint stateMask,
+        [MarshalAs(UnmanagedType.Interface)] out IMMDeviceCollection devices);
 
     [PreserveSig]
     int GetDefaultAudioEndpoint(AudioDataFlow dataFlow, AudioDeviceRole role, out IMMDevice device);
@@ -94,6 +97,15 @@ internal interface IMMDeviceEnumerator
 
     [PreserveSig]
     int UnregisterEndpointNotificationCallback(IMMNotificationClient client);
+}
+
+[ComImport]
+[Guid("0BD7A1BE-7A1A-44DB-8397-CC5392387B5E")]
+[InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+internal interface IMMDeviceCollection
+{
+    [PreserveSig] int GetCount(out uint count);
+    [PreserveSig] int Item(uint index, out IMMDevice device);
 }
 
 [Guid("7991EEC9-7E89-4D85-8390-6C703CEC60C0")]
@@ -277,7 +289,11 @@ internal interface IAudioMeterInformation
 {
     [PreserveSig] int GetPeakValue(out float peak);
     [PreserveSig] int GetMeteringChannelCount(out uint channelCount);
-    [PreserveSig] int GetChannelsPeakValues(uint channelCount, [Out] float[] peakValues);
+    [PreserveSig]
+    int GetChannelsPeakValues(
+        uint channelCount,
+        [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0, ArraySubType = UnmanagedType.R4)]
+        float[] peakValues);
     [PreserveSig] int QueryHardwareSupport(out uint hardwareSupportMask);
 }
 

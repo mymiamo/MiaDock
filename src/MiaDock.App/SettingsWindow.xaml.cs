@@ -12,7 +12,6 @@ using Microsoft.UI.Xaml.Hosting;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
 using MiaDock.App.Dialogs;
-using MiaDock.App.Animations;
 using MiaDock.App.Infrastructure;
 using MiaDock.App.Models;
 using MiaDock.App.Services;
@@ -51,7 +50,6 @@ public sealed partial class SettingsWindow : Window
     private bool _isNarrow;
     private bool _syncingSubpageSelection;
     private bool _isNavigatingBack;
-    private CancellationTokenSource? _pageEntranceCancellation;
 
     public SettingsWindow(
         SettingsViewModel viewModel,
@@ -80,6 +78,7 @@ public sealed partial class SettingsWindow : Window
             ["home"] = _homePage,
             ["general"] = CreatePage(new GeneralSettingsPage()),
             ["appearance"] = CreatePage(new AppearanceSettingsPage()),
+            ["audible-notifications"] = CreatePage(new AudibleNotificationsSettingsPage()),
             ["monitor"] = CreatePage(new MonitorSettingsPage()),
             ["fullscreen"] = CreatePage(new FullscreenSettingsPage()),
             ["focus"] = new FocusSettingsPage(focusSettingsViewModel, localization),
@@ -149,6 +148,7 @@ public sealed partial class SettingsWindow : Window
         Category("personalization", "Kişiselleştir", "Personalize", "Dock görünümü, yerleşimi ve tam ekran", "Dock appearance, placement and fullscreen", "\uE771", "SettingsCategoryPersonalizationBrush",
             Subpage("general", "personalization", "Genel", "General", "Görünürlük, etkileşim ve dil", "Visibility, interaction and language", "\uE713"),
             Subpage("appearance", "personalization", "Görünüm", "Appearance", "Tema, boyut ve yüzey", "Theme, size and surface", "\uE790"),
+            Subpage("audible-notifications", "personalization", "Sesli Bildirimler", "Notification Sounds", "Olay sesleri ve önizlemeler", "Event sounds and previews", "\uE995"),
             Subpage("monitor", "personalization", "Monitör", "Monitor", "Ekran ve konumlandırma", "Display and positioning", "\uE7F4"),
             Subpage("fullscreen", "personalization", "Tam Ekran", "Fullscreen", "Oyun ve tam ekran davranışı", "Game and fullscreen behavior", "\uE740")),
         Category("focus", "Odak", "Focus", "Odak profilleri ve otomasyon", "Focus profiles and automation", "\uE734", "SettingsCategoryFocusBrush",
@@ -186,13 +186,14 @@ public sealed partial class SettingsWindow : Window
         Search("Genel Bakış", "Overview", "Hızlı ayarlar, durum ve güncellemeler", "Quick settings, status and updates", "home", "home", null, localize, "dashboard başlangıç özeti ana sayfa home modül durumu update check status"),
         Search("Genel", "General", "Görünürlük, etkileşim, dil, saat ve dock konumu", "Visibility, interaction, language, clock and dock position", "personalization", "general", null, localize, "türkçe english language dil hover fare tıklama click always visible events only saat clock saniye seconds tarih date weekday konum position otomatik güncelleme"),
         Search("Görünüm", "Appearance", "Tema, boyut, renk, opaklık, radius ve animasyon", "Theme, size, color, opacity, radius and animation", "personalization", "appearance", null, localize, "apple mica acrylic blur glass köşe corner radius kenar mesafe edge spacing margin width height opacity shadow animation"),
+        Search("Sesli Bildirimler", "Notification Sounds", "Ağ, pil ve cihaz olay sesleri", "Network, battery and device event sounds", "personalization", "audible-notifications", null, localize, "ses sound audio uyarı notification internet wifi ethernet pil battery cihaz device bağlandı ayrıldı saat başı hourly chime preview önizleme alarm"),
         Search("Monitör", "Monitor", "Ekran seçimi, DPI ve konumlandırma", "Display selection, DPI and positioning", "personalization", "monitor", null, localize, "primary active fixed ana aktif sabit monitor display screen ölçek scaling dpi"),
         Search("Tam Ekran", "Fullscreen", "Oyun ve tam ekran bildirim davranışı", "Games and fullscreen notification behavior", "personalization", "fullscreen", null, localize, "game oyun borderless minimal controls hide edge hover reveal"),
         Search("Odak", "Focus", "Etkinleştir, devre dışı bırak, profiller ve otomasyon", "Enable, disable, profiles and automation", "focus", "focus", null, localize, "dnd rahatsız etmeyin work gaming sleep schedule profile"),
         Search("Modüller ve İzinler", "Modules and Permissions", "Özellikler, Windows servisleri ve izinler", "Features, Windows services and permissions", "modules", "modules", null, localize, "media volume microphone camera battery network bluetooth timer notifications transfer servis izin permission privacy hassas içerik"),
         Search("Medya", "Media", "Kaynak uygulama, oynatma ve ses denetimi", "Source app, playback and volume controls", "modules", "media", null, localize, "spotify apple music youtube browser play pause previous next seek album cover ses volume"),
         Search("Bildirimler", "Notifications", "Windows izni, uygulama filtreleri ve gizlilik", "Windows access, app filters and privacy", "modules", "notifications", null, localize, "usernotificationlistener allow list block list izin permission title body başlık gövde"),
-        Search("İsteğe Bağlı", "Optional", "Klavye kilitleri, USB ve yardımcı özellikler", "Keyboard locks, USB and helper features", "modules", "optional", null, localize, "caps lock num lock scroll lock klavye keyboard usb bellek zamanlayıcı timer isteğe bağlı optional"),
+        Search("İsteğe Bağlı", "Optional", "Klavye kilitleri, USB ve yardımcı özellikler", "Keyboard locks, USB and helper features", "modules", "optional", null, localize, "caps lock num lock scroll lock klavye keyboard usb bellek zamanlayıcı timer saat başı hourly chime isteğe bağlı optional"),
         Search("Kısayollar", "Shortcuts", "Global klavye kısayolları", "Global keyboard shortcuts", "shortcuts", "shortcuts", null, localize, "hotkey registerhotkey ctrl alt shift kısayol shortcut dock göster gizle"),
         Search("Sistem Tepsisi", "System Tray", "Tepsi simgesi ve tek tık davranışı", "Tray icon and single-click behavior", "system", "tray", null, localize, "tray icon right click menu göster gizle exit çıkış"),
         Search("Başlangıç ve Kapanış", "Startup and Shutdown", "Windows başlangıcı ve kapatma davranışı", "Windows startup and close behavior", "system", "startup", null, localize, "start with windows startup task açılışta çalıştır minimize küçült tamamen çık"),
@@ -218,9 +219,6 @@ public sealed partial class SettingsWindow : Window
 
     private void OnClosed(object sender, WindowEventArgs args)
     {
-        _pageEntranceCancellation?.Cancel();
-        _pageEntranceCancellation?.Dispose();
-        _pageEntranceCancellation = null;
         _localization.LanguageChanged -= OnLanguageChanged;
         _homePage.NavigationRequested -= OnHomeNavigationRequested;
         _modulesPage.DetailsRequested -= OnModuleDetailsRequested;
@@ -413,9 +411,6 @@ public sealed partial class SettingsWindow : Window
 
     private void ShowPage(UserControl page)
     {
-        _pageEntranceCancellation?.Cancel();
-        _pageEntranceCancellation?.Dispose();
-        _pageEntranceCancellation = new CancellationTokenSource();
         PageHost.Content = page;
         ElementCompositionPreview.SetIsTranslationEnabled(PageHost, true);
         var visual = ElementCompositionPreview.GetElementVisual(PageHost);
@@ -439,18 +434,6 @@ public sealed partial class SettingsWindow : Window
         translation.Duration = TimeSpan.FromMilliseconds(200);
         visual.StartAnimation("Opacity", opacity);
         visual.StartAnimation("Translation", translation);
-        _ = AnimatePageEntranceAsync(page, _pageEntranceCancellation.Token);
-    }
-
-    private static async Task AnimatePageEntranceAsync(UserControl page, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await SettingsEntranceAnimator.RunAsync(page, cancellationToken);
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
     }
 
     private void RefreshCurrentCategory()

@@ -21,6 +21,8 @@
   <ItemGroup>
     <Compile Include="..\..\src\MiaDock.App\Modules\StoreUpdateModule.cs"
              Link="App\StoreUpdateModule.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Modules\HourlyNotificationModule.cs"
+             Link="App\HourlyNotificationModule.cs" />
     <Compile Include="..\..\src\MiaDock.App\Services\ISettingsService.cs"
              Link="App\ISettingsService.cs" />
     <Compile Include="..\..\src\MiaDock.App\Services\SettingsChangedEventArgs.cs"

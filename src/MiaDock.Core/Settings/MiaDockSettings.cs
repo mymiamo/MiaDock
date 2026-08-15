@@ -14,9 +14,10 @@ public sealed record MiaDockSettings(
     PresentationPrivacySettings Privacy,
     StoreUpdateSettings StoreUpdates,
     FocusSettings Focus,
+    AudibleNotificationSettings AudibleNotifications,
     IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules)
 {
-    public const int CurrentSchemaVersion = 22;
+    public const int CurrentSchemaVersion = 29;
 
     public static MiaDockSettings Default { get; } = new(
         CurrentSchemaVersion,
@@ -32,6 +33,7 @@ public sealed record MiaDockSettings(
         PresentationPrivacySettings.Default,
         StoreUpdateSettings.Default,
         FocusSettings.Default,
+        AudibleNotificationSettings.Default,
         new Dictionary<string, ModuleSettingsEnvelope>(StringComparer.Ordinal)
         {
             ["media"] = ModuleSettingsEnvelope.MediaDefault,
@@ -41,7 +43,10 @@ public sealed record MiaDockSettings(
             ["battery"] = ModuleSettingsEnvelope.BatteryDefault,
             ["network"] = ModuleSettingsEnvelope.NetworkDefault,
             ["bluetooth"] = ModuleSettingsEnvelope.BluetoothDefault,
+            ["device-hub"] = ModuleSettingsEnvelope.DeviceHubDefault,
+            ["clipboard-peek"] = ModuleSettingsEnvelope.ClipboardPeekDefault,
             ["timer"] = ModuleSettingsEnvelope.TimerDefault,
+            ["hourly-notification"] = ModuleSettingsEnvelope.HourlyNotificationDefault,
             ["notifications"] = ModuleSettingsEnvelope.NotificationsDefault,
             ["transfers"] = ModuleSettingsEnvelope.TransfersDefault
         });

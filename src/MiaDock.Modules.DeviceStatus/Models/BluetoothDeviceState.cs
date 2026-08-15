@@ -4,4 +4,6 @@ public sealed record BluetoothDeviceState(
     string Id,
     string DisplayName,
     bool IsConnected,
-    bool IsPresent);
+    bool IsPresent,
+    int? BatteryPercentage = null,
+    DeviceHubDeviceType DeviceType = DeviceHubDeviceType.GenericBluetoothDevice);

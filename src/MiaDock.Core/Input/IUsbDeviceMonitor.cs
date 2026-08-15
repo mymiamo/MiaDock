@@ -6,7 +6,5 @@ public interface IUsbDeviceMonitor : IAsyncDisposable
 
     bool IsRunning { get; }
 
-    ValueTask StartAsync(CancellationToken cancellationToken = default);
-
-    ValueTask StopAsync(CancellationToken cancellationToken = default);
+    ValueTask<IAsyncDisposable> AcquireAsync(CancellationToken cancellationToken = default);
 }

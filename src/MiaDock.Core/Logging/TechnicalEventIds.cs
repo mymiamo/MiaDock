@@ -27,6 +27,7 @@ public static class TechnicalEventIds
     public const string AudioTopologyRebind = "audio.topology-rebind";
     public const string TimerAlarmStarting = "time.alarm-starting";
     public const string TimerAlarmPlaybackFailed = "time.alarm-playback-failed";
+    public const string AudibleNotificationPlaybackFailed = "notification-sound.playback-failed";
     public const string SystemActivityReady = "system-activity.ready";
     public const string CameraWatcherUnavailable = "system-activity.camera-watcher-unavailable";
     public const string PrivacyUsageMonitorFailed = "privacy.usage-monitor-failed";

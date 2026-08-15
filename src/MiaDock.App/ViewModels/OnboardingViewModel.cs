@@ -376,6 +376,7 @@ public sealed class OnboardingViewModel : ObservableObject, IDisposable
             new(ThemeStyle.BlurredGlass, Text("Onboarding.Option.Theme.Glass")),
             new(ThemeStyle.NeutralFrostedGlass, Text("Theme.NeutralFrostedGlass")),
             new(ThemeStyle.AdaptiveFluent, "Adaptive Fluent"),
+            new(ThemeStyle.TozPembe, Text("Theme.TozPembe")),
             new(ThemeStyle.CustomSolidColor, Text("Onboarding.Option.Theme.Solid"))
         ];
         _monitorModes =

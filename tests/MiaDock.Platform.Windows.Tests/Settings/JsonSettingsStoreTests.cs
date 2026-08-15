@@ -140,6 +140,70 @@ public sealed class JsonSettingsStoreTests
     }
 
     [TestMethod]
+    public async Task Load_SchemaTwentySevenWithoutAudibleNotifications_AddsEnabledDefaults()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["SchemaVersion"] = 27;
+        node.Remove("AudibleNotifications");
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(AudibleNotificationSettings.Default, result.AudibleNotifications);
+    }
+
+    [TestMethod]
+    public async Task Load_SchemaTwentyEight_AddsHourlyDefaultsWithoutEnablingModule()
+    {
+        Directory.CreateDirectory(_directory);
+        var node = JsonNode.Parse(JsonSerializer.Serialize(MiaDockSettings.Default))!.AsObject();
+        node["SchemaVersion"] = 28;
+        node["AudibleNotifications"]!.AsObject().Remove("HourlyEnabled");
+        node["Modules"]!.AsObject().Remove("hourly-notification");
+        await File.WriteAllTextAsync(_settingsPath, node.ToJsonString());
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        var result = await store.LoadAsync();
+
+        Assert.AreEqual(29, result.SchemaVersion);
+        Assert.IsTrue(result.AudibleNotifications.HourlyEnabled);
+        Assert.IsFalse(result.Modules["hourly-notification"].IsEnabled);
+    }
+
+    [TestMethod]
+    public async Task SaveAndLoad_RoundTripsHourlyPreferences()
+    {
+        Directory.CreateDirectory(_directory);
+        var modules = new Dictionary<string, ModuleSettingsEnvelope>(
+            MiaDockSettings.Default.Modules,
+            StringComparer.Ordinal)
+        {
+            ["hourly-notification"] = ModuleSettingsEnvelope.HourlyNotificationDefault with
+            {
+                IsEnabled = true
+            }
+        };
+        var expected = MiaDockSettings.Default with
+        {
+            AudibleNotifications = MiaDockSettings.Default.AudibleNotifications with
+            {
+                HourlyEnabled = false
+            },
+            Modules = modules
+        };
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+
+        await store.SaveAsync(expected);
+        var result = await store.LoadAsync();
+
+        Assert.IsFalse(result.AudibleNotifications.HourlyEnabled);
+        Assert.IsTrue(result.Modules["hourly-notification"].IsEnabled);
+    }
+
+    [TestMethod]
     public async Task Load_SchemaFourteenWithoutFocus_AddsBuiltInProfilesWithoutDataLoss()
     {
         Directory.CreateDirectory(_directory);

@@ -3,6 +3,26 @@
 Bu yol haritası mevcut geliştirme durumunu ve yayın öncesi kalan doğrulamaları
 gösterir. Sürüm numaraları yalnız proje sahibi tarafından kesinleştirilir.
 
+## 1.5.3.0 — Clipboard Peek color and text info
+
+- Clipboard Peek: HEX / RGB / HSL dönüşümü ve düz metinde kelime + karakter sayısı.
+
+## 1.5.2.0 — Tozpembe overlay fix
+
+- Tozpembe: yuvarlak ada dışında şeffaf pencere; HWND köşelerinde beyaz kare yok.
+
+## 1.5.1.0 — Tozpembe theme
+
+- Tozpembe: tozpembe yüzey, koyu ve okunaklı yazı.
+
+## 1.5.0.0 — Device Hub, Clipboard Peek, Sounds
+
+- Device Hub: Bluetooth, ses çıkışı ve çıkarılabilir depolama tek yerde.
+- Clipboard Peek: oturum içi kopyalama geçmişi ve gizlilik koruması.
+- Saat başı dock bildirimi.
+- Ağ, pil, cihaz ve saat başı için isteğe bağlı kısa bildirim sesleri.
+- Ayarlar → Kişiselleştir → Notification Sounds.
+
 ## 1.4.0.0 — Dock Community Toolkit Animations
 
 - `CommunityToolkit.WinUI.Animations` ile dock içerik opacity / scale / translation.

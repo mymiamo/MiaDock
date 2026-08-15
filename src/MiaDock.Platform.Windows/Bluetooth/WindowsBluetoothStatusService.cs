@@ -13,6 +13,9 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
     private const string IsConnectedProperty = "System.Devices.Aep.IsConnected";
     private const string IsPresentProperty = "System.Devices.Aep.IsPresent";
     private const string ContainerIdProperty = "System.Devices.Aep.ContainerId";
+    private const string BatteryLifeProperty = "System.Devices.BatteryLife";
+    private const string CategoryIdsProperty = "System.Devices.CategoryIds";
+    private const string AepCategoryProperty = "System.Devices.Aep.Category";
     private readonly IUiDispatcher _dispatcher;
     private readonly IBluetoothRadioStateProvider _radioProvider;
     private readonly ILogService? _log;
@@ -24,6 +27,7 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
     private long _publishRevision;
     private bool _enumerationComplete;
     private bool _started;
+    private int _leaseCount;
     private bool _disposed;
 
     public WindowsBluetoothStatusService(
@@ -39,16 +43,38 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
     public BluetoothStatusSnapshot Current { get; private set; } = BluetoothStatusSnapshot.Default;
     public event EventHandler<BluetoothStatusSnapshot>? SnapshotChanged;
 
-    public async ValueTask StartAsync(CancellationToken cancellationToken = default)
+    public async ValueTask<IAsyncDisposable> AcquireAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         ObjectDisposedException.ThrowIf(_disposed, this);
+        var shouldStart = false;
         lock (_gate)
         {
-            if (_started)
-            {
-                return;
-            }
+            _leaseCount++;
+            shouldStart = _leaseCount == 1;
+        }
+
+        if (!shouldStart)
+        {
+            return new Lease(this);
+        }
+
+        try
+        {
+            await StartCoreAsync(cancellationToken).ConfigureAwait(false);
+            return new Lease(this);
+        }
+        catch
+        {
+            await ReleaseLeaseAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async ValueTask StartCoreAsync(CancellationToken cancellationToken)
+    {
+        lock (_gate)
+        {
             _started = true;
             _radioProvider.StateChanged += OnRadioStateChanged;
         }
@@ -61,7 +87,7 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
         }
         catch (OperationCanceledException)
         {
-            await StopAsync();
+            await StopCoreAsync().ConfigureAwait(false);
             throw;
         }
         catch (Exception exception)
@@ -77,9 +103,8 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
         }
     }
 
-    public ValueTask StopAsync(CancellationToken cancellationToken = default)
+    private ValueTask StopCoreAsync()
     {
-        cancellationToken.ThrowIfCancellationRequested();
         lock (_gate)
         {
             if (!_started)
@@ -96,6 +121,26 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
         }
         Publish(BluetoothStatusSnapshot.Default, allowStopped: true);
         return ValueTask.CompletedTask;
+    }
+
+    private async ValueTask ReleaseLeaseAsync()
+    {
+        var shouldStop = false;
+        lock (_gate)
+        {
+            if (_leaseCount == 0)
+            {
+                return;
+            }
+
+            _leaseCount--;
+            shouldStop = _leaseCount == 0;
+        }
+
+        if (shouldStop)
+        {
+            await StopCoreAsync().ConfigureAwait(false);
+        }
     }
 
     private void OnRadioStateChanged(object? sender, BluetoothRadioState state) => ApplyRadioState(state);
@@ -140,7 +185,15 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
         {
             var watcher = DeviceInformation.CreateWatcher(
                 selector,
-                new[] { IsConnectedProperty, IsPresentProperty, ContainerIdProperty },
+                new[]
+                {
+                    IsConnectedProperty,
+                    IsPresentProperty,
+                    ContainerIdProperty,
+                    BatteryLifeProperty,
+                    CategoryIdsProperty,
+                    AepCategoryProperty
+                },
                 DeviceInformationKind.AssociationEndpoint);
             _watcherGeneration++;
             _watcher = watcher;
@@ -267,7 +320,9 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
             container,
             string.IsNullOrWhiteSpace(device.Name) ? "Bluetooth cihazı" : device.Name,
             GetBool(device, IsConnectedProperty),
-            GetBool(device, IsPresentProperty));
+            GetBool(device, IsPresentProperty),
+            GetBatteryPercentage(device),
+            ClassifyDevice(device));
     }
 
     private static bool GetBool(DeviceInformation device, string key) =>
@@ -275,6 +330,57 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
 
     private static Guid? GetGuid(DeviceInformation device, string key) =>
         device.Properties.TryGetValue(key, out var value) && value is Guid result ? result : null;
+
+    private static int? GetBatteryPercentage(DeviceInformation device, string key = BatteryLifeProperty)
+    {
+        if (!device.Properties.TryGetValue(key, out var value) || value is null)
+        {
+            return null;
+        }
+
+        var percentage = value switch
+        {
+            byte byteValue => byteValue,
+            short shortValue => shortValue,
+            int intValue => intValue,
+            uint uintValue when uintValue <= int.MaxValue => (int)uintValue,
+            _ => -1
+        };
+        return percentage is >= 0 and <= 100 ? percentage : null;
+    }
+
+    private static DeviceHubDeviceType ClassifyDevice(DeviceInformation device)
+    {
+        var categories = ReadStrings(device, CategoryIdsProperty)
+            .Concat(ReadStrings(device, AepCategoryProperty))
+            .ToArray();
+        if (categories.Any(value => Contains(value, "Audio.Headphone"))) return DeviceHubDeviceType.Headphones;
+        if (categories.Any(value => Contains(value, "Audio.Headset"))) return DeviceHubDeviceType.Headset;
+        if (categories.Any(value => Contains(value, "Audio.Speaker"))) return DeviceHubDeviceType.Speaker;
+        if (categories.Any(value => Contains(value, "Input.Mouse"))) return DeviceHubDeviceType.Mouse;
+        if (categories.Any(value => Contains(value, "Input.Keyboard"))) return DeviceHubDeviceType.Keyboard;
+        if (categories.Any(value => Contains(value, "Input.Gaming") || Contains(value, "Game"))) return DeviceHubDeviceType.Gamepad;
+        return DeviceHubDeviceType.GenericBluetoothDevice;
+    }
+
+    private static IEnumerable<string> ReadStrings(DeviceInformation device, string key)
+    {
+        if (!device.Properties.TryGetValue(key, out var value) || value is null)
+        {
+            return Array.Empty<string>();
+        }
+
+        return value switch
+        {
+            string text => [text],
+            string[] values => values,
+            IEnumerable<string> values => values,
+            _ => Array.Empty<string>()
+        };
+    }
+
+    private static bool Contains(string value, string expected) =>
+        value.Contains(expected, StringComparison.OrdinalIgnoreCase);
 
     private void Publish(BluetoothStatusSnapshot snapshot, bool allowStopped = false)
     {
@@ -323,12 +429,24 @@ public sealed class WindowsBluetoothStatusService : IBluetoothStatusService
         {
             if (_disposed) return;
             _disposed = true;
+            _leaseCount = 0;
             _started = false;
             _publishRevision++;
             _radioProvider.StateChanged -= OnRadioStateChanged;
             _radioProvider.Stop();
             StopWatcherLocked();
             _devices.Clear();
+        }
+    }
+
+    private sealed class Lease(WindowsBluetoothStatusService owner) : IAsyncDisposable
+    {
+        private WindowsBluetoothStatusService? _owner = owner;
+
+        public ValueTask DisposeAsync()
+        {
+            var current = Interlocked.Exchange(ref _owner, null);
+            return current is null ? ValueTask.CompletedTask : current.ReleaseLeaseAsync();
         }
     }
 }

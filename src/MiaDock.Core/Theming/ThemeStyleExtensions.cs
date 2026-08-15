@@ -27,5 +27,11 @@ public static class ThemeStyleExtensions
         ThemeStyle.BlurredGlass or
         ThemeStyle.NeutralFrostedGlass;
 
+    public static bool UsesAdaptiveSolidPalette(this ThemeStyle style) => style is
+        ThemeStyle.AppleLike or
+        ThemeStyle.CustomSolidColor or
+        ThemeStyle.OledBlack or
+        ThemeStyle.TozPembe;
+
     public static ThemeDescriptor Descriptor(this ThemeStyle style) => ThemeCatalog.Get(style);
 }

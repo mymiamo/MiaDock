@@ -1,4 +1,3 @@
-using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Services;
@@ -46,16 +45,12 @@ public sealed partial class TimerExpandedView : UserControl
     {
         if (_viewModel == DataContext as TimeToolsViewModel)
         {
-            RefreshSelection();
+            ApplyLocalization();
             return;
         }
 
         _viewModel = DataContext as TimeToolsViewModel;
-        if (_viewModel is not null)
-        {
-            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
-        }
-        RefreshSelection();
+        ApplyLocalization();
     }
 
     private void DetachViewModel()
@@ -63,40 +58,11 @@ public sealed partial class TimerExpandedView : UserControl
         DockInteractionSession.End(HoursBox);
         DockInteractionSession.End(MinutesBox);
         DockInteractionSession.End(SecondsBox);
-        if (_viewModel is not null)
-        {
-            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
-            _viewModel = null;
-        }
+        _viewModel = null;
     }
 
-    private void OnTimerSegmentClick(object sender, RoutedEventArgs args)
+    private void ApplyLocalization()
     {
-        if (_viewModel is not null) _viewModel.SelectedToolIndex = 0;
-        RefreshSelection();
-    }
-
-    private void OnStopwatchSegmentClick(object sender, RoutedEventArgs args)
-    {
-        if (_viewModel is not null) _viewModel.SelectedToolIndex = 1;
-        RefreshSelection();
-    }
-
-    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
-    {
-        if (args.PropertyName == nameof(TimeToolsViewModel.SelectedToolIndex))
-        {
-            RefreshSelection();
-        }
-    }
-
-    private void RefreshSelection()
-    {
-        var stopwatch = _viewModel?.SelectedToolIndex == 1;
-        TimerSegment.IsChecked = !stopwatch;
-        StopwatchSegment.IsChecked = stopwatch;
-        TimerPanel.Visibility = stopwatch ? Visibility.Collapsed : Visibility.Visible;
-        StopwatchPanel.Visibility = stopwatch ? Visibility.Visible : Visibility.Collapsed;
         if (_localization is not null)
         {
             DispatcherQueue.TryEnqueue(() => _localization.Apply(this));

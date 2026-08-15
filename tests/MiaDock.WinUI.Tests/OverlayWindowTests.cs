@@ -104,6 +104,37 @@ public sealed class OverlayWindowTests
 
         Assert.IsEmpty(windowAssignments);
         StringAssert.Contains(source, "_windowBackdropTarget.SystemBackdrop = _transparentWindowBackdrop;");
+        StringAssert.Contains(source, "Color.FromArgb(0, 0, 0, 0)");
+        Assert.DoesNotContain("_transparentWindowBackdrop.Color", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ResolveTransparentClearColor", source, StringComparison.Ordinal);
+        StringAssert.Contains(source, "or ThemeStyle.TozPembe");
+        Assert.IsFalse(
+            System.Text.RegularExpressions.Regex.IsMatch(
+                source,
+                @"ThemeStyle\.TozPembe\s*\r?\n\s*\? ElementTheme\.Light"));
+    }
+
+    [TestMethod]
+    public void IslandShell_StaysTransparentOutsideTheRoundedSurface()
+    {
+        var document = XDocument.Load(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml"));
+        var shell = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml.cs"));
+
+        Assert.AreEqual(
+            "Transparent",
+            document.Root?.Attribute("Background")?.Value);
+        StringAssert.Contains(shell, "ThemeStyle.TozPembe or ThemeStyle.OledBlack");
+        Assert.IsFalse(
+            System.Text.RegularExpressions.Regex.IsMatch(
+                shell,
+                @"ThemeStyle\.TozPembe\s*\??\s*ElementTheme\.Light"));
+        StringAssert.Contains(shell, "Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0))");
     }
 
     [TestMethod]

@@ -33,7 +33,8 @@ public sealed record NetworkStatusSnapshot(
     Guid? AdapterId,
     double? DownloadBytesPerSecond,
     double? UploadBytesPerSecond,
-    NetworkThroughputState ThroughputState = NetworkThroughputState.Inactive)
+    NetworkThroughputState ThroughputState = NetworkThroughputState.Inactive,
+    bool IsVpnActive = false)
 {
     public static NetworkStatusSnapshot Default { get; } = new(
         DeviceServiceState.Stopped,

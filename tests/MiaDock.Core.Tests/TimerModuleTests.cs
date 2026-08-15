@@ -11,6 +11,16 @@ namespace MiaDock.Core.Tests;
 public sealed class TimerModuleTests
 {
     [TestMethod]
+    public void Descriptor_ReservesEnoughExpandedHeightForTimeControls()
+    {
+        var service = new FakeTimeToolsService(TimeToolsSnapshot.Default);
+        using var viewModel = new TimeToolsViewModel(service);
+        using var module = new TimerModule(viewModel, service);
+
+        Assert.AreEqual(420, module.Descriptor.MinimumExpandedHeight);
+    }
+
+    [TestMethod]
     [DataRow(true, 0)]
     [DataRow(false, 5_000)]
     public async Task RunningOrPausedStopwatch_KeepsModulePersistent(

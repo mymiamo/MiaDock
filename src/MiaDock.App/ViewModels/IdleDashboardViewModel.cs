@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Media;
 using MiaDock.Core.Localization;
@@ -14,6 +15,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     private readonly INetworkStatusService _networkService;
     private readonly IBluetoothStatusService _bluetoothService;
     private readonly ILocalizationService _localization;
+    private readonly IRadioToggleService? _radioToggleService;
     private BatteryStatusSnapshot _battery;
     private NetworkStatusSnapshot _network;
     private BluetoothStatusSnapshot _bluetooth;
@@ -22,12 +24,14 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         IPowerStatusService powerService,
         INetworkStatusService networkService,
         IBluetoothStatusService bluetoothService,
-        ILocalizationService localization)
+        ILocalizationService localization,
+        IRadioToggleService? radioToggleService = null)
     {
         _powerService = powerService;
         _networkService = networkService;
         _bluetoothService = bluetoothService;
         _localization = localization;
+        _radioToggleService = radioToggleService;
         _battery = powerService.Current;
         _network = networkService.Current;
         _bluetooth = bluetoothService.Current;
@@ -36,6 +40,8 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         _networkService.SnapshotChanged += OnNetworkChanged;
         _bluetoothService.SnapshotChanged += OnBluetoothChanged;
         _localization.LanguageChanged += OnLanguageChanged;
+        ToggleWifiCommand = new AsyncRelayCommand(ToggleWifiAsync, CanToggleWifi);
+        ToggleBluetoothCommand = new AsyncRelayCommand(ToggleBluetoothAsync, CanToggleBluetooth);
     }
 
     public string BatteryGlyph => _battery.IsCharging ? "\uE83E" : "\uE850";
@@ -101,6 +107,14 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         _ => Text("Network.Offline")
     };
 
+    public Visibility VpnVisibility => _network.IsVpnActive ? Visibility.Visible : Visibility.Collapsed;
+
+    public string VpnStatus => "VPN";
+
+    public IAsyncRelayCommand ToggleWifiCommand { get; }
+
+    public IAsyncRelayCommand ToggleBluetoothCommand { get; }
+
     public int ConnectedBluetoothCount => _bluetooth.Devices.Count(device => device.IsConnected);
 
     public string BluetoothCountText => ConnectedBluetoothCount.ToString();
@@ -158,7 +172,10 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(NetworkOpacity));
         OnPropertyChanged(nameof(NetworkStatusBrush));
         OnPropertyChanged(nameof(NetworkStatus));
+        OnPropertyChanged(nameof(VpnVisibility));
+        OnPropertyChanged(nameof(VpnStatus));
         OnPropertyChanged(nameof(StatusSummary));
+        ToggleWifiCommand.NotifyCanExecuteChanged();
     }
 
     private void OnBluetoothChanged(object? sender, BluetoothStatusSnapshot snapshot)
@@ -169,6 +186,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(BluetoothVisibility));
         OnPropertyChanged(nameof(BluetoothStatus));
         OnPropertyChanged(nameof(StatusSummary));
+        ToggleBluetoothCommand.NotifyCanExecuteChanged();
     }
 
     private void OnLanguageChanged(object? sender, EventArgs args)
@@ -176,11 +194,34 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(BatteryStatus));
         OnPropertyChanged(nameof(NetworkStatus));
         OnPropertyChanged(nameof(BluetoothStatus));
+        OnPropertyChanged(nameof(VpnStatus));
         OnPropertyChanged(nameof(StatusSummary));
     }
 
     private string Text(string key, params object?[] arguments) =>
         _localization.Get(key, arguments);
+
+    private bool CanToggleWifi() =>
+        _radioToggleService is not null && _network.ConnectionKind == NetworkConnectionKind.WiFi;
+
+    private bool CanToggleBluetooth() =>
+        _radioToggleService is not null && _bluetooth.RadioState is BluetoothRadioState.On or BluetoothRadioState.Off;
+
+    private async Task ToggleWifiAsync()
+    {
+        if (_radioToggleService is not null)
+        {
+            await _radioToggleService.ToggleWifiAsync();
+        }
+    }
+
+    private async Task ToggleBluetoothAsync()
+    {
+        if (_radioToggleService is not null)
+        {
+            await _radioToggleService.ToggleBluetoothAsync();
+        }
+    }
 
     public void Dispose()
     {

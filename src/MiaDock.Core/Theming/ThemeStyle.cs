@@ -11,5 +11,6 @@ public enum ThemeStyle
     BlurredGlass = 6,
     OledBlack = 7,
     NeutralFrostedGlass = 8,
-    AdaptiveFluent = 9
+    AdaptiveFluent = 9,
+    TozPembe = 10
 }

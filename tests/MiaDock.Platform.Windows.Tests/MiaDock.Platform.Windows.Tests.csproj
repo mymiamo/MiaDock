@@ -34,6 +34,8 @@
              Link="App\StartupTaskCoordinator.cs" />
     <Compile Include="..\..\src\MiaDock.App\Services\FocusAutomationService.cs"
              Link="App\FocusAutomationService.cs" />
+    <Compile Include="..\..\src\MiaDock.App\Modules\UsbDeviceModule.cs"
+             Link="App\UsbDeviceModule.cs" />
   </ItemGroup>
 
   <ItemGroup>

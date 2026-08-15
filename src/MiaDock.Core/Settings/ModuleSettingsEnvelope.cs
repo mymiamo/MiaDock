@@ -68,6 +68,28 @@ public sealed record ModuleSettingsEnvelope(
         false,
         new Dictionary<string, JsonElement>(StringComparer.Ordinal));
 
+    public static ModuleSettingsEnvelope DeviceHubDefault { get; } = new(
+        InitialSchemaVersion, true, 4, false,
+        new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+        {
+            ["showConnectedEvents"] = JsonSerializer.SerializeToElement(true),
+            ["showDisconnectedEvents"] = JsonSerializer.SerializeToElement(true),
+            ["showStorageEvents"] = JsonSerializer.SerializeToElement(true),
+            ["showBatteryWarnings"] = JsonSerializer.SerializeToElement(true),
+            ["showAudioOutputEvents"] = JsonSerializer.SerializeToElement(true),
+            ["showBluetooth"] = JsonSerializer.SerializeToElement(true),
+            ["showAudioDevices"] = JsonSerializer.SerializeToElement(true),
+            ["showRemovableStorage"] = JsonSerializer.SerializeToElement(true),
+            ["batteryWarningPercent"] = JsonSerializer.SerializeToElement(20)
+        });
+    public static ModuleSettingsEnvelope ClipboardPeekDefault { get; } = new(
+        InitialSchemaVersion, false, 3, false, new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+        {
+            ["historyLimit"] = JsonSerializer.SerializeToElement(5),
+            ["eventMode"] = JsonSerializer.SerializeToElement("smart"),
+            ["showImageEvents"] = JsonSerializer.SerializeToElement(true)
+        });
+
     public static ModuleSettingsEnvelope TimerDefault { get; } = new(
         InitialSchemaVersion,
         true,
@@ -77,6 +99,13 @@ public sealed record ModuleSettingsEnvelope(
         {
             ["presetMinutes"] = JsonSerializer.SerializeToElement(new[] { 5, 10, 15, 25, 30, 45, 60 })
         });
+
+    public static ModuleSettingsEnvelope HourlyNotificationDefault { get; } = new(
+        InitialSchemaVersion,
+        false,
+        4,
+        false,
+        new Dictionary<string, JsonElement>(StringComparer.Ordinal));
 
     public static ModuleSettingsEnvelope NotificationsDefault { get; } = new(
         InitialSchemaVersion,

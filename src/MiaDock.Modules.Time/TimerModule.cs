@@ -53,7 +53,7 @@ public sealed class TimerModule : IIslandModule, IDisposable
         isPersistent: false,
         hoverViewKey: "TimerHoverView",
         iconGlyph: "\uE823",
-        minimumExpandedHeight: 390);
+        minimumExpandedHeight: 420);
 
     public ModuleLifecycleState LifecycleState { get; private set; }
     public bool IsEnabled { get => _isEnabled; set { _isEnabled = value; PresentationChanged?.Invoke(this, CurrentPresentation); } }

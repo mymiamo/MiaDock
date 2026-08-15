@@ -15,6 +15,7 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
     private readonly ISettingsService _settings;
     private readonly ILocalizationService _localization;
     private readonly IUiDispatcher _dispatcher;
+    private IAsyncDisposable? _monitorLease;
     private bool _isEnabled = true;
 
     public UsbDeviceModule(
@@ -81,7 +82,7 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
         LifecycleState = ModuleLifecycleState.Active;
         if (ShouldMonitor)
         {
-            await _monitor.StartAsync(cancellationToken);
+            await EnsureMonitorStateAsync(true, cancellationToken);
         }
 
         PresentationChanged?.Invoke(this, null);
@@ -91,7 +92,7 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
     {
         cancellationToken.ThrowIfCancellationRequested();
         LifecycleState = ModuleLifecycleState.Inactive;
-        await _monitor.StopAsync(cancellationToken);
+        await EnsureMonitorStateAsync(false, cancellationToken);
         PresentationChanged?.Invoke(this, null);
     }
 
@@ -99,13 +100,17 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
     {
         _monitor.DeviceChanged -= OnDeviceChanged;
         _settings.SettingsChanged -= OnSettingsChanged;
-        await _monitor.DisposeAsync();
+        await EnsureMonitorStateAsync(false, CancellationToken.None);
     }
 
     private bool ShouldMonitor =>
         IsEnabled &&
         LifecycleState == ModuleLifecycleState.Active &&
-        _settings.Current.General.ShowUsbDeviceEvents;
+        _settings.Current.General.ShowUsbDeviceEvents &&
+        !IsDeviceHubEnabled;
+
+    private bool IsDeviceHubEnabled =>
+        _settings.Current.Modules.TryGetValue("device-hub", out var envelope) && envelope.IsEnabled;
 
     private async void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
     {
@@ -113,16 +118,30 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
         {
             if (ShouldMonitor)
             {
-                await _monitor.StartAsync();
+                await EnsureMonitorStateAsync(true, CancellationToken.None);
             }
             else
             {
-                await _monitor.StopAsync();
+                await EnsureMonitorStateAsync(false, CancellationToken.None);
             }
         }
         catch
         {
             // Monitor start/stop failures should not crash settings propagation.
+        }
+    }
+
+    private async ValueTask EnsureMonitorStateAsync(bool shouldRun, CancellationToken cancellationToken)
+    {
+        if (shouldRun)
+        {
+            _monitorLease ??= await _monitor.AcquireAsync(cancellationToken);
+            return;
+        }
+
+        if (Interlocked.Exchange(ref _monitorLease, null) is { } lease)
+        {
+            await lease.DisposeAsync();
         }
     }
 
@@ -140,8 +159,6 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
                 return;
             }
 
-            // Only removable volume notifications are raised by the monitor. Ignore
-            // letter-only placeholders that somehow bypass Removable filtering on connect.
             var primary = _localization.Get(
                 args.IsConnected ? "UsbDevice.ConnectedFormat" : "UsbDevice.DisconnectedFormat",
                 args.DisplayName);
@@ -156,7 +173,7 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
                 secondary,
                 glyph,
                 ModuleIndicatorKind.StatusDot,
-                valueText: args.DriveLetter,
+                valueText: string.IsNullOrWhiteSpace(args.DriveLetter) ? null : args.DriveLetter,
                 presentationKind: ModulePresentationKind.Status);
             EventOccurred?.Invoke(this, new ModuleEvent(
                 ModuleId,
@@ -165,8 +182,11 @@ public sealed class UsbDeviceModule : IIslandModule, IAsyncDisposable
                 NotificationDuration,
                 args.OccurredAtUtc,
                 ModuleEventPriority.Normal,
-                $"usb-device:{args.DriveLetter}:{args.IsConnected}",
-                isFullscreenEligible: false));
+                $"usb-device:{(string.IsNullOrWhiteSpace(args.DeviceKey) ? args.DisplayName : args.DeviceKey)}:{args.IsConnected}",
+                isFullscreenEligible: false,
+                audibleCue: args.IsConnected
+                    ? AudibleNotificationCue.DeviceConnected
+                    : AudibleNotificationCue.DeviceDisconnected));
         }
 
         if (_dispatcher.HasThreadAccess)

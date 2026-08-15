@@ -8,78 +8,198 @@
   <UserControl.Resources>
     <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
   </UserControl.Resources>
-  <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}" RowSpacing="7"
+
+  <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}"
         AutomationProperties.Name="Zaman araçları">
-    <Grid.RowDefinitions><RowDefinition Height="44"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-
-    <Border Style="{StaticResource DockSectionStyle}" Padding="2">
-      <Grid ColumnSpacing="2">
-        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-        <ToggleButton x:Name="TimerSegment" MinHeight="40" IsThreeState="False"
-                      Content="Zamanlayıcı" Style="{StaticResource DockSegmentToggleButtonStyle}"
-                      Click="OnTimerSegmentClick" AutomationProperties.Name="Zamanlayıcı görünümü" />
-        <ToggleButton x:Name="StopwatchSegment" Grid.Column="1" MinHeight="40" IsThreeState="False"
-                      Content="Kronometre" Style="{StaticResource DockSegmentToggleButtonStyle}"
-                      Click="OnStopwatchSegmentClick" AutomationProperties.Name="Kronometre görünümü" />
-      </Grid>
-    </Border>
-
-    <Grid Grid.Row="1">
-      <ScrollViewer x:Name="TimerPanel" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
-        <StackPanel Spacing="8" Padding="2,0,2,4">
-          <StackPanel HorizontalAlignment="Center" Spacing="1">
-            <TextBlock Text="{Binding TimerText}" Style="{StaticResource DockDisplayTextStyle}" HorizontalAlignment="Center" />
-            <TextBlock Text="{Binding TimerStatusText}" Style="{StaticResource DockCaptionTextStyle}" HorizontalAlignment="Center" />
+    <TabView x:Name="TimeToolTabs"
+             SelectedIndex="{Binding SelectedToolIndex, Mode=TwoWay}"
+             IsAddTabButtonVisible="False"
+             CanDragTabs="False"
+             CanReorderTabs="False"
+             TabWidthMode="Equal"
+             TabNavigation="Local"
+             AutomationProperties.Name="Zaman araçları">
+      <TabViewItem IsClosable="False"
+                   AutomationProperties.Name="Zamanlayıcı görünümü">
+        <TabViewItem.Header>
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <FontIcon Glyph="&#xE823;" FontSize="14" />
+            <TextBlock Text="Zamanlayıcı" />
           </StackPanel>
-          <ProgressBar Height="3" Minimum="0" Maximum="100" Value="{Binding TimerProgressPercent}" />
-          <TextBlock Text="Hazır süreler" Style="{StaticResource DockModuleHeaderTextStyle}" />
-          <ItemsControl x:Name="PresetList" ItemsSource="{Binding PresetDurations}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <StackPanel Orientation="Horizontal" />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-              <DataTemplate>
-                <Button Width="88" Height="44" Margin="0,0,6,6"
-                        DataContext="{Binding}"
-                        Click="OnPresetClick"
-                        Style="{StaticResource DockInlineButtonStyle}"
-                        AutomationProperties.Name="{Binding Label}">
-                  <TextBlock Text="{Binding Label}" />
-                </Button>
-              </DataTemplate>
-            </ItemsControl.ItemTemplate>
-          </ItemsControl>
-          <TextBlock Text="Özel süre" Style="{StaticResource DockModuleHeaderTextStyle}" />
-          <Grid ColumnSpacing="8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-            <StackPanel Spacing="2"><TextBlock Text="Saat" Style="{StaticResource DockCaptionTextStyle}"/><NumberBox x:Name="HoursBox" Minimum="0" Maximum="99" SmallChange="1" Value="{Binding CustomHours, Mode=TwoWay}" SpinButtonPlacementMode="Compact" GotFocus="OnDurationEditorGotFocus" LostFocus="OnDurationEditorLostFocus" AutomationProperties.Name="Saat"/></StackPanel>
-            <StackPanel Grid.Column="1" Spacing="2"><TextBlock Text="Dakika" Style="{StaticResource DockCaptionTextStyle}"/><NumberBox x:Name="MinutesBox" Minimum="0" Maximum="59" SmallChange="1" Value="{Binding CustomMinutes, Mode=TwoWay}" SpinButtonPlacementMode="Compact" GotFocus="OnDurationEditorGotFocus" LostFocus="OnDurationEditorLostFocus" AutomationProperties.Name="Dakika"/></StackPanel>
-            <StackPanel Grid.Column="2" Spacing="2"><TextBlock Text="Saniye" Style="{StaticResource DockCaptionTextStyle}"/><NumberBox x:Name="SecondsBox" Minimum="0" Maximum="59" SmallChange="1" Value="{Binding CustomSeconds, Mode=TwoWay}" SpinButtonPlacementMode="Compact" GotFocus="OnDurationEditorGotFocus" LostFocus="OnDurationEditorLostFocus" AutomationProperties.Name="Saniye"/></StackPanel>
-          </Grid>
-          <Grid ColumnSpacing="8">
-            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
-            <Button MinHeight="44" Content="{Binding TimerPrimaryText}" Command="{Binding TimerPrimaryCommand}" Style="{StaticResource AccentButtonStyle}" />
-            <Button Grid.Column="1" MinHeight="44" Content="{Binding TimerSecondaryText}" Command="{Binding CancelTimerCommand}" Style="{StaticResource DockInlineButtonStyle}" />
-          </Grid>
-        </StackPanel>
-      </ScrollViewer>
+        </TabViewItem.Header>
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollMode="Disabled"
+                      HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="8" Padding="2,4,2,4">
+            <StackPanel HorizontalAlignment="Center" Spacing="2">
+              <TextBlock Text="{Binding TimerText}"
+                         Style="{StaticResource DockDisplayTextStyle}"
+                         FontSize="26"
+                         HorizontalAlignment="Center"
+                         AutomationProperties.LiveSetting="Polite" />
+              <TextBlock Text="{Binding TimerStatusText}"
+                         Style="{StaticResource DockCaptionTextStyle}"
+                         HorizontalAlignment="Center" />
+            </StackPanel>
 
-      <Grid x:Name="StopwatchPanel" Visibility="Collapsed" RowSpacing="10" Padding="8,2">
-        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-        <StackPanel HorizontalAlignment="Center" Spacing="1">
-          <TextBlock Text="{Binding StopwatchText}" Style="{StaticResource DockDisplayTextStyle}" HorizontalAlignment="Center" />
-          <TextBlock Text="Saat : dakika : saniye" Style="{StaticResource DockCaptionTextStyle}" />
-        </StackPanel>
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Spacing="8" HorizontalAlignment="Center">
-          <Button MinWidth="100" MinHeight="44" Content="{Binding StopwatchPrimaryText}" Command="{Binding StopwatchPrimaryCommand}" Style="{StaticResource AccentButtonStyle}" />
-          <Button MinWidth="72" MinHeight="44" Content="Tur" Command="{Binding AddLapCommand}" Style="{StaticResource DockInlineButtonStyle}" />
-          <Button MinWidth="72" MinHeight="44" Content="Sıfırla" Command="{Binding ResetStopwatchCommand}" Style="{StaticResource DockInlineButtonStyle}" />
-        </StackPanel>
-        <Grid Grid.Row="2"><TextBlock Text="Turlar" Style="{StaticResource DockModuleHeaderTextStyle}"/><TextBlock Text="En yeni tur üstte" HorizontalAlignment="Right" Style="{StaticResource DockCaptionTextStyle}"/></Grid>
-        <ListView Grid.Row="3" ItemsSource="{Binding LapTexts}" AutomationProperties.Name="Kronometre turları" />
-      </Grid>
-    </Grid>
+            <ProgressBar Height="4"
+                         Minimum="0"
+                         Maximum="100"
+                         Value="{Binding TimerProgressPercent}"
+                         Style="{StaticResource DockProgressBarStyle}"
+                         AutomationProperties.Name="Zamanlayıcı ilerlemesi" />
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Hazır süreler" Style="{StaticResource DockModuleHeaderTextStyle}" />
+              <ItemsRepeater x:Name="PresetList" ItemsSource="{Binding PresetDurations}">
+                <ItemsRepeater.Layout>
+                  <UniformGridLayout MinItemWidth="80"
+                                     MinItemHeight="44"
+                                     MinColumnSpacing="6"
+                                     MinRowSpacing="6" />
+                </ItemsRepeater.Layout>
+                <ItemsRepeater.ItemTemplate>
+                  <DataTemplate>
+                    <Button MinHeight="44"
+                            HorizontalAlignment="Stretch"
+                            Click="OnPresetClick"
+                            Style="{StaticResource DockInlineButtonStyle}"
+                            AutomationProperties.Name="{Binding Label}">
+                      <TextBlock Text="{Binding Label}" />
+                    </Button>
+                  </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+              </ItemsRepeater>
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+              <TextBlock Text="Özel süre" Style="{StaticResource DockModuleHeaderTextStyle}" />
+              <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Saat" Style="{StaticResource DockCaptionTextStyle}" />
+                  <NumberBox x:Name="HoursBox" Minimum="0" Maximum="99" SmallChange="1"
+                             Value="{Binding CustomHours, Mode=TwoWay}"
+                             SpinButtonPlacementMode="Compact"
+                             GotFocus="OnDurationEditorGotFocus"
+                             LostFocus="OnDurationEditorLostFocus"
+                             AutomationProperties.Name="Saat" />
+                </StackPanel>
+                <StackPanel Grid.Column="1" Spacing="4">
+                  <TextBlock Text="Dakika" Style="{StaticResource DockCaptionTextStyle}" />
+                  <NumberBox x:Name="MinutesBox" Minimum="0" Maximum="59" SmallChange="1"
+                             Value="{Binding CustomMinutes, Mode=TwoWay}"
+                             SpinButtonPlacementMode="Compact"
+                             GotFocus="OnDurationEditorGotFocus"
+                             LostFocus="OnDurationEditorLostFocus"
+                             AutomationProperties.Name="Dakika" />
+                </StackPanel>
+                <StackPanel Grid.Column="2" Spacing="4">
+                  <TextBlock Text="Saniye" Style="{StaticResource DockCaptionTextStyle}" />
+                  <NumberBox x:Name="SecondsBox" Minimum="0" Maximum="59" SmallChange="1"
+                             Value="{Binding CustomSeconds, Mode=TwoWay}"
+                             SpinButtonPlacementMode="Compact"
+                             GotFocus="OnDurationEditorGotFocus"
+                             LostFocus="OnDurationEditorLostFocus"
+                             AutomationProperties.Name="Saniye" />
+                </StackPanel>
+              </Grid>
+            </StackPanel>
+
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+              <Button MinHeight="44"
+                      Content="{Binding TimerPrimaryText}"
+                      Command="{Binding TimerPrimaryCommand}"
+                      Style="{StaticResource AccentButtonStyle}"
+                      AutomationProperties.Name="{Binding TimerPrimaryText}" />
+              <Button Grid.Column="1"
+                      MinHeight="44"
+                      Content="{Binding TimerSecondaryText}"
+                      Command="{Binding CancelTimerCommand}"
+                      Style="{StaticResource DockInlineButtonStyle}"
+                      AutomationProperties.Name="{Binding TimerSecondaryText}" />
+            </Grid>
+          </StackPanel>
+        </ScrollViewer>
+      </TabViewItem>
+
+      <TabViewItem IsClosable="False"
+                   AutomationProperties.Name="Kronometre görünümü">
+        <TabViewItem.Header>
+          <StackPanel Orientation="Horizontal" Spacing="6">
+            <FontIcon Glyph="&#xE916;" FontSize="14" />
+            <TextBlock Text="Kronometre" />
+          </StackPanel>
+        </TabViewItem.Header>
+        <ScrollViewer VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollMode="Disabled"
+                      HorizontalScrollBarVisibility="Disabled">
+          <StackPanel Spacing="8" Padding="2,4,2,4">
+            <StackPanel HorizontalAlignment="Center" Spacing="2">
+              <TextBlock Text="{Binding StopwatchText}"
+                         Style="{StaticResource DockDisplayTextStyle}"
+                         FontSize="26"
+                         HorizontalAlignment="Center"
+                         AutomationProperties.LiveSetting="Polite" />
+              <TextBlock Text="Saat : dakika : saniye"
+                         Style="{StaticResource DockCaptionTextStyle}"
+                         HorizontalAlignment="Center" />
+            </StackPanel>
+
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="2*" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+              </Grid.ColumnDefinitions>
+              <Button MinHeight="44"
+                      Content="{Binding StopwatchPrimaryText}"
+                      Command="{Binding StopwatchPrimaryCommand}"
+                      Style="{StaticResource AccentButtonStyle}"
+                      AutomationProperties.Name="{Binding StopwatchPrimaryText}" />
+              <Button Grid.Column="1"
+                      MinHeight="44"
+                      Content="Tur"
+                      Command="{Binding AddLapCommand}"
+                      Style="{StaticResource DockInlineButtonStyle}"
+                      AutomationProperties.Name="Tur" />
+              <Button Grid.Column="2"
+                      MinHeight="44"
+                      Content="Sıfırla"
+                      Command="{Binding ResetStopwatchCommand}"
+                      Style="{StaticResource DockInlineButtonStyle}"
+                      AutomationProperties.Name="Kronometreyi sıfırla" />
+            </Grid>
+
+            <StackPanel Spacing="4"
+                        Visibility="{Binding HasStopwatchActivity, Converter={StaticResource BooleanToVisibility}}">
+              <Grid>
+                <TextBlock Text="Turlar" Style="{StaticResource DockModuleHeaderTextStyle}" />
+                <TextBlock Text="En yeni tur üstte"
+                           HorizontalAlignment="Right"
+                           Style="{StaticResource DockCaptionTextStyle}" />
+              </Grid>
+              <ItemsRepeater ItemsSource="{Binding LapTexts}"
+                             AutomationProperties.Name="Kronometre turları">
+                <ItemsRepeater.ItemTemplate>
+                  <DataTemplate>
+                    <Border BorderBrush="{ThemeResource DockDividerBrush}"
+                            BorderThickness="0,0,0,1"
+                            Padding="0,8">
+                      <TextBlock Text="{Binding}" Style="{StaticResource DockBodyTextStyle}" />
+                    </Border>
+                  </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+              </ItemsRepeater>
+            </StackPanel>
+          </StackPanel>
+        </ScrollViewer>
+      </TabViewItem>
+    </TabView>
   </Grid>
 </UserControl>

@@ -109,6 +109,9 @@
   <data name="Theme.CustomSolidColor" xml:space="preserve">
     <value>Özel Düz Renk</value>
   </data>
+  <data name="Theme.TozPembe" xml:space="preserve">
+    <value>Tozpembe</value>
+  </data>
   <data name="Module.media.Name" xml:space="preserve">
     <value>Müzik</value>
   </data>
@@ -1186,4 +1189,107 @@
   <data name="UsbDevice.DisconnectedFormat" xml:space="preserve">
     <value>{0} çıkarıldı</value>
   </data>
+  <data name="Module.device-hub.Name" xml:space="preserve"><value>Device Hub</value></data>
+  <data name="DeviceHub.Connected" xml:space="preserve"><value>Cihaz bağlandı</value></data>
+  <data name="DeviceHub.Disconnected" xml:space="preserve"><value>Cihaz ayrıldı</value></data>
+  <data name="DeviceHub.Loading" xml:space="preserve"><value>Cihazlar hazırlanıyor.</value></data>
+  <data name="DeviceHub.Ready" xml:space="preserve"><value>Bağlı cihazlar güncel.</value></data>
+  <data name="DeviceHub.Unavailable" xml:space="preserve"><value>Cihaz bilgileri şu anda kullanılamıyor.</value></data>
+  <data name="DeviceHub.BatteryLow" xml:space="preserve"><value>Pil düşük</value></data>
+  <data name="DeviceHub.AudioOutputChanged" xml:space="preserve"><value>Ses çıkışı değişti</value></data>
+  <data name="DeviceHub.SettingsTitle" xml:space="preserve"><value>Device Hub tercihleri</value></data>
+  <data name="DeviceHub.ShowConnectedEvents" xml:space="preserve"><value>Cihaz bağlanma olaylarını göster</value></data>
+  <data name="DeviceHub.ShowDisconnectedEvents" xml:space="preserve"><value>Cihaz ayrılma olaylarını göster</value></data>
+  <data name="DeviceHub.ShowBatteryWarnings" xml:space="preserve"><value>Düşük pil uyarılarını göster</value></data>
+  <data name="DeviceHub.ShowAudioOutputEvents" xml:space="preserve"><value>Ses çıkışı değişimlerini göster</value></data>
+  <data name="DeviceHub.ShowBluetooth" xml:space="preserve"><value>Bluetooth cihazlarını göster</value></data>
+  <data name="DeviceHub.ShowAudioDevices" xml:space="preserve"><value>Ses cihazlarını göster</value></data>
+  <data name="DeviceHub.ShowRemovableStorage" xml:space="preserve"><value>Çıkarılabilir depolamayı göster</value></data>
+  <data name="DeviceHub.BatteryWarningPercent" xml:space="preserve"><value>Pil uyarısı eşiği</value></data>
+  <data name="ClipboardPeek.Title" xml:space="preserve"><value>Clipboard Peek</value></data><data name="ClipboardPeek.History" xml:space="preserve"><value>Son kopyalananlar</value></data><data name="ClipboardPeek.ClearHistory" xml:space="preserve"><value>Geçmişi temizle</value></data><data name="ClipboardPeek.Copy" xml:space="preserve"><value>Kopyala</value></data><data name="ClipboardPeek.Open" xml:space="preserve"><value>Aç</value></data><data name="ClipboardPeek.OpenFolder" xml:space="preserve"><value>Klasörü aç</value></data><data name="ClipboardPeek.SaveImage" xml:space="preserve"><value>Görseli kaydet</value></data><data name="ClipboardPeek.Reveal" xml:space="preserve"><value>Bir kez göster</value></data><data name="ClipboardPeek.Empty" xml:space="preserve"><value>Burada görmek için bir şey kopyalayın.</value></data><data name="ClipboardPeek.SensitiveContent" xml:space="preserve"><value>Hassas içerik</value></data>
+  <data name="DeviceHub.CompactSummary" xml:space="preserve"><value>{0} bağlı · {1} ses çıkışı</value></data>
+  <data name="DeviceHub.SafeToRemove" xml:space="preserve"><value>Çıkarmak güvenli</value></data>
+  <data name="DeviceHub.Open" xml:space="preserve"><value>Aç</value></data>
+  <data name="DeviceHub.ManageBluetooth" xml:space="preserve"><value>Bluetooth ayarlarında yönet</value></data>
+  <data name="DeviceHub.ManageSound" xml:space="preserve"><value>Ses ayarlarını aç</value></data>
+  <data name="DeviceHub.EjectSucceeded" xml:space="preserve"><value>{0} aygıtını çıkarmak güvenli.</value></data>
+  <data name="DeviceHub.EjectInUse" xml:space="preserve"><value>{0} kullanılıyor. Açık dosyaları kapatıp yeniden deneyin.</value></data>
+  <data name="DeviceHub.EjectAccessDenied" xml:space="preserve"><value>Windows, {0} aygıtının çıkarılmasına izin vermedi.</value></data>
+  <data name="DeviceHub.EjectNotFound" xml:space="preserve"><value>{0} artık kullanılamıyor.</value></data>
+  <data name="DeviceHub.EjectUnsupported" xml:space="preserve"><value>{0} aygıtını güvenle kaldırmak için Windows ayarlarını kullanın.</value></data>
+  <data name="DeviceHub.EjectFailed" xml:space="preserve"><value>{0} güvenli biçimde çıkarılamadı.</value></data>
+  <data name="DeviceHub.Default" xml:space="preserve"><value>Varsayılan</value></data>
+  <data name="DeviceHub.FreeSpaceFormat" xml:space="preserve"><value>{0} boş</value></data>
+  <data name="DeviceHub.Type.Headphones" xml:space="preserve"><value>Kulaklık</value></data>
+  <data name="DeviceHub.Type.Headset" xml:space="preserve"><value>Mikrofonlu kulaklık</value></data>
+  <data name="DeviceHub.Type.Speaker" xml:space="preserve"><value>Hoparlör</value></data>
+  <data name="DeviceHub.Type.Mouse" xml:space="preserve"><value>Fare</value></data>
+  <data name="DeviceHub.Type.Keyboard" xml:space="preserve"><value>Klavye</value></data>
+  <data name="DeviceHub.Type.Gamepad" xml:space="preserve"><value>Oyun kumandası</value></data>
+  <data name="DeviceHub.Type.Other" xml:space="preserve"><value>Diğer cihaz</value></data>
+  <data name="DeviceHub.BluetoothDetailFormat" xml:space="preserve"><value>{0} · {1}</value></data>
+  <data name="DeviceHub.ConnectedState" xml:space="preserve"><value>Bağlı</value></data>
+  <data name="DeviceHub.DisconnectedState" xml:space="preserve"><value>Bağlı değil</value></data>
+  <data name="DeviceHub.ShowStorageEvents" xml:space="preserve"><value>Çıkarılabilir depolama bağlantı olaylarını göster</value></data>
+  <data name="ClipboardPeek.ComposeEmail" xml:space="preserve"><value>E-posta oluştur</value></data>
+  <data name="ClipboardPeek.ShowInFolder" xml:space="preserve"><value>Klasörde göster</value></data>
+  <data name="ClipboardPeek.MultipleItems" xml:space="preserve"><value>{0} öğe kopyalandı</value></data>
+  <data name="ClipboardPeek.Time.Now" xml:space="preserve"><value>Şimdi</value></data>
+  <data name="ClipboardPeek.Time.Minutes" xml:space="preserve"><value>{0} dk önce</value></data>
+  <data name="ClipboardPeek.Time.Hours" xml:space="preserve"><value>{0} sa önce</value></data>
+  <data name="ClipboardPeek.Type.PlainText" xml:space="preserve"><value>Metin</value></data>
+  <data name="ClipboardPeek.Type.Url" xml:space="preserve"><value>Bağlantı</value></data>
+  <data name="ClipboardPeek.Type.Email" xml:space="preserve"><value>E-posta</value></data>
+  <data name="ClipboardPeek.Type.Color" xml:space="preserve"><value>Renk</value></data>
+  <data name="ClipboardPeek.Type.File" xml:space="preserve"><value>Dosya</value></data>
+  <data name="ClipboardPeek.Type.Folder" xml:space="preserve"><value>Klasör</value></data>
+  <data name="ClipboardPeek.Type.Image" xml:space="preserve"><value>Görsel</value></data>
+  <data name="ClipboardPeek.Type.Unknown" xml:space="preserve"><value>Diğer içerik</value></data>
+  <data name="ClipboardPeek.Type.Sensitive" xml:space="preserve"><value>Hassas içerik</value></data>
+  <data name="ClipboardPeek.Action.Succeeded" xml:space="preserve"><value>İşlem tamamlandı.</value></data>
+  <data name="ClipboardPeek.Action.Cancelled" xml:space="preserve"><value>İşlem iptal edildi.</value></data>
+  <data name="ClipboardPeek.Action.Unavailable" xml:space="preserve"><value>Bu işlem şu anda kullanılamıyor.</value></data>
+  <data name="ClipboardPeek.Action.AccessDenied" xml:space="preserve"><value>Erişim reddedildi.</value></data>
+  <data name="ClipboardPeek.Action.Unsupported" xml:space="preserve"><value>Bu içerik desteklenmiyor.</value></data>
+  <data name="ClipboardPeek.Action.Failed" xml:space="preserve"><value>İşlem tamamlanamadı.</value></data>
+  <data name="ClipboardPeek.Settings.Title" xml:space="preserve"><value>Clipboard Peek</value></data>
+  <data name="ClipboardPeek.Settings.Description" xml:space="preserve"><value>Pano yalnızca modül açıkken izlenir; geçmiş uygulama kapanınca silinir.</value></data>
+  <data name="ClipboardPeek.Settings.HistoryLimit" xml:space="preserve"><value>Oturum geçmişi</value></data>
+  <data name="ClipboardPeek.Settings.HistoryDescription" xml:space="preserve"><value>Kopyalanan son öğeler yalnızca RAM'de tutulur.</value></data>
+  <data name="ClipboardPeek.Settings.HistoryOff" xml:space="preserve"><value>Kapalı</value></data>
+  <data name="ClipboardPeek.Settings.EventMode" xml:space="preserve"><value>Dock bildirimi</value></data>
+  <data name="ClipboardPeek.Settings.EventSmart" xml:space="preserve"><value>Akıllı</value></data>
+  <data name="ClipboardPeek.Settings.EventEverything" xml:space="preserve"><value>Tüm kopyalar</value></data>
+  <data name="ClipboardPeek.Settings.EventNever" xml:space="preserve"><value>Asla</value></data>
+  <data name="ClipboardPeek.Settings.ImageEvents" xml:space="preserve"><value>Görsel bildirimlerini göster</value></data>
+  <data name="ClipboardPeek.Color.Hex" xml:space="preserve"><value>HEX {0}</value></data>
+  <data name="ClipboardPeek.Color.Rgb" xml:space="preserve"><value>RGB {0}</value></data>
+  <data name="ClipboardPeek.Color.Hsl" xml:space="preserve"><value>HSL {0}</value></data>
+  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} kelime · {1} karakter</value></data>
+  <data name="HourlyNotification.ModuleName" xml:space="preserve"><value>Saat Başı Bildirimi</value></data>
+  <data name="HourlyNotification.TimeFormat" xml:space="preserve"><value>Saat {0}</value></data>
+  <data name="HourlyNotification.Description" xml:space="preserve"><value>Saat başı bildirimi</value></data>
+  <data name="HourlyNotification.Settings.Title" xml:space="preserve"><value>Saat Başı Bildirimi</value></data>
+  <data name="HourlyNotification.Settings.Description" xml:space="preserve"><value>Her tam saatte dock üzerinde bir olay gösterir ve ses ayarları izin veriyorsa kısa bir ses çalar.</value></data>
+  <data name="HourlyNotification.Settings.Toggle" xml:space="preserve"><value>Saat başı bildirimini göster</value></data>
+  <data name="AudibleNotifications.Title" xml:space="preserve"><value>Sesli Bildirimler</value></data>
+  <data name="AudibleNotifications.Description" xml:space="preserve"><value>Ağ, pil, cihaz ve saat başı olaylarında çalacak kısa uyarı seslerini yönetin.</value></data>
+  <data name="AudibleNotifications.MasterTitle" xml:space="preserve"><value>Sesli bildirimleri aç</value></data>
+  <data name="AudibleNotifications.MasterDescription" xml:space="preserve"><value>Alarm dışında tüm uygulama içi bildirim seslerini birlikte kontrol eder.</value></data>
+  <data name="AudibleNotifications.EventsTitle" xml:space="preserve"><value>Olay sesleri</value></data>
+  <data name="AudibleNotifications.NetworkOffline.Title" xml:space="preserve"><value>İnternet bağlantısı yok</value></data>
+  <data name="AudibleNotifications.NetworkOffline.Description" xml:space="preserve"><value>Etkin bir Wi-Fi veya Ethernet bağlantısı bulunmadığında çalar.</value></data>
+  <data name="AudibleNotifications.ConnectedWithoutInternet.Title" xml:space="preserve"><value>Bağlı, ancak internet yok</value></data>
+  <data name="AudibleNotifications.ConnectedWithoutInternet.Description" xml:space="preserve"><value>Wi-Fi veya Ethernet bağlıyken tam internet erişimi olmadığında çalar.</value></data>
+  <data name="AudibleNotifications.LowBattery.Title" xml:space="preserve"><value>Pil seviyesi ciddi ölçüde az</value></data>
+  <data name="AudibleNotifications.LowBattery.Description" xml:space="preserve"><value>Bilgisayar veya desteklenen bağlı cihaz pili düşük eşiklerden geçtiğinde çalar.</value></data>
+  <data name="AudibleNotifications.DeviceConnected.Title" xml:space="preserve"><value>Cihaz bağlandı</value></data>
+  <data name="AudibleNotifications.DeviceConnected.Description" xml:space="preserve"><value>Bluetooth cihazı veya çıkarılabilir depolama bağlandığında çalar.</value></data>
+  <data name="AudibleNotifications.DeviceDisconnected.Title" xml:space="preserve"><value>Cihaz ayrıldı</value></data>
+  <data name="AudibleNotifications.DeviceDisconnected.Description" xml:space="preserve"><value>Bluetooth cihazı veya çıkarılabilir depolama ayrıldığında çalar.</value></data>
+  <data name="AudibleNotifications.Hourly.Title" xml:space="preserve"><value>Saat başı</value></data>
+  <data name="AudibleNotifications.Hourly.Description" xml:space="preserve"><value>Saat başı bildirimi etkin olduğunda her tam saatte çalar.</value></data>
+  <data name="AudibleNotifications.Preview" xml:space="preserve"><value>Sesi oynat</value></data>
+  <data name="AudibleNotifications.Alarm.Title" xml:space="preserve"><value>Zamanlayıcı alarmı her zaman açık</value></data>
+  <data name="AudibleNotifications.Alarm.Description" xml:space="preserve"><value>Zamanlayıcı alarmı bu ayarlardan etkilenmez ve alarm görünümündeki susturma düğmesiyle durdurulur.</value></data>
 </root>

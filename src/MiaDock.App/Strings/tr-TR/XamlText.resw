@@ -2110,4 +2110,46 @@
   <data name="XamlText.0688" xml:space="preserve">
     <value>Medya kaynakları hazırlanıyor…</value>
   </data>
+  <data name="XamlText.DeviceHub.Title" xml:space="preserve"><value>Device Hub</value></data>
+  <data name="XamlText.DeviceHub.Description" xml:space="preserve"><value>Bağlı cihazlar tek yerde.</value></data>
+  <data name="XamlText.DeviceHub.Automation" xml:space="preserve"><value>Bağlı cihazlar</value></data>
+  <data name="XamlText.DeviceHub.Connected" xml:space="preserve"><value>Bağlı</value></data>
+  <data name="XamlText.DeviceHub.Empty" xml:space="preserve"><value>Bağlı Bluetooth cihazı yok.</value></data>
+  <data name="XamlText.DeviceHub.Output" xml:space="preserve"><value>Ses çıkışı</value></data>
+  <data name="XamlText.DeviceHub.OutputAutomation" xml:space="preserve"><value>Ses çıkışı aygıtları</value></data>
+  <data name="XamlText.DeviceHub.InputAutomation" xml:space="preserve"><value>Mikrofon aygıtları</value></data>
+  <data name="XamlText.DeviceHub.Storage" xml:space="preserve"><value>Çıkarılabilir depolama</value></data>
+  <data name="XamlText.ClipboardPeek.Title" xml:space="preserve"><value>Clipboard Peek</value></data>
+  <data name="XamlText.DeviceHub.Audio" xml:space="preserve"><value>Ses</value></data>
+  <data name="XamlText.DeviceHub.OpenSoundSettings" xml:space="preserve"><value>Ses ayarlarını aç</value></data>
+  <data name="XamlText.DeviceHub.OutputDevices" xml:space="preserve"><value>Ses çıkış aygıtları</value></data>
+  <data name="XamlText.DeviceHub.InputDevices" xml:space="preserve"><value>Mikrofon aygıtları</value></data>
+  <data name="XamlText.DeviceHub.OpenBluetoothSettings" xml:space="preserve"><value>Bluetooth ayarlarını aç</value></data>
+  <data name="XamlText.DeviceHub.BluetoothDevices" xml:space="preserve"><value>Bluetooth aygıtları</value></data>
+  <data name="XamlText.DeviceHub.OpenSafelyRemove" xml:space="preserve"><value>Güvenli kaldırmayı aç</value></data>
+  <data name="XamlText.DeviceHub.StorageDevices" xml:space="preserve"><value>Çıkarılabilir depolama aygıtları</value></data>
+  <data name="XamlText.DeviceHub.Open" xml:space="preserve"><value>Aç</value></data>
+  <data name="XamlText.0689" xml:space="preserve"><value>Akıllı</value></data>
+  <data name="XamlText.0690" xml:space="preserve"><value>Asla</value></data>
+  <data name="XamlText.0698" xml:space="preserve"><value>Clipboard Peek olay davranışı</value></data>
+  <data name="XamlText.0699" xml:space="preserve"><value>Clipboard geçmiş limiti</value></data>
+  <data name="XamlText.0700" xml:space="preserve"><value>Clipboard geçmişini çıkışta temizle</value></data>
+  <data name="XamlText.0701" xml:space="preserve"><value>Dock bildirimi</value></data>
+  <data name="XamlText.0705" xml:space="preserve"><value>Geçmiş limiti</value></data>
+  <data name="XamlText.0706" xml:space="preserve"><value>Hassas Clipboard içeriğini gizle</value></data>
+  <data name="XamlText.0707" xml:space="preserve"><value>Hassas içeriği gizle</value></data>
+  <data name="XamlText.0709" xml:space="preserve"><value>Kopyalanan son öğeler yalnızca bu oturumda tutulur.</value></data>
+  <data name="XamlText.0714" xml:space="preserve"><value>Tam ekran uygulamalarda, film ve video oynatıcılarda dock görünürlüğünü ve geçici bildirimleri yapılandırın.</value></data>
+  <data name="XamlText.0715" xml:space="preserve"><value>Tüm kopyalar</value></data>
+  <data name="XamlText.0719" xml:space="preserve"><value>Çıkışta geçmişi temizle</value></data>
+  <data name="XamlText.0722" xml:space="preserve"><value>Clipboard Peek</value></data>
+  <data name="XamlText.0723" xml:space="preserve"><value>Bu özellik deneysel durumdadır; yalnızca etkinleştirildiğinde panoyu izler.</value></data>
+  <data name="XamlText.DeviceHub.Microphone" xml:space="preserve"><value>Mikrofon</value></data>
+  <data name="XamlText.DeviceHub.SelectSound" xml:space="preserve"><value>Ses ayarlarında seç</value></data>
+  <data name="XamlText.DeviceHub.SelectOutputAutomation" xml:space="preserve"><value>Bu çıkışı ses ayarlarında seç</value></data>
+  <data name="XamlText.DeviceHub.SelectMicrophoneAutomation" xml:space="preserve"><value>Bu mikrofonu ses ayarlarında seç</value></data>
+  <data name="XamlText.DeviceHub.ManageBluetooth" xml:space="preserve"><value>Bluetooth ayarlarında yönet</value></data>
+  <data name="XamlText.DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Windows kaldırma seçenekleri</value></data>
+  <data name="XamlText.DeviceHub.Eject" xml:space="preserve"><value>Güvenli çıkar</value></data>
+  <data name="XamlText.DeviceHub.Batteries" xml:space="preserve"><value>Cihaz pilleri</value></data>
 </root>

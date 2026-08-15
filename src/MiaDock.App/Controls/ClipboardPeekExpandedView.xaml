@@ -1,0 +1,123 @@
+<UserControl x:Class="MiaDock.App.Controls.ClipboardPeekExpandedView"
+             x:Name="Root"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:controls="using:MiaDock.App.Controls">
+  <UserControl.Resources>
+    <controls:BooleanToVisibilityConverter x:Key="BooleanToVisibility" />
+  </UserControl.Resources>
+  <Grid Style="{StaticResource DockExpandedModuleLayoutStyle}">
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                  AutomationProperties.Name="{Binding TitleText}">
+      <StackPanel Padding="12" Spacing="10">
+        <Grid ColumnSpacing="10">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+          <Border Style="{StaticResource DockModuleIconContainerStyle}">
+            <FontIcon Glyph="&#xE8C8;" Style="{StaticResource DockModuleIconStyle}" AutomationProperties.AccessibilityView="Raw" />
+          </Border>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
+            <TextBlock Text="{Binding TitleText}" Style="{StaticResource DockTitleTextStyle}" />
+            <TextBlock Text="{Binding CurrentTypeText}" Style="{StaticResource DockCaptionTextStyle}" />
+          </StackPanel>
+        </Grid>
+
+        <Border Style="{StaticResource DockSectionStyle}" Padding="12,10">
+          <StackPanel Spacing="9">
+            <Border Width="80" Height="80" CornerRadius="12" HorizontalAlignment="Left"
+                    Background="{Binding ColorPreviewBrush}"
+                    Visibility="{Binding HasColorPreview, Converter={StaticResource BooleanToVisibility}}"
+                    AutomationProperties.Name="{Binding CurrentDisplayText}" />
+            <StackPanel Spacing="2"
+                        Visibility="{Binding HasColorFormats, Converter={StaticResource BooleanToVisibility}}">
+              <Button MinHeight="44" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                      Command="{Binding CopyColorFormatCommand}" CommandParameter="Hex"
+                      Content="{Binding ColorHexText}"
+                      AutomationProperties.Name="{Binding ColorHexText}" />
+              <Button MinHeight="44" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                      Command="{Binding CopyColorFormatCommand}" CommandParameter="Rgb"
+                      Content="{Binding ColorRgbText}"
+                      AutomationProperties.Name="{Binding ColorRgbText}" />
+              <Button MinHeight="44" HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                      Command="{Binding CopyColorFormatCommand}" CommandParameter="Hsl"
+                      Content="{Binding ColorHslText}"
+                      AutomationProperties.Name="{Binding ColorHslText}" />
+            </StackPanel>
+            <Image Source="{Binding Thumbnail}" Height="120" Stretch="Uniform" HorizontalAlignment="Left"
+                   Visibility="{Binding HasThumbnail, Converter={StaticResource BooleanToVisibility}}"
+                   AutomationProperties.Name="{Binding CurrentDisplayText}" />
+            <TextBlock Text="{Binding CurrentDisplayText}" TextWrapping="Wrap" MaxLines="6"
+                       Style="{StaticResource DockBodyTextStyle}" />
+            <TextBlock Text="{Binding TextStatsText}" Style="{StaticResource DockCaptionTextStyle}"
+                       Visibility="{Binding HasTextStats, Converter={StaticResource BooleanToVisibility}}" />
+            <CommandBar Background="Transparent" DefaultLabelPosition="Right" IsDynamicOverflowEnabled="True"
+                        HorizontalAlignment="Left">
+              <AppBarButton Label="{Binding CopyText}" Command="{Binding CopyCommand}" MinHeight="44"
+                            Visibility="{Binding CanCopy, Converter={StaticResource BooleanToVisibility}}"
+                            AutomationProperties.Name="{Binding CopyText}">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE8C8;" /></AppBarButton.Icon>
+              </AppBarButton>
+              <AppBarButton Label="{Binding OpenText}" Command="{Binding OpenCommand}" MinHeight="44"
+                            Visibility="{Binding CanOpen, Converter={StaticResource BooleanToVisibility}}"
+                            AutomationProperties.Name="{Binding OpenText}">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE8A7;" /></AppBarButton.Icon>
+              </AppBarButton>
+              <AppBarButton Label="{Binding OpenFolderText}" Command="{Binding OpenFolderCommand}" MinHeight="44"
+                            Visibility="{Binding CanOpenFolder, Converter={StaticResource BooleanToVisibility}}"
+                            AutomationProperties.Name="{Binding OpenFolderText}">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE838;" /></AppBarButton.Icon>
+              </AppBarButton>
+              <AppBarButton Label="{Binding SaveImageText}" Command="{Binding SaveImageCommand}" MinHeight="44"
+                            Visibility="{Binding CanSaveImage, Converter={StaticResource BooleanToVisibility}}"
+                            AutomationProperties.Name="{Binding SaveImageText}">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE74E;" /></AppBarButton.Icon>
+              </AppBarButton>
+              <AppBarButton Label="{Binding RevealText}" Command="{Binding RevealCommand}" MinHeight="44"
+                            Visibility="{Binding CanReveal, Converter={StaticResource BooleanToVisibility}}"
+                            AutomationProperties.Name="{Binding RevealText}">
+                <AppBarButton.Icon><FontIcon Glyph="&#xE890;" /></AppBarButton.Icon>
+              </AppBarButton>
+            </CommandBar>
+            <InfoBar IsOpen="{Binding IsStatusOpen, Mode=TwoWay}"
+                     Message="{Binding StatusMessage}"
+                     Severity="{Binding StatusSeverity}"
+                     IsClosable="True"
+                     AutomationProperties.LiveSetting="Polite" />
+          </StackPanel>
+        </Border>
+
+        <Grid Visibility="{Binding HasHistory, Converter={StaticResource BooleanToVisibility}}">
+          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+          <Grid Margin="0,0,0,3">
+            <TextBlock Text="{Binding HistoryText}" Style="{StaticResource DockModuleHeaderTextStyle}" VerticalAlignment="Center" />
+            <Button HorizontalAlignment="Right" Content="{Binding ClearHistoryText}" Command="{Binding ClearHistoryCommand}"
+                    MinHeight="44" AutomationProperties.Name="{Binding ClearHistoryText}" />
+          </Grid>
+          <ItemsControl Grid.Row="1" ItemsSource="{Binding HistoryEntries}"
+                        AutomationProperties.Name="{Binding HistoryText}">
+            <ItemsControl.ItemTemplate>
+              <DataTemplate>
+                <Button HorizontalContentAlignment="Stretch" MinHeight="44" Margin="0,2"
+                        Command="{Binding DataContext.SelectItemCommand, ElementName=Root}"
+                        CommandParameter="{Binding Item}"
+                        AutomationProperties.Name="{Binding DisplayText}">
+                  <Grid Padding="4" ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <FontIcon Glyph="&#xE8C8;" VerticalAlignment="Center" AutomationProperties.AccessibilityView="Raw" />
+                    <StackPanel Grid.Column="1" Spacing="1">
+                      <TextBlock Text="{Binding DisplayText}" MaxLines="1" TextTrimming="CharacterEllipsis" />
+                      <TextBlock Text="{Binding TypeText}" Style="{StaticResource DockCaptionTextStyle}" />
+                    </StackPanel>
+                    <TextBlock Grid.Column="2" Text="{Binding RelativeTime}" Style="{StaticResource DockCaptionTextStyle}"
+                               VerticalAlignment="Center" />
+                  </Grid>
+                </Button>
+              </DataTemplate>
+            </ItemsControl.ItemTemplate>
+          </ItemsControl>
+        </Grid>
+      </StackPanel>
+    </ScrollViewer>
+  </Grid>
+</UserControl>

@@ -39,6 +39,21 @@
 
       <Border Padding="18" Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="8">
+          <TextBlock Text="{Binding HourlyNotificationSettingsTitle}"
+                     Style="{StaticResource SettingsSectionTitleTextBlockStyle}" />
+          <TextBlock Text="{Binding HourlyNotificationSettingsDescription}"
+                     TextWrapping="Wrap"
+                     Opacity="0.72" />
+          <ToggleSwitch Header="{Binding HourlyNotificationSettingsToggle}"
+                        MinHeight="44"
+                        MinWidth="44"
+                        IsOn="{Binding HourlyNotificationEnabled, Mode=TwoWay}"
+                        AutomationProperties.Name="{Binding HourlyNotificationSettingsToggle}" />
+        </StackPanel>
+      </Border>
+
+      <Border Padding="18" Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="8">
           <TextBlock Text="Zamanlayıcı" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" />
           <TextBlock Text="Zamanlayıcı ve kronometreyi genişletilmiş dock içindeki Zaman modülünden yönetin. Fare tekeriyle varsayılan görünüm ve modüller arasında geçebilirsiniz."
                      TextWrapping="Wrap" Opacity="0.72" />

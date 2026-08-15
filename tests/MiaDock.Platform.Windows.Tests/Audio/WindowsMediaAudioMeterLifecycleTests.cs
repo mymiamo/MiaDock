@@ -1,8 +1,31 @@
+using System.Runtime.InteropServices;
+using MiaDock.Platform.Windows.Audio;
+
 namespace MiaDock.Platform.Windows.Tests.Audio;
 
 [TestClass]
 public sealed class WindowsMediaAudioMeterLifecycleTests
 {
+    [TestMethod]
+    public void ChannelPeakBuffer_IsMarshaledAsCallerAllocatedFloatArray()
+    {
+        var method = typeof(IAudioMeterInformation).GetMethod(
+            nameof(IAudioMeterInformation.GetChannelsPeakValues));
+        Assert.IsNotNull(method);
+
+        var bufferParameter = method.GetParameters()[1];
+        var marshalAs = bufferParameter
+            .GetCustomAttributes(typeof(MarshalAsAttribute), inherit: false)
+            .Cast<MarshalAsAttribute>()
+            .SingleOrDefault();
+
+        Assert.IsNotNull(marshalAs);
+        Assert.AreEqual(UnmanagedType.LPArray, marshalAs.Value);
+        Assert.AreEqual(UnmanagedType.R4, marshalAs.ArraySubType);
+        Assert.AreEqual(0, marshalAs.SizeParamIndex);
+        Assert.IsTrue(bufferParameter.IsOut);
+    }
+
     [TestMethod]
     public void WorkerCleanup_GuardsDetachedComObjectsAndDisposedShutdown()
     {

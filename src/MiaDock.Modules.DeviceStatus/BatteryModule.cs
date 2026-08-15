@@ -96,7 +96,8 @@ public sealed class BatteryModule : IIslandModule, IDisposable
             DateTimeOffset.UtcNow,
             priority,
             "battery:low",
-            isFullscreenEligible: options.ShowInFullscreen));
+            isFullscreenEligible: options.ShowInFullscreen,
+            audibleCue: AudibleNotificationCue.LowBattery));
     }
 
     private ModulePresentation CreatePresentation(BatteryStatusSnapshot snapshot) => new(

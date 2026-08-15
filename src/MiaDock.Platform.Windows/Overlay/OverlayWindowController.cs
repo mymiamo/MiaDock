@@ -1,5 +1,7 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Windowing;
 using Microsoft.UI.Xaml;
 using MiaDock.Core.Overlay;
@@ -12,6 +14,7 @@ namespace MiaDock.Platform.Windows.Overlay;
 internal sealed class OverlayWindowController : IOverlayWindowController
 {
     private const nuint SubclassId = 0x4D494144;
+    private static readonly TimeSpan EdgeRevealAnimationDuration = TimeSpan.FromMilliseconds(170);
     private readonly Window _window;
     private readonly AppWindow _appWindow;
     private readonly OverlayWindowOptions _options;
@@ -36,6 +39,12 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     private string? _displayId;
     private bool _edgeRevealHidden;
     private double _edgeRevealStripInDips = 2;
+    private DispatcherQueueTimer? _edgeRevealAnimationTimer;
+    private long _edgeRevealAnimationStartTimestamp;
+    private OverlayPlacement? _edgeRevealAnimationStartPlacement;
+    private OverlayPlacement? _edgeRevealAnimatedPlacement;
+    private OverlayPlacement? _edgeRevealAnimationTargetPlacement;
+    private Action? _edgeRevealAnimationCompleted;
 
     public OverlayWindowController(
         Window window,
@@ -100,6 +109,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     public void Hide()
     {
         ThrowIfDisposed();
+        StopEdgeRevealAnimation();
         _ = NativeMethods.ShowWindow(WindowHandle, NativeConstants.SwHide);
         IsVisible = false;
     }
@@ -115,6 +125,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         _position = position;
         _displayId = displayId;
         _marginInDips = marginInDips;
+        StopEdgeRevealAnimation();
         Reposition();
     }
 
@@ -134,6 +145,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
 
         _sizeInDips = sizeInDips;
         _cornerRadiiInDips = cornerRadiiInDips;
+        StopEdgeRevealAnimation();
         Reposition();
     }
 
@@ -189,23 +201,44 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         ApplyExtendedStyles();
     }
 
-    public void SetEdgeRevealHidden(bool hidden, double visibleStripInDips = 2)
+    public void SetEdgeRevealHidden(
+        bool hidden,
+        double visibleStripInDips = 2,
+        bool animate = false,
+        Action? transitionCompleted = null)
     {
         ThrowIfDisposed();
-        if (!double.IsFinite(visibleStripInDips) || visibleStripInDips is < 1 or > 16)
+        if (!double.IsFinite(visibleStripInDips) || visibleStripInDips is < 1 or > 160)
         {
             throw new ArgumentOutOfRangeException(nameof(visibleStripInDips));
         }
 
-        if (_edgeRevealHidden == hidden &&
-            Math.Abs(_edgeRevealStripInDips - visibleStripInDips) < 0.01)
+        var isUnchanged = _edgeRevealHidden == hidden &&
+                          Math.Abs(_edgeRevealStripInDips - visibleStripInDips) < 0.01;
+        if (isUnchanged && _edgeRevealAnimationTargetPlacement is null)
+        {
+            transitionCompleted?.Invoke();
+            return;
+        }
+
+        if (isUnchanged && animate)
         {
             return;
         }
 
+        var currentPlacement = _edgeRevealAnimatedPlacement ?? _lastPlacement;
+        StopEdgeRevealAnimation();
         _edgeRevealHidden = hidden;
         _edgeRevealStripInDips = visibleStripInDips;
-        Reposition();
+        var layout = CalculatePlacement();
+        if (!animate || !IsVisible || currentPlacement is null || currentPlacement == layout.Placement)
+        {
+            ApplyPlacement(layout);
+            transitionCompleted?.Invoke();
+            return;
+        }
+
+        StartEdgeRevealAnimation(currentPlacement.Value, layout, transitionCompleted);
     }
 
     public bool IsPointerAtAttachedEdge(
@@ -261,6 +294,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         // Native window destruction can synchronously re-enter WM_NCDESTROY. Set the
         // guard first so cleanup cannot recursively execute on the same native stack.
         _disposed = true;
+        StopEdgeRevealAnimation();
 
         _window.Closed -= OnWindowClosed;
         _displayTopology.DisplaysChanged -= OnDisplaysChanged;
@@ -430,6 +464,11 @@ internal sealed class OverlayWindowController : IOverlayWindowController
 
     private void Reposition()
     {
+        ApplyPlacement(CalculatePlacement());
+    }
+
+    private EdgeRevealLayout CalculatePlacement()
+    {
         var dpi = NativeMethods.GetDpiForWindow(WindowHandle);
         if (dpi == 0)
         {
@@ -460,6 +499,25 @@ internal sealed class OverlayWindowController : IOverlayWindowController
                 visibleStripPixels)
             : visiblePlacement;
 
+        return new EdgeRevealLayout(placement, visiblePlacement, displayBounds, dpi);
+    }
+
+    private void ApplyPlacement(EdgeRevealLayout layout)
+    {
+        ApplyPlacement(layout.Placement);
+
+        // SetWindowRgn masks are permanently 1-bit and turn the rounded corners
+        // into a staircase. The backdrop element carries the silhouette instead,
+        // so the HWND stays rectangular and DWM keeps the anti-aliased alpha.
+        ClearWindowRegionIfNeeded();
+        _lastVisiblePlacement = layout.VisiblePlacement;
+        _lastDisplayBounds = layout.DisplayBounds;
+        _lastDpi = layout.Dpi;
+        LastFailure = null;
+    }
+
+    private void ApplyPlacement(OverlayPlacement placement)
+    {
         EnsureSetWindowPos(
             placement.X,
             placement.Y,
@@ -468,17 +526,86 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             NativeConstants.HwndTopmost,
             NativeConstants.SwpNoActivate
             | NativeConstants.SwpNoOwnerZOrder);
-
-        // SetWindowRgn masks are permanently 1-bit and turn the rounded corners
-        // into a staircase. The backdrop element carries the silhouette instead,
-        // so the HWND stays rectangular and DWM keeps the anti-aliased alpha.
-        ClearWindowRegionIfNeeded();
         _lastPlacement = placement;
-        _lastVisiblePlacement = visiblePlacement;
-        _lastDisplayBounds = displayBounds;
-        _lastDpi = dpi;
-        LastFailure = null;
     }
+
+    private void StartEdgeRevealAnimation(
+        OverlayPlacement from,
+        EdgeRevealLayout target,
+        Action? transitionCompleted)
+    {
+        _edgeRevealAnimationStartPlacement = from;
+        _edgeRevealAnimatedPlacement = from;
+        _edgeRevealAnimationTargetPlacement = target.Placement;
+        _edgeRevealAnimationCompleted = transitionCompleted;
+        _edgeRevealAnimationStartTimestamp = Stopwatch.GetTimestamp();
+        _lastVisiblePlacement = target.VisiblePlacement;
+        _lastDisplayBounds = target.DisplayBounds;
+        _lastDpi = target.Dpi;
+        _edgeRevealAnimationTimer ??= _window.DispatcherQueue.CreateTimer();
+        _edgeRevealAnimationTimer.Interval = TimeSpan.FromMilliseconds(16);
+        _edgeRevealAnimationTimer.IsRepeating = true;
+        _edgeRevealAnimationTimer.Tick -= OnEdgeRevealAnimationTick;
+        _edgeRevealAnimationTimer.Tick += OnEdgeRevealAnimationTick;
+        _edgeRevealAnimationTimer.Start();
+    }
+
+    private void OnEdgeRevealAnimationTick(DispatcherQueueTimer sender, object args)
+    {
+        try
+        {
+            if (_edgeRevealAnimationStartPlacement is not { } from ||
+                _edgeRevealAnimationTargetPlacement is not { } to)
+            {
+                StopEdgeRevealAnimation();
+                return;
+            }
+
+            var elapsed = Stopwatch.GetElapsedTime(_edgeRevealAnimationStartTimestamp);
+            var progress = Math.Clamp(elapsed.TotalMilliseconds / EdgeRevealAnimationDuration.TotalMilliseconds, 0d, 1d);
+            var easedProgress = 1d - Math.Pow(1d - progress, 3d);
+            var placement = InterpolatePlacement(from, to, easedProgress);
+            ApplyPlacement(placement);
+            _edgeRevealAnimatedPlacement = placement;
+
+            if (progress < 1d)
+            {
+                return;
+            }
+
+            var completed = _edgeRevealAnimationCompleted;
+            StopEdgeRevealAnimation();
+            completed?.Invoke();
+        }
+        catch (Exception exception)
+        {
+            LastFailure = exception;
+            StopEdgeRevealAnimation();
+        }
+    }
+
+    private void StopEdgeRevealAnimation()
+    {
+        if (_edgeRevealAnimationTimer is not null)
+        {
+            _edgeRevealAnimationTimer.Stop();
+            _edgeRevealAnimationTimer.Tick -= OnEdgeRevealAnimationTick;
+        }
+
+        _edgeRevealAnimatedPlacement = null;
+        _edgeRevealAnimationStartPlacement = null;
+        _edgeRevealAnimationTargetPlacement = null;
+        _edgeRevealAnimationCompleted = null;
+    }
+
+    private static OverlayPlacement InterpolatePlacement(
+        OverlayPlacement from,
+        OverlayPlacement to,
+        double progress) => new(
+        (int)Math.Round(from.X + ((to.X - from.X) * progress)),
+        (int)Math.Round(from.Y + ((to.Y - from.Y) * progress)),
+        (int)Math.Round(from.Width + ((to.Width - from.Width) * progress)),
+        (int)Math.Round(from.Height + ((to.Height - from.Height) * progress)));
 
     private void ClearWindowRegionIfNeeded()
     {
@@ -674,6 +801,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     {
         try
         {
+            StopEdgeRevealAnimation();
             SuppressWindowChrome();
             Reposition();
         }
@@ -689,4 +817,10 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         _ = EnqueueOnWindowThread(TryRefreshAppearanceAndPosition);
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
+
+    private readonly record struct EdgeRevealLayout(
+        OverlayPlacement Placement,
+        OverlayPlacement VisiblePlacement,
+        OverlayWorkArea DisplayBounds,
+        uint Dpi);
 }

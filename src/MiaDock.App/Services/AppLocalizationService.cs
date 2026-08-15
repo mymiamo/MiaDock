@@ -83,10 +83,23 @@ public sealed class AppLocalizationService : IAppLocalizationService
     public void Apply(DependencyObject root)
     {
         ArgumentNullException.ThrowIfNull(root);
-        LocalizeElement(root);
-        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        var pending = new Stack<DependencyObject>();
+        var visited = new HashSet<DependencyObject>(DependencyObjectReferenceComparer.Instance);
+        pending.Push(root);
+
+        while (pending.Count > 0)
         {
-            Apply(VisualTreeHelper.GetChild(root, index));
+            var current = pending.Pop();
+            if (!visited.Add(current))
+            {
+                continue;
+            }
+
+            LocalizeElement(current);
+            for (var index = VisualTreeHelper.GetChildrenCount(current) - 1; index >= 0; index--)
+            {
+                pending.Push(VisualTreeHelper.GetChild(current, index));
+            }
         }
     }
 
@@ -178,5 +191,14 @@ public sealed class AppLocalizationService : IAppLocalizationService
         }
 
         setter(Tables.Value.TranslateXamlText(CultureNameFor(CurrentLanguage), original) ?? original);
+    }
+
+    private sealed class DependencyObjectReferenceComparer : IEqualityComparer<DependencyObject>
+    {
+        public static DependencyObjectReferenceComparer Instance { get; } = new();
+
+        public bool Equals(DependencyObject? left, DependencyObject? right) => ReferenceEquals(left, right);
+
+        public int GetHashCode(DependencyObject value) => RuntimeHelpers.GetHashCode(value);
     }
 }

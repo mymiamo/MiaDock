@@ -29,6 +29,23 @@ public sealed class DockEdgeRevealGeometryTests
     }
 
     [TestMethod]
+    [DataRow(OverlayPosition.TopCenter, -36)]
+    [DataRow(OverlayPosition.BottomCenter, 1428)]
+    public void HideTowardAttachedEdge_LeavesTwelvePixelHandle(
+        OverlayPosition position,
+        int expectedY)
+    {
+        var result = DockEdgeRevealGeometry.HideTowardAttachedEdge(
+            Placement,
+            Bounds,
+            position,
+            12);
+
+        Assert.AreEqual(expectedY, result.Y);
+        Assert.AreEqual(Placement.Width, result.Width);
+    }
+
+    [TestMethod]
     public void IsPointerAtActivationEdge_RequiresCorrectDisplayAndDockSpan()
     {
         Assert.IsTrue(DockEdgeRevealGeometry.IsPointerAtActivationEdge(

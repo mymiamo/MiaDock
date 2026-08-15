@@ -55,6 +55,55 @@
         </Grid>
       </Border>
 
+      <TextBlock Text="{Binding DeviceHubSettingsTitle}" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" Margin="0,8,0,0" />
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14" RowSpacing="8">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="38" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+          <FontIcon Glyph="&#xE7F4;" FontSize="19" VerticalAlignment="Center" Foreground="{ThemeResource SettingsModulesIconBrush}" />
+          <TextBlock Grid.Column="1" Text="{Binding DeviceHubShowConnectedEventsText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Column="2" IsOn="{Binding DeviceHubConnectedEvents, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowConnectedEventsText}" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding DeviceHubShowDisconnectedEventsText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="1" Grid.Column="2" IsOn="{Binding DeviceHubDisconnectedEvents, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowDisconnectedEventsText}" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding DeviceHubShowBatteryWarningsText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="2" Grid.Column="2" IsOn="{Binding DeviceHubBatteryWarnings, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowBatteryWarningsText}" />
+          <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding DeviceHubShowAudioOutputEventsText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="3" Grid.Column="2" IsOn="{Binding DeviceHubAudioOutputEvents, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowAudioOutputEventsText}" />
+          <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding DeviceHubShowBluetoothText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="4" Grid.Column="2" IsOn="{Binding DeviceHubBluetooth, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowBluetoothText}" />
+          <TextBlock Grid.Row="5" Grid.Column="1" Text="{Binding DeviceHubShowAudioDevicesText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="5" Grid.Column="2" IsOn="{Binding DeviceHubAudioDevices, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowAudioDevicesText}" />
+          <TextBlock Grid.Row="6" Grid.Column="1" Text="{Binding DeviceHubShowRemovableStorageText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="6" Grid.Column="2" IsOn="{Binding DeviceHubRemovableStorage, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowRemovableStorageText}" />
+          <TextBlock Grid.Row="7" Grid.Column="1" Text="{Binding DeviceHubBatteryWarningPercentText}" VerticalAlignment="Center" />
+          <NumberBox Grid.Row="7" Grid.Column="2" Minimum="5" Maximum="50" Value="{Binding DeviceHubBatteryWarningPercent, Mode=TwoWay}" SpinButtonPlacementMode="Compact" AutomationProperties.Name="{Binding DeviceHubBatteryWarningPercentText}" />
+          <TextBlock Grid.Row="8" Grid.Column="1" Text="{Binding DeviceHubShowStorageEventsText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="8" Grid.Column="2" IsOn="{Binding DeviceHubStorageEvents, Mode=TwoWay}" AutomationProperties.Name="{Binding DeviceHubShowStorageEventsText}" />
+        </Grid>
+      </Border>
+
+      <TextBlock Text="{Binding ClipboardSettingsTitle}" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" Margin="0,8,0,0" />
+      <TextBlock Text="{Binding ClipboardSettingsDescription}"
+                 TextWrapping="Wrap" FontSize="12" Opacity="0.66" />
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14" RowSpacing="10">
+          <Grid.ColumnDefinitions><ColumnDefinition Width="38" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+          <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+          <FontIcon Glyph="&#xE8C8;" FontSize="19" VerticalAlignment="Center" Foreground="{ThemeResource SettingsModulesIconBrush}" />
+          <StackPanel Grid.Column="1"><TextBlock Text="{Binding ClipboardHistoryLimitText}" Style="{StaticResource SettingsCardTitleTextBlockStyle}" /><TextBlock Text="{Binding ClipboardHistoryDescriptionText}" TextWrapping="Wrap" FontSize="12" Opacity="0.66" /></StackPanel>
+          <ComboBox Grid.Column="2" ItemsSource="{Binding ClipboardHistoryLimits}" DisplayMemberPath="Label" SelectedIndex="{Binding ClipboardHistoryLimitIndex, Mode=TwoWay}" MinWidth="100" MinHeight="44" AutomationProperties.Name="{Binding ClipboardHistoryLimitText}" />
+          <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding ClipboardEventModeText}" VerticalAlignment="Center" />
+          <ComboBox Grid.Row="1" Grid.Column="2" ItemsSource="{Binding ClipboardEventModes}" DisplayMemberPath="Label" SelectedIndex="{Binding ClipboardEventModeIndex, Mode=TwoWay}" MinWidth="150" MinHeight="44" AutomationProperties.Name="{Binding ClipboardEventModeText}" />
+          <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding ClipboardImageEventsText}" VerticalAlignment="Center" />
+          <ToggleSwitch Grid.Row="2" Grid.Column="2" IsOn="{Binding ClipboardImageEvents, Mode=TwoWay}" AutomationProperties.Name="{Binding ClipboardImageEventsText}" />
+          <StackPanel Grid.Row="3" Grid.Column="1" VerticalAlignment="Center">
+            <TextBlock Text="{Binding ClipboardClearHistoryText}" />
+            <TextBlock Text="{Binding ClipboardHistoryStatus}" FontSize="12" Opacity="0.66" AutomationProperties.LiveSetting="Polite" />
+          </StackPanel>
+          <Button Grid.Row="3" Grid.Column="2" Content="{Binding ClipboardClearHistoryText}" Command="{Binding ClearClipboardHistoryCommand}" MinHeight="44" AutomationProperties.Name="{Binding ClipboardClearHistoryText}" />
+        </Grid>
+      </Border>
+
       <TextBlock Text="Hassas içerik" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" Margin="0,8,0,0" />
       <TextBlock Text="Bildirim ve aktarım gibi hassas içerikler için iki koruma da varsayılan olarak kapalıdır."
                  TextWrapping="Wrap" FontSize="12" Opacity="0.66" />

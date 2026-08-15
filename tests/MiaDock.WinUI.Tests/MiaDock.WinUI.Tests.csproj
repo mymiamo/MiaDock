@@ -29,9 +29,9 @@
     <Content Include="..\..\src\MiaDock.App\Animations\BoundsEasingProfile.cs" Link="Animations\BoundsEasingProfile.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Animations\IslandAnimationProfile.cs" Link="Animations\IslandAnimationProfile.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Animations\ToolkitAnimationFactory.cs" Link="Animations\ToolkitAnimationFactory.cs" CopyToOutputDirectory="PreserveNewest" />
-    <Content Include="..\..\src\MiaDock.App\Animations\SettingsEntranceAnimator.cs" Link="Animations\SettingsEntranceAnimator.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.UI\Services\ThemeService.cs" Link="Services\ThemeService.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\VolumeExpandedView.xaml.cs" Link="Controls\VolumeExpandedView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Controls\DeviceHubExpandedView.xaml.cs" Link="Controls\DeviceHubExpandedView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OverlayWindow.xaml" Link="Windows\OverlayWindow.xaml" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\OverlayWindow.xaml.cs" Link="Windows\OverlayWindow.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\IslandShell.xaml.cs" Link="Controls\IslandShell.xaml.cs" CopyToOutputDirectory="PreserveNewest" />

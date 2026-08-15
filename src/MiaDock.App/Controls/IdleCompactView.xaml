@@ -77,6 +77,15 @@
                 ToolTipService.ToolTip="{Binding NetworkStatus}"
                 AutomationProperties.Name="{Binding NetworkStatus}" />
 
+      <FontIcon Glyph="&#xE72E;"
+                Width="14"
+                FontFamily="Segoe Fluent Icons"
+                FontSize="13"
+                Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                Visibility="{Binding VpnVisibility}"
+                ToolTipService.ToolTip="{Binding VpnStatus}"
+                AutomationProperties.Name="{Binding VpnStatus}" />
+
       <FontIcon x:Name="CallActivityIcon"
                 Glyph="&#xE717;"
                 Width="14"
@@ -87,12 +96,12 @@
                 ToolTipService.ToolTip="Olası arama etkinliği"
                 AutomationProperties.Name="Olası arama etkinliği" />
 
-      <Border x:Name="BluetoothStatusIndicator"
-              Padding="0"
-              Visibility="{Binding BluetoothVisibility}"
-              ToolTipService.ToolTip="{Binding BluetoothStatus}"
-              AutomationProperties.Name="{Binding BluetoothStatus}">
-        <StackPanel Orientation="Horizontal" Spacing="2">
+      <StackPanel x:Name="BluetoothStatusIndicator"
+                  Orientation="Horizontal"
+                  Spacing="2"
+                  Visibility="{Binding BluetoothVisibility}"
+                  ToolTipService.ToolTip="{Binding BluetoothStatus}"
+                  AutomationProperties.Name="{Binding BluetoothStatus}">
           <FontIcon Glyph="&#xE702;"
                     Width="14"
                     FontFamily="Segoe Fluent Icons"
@@ -103,8 +112,7 @@
                      Style="{StaticResource DockCaptionTextStyle}"
                      VerticalAlignment="Center"
                      Opacity="0.82" />
-        </StackPanel>
-      </Border>
+      </StackPanel>
 
       <Border Style="{StaticResource DockStatusBadgeStyle}"
               Padding="6,2"

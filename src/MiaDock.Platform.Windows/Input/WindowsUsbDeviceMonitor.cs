@@ -1,37 +1,44 @@
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
+using System.Text;
 using MiaDock.Core.Input;
 
 namespace MiaDock.Platform.Windows.Input;
 
+/// <summary>
+/// Observes physical USB devices through Windows device-interface notifications.
+/// Drive enumeration is deliberately used only to enrich a newly-arrived storage
+/// device; it is not the source of truth for USB arrival or removal.
+/// </summary>
 public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
 {
     private const uint WmDeviceChange = 0x0219;
     private const nuint DbtDeviceArrival = 0x8000;
     private const nuint DbtDeviceRemoveComplete = 0x8004;
-    private const uint DbtDevTypVolume = 0x00000002;
+    private const uint DbtDevTypDeviceInterface = 0x00000005;
+    private const uint DeviceNotifyWindowHandle = 0x00000000;
+    private const int DeviceInterfaceNameOffset = 28;
+    private static readonly Guid UsbDeviceInterfaceClass = new("A5DCBF10-6530-11D2-901F-00C04FB951ED");
     private static readonly nint HwndMessage = new(-3);
 
     private readonly WindowProcedure _windowProcedure;
     private readonly string _windowClassName = $"MiaDock.UsbDevices.{Guid.NewGuid():N}";
-    private readonly Dictionary<char, string> _knownLabels = new();
     private readonly object _gate = new();
-    private readonly Timer _reconciliationTimer;
+    private readonly UsbDeviceChangeCoalescer _coalescer = new(TimeSpan.FromSeconds(2));
+    private readonly Dictionary<string, StorageVolume> _knownStorageVolumes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, DevicePresentation> _knownDevices = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _connectedDeviceKeys = new(StringComparer.Ordinal);
     private nint _instance;
     private nint _windowHandle;
+    private nint _deviceNotification;
+    private int _monitorSession;
+    private int _leaseCount;
     private bool _running;
     private bool _disposed;
 
-    public WindowsUsbDeviceMonitor()
-    {
-        _windowProcedure = HandleWindowMessage;
-        _reconciliationTimer = new Timer(
-            _ => ReconcileRemovableDrivesSafely(),
-            null,
-            Timeout.InfiniteTimeSpan,
-            Timeout.InfiniteTimeSpan);
-    }
+    public WindowsUsbDeviceMonitor() => _windowProcedure = HandleWindowMessage;
 
     public event EventHandler<UsbDeviceChangedEventArgs>? DeviceChanged;
 
@@ -46,35 +53,60 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
         }
     }
 
-    public ValueTask StartAsync(CancellationToken cancellationToken = default)
+    public ValueTask<IAsyncDisposable> AcquireAsync(CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         cancellationToken.ThrowIfCancellationRequested();
 
         lock (_gate)
         {
-            if (_running)
+            _leaseCount++;
+            if (_leaseCount > 1)
+            {
+                return ValueTask.FromResult<IAsyncDisposable>(new Lease(this));
+            }
+
+            try
+            {
+                EnsureWindow();
+                SeedKnownStorageVolumes(); // Initial inventory is intentionally silent.
+                _knownDevices.Clear();
+                _connectedDeviceKeys.Clear();
+                _coalescer.Reset();
+                _monitorSession++;
+                _running = true;
+            }
+            catch
+            {
+                _leaseCount--;
+                throw;
+            }
+        }
+
+        return ValueTask.FromResult<IAsyncDisposable>(new Lease(this));
+    }
+
+    private ValueTask ReleaseLeaseAsync()
+    {
+        lock (_gate)
+        {
+            if (_leaseCount == 0)
             {
                 return ValueTask.CompletedTask;
             }
 
-            EnsureWindow();
-            SeedKnownRemovableDrives();
-            _running = true;
-            _reconciliationTimer.Change(TimeSpan.FromSeconds(2), TimeSpan.FromSeconds(2));
-        }
+            _leaseCount--;
+            if (_leaseCount > 0)
+            {
+                return ValueTask.CompletedTask;
+            }
 
-        return ValueTask.CompletedTask;
-    }
-
-    public ValueTask StopAsync(CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        lock (_gate)
-        {
             _running = false;
-            _knownLabels.Clear();
-            _reconciliationTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            _monitorSession++;
+            _knownStorageVolumes.Clear();
+            _knownDevices.Clear();
+            _connectedDeviceKeys.Clear();
+            _coalescer.Reset();
         }
 
         return ValueTask.CompletedTask;
@@ -87,19 +119,42 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
             return ValueTask.CompletedTask;
         }
 
-        // Skip DestroyWindow/UnregisterClass: nested WndProc during teardown can
-        // fail-fast. Process exit reclaims the message-only HWND.
-        _disposed = true;
+        nint notification;
         lock (_gate)
         {
+            _disposed = true;
+            _leaseCount = 0;
             _running = false;
+            _monitorSession++;
+            _knownStorageVolumes.Clear();
+            _knownDevices.Clear();
+            _connectedDeviceKeys.Clear();
+            _coalescer.Reset();
+            notification = _deviceNotification;
+            _deviceNotification = 0;
             _windowHandle = 0;
-            _knownLabels.Clear();
-            _reconciliationTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
         }
-        _reconciliationTimer.Dispose();
+
+        // Never let native cleanup destabilise app shutdown. The message-only
+        // window is process-owned and is reclaimed by Windows at process exit.
+        if (notification != 0)
+        {
+            try { _ = UnregisterDeviceNotification(notification); }
+            catch { }
+        }
 
         return ValueTask.CompletedTask;
+    }
+
+    private sealed class Lease(WindowsUsbDeviceMonitor owner) : IAsyncDisposable
+    {
+        private WindowsUsbDeviceMonitor? _owner = owner;
+
+        public ValueTask DisposeAsync()
+        {
+            var current = Interlocked.Exchange(ref _owner, null);
+            return current is null ? ValueTask.CompletedTask : current.ReleaseLeaseAsync();
+        }
     }
 
     private void EnsureWindow()
@@ -122,39 +177,25 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
             throw new Win32Exception(Marshal.GetLastWin32Error(), "USB mesaj penceresi kaydedilemedi.");
         }
 
-        _windowHandle = CreateWindowExW(
-            0,
-            _windowClassName,
-            string.Empty,
-            0,
-            0,
-            0,
-            0,
-            0,
-            HwndMessage,
-            0,
-            _instance,
-            0);
+        _windowHandle = CreateWindowExW(0, _windowClassName, string.Empty, 0, 0, 0, 0, 0,
+            HwndMessage, 0, _instance, 0);
         if (_windowHandle == 0)
         {
             var error = Marshal.GetLastWin32Error();
             UnregisterClassW(_windowClassName, _instance);
             throw new Win32Exception(error, "USB mesaj penceresi oluşturulamadı.");
         }
-    }
 
-    private void SeedKnownRemovableDrives()
-    {
-        _knownLabels.Clear();
-        foreach (var drive in DriveInfo.GetDrives())
+        var filter = new DevBroadcastDeviceInterface
         {
-            if (!IsRemovableDrive(drive))
-            {
-                continue;
-            }
-
-            var letter = char.ToUpperInvariant(drive.Name[0]);
-            _knownLabels[letter] = ResolveDisplayName(drive, letter);
+            Size = Marshal.SizeOf<DevBroadcastDeviceInterface>(),
+            DeviceType = DbtDevTypDeviceInterface,
+            ClassGuid = UsbDeviceInterfaceClass
+        };
+        _deviceNotification = RegisterDeviceNotificationW(_windowHandle, ref filter, DeviceNotifyWindowHandle);
+        if (_deviceNotification == 0)
+        {
+            throw new Win32Exception(Marshal.GetLastWin32Error(), "USB cihaz bildirimleri kaydedilemedi.");
         }
     }
 
@@ -162,23 +203,16 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
     {
         try
         {
-            if (!_disposed &&
-                message == WmDeviceChange &&
-                (wParam == DbtDeviceArrival || wParam == DbtDeviceRemoveComplete) &&
-                lParam != 0)
+            if (!_disposed && message == WmDeviceChange && lParam != 0 &&
+                (wParam == DbtDeviceArrival || wParam == DbtDeviceRemoveComplete))
             {
-                // A message-only HWND does not receive every volume broadcast on
-                // all Windows builds. Reconcile on the worker-pool timer instead
-                // of touching drives or subscribers on this native callback stack.
-                _reconciliationTimer.Change(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(2));
+                HandleDeviceChange(wParam == DbtDeviceArrival, lParam);
                 return 0;
             }
         }
-        catch (Exception)
+        catch
         {
-            // A managed exception must never cross the reverse P/Invoke WndProc
-            // boundary; escaping here terminates the process through a native
-            // fail-fast path that no handler can observe.
+            // A managed exception may never cross this reverse P/Invoke boundary.
         }
 
         return DefWindowProcW(window, message, wParam, lParam);
@@ -186,213 +220,197 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
 
     private void HandleDeviceChange(bool connected, nint lParam)
     {
-        bool running;
+        if (!TryReadUsbInterfaceKey(lParam, out var deviceKey))
+        {
+            return;
+        }
+
+        int session;
+        DevicePresentation removedPresentation = default;
         lock (_gate)
         {
-            running = _running && !_disposed;
-        }
-
-        if (!running)
-        {
-            return;
-        }
-
-        var header = Marshal.PtrToStructure<DevBroadcastHeader>(lParam);
-        if (header.DeviceType != DbtDevTypVolume)
-        {
-            return;
-        }
-
-        var volume = Marshal.PtrToStructure<DevBroadcastVolume>(lParam);
-        foreach (var letter in EnumerateDriveLetters(volume.UnitMask))
-        {
-            RaiseForDrive(connected, letter);
-        }
-    }
-
-    private void RaiseForDrive(bool connected, char letter)
-    {
-        if (connected && !TryRaiseConnected(letter))
-        {
-            _ = RetryConnectedAsync(letter);
-            return;
-        }
-
-        if (!connected)
-        {
-            TryRaiseDisconnected(letter);
-        }
-    }
-
-    private async Task RetryConnectedAsync(char letter)
-    {
-        for (var attempt = 0; attempt < 5; attempt++)
-        {
-            try
-            {
-                await Task.Delay(250).ConfigureAwait(false);
-            }
-            catch
+            if (!_running || _disposed || !_coalescer.TryAccept(deviceKey, connected, DateTimeOffset.UtcNow))
             {
                 return;
             }
 
-            if (TryRaiseConnected(letter))
+            session = _monitorSession;
+            if (connected)
             {
-                return;
+                _connectedDeviceKeys.Add(deviceKey);
             }
+            else
+            {
+                _connectedDeviceKeys.Remove(deviceKey);
+                if (_knownDevices.Remove(deviceKey, out var known))
+                {
+                    removedPresentation = known;
+                }
+            }
+        }
+
+        if (connected)
+        {
+            _ = PublishConnectedAfterDeviceSettlesAsync(deviceKey, session);
+            return;
+        }
+
+        PublishDeviceChanged(false, deviceKey,
+            removedPresentation == default ? DevicePresentation.Generic : removedPresentation);
+    }
+
+    private async Task PublishConnectedAfterDeviceSettlesAsync(string deviceKey, int session)
+    {
+        try
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(350)).ConfigureAwait(false);
+
+            DevicePresentation presentation;
+            lock (_gate)
+            {
+                if (!_running || _disposed || session != _monitorSession || !_connectedDeviceKeys.Contains(deviceKey))
+                {
+                    return;
+                }
+
+                presentation = FindNewStorageVolume() ?? DevicePresentation.Generic;
+                _knownDevices[deviceKey] = presentation;
+            }
+
+            PublishDeviceChanged(true, deviceKey, presentation);
+        }
+        catch
+        {
+            // Device settling and volume metadata are optional enrichment only.
         }
     }
 
-    private bool TryRaiseConnected(char letter)
+    private DevicePresentation? FindNewStorageVolume()
     {
-        string displayName;
-        lock (_gate)
+        var current = CaptureStorageVolumes();
+        var added = current.FirstOrDefault(pair => !_knownStorageVolumes.ContainsKey(pair.Key));
+        _knownStorageVolumes.Clear();
+        foreach (var pair in current)
         {
-            if (!_running || _disposed)
-            {
-                return true;
-            }
+            _knownStorageVolumes[pair.Key] = pair.Value;
+        }
 
-            if (!TryGetRemovableDrive(letter, out var drive))
+        return string.IsNullOrEmpty(added.Key) ? null : added.Value.ToPresentation();
+    }
+
+    private void SeedKnownStorageVolumes()
+    {
+        _knownStorageVolumes.Clear();
+        foreach (var pair in CaptureStorageVolumes())
+        {
+            _knownStorageVolumes[pair.Key] = pair.Value;
+        }
+    }
+
+    private static Dictionary<string, StorageVolume> CaptureStorageVolumes()
+    {
+        var volumes = new Dictionary<string, StorageVolume>(StringComparer.OrdinalIgnoreCase);
+        try
+        {
+            foreach (var drive in DriveInfo.GetDrives())
+            {
+                try
+                {
+                    if (drive.DriveType is not (DriveType.Fixed or DriveType.Removable) || !drive.IsReady)
+                    {
+                        continue;
+                    }
+
+                    var root = drive.Name;
+                    if (string.IsNullOrWhiteSpace(root) || root.Length < 2)
+                    {
+                        continue;
+                    }
+
+                    var letter = char.ToUpperInvariant(root[0]) + ":";
+                    volumes[root] = new StorageVolume(letter, drive.VolumeLabel);
+                }
+                catch
+                {
+                    // A volume can disappear during enumeration.
+                }
+            }
+        }
+        catch
+        {
+            // Drive queries are not required for USB device detection.
+        }
+
+        return volumes;
+    }
+
+    private bool TryReadUsbInterfaceKey(nint lParam, out string deviceKey)
+    {
+        deviceKey = string.Empty;
+        try
+        {
+            var header = Marshal.PtrToStructure<DevBroadcastHeader>(lParam);
+            if (header.DeviceType != DbtDevTypDeviceInterface || header.Size < DeviceInterfaceNameOffset + sizeof(char))
             {
                 return false;
             }
 
-            displayName = ResolveDisplayName(drive!, letter);
-            _knownLabels[letter] = displayName;
-        }
-
-        PublishDeviceChanged(true, letter, displayName);
-        return true;
-    }
-
-    private void TryRaiseDisconnected(char letter)
-    {
-        string displayName;
-        lock (_gate)
-        {
-            if (!_running || _disposed)
+            var deviceInterface = Marshal.PtrToStructure<DevBroadcastDeviceInterfaceHeader>(lParam);
+            if (deviceInterface.ClassGuid != UsbDeviceInterfaceClass)
             {
-                return;
+                return false;
             }
 
-            if (!_knownLabels.Remove(letter, out displayName!))
+            var byteLength = Math.Min((int)header.Size - DeviceInterfaceNameOffset, 32 * 1024);
+            var rawPath = Marshal.PtrToStringUni(lParam + DeviceInterfaceNameOffset, byteLength / sizeof(char))?.TrimEnd('\0');
+            if (string.IsNullOrWhiteSpace(rawPath))
             {
-                return;
-            }
-        }
-
-        PublishDeviceChanged(false, letter, displayName);
-    }
-
-    private void ReconcileRemovableDrivesSafely()
-    {
-        try
-        {
-            Dictionary<char, string> current = [];
-            foreach (var drive in DriveInfo.GetDrives())
-            {
-                if (!IsRemovableDrive(drive)) continue;
-                var letter = char.ToUpperInvariant(drive.Name[0]);
-                current[letter] = ResolveDisplayName(drive, letter);
+                return false;
             }
 
-            List<(bool Connected, char Letter, string DisplayName)> changes = [];
-            lock (_gate)
-            {
-                if (!_running || _disposed) return;
-                foreach (var (letter, label) in _knownLabels)
-                {
-                    if (!current.ContainsKey(letter)) changes.Add((false, letter, label));
-                }
-
-                foreach (var (letter, label) in current)
-                {
-                    if (!_knownLabels.ContainsKey(letter)) changes.Add((true, letter, label));
-                }
-
-                _knownLabels.Clear();
-                foreach (var (letter, label) in current) _knownLabels[letter] = label;
-            }
-
-            foreach (var change in changes)
-            {
-                PublishDeviceChanged(change.Connected, change.Letter, change.DisplayName);
-            }
-        }
-        catch
-        {
-            // USB enumeration must not take down the process during device churn.
-        }
-    }
-
-    private void PublishDeviceChanged(bool connected, char letter, string displayName)
-    {
-        foreach (EventHandler<UsbDeviceChangedEventArgs> handler in DeviceChanged?.GetInvocationList() ?? [])
-        {
-            try
-            {
-                handler(this, new UsbDeviceChangedEventArgs(
-                    connected, $"{letter}:", displayName, DateTimeOffset.UtcNow));
-            }
-            catch
-            {
-                // Device subscribers can be shutting down concurrently.
-            }
-        }
-    }
-
-    private static bool TryGetRemovableDrive(char letter, out DriveInfo? drive)
-    {
-        try
-        {
-            drive = new DriveInfo($"{letter}:\\");
-            if (IsRemovableDrive(drive))
-            {
-                return true;
-            }
-        }
-        catch
-        {
-            // Drive may still be mounting.
-        }
-
-        drive = null;
-        return false;
-    }
-
-    private static string ResolveDisplayName(DriveInfo drive, char letter)
-    {
-        try
-        {
-            if (drive.IsReady)
-            {
-                var label = drive.VolumeLabel?.Trim();
-                if (!string.IsNullOrEmpty(label))
-                {
-                    return $"{label} ({letter}:)";
-                }
-            }
-        }
-        catch
-        {
-            // Volume metadata can throw while the device is still settling.
-        }
-
-        return $"{letter}:";
-    }
-
-    private static bool IsRemovableDrive(DriveInfo drive)
-    {
-        try
-        {
-            return drive.DriveType == DriveType.Removable;
+            // The raw interface path can contain hardware identifiers. Retain only
+            // a short one-way key and never log or expose the original path.
+            deviceKey = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawPath)))[..16];
+            return true;
         }
         catch
         {
             return false;
         }
+    }
+
+    private void PublishDeviceChanged(bool connected, string deviceKey, DevicePresentation presentation)
+    {
+        foreach (EventHandler<UsbDeviceChangedEventArgs> handler in DeviceChanged?.GetInvocationList() ?? [])
+        {
+            try
+            {
+                handler(this, CreateDeviceChangedEvent(
+                    connected, deviceKey, presentation.DriveLetter, presentation.DisplayName, DateTimeOffset.UtcNow));
+            }
+            catch
+            {
+                // Subscribers may be shutting down concurrently.
+            }
+        }
+    }
+
+    internal static UsbDeviceChangedEventArgs CreateDeviceChangedEvent(
+        bool connected,
+        string deviceKey,
+        string? driveLetter,
+        string? volumeLabel,
+        DateTimeOffset occurredAtUtc)
+    {
+        var normalizedDrive = string.IsNullOrWhiteSpace(driveLetter) ? string.Empty : driveLetter.Trim();
+        var label = volumeLabel?.Trim();
+        var displayName = string.IsNullOrEmpty(normalizedDrive)
+            ? "USB device"
+            : string.IsNullOrEmpty(label) || string.Equals(label, normalizedDrive, StringComparison.OrdinalIgnoreCase)
+                ? normalizedDrive
+                : $"{label} ({normalizedDrive})";
+
+        return new UsbDeviceChangedEventArgs(connected, normalizedDrive, displayName, occurredAtUtc, deviceKey);
     }
 
     internal static IEnumerable<char> EnumerateDriveLetters(uint unitMask)
@@ -406,6 +424,16 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
         }
     }
 
+    private readonly record struct StorageVolume(string DriveLetter, string? Label)
+    {
+        public DevicePresentation ToPresentation() => new(DriveLetter, Label);
+    }
+
+    private readonly record struct DevicePresentation(string DriveLetter, string? DisplayName)
+    {
+        public static DevicePresentation Generic { get; } = new(string.Empty, null);
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     private struct DevBroadcastHeader
     {
@@ -415,13 +443,22 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
     }
 
     [StructLayout(LayoutKind.Sequential)]
-    private struct DevBroadcastVolume
+    private struct DevBroadcastDeviceInterfaceHeader
     {
         public uint Size;
         public uint DeviceType;
         public uint Reserved;
-        public uint UnitMask;
-        public ushort Flags;
+        public Guid ClassGuid;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DevBroadcastDeviceInterface
+    {
+        public int Size;
+        public uint DeviceType;
+        public uint Reserved;
+        public Guid ClassGuid;
+        public ushort Name;
     }
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
@@ -448,19 +485,15 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
     private static extern ushort RegisterClassExW(ref WindowClass windowClass);
 
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-    private static extern nint CreateWindowExW(
-        uint extendedStyle,
-        string className,
-        string windowName,
-        uint style,
-        int x,
-        int y,
-        int width,
-        int height,
-        nint parent,
-        nint menu,
-        nint instance,
-        nint parameter);
+    private static extern nint CreateWindowExW(uint extendedStyle, string className, string windowName,
+        uint style, int x, int y, int width, int height, nint parent, nint menu, nint instance, nint parameter);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    private static extern nint RegisterDeviceNotificationW(nint recipient, ref DevBroadcastDeviceInterface notificationFilter, uint flags);
+
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool UnregisterDeviceNotification(nint handle);
 
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     [return: MarshalAs(UnmanagedType.Bool)]
@@ -471,4 +504,25 @@ public sealed class WindowsUsbDeviceMonitor : IUsbDeviceMonitor
 
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern nint GetModuleHandleW(string? moduleName);
+}
+
+internal sealed class UsbDeviceChangeCoalescer(TimeSpan duplicateWindow)
+{
+    private readonly TimeSpan _duplicateWindow = duplicateWindow;
+    private readonly Dictionary<string, (bool Connected, DateTimeOffset OccurredAtUtc)> _events = new(StringComparer.Ordinal);
+
+    public bool TryAccept(string deviceKey, bool connected, DateTimeOffset occurredAtUtc)
+    {
+        if (_events.TryGetValue(deviceKey, out var previous) &&
+            previous.Connected == connected &&
+            occurredAtUtc - previous.OccurredAtUtc < _duplicateWindow)
+        {
+            return false;
+        }
+
+        _events[deviceKey] = (connected, occurredAtUtc);
+        return true;
+    }
+
+    public void Reset() => _events.Clear();
 }

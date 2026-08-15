@@ -1,11 +1,108 @@
 using MiaDock.Core.Presentation;
 using MiaDock.Core.Settings;
+using System.Text.Json;
 
 namespace MiaDock.Core.Tests;
 
 [TestClass]
 public sealed class SettingsValidatorTests
 {
+    [TestMethod]
+    public void Normalize_SchemaTwentySevenWithoutAudibleNotifications_AddsEnabledDefaults()
+    {
+        var legacy = MiaDockSettings.Default with
+        {
+            SchemaVersion = 27,
+            AudibleNotifications = null!
+        };
+
+        var result = SettingsValidator.Normalize(legacy);
+
+        Assert.AreEqual(29, result.SchemaVersion);
+        Assert.AreEqual(AudibleNotificationSettings.Default, result.AudibleNotifications);
+        Assert.IsTrue(result.AudibleNotifications.IsEnabled);
+        Assert.IsTrue(result.AudibleNotifications.NetworkOfflineEnabled);
+        Assert.IsTrue(result.AudibleNotifications.ConnectedWithoutInternetEnabled);
+        Assert.IsTrue(result.AudibleNotifications.LowBatteryEnabled);
+        Assert.IsTrue(result.AudibleNotifications.DeviceConnectedEnabled);
+        Assert.IsTrue(result.AudibleNotifications.DeviceDisconnectedEnabled);
+        Assert.IsTrue(result.AudibleNotifications.HourlyEnabled);
+        Assert.IsFalse(result.Modules["hourly-notification"].IsEnabled);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaTwentyEight_AddsEnabledHourlySoundAndDisabledModule()
+    {
+        var modules = new Dictionary<string, ModuleSettingsEnvelope>(
+            MiaDockSettings.Default.Modules,
+            StringComparer.Ordinal);
+        modules.Remove("hourly-notification");
+        var legacy = MiaDockSettings.Default with
+        {
+            SchemaVersion = 28,
+            AudibleNotifications = MiaDockSettings.Default.AudibleNotifications with
+            {
+                HourlyEnabled = false
+            },
+            Modules = modules
+        };
+
+        var result = SettingsValidator.Normalize(legacy);
+
+        Assert.AreEqual(29, result.SchemaVersion);
+        Assert.IsTrue(result.AudibleNotifications.HourlyEnabled);
+        Assert.IsFalse(result.Modules["hourly-notification"].IsEnabled);
+        Assert.AreEqual(4, result.Modules["hourly-notification"].EventDurationSeconds);
+        Assert.IsFalse(result.Modules["hourly-notification"].ShowInFullscreen);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaTwentyNine_PreservesHourlyPreferences()
+    {
+        var modules = new Dictionary<string, ModuleSettingsEnvelope>(
+            MiaDockSettings.Default.Modules,
+            StringComparer.Ordinal)
+        {
+            ["hourly-notification"] = ModuleSettingsEnvelope.HourlyNotificationDefault with
+            {
+                IsEnabled = true
+            }
+        };
+        var settings = MiaDockSettings.Default with
+        {
+            AudibleNotifications = MiaDockSettings.Default.AudibleNotifications with
+            {
+                HourlyEnabled = false
+            },
+            Modules = modules
+        };
+
+        var result = SettingsValidator.Normalize(settings);
+
+        Assert.IsFalse(result.AudibleNotifications.HourlyEnabled);
+        Assert.IsTrue(result.Modules["hourly-notification"].IsEnabled);
+    }
+
+    [TestMethod]
+    public void AudibleNotificationMasterSwitch_PreservesIndividualPreferences()
+    {
+        var preferences = AudibleNotificationSettings.Default with
+        {
+            IsEnabled = false,
+            DeviceDisconnectedEnabled = false
+        };
+
+        Assert.IsFalse(preferences.Allows(MiaDock.Core.Modules.AudibleNotificationCue.DeviceConnected));
+
+        var enabledAgain = preferences with { IsEnabled = true };
+        Assert.IsTrue(enabledAgain.DeviceConnectedEnabled);
+        Assert.IsFalse(enabledAgain.DeviceDisconnectedEnabled);
+        Assert.IsTrue(enabledAgain.HourlyEnabled);
+        Assert.IsTrue(enabledAgain.Allows(MiaDock.Core.Modules.AudibleNotificationCue.DeviceConnected));
+        Assert.IsFalse(enabledAgain.Allows(MiaDock.Core.Modules.AudibleNotificationCue.DeviceDisconnected));
+        Assert.IsTrue(enabledAgain.Allows(MiaDock.Core.Modules.AudibleNotificationCue.Hourly));
+    }
+
     [TestMethod]
     public void Normalize_SchemaEighteen_MigratesLegacyFullscreenToggle()
     {
@@ -62,6 +159,22 @@ public sealed class SettingsValidatorTests
 
         Assert.AreEqual(AppLanguage.English, result.General.Language);
         Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+    }
+
+    [TestMethod]
+    public void Normalize_PreservesEdgeRevealVisibilityMode()
+    {
+        var settings = MiaDockSettings.Default with
+        {
+            General = MiaDockSettings.Default.General with
+            {
+                VisibilityMode = IslandVisibilityMode.EdgeReveal
+            }
+        };
+
+        var result = SettingsValidator.Normalize(settings);
+
+        Assert.AreEqual(IslandVisibilityMode.EdgeReveal, result.General.VisibilityMode);
     }
 
     [TestMethod]
@@ -573,5 +686,66 @@ public sealed class SettingsValidatorTests
 
         Assert.AreEqual(MiaDock.Core.Presentation.DockCornerRadii.Uniform(9), once.Appearance.EffectiveCornerRadii);
         Assert.AreEqual(once, twice);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaTwentyFive_MigratesLegacyUsbEventPreferenceToDeviceHub()
+    {
+        var deviceHub = ModuleSettingsEnvelope.DeviceHubDefault;
+        var options = deviceHub.Options!
+            .Where(pair => pair.Key != "showStorageEvents")
+            .ToDictionary(pair => pair.Key, pair => pair.Value, StringComparer.Ordinal);
+        var modules = new Dictionary<string, ModuleSettingsEnvelope>(MiaDockSettings.Default.Modules, StringComparer.Ordinal)
+        {
+            ["device-hub"] = deviceHub with { Options = options }
+        };
+        var previous = MiaDockSettings.Default with
+        {
+            SchemaVersion = 25,
+            General = MiaDockSettings.Default.General with { ShowUsbDeviceEvents = false },
+            Modules = modules
+        };
+
+        var result = SettingsValidator.Normalize(previous);
+        var migrated = result.Modules["device-hub"].Options!["showStorageEvents"];
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.IsFalse(migrated.GetBoolean());
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaTwentySix_MigratesClipboardPeekToSessionOnlySchema()
+    {
+        var clipboard = ModuleSettingsEnvelope.ClipboardPeekDefault with
+        {
+            IsEnabled = true,
+            Options = new Dictionary<string, JsonElement>(StringComparer.Ordinal)
+            {
+                ["historyLimit"] = JsonSerializer.SerializeToElement(15),
+                ["eventMode"] = JsonSerializer.SerializeToElement("everything"),
+                ["hideSensitiveContent"] = JsonSerializer.SerializeToElement(false),
+                ["clearHistoryOnExit"] = JsonSerializer.SerializeToElement(false)
+            }
+        };
+        var modules = new Dictionary<string, ModuleSettingsEnvelope>(MiaDockSettings.Default.Modules, StringComparer.Ordinal)
+        {
+            ["clipboard-peek"] = clipboard
+        };
+
+        var result = SettingsValidator.Normalize(MiaDockSettings.Default with
+        {
+            SchemaVersion = 26,
+            Modules = modules
+        });
+        var migrated = result.Modules["clipboard-peek"];
+
+        Assert.IsTrue(migrated.IsEnabled);
+        Assert.IsFalse(migrated.ShowInFullscreen);
+        Assert.AreEqual(20, migrated.Options!["historyLimit"].GetInt32());
+        Assert.AreEqual("everything", migrated.Options["eventMode"].GetString());
+        Assert.IsTrue(migrated.Options["showImageEvents"].GetBoolean());
+        Assert.AreEqual(3, migrated.Options.Count);
+        Assert.IsFalse(migrated.Options.ContainsKey("hideSensitiveContent"));
+        Assert.IsFalse(migrated.Options.ContainsKey("clearHistoryOnExit"));
     }
 }

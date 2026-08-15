@@ -4,4 +4,5 @@ public sealed record UsbDeviceChangedEventArgs(
     bool IsConnected,
     string DriveLetter,
     string DisplayName,
-    DateTimeOffset OccurredAtUtc);
+    DateTimeOffset OccurredAtUtc,
+    string DeviceKey = "");

@@ -82,6 +82,14 @@ public sealed partial class ModuleNotificationHost : UserControl
         {
             transfer.DataContext = state.Presentation;
         }
+        else if (ViewHost.Content is DeviceHubNotificationView deviceHub)
+        {
+            deviceHub.DataContext = state.Presentation;
+        }
+        else if (ViewHost.Content is ClipboardPeekNotificationView clipboardPeek)
+        {
+            clipboardPeek.DataContext = state.Presentation;
+        }
 
         ApplyControlVisibility();
     }
