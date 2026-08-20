@@ -2,6 +2,9 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using MiaDock.Core.Logging;
 using MiaDock.Core.Settings;
+using Windows.Win32;
+using Windows.Win32.Foundation;
+using Windows.Win32.UI.Input.KeyboardAndMouse;
 
 namespace MiaDock.Platform.Windows.HotKeys;
 
@@ -26,8 +29,9 @@ public sealed class WindowsGlobalHotKeyService : IGlobalHotKeyService
     public WindowsGlobalHotKeyService(ILogService? log = null)
     {
         _windowProcedure = HandleWindowMessage;
-        _registerHotKey = RegisterHotKey;
-        _unregisterHotKey = UnregisterHotKey;
+        _registerHotKey = static (window, id, modifiers, key) =>
+            PInvoke.RegisterHotKey(new HWND(window), id, (HOT_KEY_MODIFIERS)modifiers, key);
+        _unregisterHotKey = static (window, id) => PInvoke.UnregisterHotKey(new HWND(window), id);
         _log = log;
         _ownsNativeWindow = true;
     }
@@ -271,12 +275,6 @@ public sealed class WindowsGlobalHotKeyService : IGlobalHotKeyService
     private static extern bool UnregisterClassW(string className, nint instance);
     [DllImport("user32.dll")]
     private static extern nint DefWindowProcW(nint window, uint message, nuint wParam, nint lParam);
-    [DllImport("user32.dll", SetLastError = true)]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool RegisterHotKey(nint window, int id, uint modifiers, uint virtualKey);
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool UnregisterHotKey(nint window, int id);
     [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
     private static extern nint GetModuleHandleW(string? moduleName);
 }

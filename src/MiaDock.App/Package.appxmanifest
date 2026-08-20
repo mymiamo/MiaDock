@@ -10,7 +10,7 @@
 
   <Identity Name="mymiamo.net.MiaDock"
             Publisher="CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA"
-            Version="1.5.4.0" />
+            Version="1.5.3.0" />
   <Properties>
     <DisplayName>MiaDock</DisplayName>
     <PublisherDisplayName>Eray Durupınar (mymiamo.net)</PublisherDisplayName>

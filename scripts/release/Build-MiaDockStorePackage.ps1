@@ -17,7 +17,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$expectedVersion = "1.5.4.0"
+$expectedVersion = "1.5.3.0"
 $repositoryRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot "..\.."))
 $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csproj"
@@ -27,7 +27,7 @@ $validationScript = Join-Path $repositoryRoot (
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
     $timestamp = [DateTimeOffset]::UtcNow.ToString("yyyyMMdd-HHmmss")
     $ResultsDirectory = Join-Path $repositoryRoot (
-        "artifacts\release\1.5.4.0\candidate-$timestamp")
+        "artifacts\release\1.5.3.0\candidate-$timestamp")
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
@@ -138,6 +138,24 @@ function Invoke-DotNet {
     }
 }
 
+function Get-Sha256 {
+    param(
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    $stream = [System.IO.File]::OpenRead($Path)
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        return -join ($algorithm.ComputeHash($stream) | ForEach-Object {
+            $_.ToString("x2")
+        })
+    } finally {
+        $algorithm.Dispose()
+        $stream.Dispose()
+    }
+}
+
 function Read-PackageIdentity {
     param(
         [Parameter(Mandatory)]
@@ -222,7 +240,9 @@ function Assert-AndExtractStoreUpload {
             "Assets/StoreLogo.png",
             "Assets/Square44x44Logo.png",
             "Assets/Square150x150Logo.png",
-            "MiaDock.App.exe")
+            "MiaDock.App.exe",
+            "WinUIEx.dll",
+            "WinUIEx.pri")
         $missing = @($requiredEntries | Where-Object { $_ -notin $entryNames })
         if ($missing.Count -gt 0) {
             throw "Store package entries are missing: $($missing -join ', ')."
@@ -233,10 +253,9 @@ function Assert-AndExtractStoreUpload {
 
     return [ordered]@{
         UploadPath = $UploadPath
-        UploadSha256 = (Get-FileHash -LiteralPath $UploadPath -Algorithm SHA256).Hash
+        UploadSha256 = Get-Sha256 -Path $UploadPath
         WackPackagePath = $wackPackagePath
-        WackPackageSha256 = (
-            Get-FileHash -LiteralPath $wackPackagePath -Algorithm SHA256).Hash
+        WackPackageSha256 = Get-Sha256 -Path $wackPackagePath
         IdentityName = $identity.Name
         Publisher = $identity.Publisher
         Version = $identity.Version

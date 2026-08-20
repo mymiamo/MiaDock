@@ -239,7 +239,10 @@ public sealed class IslandShellTests
         StringAssert.Contains(source, "activationAware.SetPresentationActive(hidden && horizontal)");
         StringAssert.Contains(source, "EdgeRevealStatusHost.VerticalAlignment");
         StringAssert.Contains(overlay, "EdgeRevealVisibleStripInDips");
-        StringAssert.Contains(overlay, "EdgeRevealStripThicknessInDips = 15");
+        StringAssert.Contains(overlay, "EdgeRevealStripThicknessInDips = 3");
+        StringAssert.Contains(overlay, "EdgeRevealActivationDelayMilliseconds = 100");
+        StringAssert.Contains(overlay, "TimeSpan.FromMilliseconds(650)");
+        StringAssert.Contains(overlay, "SuspendEdgeRevealForExclusiveFullscreen");
         StringAssert.Contains(overlay, "IslandVisibilityMode.EdgeReveal");
         StringAssert.Contains(overlay, "IsEdgeRevealModeActive");
     }

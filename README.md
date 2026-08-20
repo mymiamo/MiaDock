@@ -11,7 +11,7 @@
 [![CI](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml/badge.svg)](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/github/license/mymiamo/MiaDock)](LICENSE)
 
-[Version **1.5.4.0** · Releases](https://github.com/mymiamo/MiaDock/releases)
+[Version **1.5.3.0** · Releases](https://github.com/mymiamo/MiaDock/releases)
 
 <a href="https://get.microsoft.com/installer/download/9pml784d0fdk?referrer=appbadge" target="_self">
   <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Download MiaDock from the Microsoft Store" />

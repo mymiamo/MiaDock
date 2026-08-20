@@ -2,8 +2,9 @@ using System.Runtime.InteropServices;
 using MiaDock.Core.Audio;
 using MiaDock.Core.Logging;
 using MiaDock.Core.Modules;
-using Windows.Media.Core;
-using Windows.Media.Playback;
+using MiaDock.Core.Settings;
+using NAudio.CoreAudioApi;
+using NAudio.Wave;
 
 namespace MiaDock.Platform.Windows.Audio;
 
@@ -33,10 +34,10 @@ public sealed class WindowsAudibleNotificationPlayer : IAudibleNotificationPlaye
     private DateTimeOffset _lastCueAt;
     private bool _disposed;
 
-    public WindowsAudibleNotificationPlayer(ILogService? log = null)
+    public WindowsAudibleNotificationPlayer(IAudibleNotificationSettingsProvider settings, ILogService? log = null)
         : this(
             Path.Combine(AppContext.BaseDirectory, "Assets", "sfx"),
-            static () => new WindowsMediaAudibleNotificationSession(),
+            () => new NaudioAudibleNotificationSession(() => settings.Current, log),
             File.Exists,
             TimeProvider.System,
             log)
@@ -199,45 +200,28 @@ internal interface IAudibleNotificationPlaybackSession : IDisposable
     void Stop();
 }
 
-internal sealed class WindowsMediaAudibleNotificationSession : IAudibleNotificationPlaybackSession
+internal sealed class NaudioAudibleNotificationSession : IAudibleNotificationPlaybackSession
 {
-    private readonly MediaPlayer _player;
-    private MediaSource? _source;
+    private readonly Func<AudibleNotificationSettings> _settings;
+    private readonly ILogService? _log;
+    private readonly SemaphoreSlim _gate = new(1, 1);
+    private WasapiPlayer? _player;
+    private AudioFileReader? _reader;
     private bool _disposed;
 
-    internal WindowsMediaAudibleNotificationSession()
+    internal NaudioAudibleNotificationSession(
+        Func<AudibleNotificationSettings> settings,
+        ILogService? log)
     {
-        _player = new MediaPlayer
-        {
-            AudioCategory = MediaPlayerAudioCategory.Alerts,
-            IsLoopingEnabled = false,
-            Volume = 1
-        };
-        _player.CommandManager.IsEnabled = false;
-        _player.MediaFailed += OnMediaFailed;
+        _settings = settings;
+        _log = log;
     }
 
     public event EventHandler? Failed;
 
-    public void Play(Uri source)
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        var previous = _source;
-        _source = MediaSource.CreateFromUri(source);
-        _player.Source = _source;
-        previous?.Dispose();
-        _player.Play();
-    }
+    public void Play(Uri source) => _ = PlayAsync(source);
 
-    public void Stop()
-    {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        _player.Pause();
-        if (_source is not null)
-        {
-            _player.PlaybackSession.Position = TimeSpan.Zero;
-        }
-    }
+    public void Stop() => _ = StopAsync();
 
     public void Dispose()
     {
@@ -247,14 +231,95 @@ internal sealed class WindowsMediaAudibleNotificationSession : IAudibleNotificat
         }
 
         _disposed = true;
-        _player.MediaFailed -= OnMediaFailed;
-        try { _player.Pause(); } catch (Exception exception) when (exception is COMException or ObjectDisposedException) { }
-        try { _player.Source = null; } catch (Exception exception) when (exception is COMException or ObjectDisposedException) { }
-        try { _source?.Dispose(); } catch (Exception exception) when (exception is COMException or ObjectDisposedException) { }
-        _source = null;
-        try { _player.Dispose(); } catch (Exception exception) when (exception is COMException or ObjectDisposedException) { }
+        StopAsync().GetAwaiter().GetResult();
+        _gate.Dispose();
     }
 
-    private void OnMediaFailed(MediaPlayer sender, MediaPlayerFailedEventArgs args) =>
-        Failed?.Invoke(this, EventArgs.Empty);
+    private async Task PlayAsync(Uri source)
+    {
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_disposed) return;
+            await StopCoreAsync().ConfigureAwait(false);
+            var options = _settings();
+            var builder = new WasapiPlayerBuilder().WithSharedMode().WithEventSync();
+            var usedFallback = false;
+            if (!string.IsNullOrWhiteSpace(options.OutputDeviceId))
+            {
+                try
+                {
+                    using var devices = new MMDeviceEnumerator();
+                    builder.WithDevice(devices.GetDevice(options.OutputDeviceId));
+                }
+                catch (Exception)
+                {
+                    usedFallback = true;
+                }
+            }
+
+            var player = builder.Build();
+            var reader = new AudioFileReader(source.LocalPath);
+            player.Init(reader);
+            player.Volume = options.VolumePercent / 100f;
+            player.PlaybackStopped += OnPlaybackStopped;
+            _player = player;
+            _reader = reader;
+            player.Play();
+            if (usedFallback)
+            {
+                _log?.Write(TechnicalLogLevel.Warning, TechnicalEventIds.AudibleNotificationPlaybackFailed,
+                    "NotificationSound", "The selected notification device was unavailable; the default output was used.",
+                    properties: new Dictionary<string, object?> { ["operation"] = "fallback-default-device" });
+            }
+        }
+        catch (Exception)
+        {
+            Failed?.Invoke(this, EventArgs.Empty);
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
+    private async Task StopAsync()
+    {
+        if (_disposed && _player is null) return;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try { await StopCoreAsync().ConfigureAwait(false); }
+        finally { _gate.Release(); }
+    }
+
+    private async Task StopCoreAsync()
+    {
+        var player = _player;
+        var reader = _reader;
+        _player = null;
+        _reader = null;
+        if (player is not null)
+        {
+            player.PlaybackStopped -= OnPlaybackStopped;
+            await player.DisposeAsync().ConfigureAwait(false);
+        }
+        reader?.Dispose();
+    }
+
+    private void OnPlaybackStopped(object? sender, StoppedEventArgs args)
+    {
+        if (args.Exception is not null) Failed?.Invoke(this, EventArgs.Empty);
+        _ = ReleaseCompletedAsync(sender as WasapiPlayer);
+    }
+
+    private async Task ReleaseCompletedAsync(WasapiPlayer? completed)
+    {
+        if (completed is null) return;
+        await _gate.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (!ReferenceEquals(_player, completed)) return;
+            await StopCoreAsync().ConfigureAwait(false);
+        }
+        finally { _gate.Release(); }
+    }
 }

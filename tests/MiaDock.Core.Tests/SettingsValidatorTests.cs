@@ -18,7 +18,7 @@ public sealed class SettingsValidatorTests
 
         var result = SettingsValidator.Normalize(legacy);
 
-        Assert.AreEqual(29, result.SchemaVersion);
+        Assert.AreEqual(30, result.SchemaVersion);
         Assert.AreEqual(AudibleNotificationSettings.Default, result.AudibleNotifications);
         Assert.IsTrue(result.AudibleNotifications.IsEnabled);
         Assert.IsTrue(result.AudibleNotifications.NetworkOfflineEnabled);
@@ -49,7 +49,7 @@ public sealed class SettingsValidatorTests
 
         var result = SettingsValidator.Normalize(legacy);
 
-        Assert.AreEqual(29, result.SchemaVersion);
+        Assert.AreEqual(30, result.SchemaVersion);
         Assert.IsTrue(result.AudibleNotifications.HourlyEnabled);
         Assert.IsFalse(result.Modules["hourly-notification"].IsEnabled);
         Assert.AreEqual(4, result.Modules["hourly-notification"].EventDurationSeconds);
@@ -81,6 +81,26 @@ public sealed class SettingsValidatorTests
 
         Assert.IsFalse(result.AudibleNotifications.HourlyEnabled);
         Assert.IsTrue(result.Modules["hourly-notification"].IsEnabled);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaTwentyNine_AddsAudioOutputDefaultsWithoutChangingPreferences()
+    {
+        var legacy = MiaDockSettings.Default with
+        {
+            SchemaVersion = 29,
+            AudibleNotifications = MiaDockSettings.Default.AudibleNotifications with
+            {
+                OutputDeviceId = "  endpoint-id  ",
+                VolumePercent = 135
+            }
+        };
+
+        var result = SettingsValidator.Normalize(legacy);
+
+        Assert.AreEqual(30, result.SchemaVersion);
+        Assert.AreEqual("endpoint-id", result.AudibleNotifications.OutputDeviceId);
+        Assert.AreEqual(100, result.AudibleNotifications.VolumePercent);
     }
 
     [TestMethod]

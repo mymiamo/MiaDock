@@ -34,7 +34,8 @@ public sealed partial class OverlayWindow : Window
 {
     private const long WheelNavigationThrottleMilliseconds = 90;
     private const long PointerActivityThrottleMilliseconds = 200;
-    private const double EdgeRevealStripThicknessInDips = 15;
+    private const double EdgeRevealStripThicknessInDips = 3;
+    private const long EdgeRevealActivationDelayMilliseconds = 100;
     private readonly OverlayWindowViewModel _viewModel;
     private readonly IOverlayWindowController _windowController;
     private readonly IslandAutoCollapseController _autoCollapse;
@@ -71,6 +72,7 @@ public sealed partial class OverlayWindow : Window
     private bool _isPointerPressed;
     private bool _edgeRevealHoverVisible;
     private bool _fullscreenAffectsDockDisplay;
+    private long _edgeRevealActivationStartedTimestamp;
     private long _lastWheelNavigationTimestamp;
     private long _lastPointerActivityTimestamp;
 
@@ -137,11 +139,11 @@ public sealed partial class OverlayWindow : Window
         _moduleReturnTimer.IsRepeating = false;
         _moduleReturnTimer.Tick += OnModuleReturnTimerTick;
         _edgeRevealPollTimer = DispatcherQueue.CreateTimer();
-        _edgeRevealPollTimer.Interval = TimeSpan.FromMilliseconds(200);
+        _edgeRevealPollTimer.Interval = TimeSpan.FromMilliseconds(75);
         _edgeRevealPollTimer.IsRepeating = true;
         _edgeRevealPollTimer.Tick += OnEdgeRevealPollTimerTick;
         _edgeRevealHideTimer = DispatcherQueue.CreateTimer();
-        _edgeRevealHideTimer.Interval = TimeSpan.FromMilliseconds(450);
+        _edgeRevealHideTimer.Interval = TimeSpan.FromMilliseconds(650);
         _edgeRevealHideTimer.IsRepeating = false;
         _edgeRevealHideTimer.Tick += OnEdgeRevealHideTimerTick;
         _viewModel.Island.UpdateTemporarySelectionDuration(
@@ -893,7 +895,13 @@ public sealed partial class OverlayWindow : Window
         if (!snapshot.IsFullscreen || fullscreenTargetChanged)
         {
             _edgeRevealHoverVisible = false;
+            _edgeRevealActivationStartedTimestamp = 0;
             _edgeRevealHideTimer.Stop();
+        }
+
+        if (IsExclusiveFullscreenEdgeReveal())
+        {
+            SuspendEdgeRevealForExclusiveFullscreen();
         }
 
         ApplyEnvironment();
@@ -907,9 +915,28 @@ public sealed partial class OverlayWindow : Window
             return;
         }
 
-        if (!_edgeRevealHoverVisible && _windowController.IsPointerAtAttachedEdge())
+        if (_edgeRevealHoverVisible)
+        {
+            return;
+        }
+
+        if (!_windowController.IsPointerAtAttachedEdge())
+        {
+            _edgeRevealActivationStartedTimestamp = 0;
+            return;
+        }
+
+        var now = Environment.TickCount64;
+        if (_edgeRevealActivationStartedTimestamp == 0)
+        {
+            _edgeRevealActivationStartedTimestamp = now;
+            return;
+        }
+
+        if (now - _edgeRevealActivationStartedTimestamp >= EdgeRevealActivationDelayMilliseconds)
         {
             _edgeRevealHoverVisible = true;
+            _edgeRevealActivationStartedTimestamp = 0;
             _edgeRevealHideTimer.Stop();
             ApplyEnvironment();
         }
@@ -929,6 +956,7 @@ public sealed partial class OverlayWindow : Window
         }
 
         _edgeRevealHoverVisible = false;
+        _edgeRevealActivationStartedTimestamp = 0;
         ApplyEnvironment();
     }
 
@@ -1032,6 +1060,12 @@ public sealed partial class OverlayWindow : Window
         var focus = _focusPolicy.Current;
         var display = ResolveDockDisplay(settings);
         _fullscreenAffectsDockDisplay = DoesFullscreenAffectDisplay(display);
+        if (IsExclusiveFullscreenEdgeReveal())
+        {
+            SuspendEdgeRevealForExclusiveFullscreen();
+            return;
+        }
+
         _windowController.UpdatePlacement(
             SettingsMapper.ToOverlayPosition(settings.General.Position),
             display.Id,
@@ -1053,7 +1087,8 @@ public sealed partial class OverlayWindow : Window
                 _edgeRevealHoverVisible,
                 DockInteractionSession.IsActive,
                 _isPointerPressed,
-                _viewModel.Island.CurrentState == IslandVisualState.ExpandedModule));
+                _viewModel.Island.CurrentState == IslandVisualState.ExpandedModule,
+                _fullscreenState.Reason == FullscreenDetectionReason.ExclusiveDirect3D));
         if (!_fullscreenAffectsDockDisplay &&
             settings.General.VisibilityMode == IslandVisibilityMode.EdgeReveal &&
             !_manuallyHidden &&
@@ -1134,6 +1169,7 @@ public sealed partial class OverlayWindow : Window
         _edgeRevealPollTimer.Stop();
         _edgeRevealHideTimer.Stop();
         _edgeRevealHoverVisible = false;
+        _edgeRevealActivationStartedTimestamp = 0;
         var restorePosition = SettingsMapper.ToOverlayPosition(_settings.Current.General.Position);
         Island.SetEdgeRevealAppearance(false, restorePosition);
         _windowController.SetEdgeRevealHidden(
@@ -1151,6 +1187,20 @@ public sealed partial class OverlayWindow : Window
         return _fullscreenAffectsDockDisplay
             ? settings.Fullscreen.Behavior == FullscreenDockBehavior.EdgeReveal
             : settings.General.VisibilityMode == IslandVisibilityMode.EdgeReveal;
+    }
+
+    private bool IsExclusiveFullscreenEdgeReveal() =>
+        _fullscreenAffectsDockDisplay &&
+        _fullscreenState.Reason == FullscreenDetectionReason.ExclusiveDirect3D &&
+        _settings.Current.Fullscreen.Behavior == FullscreenDockBehavior.EdgeReveal;
+
+    private void SuspendEdgeRevealForExclusiveFullscreen()
+    {
+        _edgeRevealPollTimer.Stop();
+        _edgeRevealHideTimer.Stop();
+        _edgeRevealHoverVisible = false;
+        _edgeRevealActivationStartedTimestamp = 0;
+        _windowController.Hide();
     }
 
     private void OnAnimationsEnabledChanged(object? sender, EventArgs args)

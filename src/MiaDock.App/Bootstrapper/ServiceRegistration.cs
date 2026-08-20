@@ -245,6 +245,9 @@ public static class ServiceRegistration
         services.AddSingleton<ILogArchiveService>(provider => provider.GetRequiredService<JsonLinesLogService>());
         services.AddSingleton<ISettingsStore, JsonSettingsStore>();
         services.AddSingleton<ISettingsService, SettingsService>();
+        services.AddSingleton<AudibleNotificationSettingsProvider>();
+        services.AddSingleton<IAudibleNotificationSettingsProvider>(provider =>
+            provider.GetRequiredService<AudibleNotificationSettingsProvider>());
         services.AddSingleton<OverlayWindowHandleProvider>();
         services.AddSingleton<IOverlayWindowHandleProvider>(provider => provider.GetRequiredService<OverlayWindowHandleProvider>());
         services.AddSingleton<FocusService>();

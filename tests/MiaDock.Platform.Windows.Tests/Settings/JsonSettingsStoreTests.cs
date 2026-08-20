@@ -168,7 +168,7 @@ public sealed class JsonSettingsStoreTests
 
         var result = await store.LoadAsync();
 
-        Assert.AreEqual(29, result.SchemaVersion);
+        Assert.AreEqual(30, result.SchemaVersion);
         Assert.IsTrue(result.AudibleNotifications.HourlyEnabled);
         Assert.IsFalse(result.Modules["hourly-notification"].IsEnabled);
     }

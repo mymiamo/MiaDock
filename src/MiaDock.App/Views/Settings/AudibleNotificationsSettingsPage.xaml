@@ -18,7 +18,9 @@
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <FontIcon Glyph="&#xE995;" FontSize="20" VerticalAlignment="Center" />
+          <Image Width="20" Height="20" VerticalAlignment="Center"
+                 Source="ms-appx:///Assets/FluentIcons/settings_24_regular.svg"
+                 AutomationProperties.AccessibilityView="Raw" />
           <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
             <TextBlock Text="{Binding AudibleNotificationsMasterTitle}"
                        Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
@@ -32,6 +34,30 @@
                         IsOn="{Binding AudibleNotificationsEnabled, Mode=TwoWay}"
                         AutomationProperties.Name="{Binding AudibleNotificationsMasterTitle}" />
         </Grid>
+      </Border>
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="10">
+          <StackPanel Spacing="3">
+            <TextBlock Text="{Binding AudibleOutputDeviceTitle}" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
+            <TextBlock Text="{Binding AudibleOutputDeviceDescription}" TextWrapping="Wrap" Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
+          </StackPanel>
+          <ComboBox ItemsSource="{Binding AudibleOutputDevices}" DisplayMemberPath="Label"
+                    SelectedIndex="{Binding AudibleOutputDeviceIndex, Mode=TwoWay}"
+                    IsEnabled="{Binding AudibleNotificationControlsEnabled}" MinHeight="44"
+                    AutomationProperties.Name="{Binding AudibleOutputDeviceTitle}" />
+          <Grid>
+            <TextBlock Text="{Binding AudibleVolumeTitle}" VerticalAlignment="Center" />
+            <TextBlock Text="{Binding AudibleVolumePercentText}" HorizontalAlignment="Right" />
+          </Grid>
+          <Slider Minimum="0" Maximum="100" StepFrequency="1"
+                  Value="{Binding AudibleVolumePercent, Mode=TwoWay}"
+                  IsEnabled="{Binding AudibleNotificationControlsEnabled}"
+                  AutomationProperties.Name="{Binding AudibleVolumeTitle}" />
+          <Button Content="{Binding StopPreviewSoundText}" Command="{Binding StopPreviewSoundCommand}"
+                  HorizontalAlignment="Left" MinHeight="44"
+                  AutomationProperties.Name="{Binding StopPreviewSoundText}" />
+        </StackPanel>
       </Border>
 
       <TextBlock Text="{Binding AudibleNotificationsEventsTitle}"

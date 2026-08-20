@@ -243,7 +243,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
 
     public bool IsPointerAtAttachedEdge(
         int activationThicknessInPixels = 3,
-        int spanPaddingInPixels = 24)
+        int spanPaddingInPixels = 12)
     {
         ThrowIfDisposed();
         if (_lastVisiblePlacement is not { } placement ||

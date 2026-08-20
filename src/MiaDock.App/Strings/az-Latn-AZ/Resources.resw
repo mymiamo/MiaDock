@@ -1265,7 +1265,7 @@
   <data name="ClipboardPeek.Color.Hex" xml:space="preserve"><value>HEX {0}</value></data>
   <data name="ClipboardPeek.Color.Rgb" xml:space="preserve"><value>RGB {0}</value></data>
   <data name="ClipboardPeek.Color.Hsl" xml:space="preserve"><value>HSL {0}</value></data>
-  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} söz · {1} simvol</value></data>
+  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} söz · {1} simvol · {2} sətir</value></data>
   <data name="HourlyNotification.ModuleName" xml:space="preserve"><value>Saatlıq bildiriş</value></data>
   <data name="HourlyNotification.TimeFormat" xml:space="preserve"><value>Saat {0}</value></data>
   <data name="HourlyNotification.Description" xml:space="preserve"><value>Saatlıq bildiriş</value></data>
@@ -1292,4 +1292,11 @@
   <data name="AudibleNotifications.Preview" xml:space="preserve"><value>Səsi səsləndir</value></data>
   <data name="AudibleNotifications.Alarm.Title" xml:space="preserve"><value>Taymer siqnalı həmişə aktivdir</value></data>
   <data name="AudibleNotifications.Alarm.Description" xml:space="preserve"><value>Taymer siqnalına bu ayarlar təsir etmir və siqnal görünüşündəki susdurma düyməsi ilə dayandırılır.</value></data>
+  <data name="AudibleNotifications.OutputDevice.Title" xml:space="preserve"><value>Bildiriş səs cihazı</value></data>
+  <data name="AudibleNotifications.OutputDevice.Description" xml:space="preserve"><value>Cihaz seçilmədikdə Windows-un standart çıxışından istifadə olunur.</value></data>
+  <data name="AudibleNotifications.OutputDevice.Default" xml:space="preserve"><value>Windows standartı</value></data>
+  <data name="AudibleNotifications.Volume.Title" xml:space="preserve"><value>Bildiriş səsi</value></data>
+  <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Dayandır</value></data>
+  <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>Davranış yalnız dock və tam ekran pəncərəsi eyni ekranda olduqda tətbiq edilir. Xüsusi Direct3D tam ekranda kənarda gizlət dock-u tam bağlayır; borderless tam ekranda siçanla açma davam edir.</value></data>
+  <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Tam gizlət dock-u bağlayır. Yalnız bildirişlər normal dock-u gizlədir. Kənarda gizlət borderless tam ekranda düzgün kənarda açılır, xüsusi Direct3D-də oyunu qorumaq üçün bağlı qalır.</value></data>
 </root>

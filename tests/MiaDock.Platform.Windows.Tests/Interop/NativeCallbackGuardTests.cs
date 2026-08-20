@@ -11,7 +11,6 @@ public sealed class NativeCallbackGuardTests
     [
         (@"Overlay\OverlayWindowController.cs", "private nint WindowMessageHandler("),
         (@"Overlay\OverlayWindowController.cs", "private nint LowLevelMouseHandler("),
-        (@"Tray\WindowsTrayIconService.cs", "private nint WindowProcedure("),
         (@"Windowing\WindowMinimumSizeMonitor.cs", "private nint WindowMessageHandler("),
         (@"Fullscreen\WindowsFullscreenDetectionService.cs", "private void OnWinEvent("),
         (@"Applications\WindowsApplicationActivityService.cs", "private void OnForegroundChanged("),

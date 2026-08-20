@@ -52,47 +52,37 @@ public sealed class TrayMenuItemTests
     }
 
     [TestMethod]
-    public void WindowsTrayMenu_UsesThemeAwareOwnerDrawnSurface()
+    public void WindowsTrayMenu_UsesWinUiExFlyoutInsteadOfNativeOwnerDraw()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "Tray",
             "WindowsTrayIconService.cs"));
 
-        StringAssert.Contains(source, "OwnerDrawMenuItem");
-        StringAssert.Contains(source, "TryMeasureMenuItem");
-        StringAssert.Contains(source, "TryDrawMenuItem");
-        StringAssert.Contains(source, "RefreshMenuChrome");
-        StringAssert.Contains(source, "AppsUseLightTheme");
-        StringAssert.Contains(source, "GetDpiForWindow");
-        StringAssert.Contains(source, "GetTextExtentPoint32W");
-        StringAssert.Contains(source, "MarkColumnWidth");
-        StringAssert.Contains(source, "IsRadio");
-        StringAssert.Contains(source, "Segoe Fluent Icons");
-        StringAssert.Contains(source, "MenuChrome.Light");
-        StringAssert.Contains(source, "MenuChrome.Dark");
-        StringAssert.Contains(source, "InsertMenuItemW");
-        StringAssert.Contains(source, "MiimSubmenu");
-        StringAssert.Contains(source, "Do not DestroyWindow/UnregisterClass during teardown");
+        StringAssert.Contains(source, "WinUIEx");
+        StringAssert.Contains(source, "TrayIcon");
+        StringAssert.Contains(source, "MenuFlyout");
+        StringAssert.Contains(source, "MenuFlyoutSubItem");
+        StringAssert.Contains(source, "ToggleMenuFlyoutItem");
+        StringAssert.Contains(source, "CreateFluentIcon");
+        StringAssert.Contains(source, "SvgImageSource");
+        Assert.DoesNotContain("OwnerDrawMenuItem", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("TrayNative", source, StringComparison.Ordinal);
     }
 
     [TestMethod]
-    public void WindowsTrayCallbacks_DeferUiActionsUntilNativeCallbackUnwinds()
+    public void WindowsTrayCallbacks_UseWinUiExEventsAndDisposeSafely()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
             "Tray",
             "WindowsTrayIconService.cs"));
 
-        StringAssert.Contains(source, "TrayDispatchMessage");
-        StringAssert.Contains(source, "QueuePrimaryInvoke");
-        StringAssert.Contains(source, "PostMessageW");
-        StringAssert.Contains(source, "WindowProcedureCore");
-        StringAssert.Contains(source, "must never cross the reverse P/Invoke WndProc");
-        StringAssert.Contains(source, "notification is TrayNative.WmLButtonUp or TrayNative.NinSelect");
+        StringAssert.Contains(source, "_icon.Selected += OnSelected");
+        StringAssert.Contains(source, "_icon.ContextMenu += OnContextMenu");
+        StringAssert.Contains(source, "args.Flyout = CreateFlyout(_items)");
+        StringAssert.Contains(source, "CommandInvoked?.Invoke");
+        StringAssert.Contains(source, "_icon.Dispose()");
         StringAssert.Contains(source, "_disposed = true;");
-        Assert.IsFalse(source.Contains(
-            "notification == TrayNative.WmLButtonDoubleClick)\r\n            {\r\n                PrimaryInvoked?.Invoke",
-            StringComparison.Ordinal));
     }
 }

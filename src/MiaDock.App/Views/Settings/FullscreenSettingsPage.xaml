@@ -32,7 +32,7 @@
                       MaxWidth="440"
                       AutomationProperties.Name="Tam ekran dock davranışı"
                       AutomationProperties.HelpText="Dock'un tam ekran uygulama ile aynı monitörde nasıl davranacağını seçer." />
-            <TextBlock Text="Davranış yalnız dock ile tam ekran pencere aynı monitörde olduğunda uygulanır. Kenarda gizleme, yalnız gerekli sırada düşük sıklıklı fare denetimi kullanır."
+            <TextBlock Text="{Binding FullscreenEdgeRevealDescription}"
                        TextWrapping="Wrap"
                        Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
           </StackPanel>
@@ -89,7 +89,7 @@
       <InfoBar IsOpen="True"
                Severity="Informational"
                Title="Tam ekran davranışı"
-               Message="Tamamen gizle hiçbir olay göstermeden dock'u kapatır. Yalnız bildirimler normal dock'u gizler. Kenarda gizle fareyi doğru ekran kenarına götürdüğünüzde dock'u açar. Normal görünür seçeneği mevcut davranışı korur." />
+               Message="{Binding FullscreenEdgeRevealInfo}" />
     </StackPanel>
   </ScrollViewer>
 </UserControl>

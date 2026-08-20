@@ -55,4 +55,13 @@ public sealed class DockEdgeRevealGeometryTests
         Assert.IsFalse(DockEdgeRevealGeometry.IsPointerAtActivationEdge(
             3100, 20, Bounds, Placement, OverlayPosition.TopCenter, 3, 24));
     }
+
+    [TestMethod]
+    public void IsPointerAtActivationEdge_UsesTwelvePixelSpanTolerance()
+    {
+        Assert.IsTrue(DockEdgeRevealGeometry.IsPointerAtActivationEdge(
+            2988, 1, Bounds, Placement, OverlayPosition.TopCenter, 3, 12));
+        Assert.IsFalse(DockEdgeRevealGeometry.IsPointerAtActivationEdge(
+            2987, 1, Bounds, Placement, OverlayPosition.TopCenter, 3, 12));
+    }
 }

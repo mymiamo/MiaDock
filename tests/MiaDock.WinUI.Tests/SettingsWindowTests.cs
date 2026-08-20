@@ -282,7 +282,7 @@ public sealed class SettingsWindowTests
         Assert.DoesNotContain("ShowTrackChanges", text, StringComparison.Ordinal);
         StringAssert.Contains(text, "FullscreenBehaviors");
         StringAssert.Contains(text, "FullscreenBehaviorIndex");
-        StringAssert.Contains(text, "Tamamen gizle hiçbir olay göstermeden dock'u kapatır.");
+        StringAssert.Contains(text, "FullscreenEdgeRevealInfo");
     }
 
     [TestMethod]
@@ -294,8 +294,8 @@ public sealed class SettingsWindowTests
             "FullscreenSettingsPage.xaml")).ToString();
 
         StringAssert.Contains(text, "Tam ekran dock davranışı");
-        StringAssert.Contains(text, "aynı monitörde");
-        StringAssert.Contains(text, "Kenarda gizle");
+        StringAssert.Contains(text, "FullscreenEdgeRevealDescription");
+        StringAssert.Contains(text, "FullscreenEdgeRevealInfo");
         StringAssert.Contains(text, "AutomationProperties.HelpText");
     }
 
@@ -318,7 +318,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.5.4.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.5.3.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -351,7 +351,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.5.4.0", packageVersion);
+        Assert.AreEqual("1.5.3.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 

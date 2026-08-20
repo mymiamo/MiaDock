@@ -53,6 +53,38 @@ public sealed class FullscreenDockVisibilityPolicyTests
     }
 
     [TestMethod]
+    public void Evaluate_ExclusiveFullscreenDisablesEdgeRevealAndNotifications()
+    {
+        var hidden = FullscreenDockVisibilityPolicy.Evaluate(
+            Context(FullscreenDockBehavior.EdgeReveal) with
+            {
+                IsExclusiveFullscreen = true,
+                HoverRevealActive = true,
+                NotificationVisible = true,
+                NotificationAllowed = true,
+                InteractionActive = true,
+                Expanded = true
+            });
+
+        Assert.IsFalse(hidden.ShowWindow);
+        Assert.IsFalse(hidden.HideAtEdge);
+        Assert.IsTrue(hidden.FullscreenPolicyApplied);
+    }
+
+    [TestMethod]
+    public void Evaluate_BorderlessFullscreenRetainsEdgeReveal()
+    {
+        var result = FullscreenDockVisibilityPolicy.Evaluate(
+            Context(FullscreenDockBehavior.EdgeReveal) with
+            {
+                HoverRevealActive = true
+            });
+
+        Assert.IsTrue(result.ShowWindow);
+        Assert.IsFalse(result.HideAtEdge);
+    }
+
+    [TestMethod]
     public void Evaluate_InteractionOrExpandedPreventsEdgeHide()
     {
         var interaction = FullscreenDockVisibilityPolicy.Evaluate(
@@ -75,5 +107,6 @@ public sealed class FullscreenDockVisibilityPolicyTests
             HoverRevealActive: false,
             InteractionActive: false,
             PointerPressed: false,
-            Expanded: false);
+            Expanded: false,
+            IsExclusiveFullscreen: false);
 }

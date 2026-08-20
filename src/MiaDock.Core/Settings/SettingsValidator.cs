@@ -104,6 +104,15 @@ public static class SettingsValidator
             tray = tray with { ShowIcon = true };
         }
 
+        var audibleNotifications = settings.AudibleNotifications ?? AudibleNotificationSettings.Default;
+        audibleNotifications = audibleNotifications with
+        {
+            OutputDeviceId = string.IsNullOrWhiteSpace(audibleNotifications.OutputDeviceId)
+                ? null
+                : audibleNotifications.OutputDeviceId.Trim(),
+            VolumePercent = Math.Clamp(audibleNotifications.VolumePercent, 0, 100)
+        };
+
         return settings with
         {
             SchemaVersion = MiaDockSettings.CurrentSchemaVersion,
@@ -119,7 +128,7 @@ public static class SettingsValidator
             Privacy = settings.Privacy ?? PresentationPrivacySettings.Default,
             StoreUpdates = NormalizeStoreUpdates(settings.StoreUpdates),
             Focus = NormalizeFocus(settings.Focus),
-            AudibleNotifications = settings.AudibleNotifications ?? AudibleNotificationSettings.Default,
+            AudibleNotifications = audibleNotifications,
             Modules = NormalizeModules(settings.Modules)
         };
     }

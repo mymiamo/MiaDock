@@ -28,7 +28,7 @@ $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csp
 $solution = Join-Path $repositoryRoot "MiaDock.sln"
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.4.0"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.3.0"
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
@@ -38,7 +38,7 @@ $steps = [System.Collections.Generic.List[object]]::new()
 $summary = [ordered]@{
     SchemaVersion = 1
     Product = "MiaDock"
-    Version = "1.5.4.0"
+    Version = "1.5.3.0"
     StartedAtUtc = [DateTimeOffset]::UtcNow.ToString("O")
     CompletedAtUtc = $null
     Result = "Running"
@@ -136,9 +136,9 @@ function Assert-ManifestConsistency {
         "//*[local-name()='StartupTask' and @TaskId='MiaDockStartupTask']")
 
     if ($null -eq $packageIdentity -or
-        $packageIdentity.Version -ne "1.5.4.0" -or
+        $packageIdentity.Version -ne "1.5.3.0" -or
         $packageIdentity.Name -ne "mymiamo.net.MiaDock") {
-        throw "Package identity or version is not the expected MiaDock 1.5.4.0 identity."
+        throw "Package identity or version is not the expected MiaDock 1.5.3.0 identity."
     }
 
     if ($null -eq $applicationIdentity -or
@@ -190,7 +190,7 @@ function Assert-TestPackageContents {
             "//*[local-name()='StartupTask' and @TaskId='MiaDockStartupTask']")
         if ($null -eq $identity -or
             $identity.Name -ne "mymiamo.net.MiaDock" -or
-            $identity.Version -ne "1.5.4.0" -or
+            $identity.Version -ne "1.5.3.0" -or
             $null -eq $startupTask) {
             throw "The packaged identity, version or StartupTask declaration is invalid."
         }
@@ -200,7 +200,9 @@ function Assert-TestPackageContents {
             "Assets/StoreLogo.png",
             "Assets/Square44x44Logo.png",
             "Assets/Square150x150Logo.png",
-            "MiaDock.App.exe")
+            "MiaDock.App.exe",
+            "WinUIEx.dll",
+            "WinUIEx.pri")
         $entryNames = @($archive.Entries | ForEach-Object {
             $_.FullName.Replace("\", "/")
         })
@@ -214,6 +216,89 @@ function Assert-TestPackageContents {
 
     Add-StepResult -Name "Unsigned test package contents" -Result "Passed" `
         -Detail "$($package.Name) contains the expected identity, StartupTask and runtime assets."
+}
+
+function Get-ApplicationOutputDirectory {
+    return Join-Path $repositoryRoot (
+        "src\MiaDock.App\bin\$Platform\$Configuration\" +
+        "net10.0-windows10.0.26100.0\win-x64")
+}
+
+function Assert-UnpackagedRuntimeDependencies {
+    $outputDirectory = Get-ApplicationOutputDirectory
+    if (-not (Test-Path -LiteralPath $outputDirectory -PathType Container)) {
+        throw "The application output directory was not found: $outputDirectory"
+    }
+
+    $requiredFiles = @("WinUIEx.dll", "WinUIEx.pri")
+    $missingFiles = @($requiredFiles | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $outputDirectory $_) -PathType Leaf)
+    })
+    if ($missingFiles.Count -gt 0) {
+        throw "The unpackaged application output is missing WinUIEx runtime files: $($missingFiles -join ', ')."
+    }
+
+    $depsPath = Join-Path $outputDirectory "MiaDock.App.deps.json"
+    if (-not (Test-Path -LiteralPath $depsPath -PathType Leaf)) {
+        throw "The unpackaged application dependency manifest was not found: $depsPath"
+    }
+
+    $depsJson = Get-Content -LiteralPath $depsPath -Raw
+    if ($depsJson -notmatch '"WinUIEx/2\.9\.3"') {
+        throw "The unpackaged application dependency manifest does not contain WinUIEx 2.9.3."
+    }
+
+    Add-StepResult -Name "Unpackaged WinUIEx runtime payload" -Result "Passed" `
+        -Detail "WinUIEx.dll, WinUIEx.pri and the WinUIEx 2.9.3 dependency entry are present."
+}
+
+function Assert-NoStartupUnhandledException {
+    param(
+        [Parameter(Mandatory)]
+        [DateTimeOffset]$StartedAtUtc
+    )
+
+    $logDirectory = Join-Path $env:LOCALAPPDATA "MiaDock\Logs"
+    if (-not (Test-Path -LiteralPath $logDirectory -PathType Container)) {
+        return
+    }
+
+    $failures = [System.Collections.Generic.List[string]]::new()
+    Get-ChildItem -LiteralPath $logDirectory -Filter "*.ndjson" -File |
+        Where-Object { $_.LastWriteTimeUtc -ge $StartedAtUtc.UtcDateTime.AddSeconds(-2) } |
+        ForEach-Object {
+            foreach ($line in Get-Content -LiteralPath $_.FullName) {
+                if ([string]::IsNullOrWhiteSpace($line)) {
+                    continue
+                }
+
+                try {
+                    $entry = $line | ConvertFrom-Json
+                    $timestamp = [DateTimeOffset]::MinValue
+                    if (-not [DateTimeOffset]::TryParse(
+                        [string]$entry.timestampUtc,
+                        [System.Globalization.CultureInfo]::InvariantCulture,
+                        [System.Globalization.DateTimeStyles]::AssumeUniversal,
+                        [ref]$timestamp)) {
+                        continue
+                    }
+                    if ($entry.eventId -eq "app.unhandled" -and $timestamp -ge $StartedAtUtc) {
+                        $exception = if ([string]::IsNullOrWhiteSpace($entry.exceptionType)) {
+                            "unspecified exception"
+                        } else {
+                            $entry.exceptionType
+                        }
+                        $failures.Add("$exception at $($timestamp.ToString('O'))")
+                    }
+                } catch {
+                    # Logs can be written while the app is running; an incomplete line is ignored.
+                }
+            }
+        }
+
+    if ($failures.Count -gt 0) {
+        throw "MiaDock logged app.unhandled during the startup smoke test: $($failures -join '; ')."
+    }
 }
 
 function Read-InstalledStorePackage {
@@ -278,28 +363,33 @@ function Invoke-ApplicationSmokeTest {
         Start-Sleep -Milliseconds 500
     }
 
-    $executable = Join-Path $repositoryRoot (
-        "src\MiaDock.App\bin\$Platform\$Configuration\" +
-        "net10.0-windows10.0.26100.0\win-x64\MiaDock.App.exe")
+    $outputDirectory = Get-ApplicationOutputDirectory
+    $executable = Join-Path $outputDirectory "MiaDock.App.exe"
     if (-not (Test-Path -LiteralPath $executable)) {
         throw "The built MiaDock.App executable was not found."
     }
 
+    $startedAtUtc = [DateTimeOffset]::UtcNow
     $process = Start-Process -FilePath $executable -PassThru
-    Start-Sleep -Seconds 5
+    Start-Sleep -Seconds 10
     $runningProcess = Get-Process -Id $process.Id -ErrorAction SilentlyContinue
     if ($null -eq $runningProcess) {
         throw "MiaDock.App exited during the startup smoke test."
     }
 
     $responding = $runningProcess.Responding
+    $mainWindowHandle = $runningProcess.MainWindowHandle
+    Assert-NoStartupUnhandledException -StartedAtUtc $startedAtUtc
     Stop-Process -Id $runningProcess.Id -Force
     if (-not $responding) {
         throw "MiaDock.App entered a non-responding state during startup."
     }
+    if ($mainWindowHandle -eq [IntPtr]::Zero) {
+        throw "MiaDock.App did not create a top-level window during startup."
+    }
 
     Add-StepResult -Name "Unpackaged startup smoke test" -Result "Passed" `
-        -Detail "The process remained alive and responsive for five seconds."
+        -Detail "The process remained alive, responsive, windowed and free of app.unhandled events for ten seconds."
 }
 
 try {
@@ -343,6 +433,8 @@ try {
             "-p:RuntimeIdentifier=win-x64",
             "--no-restore",
             "-v:minimal")
+
+        Assert-UnpackagedRuntimeDependencies
 
         if ($LaunchSmokeTest) {
             Invoke-ApplicationSmokeTest

@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <Version>1.5.4.0</Version>
-    <AssemblyVersion>1.5.4.0</AssemblyVersion>
-    <FileVersion>1.5.4.0</FileVersion>
-    <InformationalVersion>1.5.4.0</InformationalVersion>
+    <Version>1.5.3.0</Version>
+    <AssemblyVersion>1.5.3.0</AssemblyVersion>
+    <FileVersion>1.5.3.0</FileVersion>
+    <InformationalVersion>1.5.3.0</InformationalVersion>
     <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
     <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
     <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
@@ -35,6 +35,10 @@
     <PackageReference Include="CommunityToolkit.WinUI.Animations" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <!-- TrayIcon loads WinUIEx at application startup, so the app must carry its
+         runtime assembly and PRI resources instead of relying on a transitive
+         platform-project reference. -->
+    <PackageReference Include="WinUIEx" GeneratePathProperty="true" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\MiaDock.Core\MiaDock.Core.csproj" />
@@ -57,7 +61,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="..\..\logo.ico" Link="Assets\logo.ico" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="$(PkgWinUIEx)\lib\net8.0-windows10.0.19041\WinUIEx.pri" Link="WinUIEx.pri" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\*.png" />
+    <Content Include="Assets\FluentIcons\*.svg" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\miadock-ringtone.wav" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\sfx\connected-internet-none.wav" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="Assets\sfx\connected-but-no-internet.wav" CopyToOutputDirectory="PreserveNewest" />

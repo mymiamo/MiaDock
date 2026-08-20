@@ -316,6 +316,7 @@ public sealed class LifecycleUiTests
         StringAssert.Contains(source, "_focus.Deactivate()");
         StringAssert.Contains(source, "_overlay.ShowDock()");
         StringAssert.Contains(source, "TrayPrimaryAction.ToggleDock");
+        StringAssert.Contains(source, "_dispatcher.TryEnqueue");
         StringAssert.Contains(source, "_settingsWindow.Show()");
     }
 }

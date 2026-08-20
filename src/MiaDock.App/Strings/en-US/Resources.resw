@@ -1642,7 +1642,7 @@
   <data name="ClipboardPeek.Color.Hex" xml:space="preserve"><value>HEX {0}</value></data>
   <data name="ClipboardPeek.Color.Rgb" xml:space="preserve"><value>RGB {0}</value></data>
   <data name="ClipboardPeek.Color.Hsl" xml:space="preserve"><value>HSL {0}</value></data>
-  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} words · {1} characters</value></data>
+  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} words · {1} characters · {2} lines</value></data>
   <data name="HourlyNotification.ModuleName" xml:space="preserve"><value>Hourly Notification</value></data>
   <data name="HourlyNotification.TimeFormat" xml:space="preserve"><value>It's {0}</value></data>
   <data name="HourlyNotification.Description" xml:space="preserve"><value>Hourly notification</value></data>
@@ -1669,4 +1669,11 @@
   <data name="AudibleNotifications.Preview" xml:space="preserve"><value>Play sound</value></data>
   <data name="AudibleNotifications.Alarm.Title" xml:space="preserve"><value>Timer alarm is always enabled</value></data>
   <data name="AudibleNotifications.Alarm.Description" xml:space="preserve"><value>The timer alarm is not affected by these settings and can be stopped from its silence button.</value></data>
+  <data name="AudibleNotifications.OutputDevice.Title" xml:space="preserve"><value>Notification sound device</value></data>
+  <data name="AudibleNotifications.OutputDevice.Description" xml:space="preserve"><value>Uses the Windows default output when no device is selected.</value></data>
+  <data name="AudibleNotifications.OutputDevice.Default" xml:space="preserve"><value>Windows default</value></data>
+  <data name="AudibleNotifications.Volume.Title" xml:space="preserve"><value>Notification volume</value></data>
+  <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>The behavior applies only when the dock and fullscreen window are on the same display. Hide at edge closes the dock completely for exclusive Direct3D; pointer reveal remains available for borderless fullscreen.</value></data>
+  <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Hide completely closes the dock. Notifications only hides the normal dock. Hide at edge opens at the correct edge in borderless fullscreen, and stays closed in exclusive Direct3D to protect the game.</value></data>
 </root>

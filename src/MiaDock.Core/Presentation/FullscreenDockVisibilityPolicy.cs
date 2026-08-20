@@ -12,7 +12,8 @@ public sealed record FullscreenDockVisibilityContext(
     bool HoverRevealActive,
     bool InteractionActive,
     bool PointerPressed,
-    bool Expanded);
+    bool Expanded,
+    bool IsExclusiveFullscreen);
 
 public sealed record FullscreenDockVisibilityDecision(
     bool ShowWindow,
@@ -55,6 +56,13 @@ public static class FullscreenDockVisibilityPolicy
         bool notification,
         bool interactionHold)
     {
+        // A visible/topmost WinUI HWND can make an exclusive Direct3D game
+        // relinquish fullscreen. Do not leave a strip, poll, or reveal it.
+        if (context.IsExclusiveFullscreen)
+        {
+            return new(false, false, true);
+        }
+
         var revealed = notification ||
                        context.HoverRevealActive ||
                        interactionHold ||

@@ -33,7 +33,7 @@ public interface IOverlayWindowController : IDisposable
         bool animate = false,
         Action? transitionCompleted = null);
 
-    bool IsPointerAtAttachedEdge(int activationThicknessInPixels = 3, int spanPaddingInPixels = 24);
+    bool IsPointerAtAttachedEdge(int activationThicknessInPixels = 3, int spanPaddingInPixels = 12);
 
     bool IsPointerOverWindow();
 }

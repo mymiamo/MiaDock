@@ -115,6 +115,25 @@ public sealed class OverlayWindowTests
     }
 
     [TestMethod]
+    public void ExclusiveDirect3D_EdgeRevealHidesBeforeAnyPlacementOrTopmostUpdate()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+
+        var applyEnvironment = source.IndexOf("private void ApplyEnvironment()", StringComparison.Ordinal);
+        var exclusiveGuard = source.IndexOf("if (IsExclusiveFullscreenEdgeReveal())", applyEnvironment, StringComparison.Ordinal);
+        var placement = source.IndexOf("_windowController.UpdatePlacement(", applyEnvironment, StringComparison.Ordinal);
+
+        Assert.IsGreaterThan(applyEnvironment, exclusiveGuard);
+        Assert.IsGreaterThan(exclusiveGuard, placement);
+        StringAssert.Contains(source, "SuspendEdgeRevealForExclusiveFullscreen();");
+        StringAssert.Contains(source, "_windowController.Hide();");
+        StringAssert.Contains(source, "FullscreenDetectionReason.ExclusiveDirect3D");
+    }
+
+    [TestMethod]
     public void IslandShell_StaysTransparentOutsideTheRoundedSurface()
     {
         var document = XDocument.Load(Path.Combine(

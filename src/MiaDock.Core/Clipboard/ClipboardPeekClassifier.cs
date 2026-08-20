@@ -51,24 +51,9 @@ public static partial class ClipboardPeekClassifier
     public static bool TryNormalizeColor(string value, out string color)
     {
         color = string.Empty;
-        var hex = HexColorRegex().Match(value);
-        if (hex.Success)
-        {
-            var digits = hex.Groups[1].Value.ToUpperInvariant();
-            color = digits.Length == 3 ? $"#{digits[0]}{digits[0]}{digits[1]}{digits[1]}{digits[2]}{digits[2]}" : $"#{digits}";
-            return true;
-        }
-
-        var rgb = RgbColorRegex().Match(value);
-        if (rgb.Success)
-        {
-            var values = rgb.Groups[1].Value.Split(',').Select(part => part.Trim()).ToArray();
-            if (values.Length != 3 || !values.All(part => int.TryParse(part, out var channel) && channel is >= 0 and <= 255)) return false;
-            color = $"#{int.Parse(values[0]):X2}{int.Parse(values[1]):X2}{int.Parse(values[2]):X2}";
-            return true;
-        }
-
-        return ClipboardColorFormats.TryConvertHslToHex(value, out color);
+        if (!ClipboardColorFormats.TryParse(value, out var formats)) return false;
+        color = formats.Hex;
+        return true;
     }
 
     private static bool TryGetExistingPath(string value, out string path, out bool isFolder)
@@ -117,8 +102,6 @@ public static partial class ClipboardPeekClassifier
     }
 
     [GeneratedRegex("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$", RegexOptions.CultureInvariant)] private static partial Regex EmailRegex();
-    [GeneratedRegex("^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$", RegexOptions.CultureInvariant)] private static partial Regex HexColorRegex();
-    [GeneratedRegex("^rgb\\(([^)]+)\\)$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)] private static partial Regex RgbColorRegex();
     [GeneratedRegex("-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----", RegexOptions.CultureInvariant)] private static partial Regex PrivateKeyRegex();
     [GeneratedRegex("^(?:sk-[A-Za-z0-9_-]{20,}|gh[pousr]_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16})$", RegexOptions.CultureInvariant)] private static partial Regex ApiTokenRegex();
     [GeneratedRegex("^[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}\\.[A-Za-z0-9_-]{8,}$", RegexOptions.CultureInvariant)] private static partial Regex JwtRegex();

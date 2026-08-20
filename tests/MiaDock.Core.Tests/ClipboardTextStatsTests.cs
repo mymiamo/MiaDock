@@ -12,6 +12,7 @@ public sealed class ClipboardTextStatsTests
 
         Assert.AreEqual(3, stats.WordCount);
         Assert.AreEqual("Merhaba  güzel\tdünya".Length, stats.CharacterCount);
+        Assert.AreEqual(1, stats.LineCount);
     }
 
     [TestMethod]
@@ -21,6 +22,16 @@ public sealed class ClipboardTextStatsTests
 
         Assert.AreEqual(0, stats.CharacterCount);
         Assert.AreEqual(0, stats.WordCount);
+        Assert.AreEqual(0, stats.LineCount);
+    }
+
+    [TestMethod]
+    public void FromText_CountsGraphemesAndLines()
+    {
+        var stats = ClipboardTextStats.FromText("A👨‍👩‍👧‍👦\r\nB");
+
+        Assert.AreEqual(4, stats.CharacterCount);
+        Assert.AreEqual(2, stats.LineCount);
     }
 
     [TestMethod]

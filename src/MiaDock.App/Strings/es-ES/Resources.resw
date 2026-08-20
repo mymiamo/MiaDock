@@ -1265,7 +1265,7 @@
   <data name="ClipboardPeek.Color.Hex" xml:space="preserve"><value>HEX {0}</value></data>
   <data name="ClipboardPeek.Color.Rgb" xml:space="preserve"><value>RGB {0}</value></data>
   <data name="ClipboardPeek.Color.Hsl" xml:space="preserve"><value>HSL {0}</value></data>
-  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} palabras · {1} caracteres</value></data>
+  <data name="ClipboardPeek.TextStats" xml:space="preserve"><value>{0} palabras · {1} caracteres · {2} líneas</value></data>
   <data name="HourlyNotification.ModuleName" xml:space="preserve"><value>Notificación horaria</value></data>
   <data name="HourlyNotification.TimeFormat" xml:space="preserve"><value>Hora: {0}</value></data>
   <data name="HourlyNotification.Description" xml:space="preserve"><value>Notificación horaria</value></data>
@@ -1292,4 +1292,11 @@
   <data name="AudibleNotifications.Preview" xml:space="preserve"><value>Reproducir sonido</value></data>
   <data name="AudibleNotifications.Alarm.Title" xml:space="preserve"><value>La alarma del temporizador siempre está activa</value></data>
   <data name="AudibleNotifications.Alarm.Description" xml:space="preserve"><value>Estos ajustes no afectan a la alarma; se detiene con el botón para silenciarla.</value></data>
+  <data name="AudibleNotifications.OutputDevice.Title" xml:space="preserve"><value>Dispositivo de sonido de notificaciones</value></data>
+  <data name="AudibleNotifications.OutputDevice.Description" xml:space="preserve"><value>Usa la salida predeterminada de Windows si no se selecciona ningún dispositivo.</value></data>
+  <data name="AudibleNotifications.OutputDevice.Default" xml:space="preserve"><value>Predeterminado de Windows</value></data>
+  <data name="AudibleNotifications.Volume.Title" xml:space="preserve"><value>Volumen de notificaciones</value></data>
+  <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Detener</value></data>
+  <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>El comportamiento se aplica solo cuando el dock y la ventana a pantalla completa están en la misma pantalla. Ocultar en el borde cierra por completo el dock en Direct3D exclusivo; la apertura con el puntero se mantiene en pantalla completa sin bordes.</value></data>
+  <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Ocultar completamente cierra el dock. Solo notificaciones oculta el dock normal. Ocultar en el borde se abre en el borde correcto en pantalla completa sin bordes y permanece cerrado en Direct3D exclusivo para proteger el juego.</value></data>
 </root>

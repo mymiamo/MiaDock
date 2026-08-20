@@ -19,6 +19,7 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     private InMemoryRandomAccessStream? _thumbnailStream;
     private CancellationTokenSource? _revealLifetime;
     private string? _revealedValue;
+    private int _copyBusy;
 
     public ClipboardPeekViewModel(
         IClipboardPeekService service,
@@ -65,6 +66,10 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     [ObservableProperty]
     public partial InfoBarSeverity StatusSeverity { get; set; } = InfoBarSeverity.Informational;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanCopy))]
+    public partial bool IsCopyBusy { get; set; }
+
     public ClipboardPeekItem? CurrentItem => SelectedItem;
     public bool HasCurrentItem => CurrentItem is not null;
     public bool HasHistory => HistoryEntries.Count > 0;
@@ -76,7 +81,7 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     public string ColorHslText => FormatColor("ClipboardPeek.Color.Hsl", "HSL {0}", formats => formats.HslDisplay);
     public bool HasTextStats => ClipboardTextStats.TryCreate(CurrentItem) is not null;
     public string TextStatsText => ClipboardTextStats.TryCreate(CurrentItem) is { } stats
-        ? string.Format(Text("ClipboardPeek.TextStats", "{0} words · {1} characters"), stats.WordCount, stats.CharacterCount)
+        ? string.Format(Text("ClipboardPeek.TextStats", "{0} words · {1} characters · {2} lines"), stats.WordCount, stats.CharacterCount, stats.LineCount)
         : string.Empty;
     public string CompactDetailText => ColorFormats is { } formats
         ? formats.Hex
@@ -105,7 +110,7 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     public string EmptyText => Text("ClipboardPeek.Empty", "Copy something to see it here.");
 
     private ClipboardColorFormats? ColorFormats =>
-        ClipboardColorFormats.TryFromHex(CurrentItem?.ColorValue, out var formats) ? formats : null;
+        ClipboardColorFormats.TryParse(CurrentItem?.ColorValue, out var formats) ? formats : null;
 
     partial void OnSelectedItemChanged(ClipboardPeekItem? value)
     {
@@ -133,13 +138,15 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     [RelayCommand]
     private async Task CopyAsync()
     {
-        if (CurrentItem is not null) ShowResult(await _service.CopyAsync(CurrentItem));
+        if (CurrentItem is null || !TryBeginCopy()) return;
+        try { ShowResult(await _service.CopyAsync(CurrentItem)); }
+        finally { EndCopy(); }
     }
 
     [RelayCommand]
     private async Task CopyColorFormatAsync(string? format)
     {
-        if (ColorFormats is not { } formats) return;
+        if (ColorFormats is not { } formats || !TryBeginCopy()) return;
         var text = format switch
         {
             "Hex" => formats.Hex,
@@ -147,8 +154,9 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
             "Hsl" => formats.Hsl,
             _ => null
         };
-        if (string.IsNullOrEmpty(text)) return;
-        ShowResult(await _service.CopyTextAsync(text));
+        if (string.IsNullOrEmpty(text)) { EndCopy(); return; }
+        try { ShowResult(await _service.CopyTextAsync(text)); }
+        finally { EndCopy(); }
     }
 
     [RelayCommand]
@@ -284,19 +292,22 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     private static bool TryParseColor(string? value, out Color color)
     {
         color = default;
-        if (value is not { Length: 7 } || value[0] != '#') return false;
-        try
-        {
-            color = Color.FromArgb(255,
-                Convert.ToByte(value.Substring(1, 2), 16),
-                Convert.ToByte(value.Substring(3, 2), 16),
-                Convert.ToByte(value.Substring(5, 2), 16));
-            return true;
-        }
-        catch (FormatException)
-        {
-            return false;
-        }
+        if (!ClipboardColorFormats.TryParse(value, out var formats)) return false;
+        color = Color.FromArgb(formats.Alpha, formats.Red, formats.Green, formats.Blue);
+        return true;
+    }
+
+    private bool TryBeginCopy()
+    {
+        if (Interlocked.CompareExchange(ref _copyBusy, 1, 0) != 0) return false;
+        IsCopyBusy = true;
+        return true;
+    }
+
+    private void EndCopy()
+    {
+        Interlocked.Exchange(ref _copyBusy, 0);
+        IsCopyBusy = false;
     }
 
     private void ShowResult(ClipboardPeekActionResult result)

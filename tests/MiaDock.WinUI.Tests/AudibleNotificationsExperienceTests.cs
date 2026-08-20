@@ -6,7 +6,7 @@ namespace MiaDock.WinUI.Tests;
 public sealed class AudibleNotificationsExperienceTests
 {
     [TestMethod]
-    public void SettingsPage_HasMasterSixEventTogglesAndAccessiblePreviews()
+    public void SettingsPage_HasMasterSixEventTogglesAudioControlsAndAccessiblePreviews()
     {
         var document = XDocument.Load(Path.Combine(
             AppContext.BaseDirectory,
@@ -16,7 +16,7 @@ public sealed class AudibleNotificationsExperienceTests
 
         Assert.AreEqual(1, document.Descendants().Count(element => element.Name.LocalName == "ScrollViewer"));
         Assert.AreEqual(7, document.Descendants().Count(element => element.Name.LocalName == "ToggleSwitch"));
-        Assert.AreEqual(6, document.Descendants().Count(element => element.Name.LocalName == "Button"));
+        Assert.AreEqual(7, document.Descendants().Count(element => element.Name.LocalName == "Button"));
         Assert.AreEqual(1, document.Descendants().Count(element => element.Name.LocalName == "InfoBar"));
         StringAssert.Contains(text, "AudibleNotificationControlsEnabled");
         StringAssert.Contains(text, "PreviewNetworkOfflineSoundCommand");
@@ -25,6 +25,9 @@ public sealed class AudibleNotificationsExperienceTests
         StringAssert.Contains(text, "PreviewDeviceConnectedSoundCommand");
         StringAssert.Contains(text, "PreviewDeviceDisconnectedSoundCommand");
         StringAssert.Contains(text, "PreviewHourlySoundCommand");
+        StringAssert.Contains(text, "AudibleOutputDevices");
+        StringAssert.Contains(text, "AudibleVolumePercent");
+        StringAssert.Contains(text, "StopPreviewSoundCommand");
         StringAssert.Contains(text, "AutomationProperties.Name");
         StringAssert.Contains(text, "MinHeight=\"44\"");
     }
@@ -61,7 +64,7 @@ public sealed class AudibleNotificationsExperienceTests
                 .ToHashSet(StringComparer.Ordinal);
             expected ??= keys;
             Assert.IsTrue(expected.SetEquals(keys), $"Notification sound resource mismatch in {culture}.");
-            Assert.HasCount(20, keys);
+            Assert.HasCount(25, keys);
         }
     }
 

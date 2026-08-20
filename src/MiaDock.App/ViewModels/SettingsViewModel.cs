@@ -23,6 +23,8 @@ using MiaDock.Core.Updates;
 using MiaDock.Core.Clipboard;
 using MiaDock.Core.Audio;
 using MiaDock.Core.Modules;
+using MiaDock.Modules.DeviceStatus.Models;
+using MiaDock.Modules.DeviceStatus.Services;
 
 namespace MiaDock.App.ViewModels;
 
@@ -40,6 +42,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private readonly IStoreUpdateCoordinator? _storeUpdates;
     private readonly IClipboardPeekService? _clipboardPeek;
     private readonly IAudibleNotificationPlayer? _audibleNotificationPlayer;
+    private readonly IAudioDeviceCatalog? _audioDeviceCatalog;
     private bool _synchronizing;
     private AppLanguage _language;
     private IslandVisibilityMode _visibilityMode;
@@ -141,6 +144,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private bool _deviceConnectedSoundEnabled = true;
     private bool _deviceDisconnectedSoundEnabled = true;
     private bool _hourlySoundEnabled = true;
+    private string? _audibleOutputDeviceId;
+    private double _audibleVolumePercent = 100;
     [ObservableProperty]
     public partial StoreUpdateSnapshot StoreUpdateSnapshot { get; set; } =
         StoreUpdateSnapshot.Unavailable(new Version(1, 1, 0, 0));
@@ -157,7 +162,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         ModuleSettingsCatalog? moduleCatalog = null,
         IStoreUpdateCoordinator? storeUpdates = null,
         IClipboardPeekService? clipboardPeek = null,
-        IAudibleNotificationPlayer? audibleNotificationPlayer = null)
+        IAudibleNotificationPlayer? audibleNotificationPlayer = null,
+        IAudioDeviceCatalog? audioDeviceCatalog = null)
     {
         _settingsService = settingsService;
         _music = music;
@@ -171,6 +177,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         _storeUpdates = storeUpdates;
         _clipboardPeek = clipboardPeek;
         _audibleNotificationPlayer = audibleNotificationPlayer;
+        _audioDeviceCatalog = audioDeviceCatalog;
         StoreUpdateSnapshot = storeUpdates?.Current ?? StoreUpdateSnapshot;
         BuildModuleItems();
         RebuildLocalizedOptions();
@@ -210,6 +217,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             _storeUpdates.UpdateAvailabilityChanged += OnStoreUpdateAvailabilityChanged;
         }
         _ = RefreshStartupStatusAsync();
+        _ = RefreshAudibleOutputDevicesAsync();
     }
 
     public IReadOnlyList<SettingOption<AppLanguage>> Languages { get; private set; } = [];
@@ -235,7 +243,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public bool IsMediaLoading => _music.ServiceState == MediaServiceState.Initializing;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.5.4.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.5.3.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
@@ -243,6 +251,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IAsyncRelayCommand CheckForUpdatesCommand { get; }
     public IAsyncRelayCommand OpenStoreCommand { get; }
     public IAsyncRelayCommand ClearClipboardHistoryCommand { get; }
+    public IReadOnlyList<SettingOption<string?>> AudibleOutputDevices { get; private set; } = [];
     public bool AudibleNotificationsEnabled
     {
         get => _audibleNotificationsEnabled;
@@ -292,11 +301,42 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         set => SetAudibleNotification(value, ref _hourlySoundEnabled,
             options => options with { HourlyEnabled = value });
     }
+    public string? AudibleOutputDeviceId
+    {
+        get => _audibleOutputDeviceId;
+        set => Set(value, ref _audibleOutputDeviceId, settings => settings with
+        {
+            AudibleNotifications = settings.AudibleNotifications with { OutputDeviceId = value }
+        });
+    }
+    public int AudibleOutputDeviceIndex
+    {
+        get => IndexOf(AudibleOutputDevices, AudibleOutputDeviceId);
+        set => AudibleOutputDeviceId = ValueAt(AudibleOutputDevices, value, AudibleOutputDeviceId);
+    }
+    public double AudibleVolumePercent
+    {
+        get => _audibleVolumePercent;
+        set
+        {
+            Set(Math.Clamp(value, 0, 100), ref _audibleVolumePercent, settings => settings with
+            {
+                AudibleNotifications = settings.AudibleNotifications with { VolumePercent = (int)Math.Round(value) }
+            });
+            OnPropertyChanged(nameof(AudibleVolumePercentText));
+        }
+    }
     public string AudibleNotificationsTitle => SoundText("AudibleNotifications.Title");
     public string AudibleNotificationsDescription => SoundText("AudibleNotifications.Description");
     public string AudibleNotificationsMasterTitle => SoundText("AudibleNotifications.MasterTitle");
     public string AudibleNotificationsMasterDescription => SoundText("AudibleNotifications.MasterDescription");
     public string AudibleNotificationsEventsTitle => SoundText("AudibleNotifications.EventsTitle");
+    public string AudibleOutputDeviceTitle => SoundText("AudibleNotifications.OutputDevice.Title", "Bildirim ses aygıtı");
+    public string AudibleOutputDeviceDescription => SoundText("AudibleNotifications.OutputDevice.Description", "Seçili aygıt yoksa Windows varsayılan çıkışını kullanır.");
+    public string AudibleDefaultOutputDeviceText => SoundText("AudibleNotifications.OutputDevice.Default", "Windows varsayılanı");
+    public string AudibleVolumeTitle => SoundText("AudibleNotifications.Volume.Title", "Bildirim sesi");
+    public string AudibleVolumePercentText => $"{AudibleVolumePercent:0}%";
+    public string StopPreviewSoundText => SoundText("AudibleNotifications.Stop", "Durdur");
     public string NetworkOfflineSoundTitle => SoundText("AudibleNotifications.NetworkOffline.Title");
     public string NetworkOfflineSoundDescription => SoundText("AudibleNotifications.NetworkOffline.Description");
     public string ConnectedWithoutInternetSoundTitle => SoundText("AudibleNotifications.ConnectedWithoutInternet.Title");
@@ -783,6 +823,12 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public double FullscreenNotificationSeconds { get => _fullscreenNotificationSeconds; set => Set(value, ref _fullscreenNotificationSeconds, s => s with { Fullscreen = s.Fullscreen with { NotificationSeconds = value } }); }
     public FullscreenNotificationStyle FullscreenStyle { get => _fullscreenStyle; set { Set(value, ref _fullscreenStyle, s => s with { Fullscreen = s.Fullscreen with { Style = value } }); OnPropertyChanged(nameof(FullscreenStyleIndex)); } }
     public bool ShowTrackChanges { get => _showTrackChanges; set => Set(value, ref _showTrackChanges, s => s with { Fullscreen = s.Fullscreen with { ShowTrackChanges = value } }); }
+    public string FullscreenEdgeRevealDescription => SoundText(
+        "Fullscreen.EdgeReveal.Description",
+        "Dock ile tam ekran pencere aynı monitördeyse davranış uygulanır. Özel Direct3D tam ekranda kenarda gizle dock'u tamamen kapatır; borderless tam ekranda fareyle açma sürer.");
+    public string FullscreenEdgeRevealInfo => SoundText(
+        "Fullscreen.EdgeReveal.Info",
+        "Tamamen gizle dock'u kapatır. Yalnız bildirimler normal dock'u gizler. Kenarda gizle borderless tam ekranda doğru kenarda açılır; özel Direct3D'de oyunu korumak için kapalı kalır.");
     public MonitorSelectionMode MonitorMode { get => _monitorMode; set { Set(value, ref _monitorMode, s => s with { Monitor = s.Monitor with { Mode = value } }); OnPropertyChanged(nameof(MonitorModeIndex)); } }
     public string? FixedMonitorId { get => _fixedMonitorId; set { Set(value, ref _fixedMonitorId, s => s with { Monitor = s.Monitor with { FixedMonitorId = value } }); OnPropertyChanged(nameof(FixedMonitorIndex)); } }
     public bool ShowTrayIcon { get => _showTrayIcon; set => Set(value, ref _showTrayIcon, s => s with { Tray = s.Tray with { ShowIcon = value } }); }
@@ -1061,6 +1107,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
                      nameof(PositionIndex), nameof(ClockHourFormatIndex), nameof(ClockDateFormatIndex),
                      nameof(ThemeIndex), nameof(AnimationKindIndex), nameof(MotionPresetIndex),
                      nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex), nameof(FullscreenBehaviorIndex),
+                     nameof(FullscreenEdgeRevealDescription), nameof(FullscreenEdgeRevealInfo),
                      nameof(MonitorModeIndex), nameof(LaunchModeIndex), nameof(CloseBehaviorIndex),
                      nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable), nameof(IsAccentColorEditable),
                      nameof(StoreUpdateStatusMessage), nameof(StoreUpdateVersionText),
@@ -1192,6 +1239,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             DeviceConnectedSoundEnabled = settings.AudibleNotifications.DeviceConnectedEnabled;
             DeviceDisconnectedSoundEnabled = settings.AudibleNotifications.DeviceDisconnectedEnabled;
             HourlySoundEnabled = settings.AudibleNotifications.HourlyEnabled;
+            AudibleOutputDeviceId = settings.AudibleNotifications.OutputDeviceId;
+            AudibleVolumePercent = settings.AudibleNotifications.VolumePercent;
             var batteryOptions = BatteryModuleOptions.FromEnvelope(
                 settings.Modules.TryGetValue("battery", out var batteryEnvelope) ? batteryEnvelope : null);
             BatteryLowThreshold = batteryOptions.LowThresholdPercent;
@@ -1792,6 +1841,12 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
 
     private string SoundText(string key) => _localization.Get(key);
 
+    private string SoundText(string key, string fallback)
+    {
+        var value = _localization.Get(key);
+        return value == key ? fallback : value;
+    }
+
     private string PreviewName(string title) => $"{PreviewSoundText}: {title}";
 
     [RelayCommand]
@@ -1817,6 +1872,30 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private void PreviewHourlySound() =>
         _audibleNotificationPlayer?.Preview(AudibleNotificationCue.Hourly);
+
+    [RelayCommand]
+    private void StopPreviewSound() => _audibleNotificationPlayer?.Stop();
+
+    private async Task RefreshAudibleOutputDevicesAsync()
+    {
+        if (_audioDeviceCatalog is null) return;
+        IReadOnlyList<AudioDeviceInfo> devices;
+        try { devices = await _audioDeviceCatalog.GetOutputDevicesAsync(); }
+        catch { return; }
+        DispatchNotificationUpdate(() =>
+        {
+            var options = new List<SettingOption<string?>> { new(null, AudibleDefaultOutputDeviceText) };
+            options.AddRange(devices.Where(device => device.IsActive)
+                .Select(device => new SettingOption<string?>(device.Id, device.DisplayName)));
+            if (!string.IsNullOrWhiteSpace(AudibleOutputDeviceId) && options.All(option => option.Value != AudibleOutputDeviceId))
+            {
+                options.Add(new(AudibleOutputDeviceId, $"{AudibleOutputDeviceId} ({AudibleOutputDeviceDescription})"));
+            }
+            AudibleOutputDevices = options;
+            OnPropertyChanged(nameof(AudibleOutputDevices));
+            OnPropertyChanged(nameof(AudibleOutputDeviceIndex));
+        });
+    }
 
     private void SetClipboardOption<T>(string key, object serializedValue, ref T field, T value)
     {

@@ -1,6 +1,8 @@
+using System.Globalization;
+
 namespace MiaDock.Core.Clipboard;
 
-public sealed record ClipboardTextStats(int CharacterCount, int WordCount)
+public sealed record ClipboardTextStats(int CharacterCount, int WordCount, int LineCount)
 {
     public static ClipboardTextStats? TryCreate(ClipboardPeekItem? item)
     {
@@ -13,6 +15,9 @@ public sealed record ClipboardTextStats(int CharacterCount, int WordCount)
     public static ClipboardTextStats FromText(string text)
     {
         ArgumentNullException.ThrowIfNull(text);
-        return new(text.Length, text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length);
+        var characters = new StringInfo(text).LengthInTextElements;
+        var words = text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+        var lines = text.Length == 0 ? 0 : text.Replace("\r\n", "\n", StringComparison.Ordinal).Replace('\r', '\n').Split('\n').Length;
+        return new(characters, words, lines);
     }
 }

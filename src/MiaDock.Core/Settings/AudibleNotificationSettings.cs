@@ -9,7 +9,9 @@ public sealed record AudibleNotificationSettings(
     bool LowBatteryEnabled,
     bool DeviceConnectedEnabled,
     bool DeviceDisconnectedEnabled,
-    bool HourlyEnabled)
+    bool HourlyEnabled,
+    string? OutputDeviceId = null,
+    int VolumePercent = 100)
 {
     public static AudibleNotificationSettings Default { get; } = new(
         true,

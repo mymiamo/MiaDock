@@ -219,34 +219,10 @@ public sealed class TrayMenuCoordinator : IDisposable
         items.Add(TrayMenuItem.Separator);
 
         items.Add(new TrayMenuItem(
-            StartupCommand,
-            Text("Tray.StartWithWindows"),
-            IsEnabled: _startupStatus != StartupTaskStatus.Unavailable,
-            IsChecked: _startupStatus is StartupTaskStatus.Enabled or StartupTaskStatus.EnabledByPolicy,
-            IconGlyph: "\uE7E8"));
-        items.Add(new TrayMenuItem(
             NotificationsCommand,
             Text("Tray.TemporaryNotifications"),
             IsChecked: settings.Tray.EnableTemporaryNotifications,
             IconGlyph: "\uEA8F"));
-        items.Add(new TrayMenuItem(0, Text("Tray.FullscreenBehavior"), Children:
-        [
-            new(
-                FullscreenEnabledCommand,
-                Text("Tray.Fullscreen.Show"),
-                IsChecked: settings.Fullscreen.Behavior != FullscreenDockBehavior.HideCompletely),
-            TrayMenuItem.Separator,
-            new(
-                FullscreenMinimalCommand,
-                Text("Tray.Fullscreen.Minimal"),
-                IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.Minimal,
-                IsRadio: true),
-            new(
-                FullscreenControlledCommand,
-                Text("Tray.Fullscreen.Controls"),
-                IsChecked: settings.Fullscreen.Style == FullscreenNotificationStyle.WithControls,
-                IsRadio: true)
-        ], IconGlyph: "\uE740"));
         items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems, IconGlyph: "\uE7F4"));
         items.Add(TrayMenuItem.Separator);
         items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit"), IconGlyph: "\uE8BB"));
@@ -266,6 +242,14 @@ public sealed class TrayMenuCoordinator : IDisposable
     }
 
     private void OnPrimaryInvoked(object? sender, EventArgs args)
+    {
+        if (!_dispatcher.TryEnqueue(ExecutePrimaryActionSafely))
+        {
+            LogDispatchFailure("primary-action");
+        }
+    }
+
+    private void ExecutePrimaryActionSafely()
     {
         try
         {
@@ -296,7 +280,21 @@ public sealed class TrayMenuCoordinator : IDisposable
         }
     }
 
-    private void OnCommandInvoked(object? sender, int command) => _ = ExecuteCommandSafelyAsync(command);
+    private void OnCommandInvoked(object? sender, int command)
+    {
+        if (!_dispatcher.TryEnqueue(() => _ = ExecuteCommandSafelyAsync(command)))
+        {
+            LogDispatchFailure("command");
+        }
+    }
+
+    private void LogDispatchFailure(string operation) =>
+        _log.Write(
+            TechnicalLogLevel.Warning,
+            TechnicalEventIds.TrayCommandFailed,
+            "Tray",
+            "A tray command was ignored because the UI dispatcher was unavailable.",
+            properties: new Dictionary<string, object?> { ["operation"] = operation });
 
     private async Task ExecuteCommandSafelyAsync(int command)
     {
