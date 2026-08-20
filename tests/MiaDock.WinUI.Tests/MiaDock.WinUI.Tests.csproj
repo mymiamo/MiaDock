@@ -43,6 +43,7 @@
     <Content Include="..\..\src\MiaDock.App\Package.appxmanifest" Link="Package.appxmanifest" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\app.manifest" Link="app.manifest" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\MiaDock.App.csproj" Link="MiaDock.App.csproj" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Content\YENILIKLER.md" Link="Content\YENILIKLER.md" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\*.xaml" Link="Settings\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\AboutSettingsPage.xaml.cs" Link="Settings\AboutSettingsPage.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\DiagnosticsSettingsPage.xaml.cs" Link="Settings\DiagnosticsSettingsPage.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
@@ -56,6 +57,8 @@
     <Content Include="..\..\src\MiaDock.App\Services\GlobalHotKeyCoordinator.cs" Link="Services\GlobalHotKeyCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Services\ModuleServiceDisclosureCatalog.cs" Link="Services\ModuleServiceDisclosureCatalog.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Services\TrayMenuCoordinator.cs" Link="Services\TrayMenuCoordinator.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Services\IOverlayWindowService.cs" Link="Services\IOverlayWindowService.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Services\OverlayWindowService.cs" Link="Services\OverlayWindowService.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Dialogs\ModuleServiceConsentDialog.cs" Link="Dialogs\ModuleServiceConsentDialog.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Views\Settings\ModulesSettingsPage.xaml.cs" Link="Settings\ModulesSettingsPage.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.Platform.Windows\Startup\WindowsStartupTaskService.cs" Link="Platform\WindowsStartupTaskService.cs" CopyToOutputDirectory="PreserveNewest" />

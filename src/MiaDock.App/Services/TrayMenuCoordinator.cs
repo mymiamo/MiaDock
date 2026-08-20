@@ -33,7 +33,7 @@ public sealed class TrayMenuCoordinator : IDisposable
     private const int DisplayCommandBase = 3000;
 
     private readonly ITrayIconService _tray;
-    private readonly OverlayWindow _overlay;
+    private readonly IOverlayWindowService _overlay;
     private readonly ISettingsWindowService _settingsWindow;
     private readonly ISettingsService _settings;
     private readonly IIslandModuleRegistry _modules;
@@ -53,7 +53,7 @@ public sealed class TrayMenuCoordinator : IDisposable
 
     public TrayMenuCoordinator(
         ITrayIconService tray,
-        OverlayWindow overlay,
+        IOverlayWindowService overlay,
         ISettingsWindowService settingsWindow,
         ISettingsService settings,
         IIslandModuleRegistry modules,
@@ -184,15 +184,15 @@ public sealed class TrayMenuCoordinator : IDisposable
             items.Add(new TrayMenuItem(
                 DeactivateFocusCommand,
                 Text("Tray.FocusTurnOff", FocusProfileName(activeProfile)),
-                IconGlyph: "\uE708"));
+                IconKey: TrayIconKey.Focus));
             items.Add(TrayMenuItem.Separator);
         }
 
         items.Add(new TrayMenuItem(
             ToggleDockCommand,
             _overlay.IsDockVisible ? Text("Dock.Hide") : Text("Dock.Show"),
-            IconGlyph: "\uE8A1"));
-        items.Add(new TrayMenuItem(SettingsCommand, Text("Dock.Settings"), IconGlyph: "\uE713"));
+            IconKey: TrayIconKey.Window));
+        items.Add(new TrayMenuItem(SettingsCommand, Text("Dock.Settings"), IconKey: TrayIconKey.Settings));
         items.Add(TrayMenuItem.Separator);
 
         if (settings.Tray.ShowMediaControls)
@@ -202,30 +202,30 @@ public sealed class TrayMenuCoordinator : IDisposable
                 PreviousCommand,
                 Text("Tray.Previous"),
                 _modules.CanExecuteCommand(MediaModuleId, "previous"),
-                IconGlyph: "\uE892"));
+                IconKey: TrayIconKey.Previous));
             items.Add(new TrayMenuItem(
                 PlayPauseCommand,
                 PlaybackLabel(),
                 _modules.CanExecuteCommand(MediaModuleId, "play-pause"),
-                IconGlyph: playing ? "\uE769" : "\uE768"));
+                IconKey: playing ? TrayIconKey.Pause : TrayIconKey.Play));
             items.Add(new TrayMenuItem(
                 NextCommand,
                 Text("Tray.Next"),
                 _modules.CanExecuteCommand(MediaModuleId, "next"),
-                IconGlyph: "\uE893"));
+                IconKey: TrayIconKey.Next));
         }
 
-        items.Add(new TrayMenuItem(0, Text("Tray.DefaultMedia"), Children: sourceItems, IconGlyph: "\uE8D6"));
+        items.Add(new TrayMenuItem(0, Text("Tray.DefaultMedia"), Children: sourceItems, IconKey: TrayIconKey.Music));
         items.Add(TrayMenuItem.Separator);
 
         items.Add(new TrayMenuItem(
             NotificationsCommand,
             Text("Tray.TemporaryNotifications"),
             IsChecked: settings.Tray.EnableTemporaryNotifications,
-            IconGlyph: "\uEA8F"));
-        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems, IconGlyph: "\uE7F4"));
+            IconKey: TrayIconKey.Notifications));
+        items.Add(new TrayMenuItem(0, Text("Tray.SelectMonitor"), Children: monitorItems, IconKey: TrayIconKey.Monitor));
         items.Add(TrayMenuItem.Separator);
-        items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit"), IconGlyph: "\uE8BB"));
+        items.Add(new TrayMenuItem(ExitCommand, Text("Tray.Exit"), IconKey: TrayIconKey.Exit));
         return items;
     }
 

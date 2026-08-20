@@ -277,10 +277,18 @@ public sealed partial class IslandShell : UserControl
         Surface.Translation = appearance.Theme == ThemeStyle.TozPembe || appearance.ShadowIntensity <= 0.01
             ? Vector3.Zero
             : new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24));
+        SyncEdgeRevealSurfaceAppearance(appearance, background, accent);
 
         _appliedTheme = appearance.Theme;
         SyncBackdropVisibility();
         ApplyCornerRadii(appearance.EffectiveCornerRadii);
+    }
+
+    public void RefreshThemeResources()
+    {
+        var target = RequestedTheme;
+        RequestedTheme = target == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark;
+        RequestedTheme = target;
     }
 
     public void SetEdgeRevealAppearance(bool hidden, OverlayPosition position)
@@ -398,6 +406,49 @@ public sealed partial class IslandShell : UserControl
         BackdropSurface.Visibility = !_edgeRevealHidden && _appliedTheme.UsesSystemBackdrop()
             ? Visibility.Visible
             : Visibility.Collapsed;
+    }
+
+    private void SyncEdgeRevealSurfaceAppearance(
+        AppearanceSettings appearance,
+        Color background,
+        Color accent)
+    {
+        // Do not reuse Surface brushes here. Theme resources are replaced while
+        // the user switches themes, and an exposed edge can remain in the visual
+        // tree during that transition. Giving the shelf its own brush instances
+        // prevents a detached theme resource from bringing down the XAML tree.
+        if (appearance.Theme == ThemeStyle.AdaptiveFluent)
+        {
+            EdgeRevealSurface.ClearValue(Border.BackgroundProperty);
+            EdgeRevealSurface.ClearValue(Border.BorderBrushProperty);
+            EdgeRevealSurface.BorderThickness = new Thickness(0);
+            return;
+        }
+
+        if (appearance.Theme == ThemeStyle.TozPembe)
+        {
+            EdgeRevealSurface.Background = new SolidColorBrush(
+                Color.FromArgb(255, background.R, background.G, background.B));
+            EdgeRevealSurface.BorderBrush = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
+            EdgeRevealSurface.BorderThickness = new Thickness(0);
+            return;
+        }
+
+        EdgeRevealSurface.Background = CreateSurfaceBrush(appearance.Theme, background, appearance.Opacity);
+        EdgeRevealSurface.BorderBrush = appearance.Theme.UsesColorlessGlass()
+            ? new SolidColorBrush(Color.FromArgb(0x20, 0xFF, 0xFF, 0xFF))
+            : appearance.Theme.IsWindows11Style()
+                ? new SolidColorBrush(Color.FromArgb(
+                    checked((byte)Math.Round(48 + appearance.ShadowIntensity * 96)),
+                    accent.R,
+                    accent.G,
+                    accent.B))
+                : new SolidColorBrush(Color.FromArgb(
+                    checked((byte)Math.Round(255 - appearance.ShadowIntensity * 80)),
+                    37,
+                    37,
+                    37));
+        EdgeRevealSurface.BorderThickness = new Thickness(0);
     }
 
     private static void OnStateChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)

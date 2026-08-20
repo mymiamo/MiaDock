@@ -22,7 +22,7 @@ namespace MiaDock.App;
 public partial class App : Application
 {
     private readonly ServiceProvider _services;
-    private OverlayWindow? _overlayWindow;
+    private IOverlayWindowService? _overlayWindow;
     private ISettingsWindowService? _settingsWindow;
     private IOnboardingWindowService? _onboardingWindow;
     private IApplicationLifetimeService? _lifetime;
@@ -126,14 +126,14 @@ public partial class App : Application
                 exception);
         }
 
-        _overlayWindow = _services.GetRequiredService<OverlayWindow>();
+        _overlayWindow = _services.GetRequiredService<IOverlayWindowService>();
         _settingsWindow = _services.GetRequiredService<ISettingsWindowService>();
         _onboardingWindow = _services.GetRequiredService<IOnboardingWindowService>();
 
         // Use the durable overlay window as dialog owner. A temporary host window
         // was the last open window and closed the process after "Crash Detected".
         await _services.GetRequiredService<CrashRecoveryCoordinator>()
-            .ShowIfNeededAsync(_overlayWindow);
+            .ShowIfNeededAsync(_overlayWindow.Current);
         _services.GetRequiredService<ICrashStateStore>().MarkSessionStarted();
 
         // Show the stable idle dock before probing media, audio, timers and
@@ -265,7 +265,7 @@ public partial class App : Application
 
             _onboardingWindow?.CloseForShutdown();
             _settingsWindow?.CloseForShutdown();
-            _overlayWindow?.Close();
+            _overlayWindow?.CloseForShutdown();
 
             if (_singleInstance is not null)
             {

@@ -17,7 +17,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$expectedVersion = "1.5.3.0"
+$expectedVersion = "1.5.4.0"
 $repositoryRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot "..\.."))
 $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csproj"
@@ -27,7 +27,7 @@ $validationScript = Join-Path $repositoryRoot (
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
     $timestamp = [DateTimeOffset]::UtcNow.ToString("yyyyMMdd-HHmmss")
     $ResultsDirectory = Join-Path $repositoryRoot (
-        "artifacts\release\1.5.3.0\candidate-$timestamp")
+        "artifacts\release\1.5.4.0\candidate-$timestamp")
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
@@ -242,7 +242,18 @@ function Assert-AndExtractStoreUpload {
             "Assets/Square150x150Logo.png",
             "MiaDock.App.exe",
             "WinUIEx.dll",
-            "WinUIEx.pri")
+            "WinUIEx.pri",
+            "Assets/FluentIcons/window_24_regular.svg",
+            "Assets/FluentIcons/settings_24_regular.svg",
+            "Assets/FluentIcons/arrow_previous_24_regular.svg",
+            "Assets/FluentIcons/play_24_regular.svg",
+            "Assets/FluentIcons/pause_24_regular.svg",
+            "Assets/FluentIcons/arrow_next_24_regular.svg",
+            "Assets/FluentIcons/music_note_2_24_regular.svg",
+            "Assets/FluentIcons/alert_24_regular.svg",
+            "Assets/FluentIcons/desktop_24_regular.svg",
+            "Assets/FluentIcons/eye_off_24_regular.svg",
+            "Assets/FluentIcons/power_24_regular.svg")
         $missing = @($requiredEntries | Where-Object { $_ -notin $entryNames })
         if ($missing.Count -gt 0) {
             throw "Store package entries are missing: $($missing -join ', ')."

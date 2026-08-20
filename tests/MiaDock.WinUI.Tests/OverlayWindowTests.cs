@@ -108,6 +108,8 @@ public sealed class OverlayWindowTests
         Assert.DoesNotContain("_transparentWindowBackdrop.Color", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ResolveTransparentClearColor", source, StringComparison.Ordinal);
         StringAssert.Contains(source, "or ThemeStyle.TozPembe");
+        StringAssert.Contains(source, "RefreshRootThemeResources(appearance.Theme)");
+        StringAssert.Contains(source, "Island.RefreshThemeResources()");
         Assert.IsFalse(
             System.Text.RegularExpressions.Regex.IsMatch(
                 source,

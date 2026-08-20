@@ -267,9 +267,6 @@ public sealed class WindowsGlobalHotKeyService : IGlobalHotKeyService
     [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern nint CreateWindowExW(uint extendedStyle, string className, string windowName,
         uint style, int x, int y, int width, int height, nint parent, nint menu, nint instance, nint parameter);
-    [DllImport("user32.dll")]
-    [return: MarshalAs(UnmanagedType.Bool)]
-    private static extern bool DestroyWindow(nint window);
     [DllImport("user32.dll", CharSet = CharSet.Unicode)]
     [return: MarshalAs(UnmanagedType.Bool)]
     private static extern bool UnregisterClassW(string className, nint instance);

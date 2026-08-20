@@ -34,7 +34,9 @@ public sealed partial class OverlayWindow : Window
 {
     private const long WheelNavigationThrottleMilliseconds = 90;
     private const long PointerActivityThrottleMilliseconds = 200;
-    private const double EdgeRevealStripThicknessInDips = 3;
+    // Keep the complete EdgeRevealStatusView in view while the dock is hidden.
+    // Its 15-DIP shelf contains the pull cue and live status indicators.
+    private const double EdgeRevealStripThicknessInDips = 15;
     private const long EdgeRevealActivationDelayMilliseconds = 100;
     private readonly OverlayWindowViewModel _viewModel;
     private readonly IOverlayWindowController _windowController;
@@ -725,15 +727,15 @@ public sealed partial class OverlayWindow : Window
             // transparency brush, so assigning it here would make the HWND opaque
             // and paint a black rectangle around the dock.
             ApplyOverlayBackdrop(appearance.Theme);
-            Root.RequestedTheme = appearance.Theme.UsesColorlessGlass() ||
-                                  appearance.Theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack
-                                      or ThemeStyle.TozPembe
-                ? ElementTheme.Dark
-                : ElementTheme.Default;
+            RefreshRootThemeResources(appearance.Theme);
             Root.Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0));
         }
 
         Island.ApplyAppearance(appearance);
+        if (themeChanged)
+        {
+            Island.RefreshThemeResources();
+        }
         _windowController.UpdateOpacity(appearance.Opacity);
 
         if (motionChanged)
@@ -758,6 +760,21 @@ public sealed partial class OverlayWindow : Window
         _appliedAppearance = appearance;
         _appliedLayoutOptions = layoutOptions;
         _appliedMotionOptions = motionOptions;
+    }
+
+    private void RefreshRootThemeResources(ThemeStyle theme)
+    {
+        var target = theme.UsesColorlessGlass() ||
+                     theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack or ThemeStyle.TozPembe
+            ? ElementTheme.Dark
+            : ElementTheme.Default;
+
+        // Replacing an application resource dictionary does not invalidate an
+        // already-resolved ThemeResource when the effective theme stays Dark
+        // (for example Apple Like -> TozPembe). Flip it synchronously so text,
+        // icons and controls resolve against the new dictionary immediately.
+        Root.RequestedTheme = target == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark;
+        Root.RequestedTheme = target;
     }
 
     private async Task ApplyMediaSelectionAsync(MediaSettings settings, CancellationToken cancellationToken)

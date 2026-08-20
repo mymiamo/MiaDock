@@ -16,9 +16,7 @@
     </Border>
     <Border x:Name="EdgeRevealSurface"
             Visibility="Collapsed"
-            Background="#FF000000"
             CornerRadius="23"
-            RequestedTheme="Dark"
             IsHitTestVisible="False"
             AutomationProperties.AccessibilityView="Raw">
       <Grid>

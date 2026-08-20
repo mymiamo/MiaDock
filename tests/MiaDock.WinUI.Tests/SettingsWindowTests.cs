@@ -31,6 +31,27 @@ public sealed class SettingsWindowTests
     }
 
     [TestMethod]
+    public void WhatsNew_ListsTheLatestReleaseFirstAndKeepsReleaseHistory()
+    {
+        var notes = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Content",
+            "YENILIKLER.md"));
+
+        var latest = notes.IndexOf("## MiaDock 1.5.4", StringComparison.Ordinal);
+        var previous = notes.IndexOf("## MiaDock 1.5.3", StringComparison.Ordinal);
+        var earliestIncluded = notes.IndexOf("## MiaDock 1.2.0", StringComparison.Ordinal);
+
+        Assert.IsTrue(latest >= 0, "The current release must have a What's New entry.");
+        Assert.IsTrue(previous > latest, "The current release must be displayed before older releases.");
+        Assert.IsTrue(earliestIncluded > previous, "The release history must remain available below newer updates.");
+        StringAssert.Contains(notes, "### Türkçe");
+        StringAssert.Contains(notes, "### English");
+        StringAssert.Contains(notes, "yüksek kontrastlı açık dolgu");
+        Assert.DoesNotContain("**", notes, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
     public void DockControlStaticText_HasEnglishLocalizationEntry()
     {
         var missing = LocalizationTables.FindUntranslatedMarkupText(
@@ -114,6 +135,21 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "SettingsWindowBackgroundBrush");
         Assert.DoesNotContain("#171B2B", text, StringComparison.Ordinal);
         Assert.DoesNotContain("#1B2032", text, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void ThemeChange_RefreshesOpenSettingsWindowResourcesImmediately()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "SettingsWindow.xaml.cs"));
+
+        StringAssert.Contains(source, "_settings.SettingsChanged += OnSettingsChanged");
+        StringAssert.Contains(source, "_settings.SettingsChanged -= OnSettingsChanged");
+        StringAssert.Contains(source, "args.Previous.Appearance.Theme == args.Current.Appearance.Theme");
+        StringAssert.Contains(source, "Root.RequestedTheme = target == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark");
+        StringAssert.Contains(source, "ApplySettingsTheme()");
     }
 
     [TestMethod]
@@ -318,7 +354,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.5.3.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.5.4.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -351,7 +387,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.5.3.0", packageVersion);
+        Assert.AreEqual("1.5.4.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 

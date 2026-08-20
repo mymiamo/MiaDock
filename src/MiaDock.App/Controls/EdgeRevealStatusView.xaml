@@ -10,7 +10,7 @@
     <Storyboard x:Name="ActivityPulseStoryboard" RepeatBehavior="Forever">
       <DoubleAnimation Storyboard.TargetName="ActivityPulse"
                        Storyboard.TargetProperty="Opacity"
-                       From="0.12" To="0.42" Duration="0:0:1.2"
+                       From="0.14" To="0.5" Duration="0:0:1.2"
                        AutoReverse="True" />
       <DoubleAnimation Storyboard.TargetName="ActivityPulseScale"
                        Storyboard.TargetProperty="ScaleX"
@@ -28,32 +28,38 @@
         Padding="8,0"
         Background="Transparent"
         AutomationProperties.LiveSetting="Polite">
-    <Grid Width="8"
-          Height="8"
-          HorizontalAlignment="Left"
-          VerticalAlignment="Center"
-          AutomationProperties.AccessibilityView="Raw">
-      <Ellipse x:Name="ActivityPulse"
-               Fill="{ThemeResource IslandStyleAccentBrush}"
-               Opacity="0.12"
-               RenderTransformOrigin="0.5,0.5">
-        <Ellipse.RenderTransform>
-          <ScaleTransform x:Name="ActivityPulseScale" />
-        </Ellipse.RenderTransform>
-      </Ellipse>
-      <Ellipse x:Name="ActivityDot"
-               Width="4"
-               Height="4"
-               Fill="{ThemeResource IslandStyleAccentBrush}"
-               HorizontalAlignment="Center"
-               VerticalAlignment="Center" />
-    </Grid>
+    <StackPanel x:Name="LeftIndicators"
+                Orientation="Horizontal"
+                Spacing="5"
+                Margin="0,2"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Center">
+      <Grid Width="8"
+            Height="8"
+            AutomationProperties.AccessibilityView="Raw">
+        <Ellipse x:Name="ActivityPulse"
+                 Fill="{ThemeResource IslandStyleAccentBrush}"
+                 Opacity="0.22"
+                 RenderTransformOrigin="0.5,0.5">
+          <Ellipse.RenderTransform>
+            <ScaleTransform x:Name="ActivityPulseScale" />
+          </Ellipse.RenderTransform>
+        </Ellipse>
+        <Ellipse x:Name="ActivityDot"
+                 Width="4"
+                 Height="4"
+                 Fill="{ThemeResource IslandStyleAccentBrush}"
+                 HorizontalAlignment="Center"
+                 VerticalAlignment="Center" />
+      </Grid>
+
+    </StackPanel>
 
     <Border x:Name="RevealGrip"
-            Width="42"
-            Height="3"
-            Background="#F2FFFFFF"
-            CornerRadius="2"
+            Width="36"
+            Height="2"
+            Background="#CCFFFFFF"
+            CornerRadius="1"
             HorizontalAlignment="Center"
             VerticalAlignment="Center"
             AutomationProperties.AccessibilityView="Raw" />
@@ -61,32 +67,39 @@
     <StackPanel x:Name="StatusTray"
                 Orientation="Horizontal"
                 Spacing="3"
+                Margin="0,2"
                 HorizontalAlignment="Right"
                 VerticalAlignment="Center">
       <FontIcon Glyph="{Binding NetworkGlyph}"
-                Width="8"
+                Width="11"
+                Height="11"
                 FontFamily="Segoe Fluent Icons"
-                FontSize="7"
+                FontSize="10"
                 Opacity="{Binding NetworkOpacity}"
                 Foreground="{Binding NetworkStatusBrush}"
+                VerticalAlignment="Center"
                 ToolTipService.ToolTip="{Binding NetworkStatus}"
                 AutomationProperties.Name="{Binding NetworkStatus}" />
 
       <FontIcon Glyph="&#xE72E;"
-                Width="8"
+                Width="11"
+                Height="11"
                 FontFamily="Segoe Fluent Icons"
-                FontSize="7"
+                FontSize="10"
                 Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                VerticalAlignment="Center"
                 Visibility="{Binding VpnVisibility}"
                 ToolTipService.ToolTip="{Binding VpnStatus}"
                 AutomationProperties.Name="{Binding VpnStatus}" />
 
       <FontIcon x:Name="CallActivityIcon"
                 Glyph="&#xE717;"
-                Width="8"
+                Width="11"
+                Height="11"
                 FontFamily="Segoe Fluent Icons"
-                FontSize="7"
+                FontSize="10"
                 Foreground="{ThemeResource IslandStyleAccentBrush}"
+                VerticalAlignment="Center"
                 Visibility="Collapsed"
                 ToolTipService.ToolTip="Olası arama etkinliği"
                 AutomationProperties.Name="Olası arama etkinliği" />
@@ -97,13 +110,14 @@
                   ToolTipService.ToolTip="{Binding BluetoothStatus}"
                   AutomationProperties.Name="{Binding BluetoothStatus}">
         <FontIcon Glyph="&#xE702;"
-                  Width="8"
+                  Width="11"
+                  Height="11"
                   FontFamily="Segoe Fluent Icons"
-                  FontSize="7"
+                  FontSize="10"
                   Foreground="{ThemeResource IslandTextPrimaryBrush}" />
         <TextBlock Text="{Binding BluetoothCountText}"
                    MaxLines="1"
-                   FontSize="6"
+                   FontSize="7"
                    Foreground="{ThemeResource IslandTextPrimaryBrush}"
                    VerticalAlignment="Center"
                    Opacity="0.86" />
@@ -115,20 +129,22 @@
                   ToolTipService.ToolTip="{Binding BatteryStatus}"
                   AutomationProperties.Name="{Binding BatteryStatus}">
         <FontIcon Glyph="{Binding BatteryGlyph}"
+                  Width="11"
+                  Height="11"
                   FontFamily="Segoe Fluent Icons"
-                  FontSize="7"
+                  FontSize="10"
                   Foreground="{ThemeResource IslandTextPrimaryBrush}" />
         <TextBlock Text="{Binding BatteryText}"
                    MaxLines="1"
-                   FontSize="6"
+                   FontSize="7"
                    Foreground="{ThemeResource IslandTextPrimaryBrush}"
                    VerticalAlignment="Center"
                    Opacity="0.86" />
       </StackPanel>
 
       <local:AudioActivityIndicator x:Name="MusicActivity"
-                                    Width="7"
-                                    Height="8"
+                                    Width="9"
+                                    Height="10"
                                     Foreground="{ThemeResource IslandTextPrimaryBrush}"
                                     Visibility="Collapsed" />
     </StackPanel>

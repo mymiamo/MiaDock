@@ -3,7 +3,7 @@
 Bu yol haritası mevcut geliştirme durumunu ve yayın öncesi kalan doğrulamaları
 gösterir. Sürüm numaraları yalnız proje sahibi tarafından kesinleştirilir.
 
-## 1.5.3.0 — Device Hub Bluetooth connect + Clipboard Peek color/text
+## 1.5.4.0 — Platform library integration cleanup
 
 - Device Hub: eşli Bluetooth cihazını dock'tan bağla / ayır. Yeni eşleştirme yok.
 - Clipboard Peek: HEX / RGB / HSL dönüşümü ve düz metinde kelime + karakter sayısı.

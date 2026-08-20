@@ -28,14 +28,14 @@ public sealed class TrayMenuItemTests
     }
 
     [TestMethod]
-    public void MenuItems_CanCarryFluentIconGlyphs()
+    public void MenuItems_CarrySemanticFluentIconKeys()
     {
         var item = new TrayMenuItem(
             42,
             "Settings",
-            IconGlyph: "\uE713");
+            IconKey: TrayIconKey.Settings);
 
-        Assert.AreEqual("\uE713", item.IconGlyph);
+        Assert.AreEqual(TrayIconKey.Settings, item.IconKey);
     }
 
     [TestMethod]
@@ -58,16 +58,37 @@ public sealed class TrayMenuItemTests
             AppContext.BaseDirectory,
             "Tray",
             "WindowsTrayIconService.cs"));
+        var resolverSource = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Tray",
+            "FluentTrayIconResolver.cs"));
 
         StringAssert.Contains(source, "WinUIEx");
         StringAssert.Contains(source, "TrayIcon");
         StringAssert.Contains(source, "MenuFlyout");
         StringAssert.Contains(source, "MenuFlyoutSubItem");
         StringAssert.Contains(source, "ToggleMenuFlyoutItem");
-        StringAssert.Contains(source, "CreateFluentIcon");
-        StringAssert.Contains(source, "SvgImageSource");
+        StringAssert.Contains(source, "FluentTrayIconResolver.Create");
+        StringAssert.Contains(resolverSource, "SvgImageSource");
+        Assert.DoesNotContain("IconGlyph", source, StringComparison.Ordinal);
         Assert.DoesNotContain("OwnerDrawMenuItem", source, StringComparison.Ordinal);
         Assert.DoesNotContain("TrayNative", source, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void EverySemanticTrayIcon_ResolvesToAnIncludedFluentAsset()
+    {
+        var assetsDirectory = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", "src", "MiaDock.App", "Assets", "FluentIcons");
+        foreach (var key in Enum.GetValues<TrayIconKey>().Where(key => key != TrayIconKey.None))
+        {
+            var asset = FluentTrayIconResolver.GetAssetName(key);
+            Assert.IsFalse(string.IsNullOrWhiteSpace(asset), $"{key} has no asset mapping.");
+            var assetPath = Path.Combine(assetsDirectory, asset);
+            Assert.IsTrue(File.Exists(assetPath), $"{key} asset is missing: {asset}");
+            var svg = File.ReadAllText(assetPath);
+            StringAssert.Contains(svg, "#F5F5F5", $"{key} must keep contrast on the dark tray flyout.");
+            Assert.DoesNotContain("#212121", svg, StringComparison.Ordinal);
+        }
     }
 
     [TestMethod]
@@ -81,6 +102,8 @@ public sealed class TrayMenuItemTests
         StringAssert.Contains(source, "_icon.Selected += OnSelected");
         StringAssert.Contains(source, "_icon.ContextMenu += OnContextMenu");
         StringAssert.Contains(source, "args.Flyout = CreateFlyout(_items)");
+        StringAssert.Contains(source, "InvokeCommand(command)");
+        StringAssert.Contains(source, "if (_disposed) return;");
         StringAssert.Contains(source, "CommandInvoked?.Invoke");
         StringAssert.Contains(source, "_icon.Dispose()");
         StringAssert.Contains(source, "_disposed = true;");

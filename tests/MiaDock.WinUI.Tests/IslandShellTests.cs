@@ -214,7 +214,7 @@ public sealed class IslandShellTests
             .ToHashSet(StringComparer.Ordinal);
 
         StringAssert.Contains(shellText, "EdgeRevealStatusHost");
-        StringAssert.Contains(shellText, "RequestedTheme=\"Dark\"");
+        Assert.DoesNotContain("RequestedTheme=\"Dark\"", shellText, StringComparison.Ordinal);
         Assert.IsTrue(shelfNames.Contains("ActivityDot"));
         Assert.IsTrue(shelfNames.Contains("RevealGrip"));
         Assert.IsTrue(shelfNames.Contains("StatusTray"));
@@ -222,9 +222,21 @@ public sealed class IslandShellTests
         Assert.AreEqual("15", shelf.Descendants().Single(element =>
             element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "LayoutRoot")
             .Attribute("Height")?.Value);
-        Assert.AreEqual("42", shelf.Descendants().Single(element =>
+        Assert.AreEqual("8", shelf.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "ActivityPulse")
+            .Parent?.Attribute("Width")?.Value);
+        Assert.AreEqual("4", shelf.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "ActivityDot")
+            .Attribute("Width")?.Value);
+        Assert.AreEqual("36", shelf.Descendants().Single(element =>
             element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "RevealGrip")
             .Attribute("Width")?.Value);
+        Assert.AreEqual("0,2", shelf.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "LeftIndicators")
+            .Attribute("Margin")?.Value);
+        Assert.AreEqual("0,2", shelf.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "StatusTray")
+            .Attribute("Margin")?.Value);
         Assert.IsTrue(shelf.Descendants().Any(element =>
             element.Attribute("Glyph")?.Value == "{Binding NetworkGlyph}"));
 
@@ -238,8 +250,13 @@ public sealed class IslandShellTests
             "OverlayWindow.xaml.cs"));
         StringAssert.Contains(source, "activationAware.SetPresentationActive(hidden && horizontal)");
         StringAssert.Contains(source, "EdgeRevealStatusHost.VerticalAlignment");
+        StringAssert.Contains(source, "SyncEdgeRevealSurfaceAppearance");
+        StringAssert.Contains(source, "public void RefreshThemeResources()");
+        StringAssert.Contains(source, "appearance.Theme == ThemeStyle.TozPembe");
+        StringAssert.Contains(source, "EdgeRevealSurface.Background = new SolidColorBrush");
+        Assert.DoesNotContain("EdgeRevealSurface.Background = Surface.Background", source, StringComparison.Ordinal);
         StringAssert.Contains(overlay, "EdgeRevealVisibleStripInDips");
-        StringAssert.Contains(overlay, "EdgeRevealStripThicknessInDips = 3");
+        StringAssert.Contains(overlay, "EdgeRevealStripThicknessInDips = 15");
         StringAssert.Contains(overlay, "EdgeRevealActivationDelayMilliseconds = 100");
         StringAssert.Contains(overlay, "TimeSpan.FromMilliseconds(650)");
         StringAssert.Contains(overlay, "SuspendEdgeRevealForExclusiveFullscreen");

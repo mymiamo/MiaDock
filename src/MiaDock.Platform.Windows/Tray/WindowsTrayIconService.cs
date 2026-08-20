@@ -57,11 +57,16 @@ public sealed class WindowsTrayIconService : ITrayIconService
         _icon = null;
     }
 
-    private void OnSelected(object? sender, EventArgs args) => PrimaryInvoked?.Invoke(this, EventArgs.Empty);
+    private void OnSelected(object? sender, EventArgs args)
+    {
+        if (_disposed) return;
+        PrimaryInvoked?.Invoke(this, EventArgs.Empty);
+    }
 
     private void OnContextMenu(object? sender, TrayIconEventArgs args)
     {
         args.Handled = true;
+        if (_disposed) return;
         args.Flyout = CreateFlyout(_items);
     }
 
@@ -81,7 +86,7 @@ public sealed class WindowsTrayIconService : ITrayIconService
             {
                 Text = item.Text,
                 IsEnabled = item.IsEnabled,
-                Icon = CreateFluentIcon(item.IconGlyph)
+                Icon = FluentTrayIconResolver.Create(item.IconKey)
             };
             foreach (var child in item.Children) submenu.Items.Add(CreateItem(child));
             return submenu;
@@ -95,9 +100,9 @@ public sealed class WindowsTrayIconService : ITrayIconService
                 Text = item.Text,
                 IsEnabled = item.IsEnabled,
                 IsChecked = item.IsChecked,
-                Icon = CreateFluentIcon(item.IconGlyph)
+                Icon = FluentTrayIconResolver.Create(item.IconKey)
             };
-            toggle.Click += (_, _) => CommandInvoked?.Invoke(this, command);
+            toggle.Click += (_, _) => InvokeCommand(command);
             return toggle;
         }
 
@@ -105,10 +110,16 @@ public sealed class WindowsTrayIconService : ITrayIconService
         {
             Text = item.Text,
             IsEnabled = item.IsEnabled,
-            Icon = CreateFluentIcon(item.IconGlyph)
+            Icon = FluentTrayIconResolver.Create(item.IconKey)
         };
-        menuItem.Click += (_, _) => CommandInvoked?.Invoke(this, command);
+        menuItem.Click += (_, _) => InvokeCommand(command);
         return menuItem;
+    }
+
+    private void InvokeCommand(int command)
+    {
+        if (_disposed) return;
+        CommandInvoked?.Invoke(this, command);
     }
 
     private void EnsureInitialized()
@@ -116,22 +127,4 @@ public sealed class WindowsTrayIconService : ITrayIconService
         if (_icon is null) throw new InvalidOperationException("The tray icon service must be initialized first.");
     }
 
-    private static IconElement? CreateFluentIcon(string? glyph)
-    {
-        var asset = glyph switch
-        {
-            "\uE713" => "settings_24_regular.svg",
-            "\uE8A1" => "window_24_regular.svg",
-            "\uE768" => "play_24_regular.svg",
-            "\uE769" => "pause_24_regular.svg",
-            _ => null
-        };
-
-        return asset is null
-            ? null
-            : new ImageIcon
-            {
-                Source = new SvgImageSource(new Uri($"ms-appx:///Assets/FluentIcons/{asset}"))
-            };
-    }
 }

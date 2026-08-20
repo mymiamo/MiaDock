@@ -20,7 +20,6 @@
     <ProjectReference Include="..\MiaDock.Core\MiaDock.Core.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.Media\MiaDock.Modules.Media.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.SystemStatus\MiaDock.Modules.SystemStatus.csproj" />
-    <ProjectReference Include="..\MiaDock.Modules.DeviceStatus\MiaDock.Modules.DeviceStatus.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.Time\MiaDock.Modules.Time.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.Notifications\MiaDock.Modules.Notifications.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.Transfers\MiaDock.Modules.Transfers.csproj" />

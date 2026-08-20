@@ -21,7 +21,7 @@ if ($Scale -lt 1.0 -and -not $AllowScaled) {
 $repositoryRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot "..\.."))
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.3.0\phase5-soak"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.4.0\phase5-soak"
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)

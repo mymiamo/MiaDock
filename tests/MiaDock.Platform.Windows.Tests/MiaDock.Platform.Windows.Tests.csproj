@@ -42,6 +42,9 @@
     <Content Include="..\..\src\MiaDock.Platform.Windows\Tray\WindowsTrayIconService.cs"
              Link="Tray\WindowsTrayIconService.cs"
              CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.Platform.Windows\Tray\FluentTrayIconResolver.cs"
+             Link="Tray\FluentTrayIconResolver.cs"
+             CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.Platform.Windows\Applications\WindowsFocusSettingsLauncher.cs"
              Link="Applications\WindowsFocusSettingsLauncher.cs"
              CopyToOutputDirectory="PreserveNewest" />

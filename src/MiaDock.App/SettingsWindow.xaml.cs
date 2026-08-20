@@ -101,6 +101,7 @@ public sealed partial class SettingsWindow : Window
 
         foreach (var page in _pages.Values) page.Loaded += OnPageLoaded;
         _localization.LanguageChanged += OnLanguageChanged;
+        _settings.SettingsChanged += OnSettingsChanged;
         Closed += OnClosed;
 
         AppWindow.Resize(new SizeInt32(1040, 760));
@@ -220,12 +221,38 @@ public sealed partial class SettingsWindow : Window
     private void OnClosed(object sender, WindowEventArgs args)
     {
         _localization.LanguageChanged -= OnLanguageChanged;
+        _settings.SettingsChanged -= OnSettingsChanged;
         _homePage.NavigationRequested -= OnHomeNavigationRequested;
         _modulesPage.DetailsRequested -= OnModuleDetailsRequested;
         foreach (var page in _pages.Values) page.Loaded -= OnPageLoaded;
         _minimumSizeMonitor.Dispose();
         AppWindow.Closing -= OnAppWindowClosing;
         Closed -= OnClosed;
+    }
+
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
+    {
+        if (args.Previous.Appearance.Theme == args.Current.Appearance.Theme)
+        {
+            return;
+        }
+
+        void Refresh()
+        {
+            var target = Root.RequestedTheme;
+            Root.RequestedTheme = target == ElementTheme.Dark ? ElementTheme.Light : ElementTheme.Dark;
+            Root.RequestedTheme = target;
+            ApplySettingsTheme();
+        }
+
+        if (DispatcherQueue.HasThreadAccess)
+        {
+            Refresh();
+        }
+        else
+        {
+            DispatcherQueue.TryEnqueue(Refresh);
+        }
     }
 
     private void OnHomeNavigationRequested(object? sender, string subpageId) => Navigate(subpageId);

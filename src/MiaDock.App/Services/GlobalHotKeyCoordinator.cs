@@ -11,7 +11,7 @@ public sealed class GlobalHotKeyCoordinator : IDisposable
     private readonly IGlobalHotKeyService _hotKeys;
     private readonly ISettingsService _settings;
     private readonly IIslandModuleRegistry _modules;
-    private readonly OverlayWindow _overlay;
+    private readonly IOverlayWindowService _overlay;
     private readonly IUiDispatcher _dispatcher;
     private readonly ILogService _log;
     private bool _started;
@@ -20,7 +20,7 @@ public sealed class GlobalHotKeyCoordinator : IDisposable
         IGlobalHotKeyService hotKeys,
         ISettingsService settings,
         IIslandModuleRegistry modules,
-        OverlayWindow overlay,
+        IOverlayWindowService overlay,
         IUiDispatcher dispatcher,
         ILogService log)
     {

@@ -28,7 +28,7 @@ $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csp
 $solution = Join-Path $repositoryRoot "MiaDock.sln"
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.3.0"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.5.4.0"
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
@@ -38,7 +38,7 @@ $steps = [System.Collections.Generic.List[object]]::new()
 $summary = [ordered]@{
     SchemaVersion = 1
     Product = "MiaDock"
-    Version = "1.5.3.0"
+    Version = "1.5.4.0"
     StartedAtUtc = [DateTimeOffset]::UtcNow.ToString("O")
     CompletedAtUtc = $null
     Result = "Running"
@@ -136,9 +136,9 @@ function Assert-ManifestConsistency {
         "//*[local-name()='StartupTask' and @TaskId='MiaDockStartupTask']")
 
     if ($null -eq $packageIdentity -or
-        $packageIdentity.Version -ne "1.5.3.0" -or
+        $packageIdentity.Version -ne "1.5.4.0" -or
         $packageIdentity.Name -ne "mymiamo.net.MiaDock") {
-        throw "Package identity or version is not the expected MiaDock 1.5.3.0 identity."
+        throw "Package identity or version is not the expected MiaDock 1.5.4.0 identity."
     }
 
     if ($null -eq $applicationIdentity -or
@@ -152,6 +152,112 @@ function Assert-ManifestConsistency {
 
     Add-StepResult -Name "Manifest consistency" -Result "Passed" `
         -Detail "Identity, version and StartupTask declarations are consistent."
+}
+
+function Get-ExpectedFluentTrayAssets {
+    return @(
+        "window_24_regular.svg",
+        "settings_24_regular.svg",
+        "arrow_previous_24_regular.svg",
+        "play_24_regular.svg",
+        "pause_24_regular.svg",
+        "arrow_next_24_regular.svg",
+        "music_note_2_24_regular.svg",
+        "alert_24_regular.svg",
+        "desktop_24_regular.svg",
+        "eye_off_24_regular.svg",
+        "power_24_regular.svg")
+}
+
+function Assert-FluentTrayIconResources {
+    $assetDirectory = Join-Path $repositoryRoot "src\MiaDock.App\Assets\FluentIcons"
+    $expectedAssets = Get-ExpectedFluentTrayAssets
+    $missingAssets = @($expectedAssets | Where-Object {
+        -not (Test-Path -LiteralPath (Join-Path $assetDirectory $_) -PathType Leaf)
+    })
+    if ($missingAssets.Count -gt 0) {
+        throw "Fluent tray icon assets are missing: $($missingAssets -join ', ')."
+    }
+
+    $resolverPath = Join-Path $repositoryRoot "src\MiaDock.Platform.Windows\Tray\FluentTrayIconResolver.cs"
+    $coordinatorPath = Join-Path $repositoryRoot "src\MiaDock.App\Services\TrayMenuCoordinator.cs"
+    $resolverSource = Get-Content -LiteralPath $resolverPath -Raw
+    $coordinatorSource = Get-Content -LiteralPath $coordinatorPath -Raw
+    foreach ($asset in $expectedAssets) {
+        if ($resolverSource -notmatch [regex]::Escape($asset)) {
+            throw "Fluent tray icon resolver has no mapping for $asset."
+        }
+    }
+
+    if ($resolverSource -notmatch "SvgImageSource" -or
+        $coordinatorSource -match "IconGlyph") {
+        throw "Tray icon semantics must resolve through local SVG assets, not raw glyph values."
+    }
+
+    Add-StepResult -Name "Fluent tray icon resources" -Result "Passed" `
+        -Detail "$($expectedAssets.Count) semantic Fluent SVG tray assets and resolver mappings are present."
+}
+
+function Assert-LocalizationCoverage {
+    $requiredCultures = @("az-Latn-AZ", "en-US", "es-ES", "es-MX", "pt-BR", "tr-TR")
+    $requiredKeys = @(
+        "Common.Play",
+        "Common.Pause",
+        "Dock.Show",
+        "Dock.Hide",
+        "Dock.Settings",
+        "Tray.Previous",
+        "Tray.Next",
+        "Tray.MediaNotFound",
+        "Tray.PrimaryMonitor",
+        "Tray.ActiveMonitor",
+        "Tray.DefaultMedia",
+        "Tray.SelectMonitor",
+        "Tray.TemporaryNotifications",
+        "Tray.FocusTurnOff",
+        "Tray.Exit")
+
+    foreach ($culture in $requiredCultures) {
+        $resourcePath = Join-Path $repositoryRoot "src\MiaDock.App\Strings\$culture\Resources.resw"
+        if (-not (Test-Path -LiteralPath $resourcePath -PathType Leaf)) {
+            throw "Localization table is missing for $culture."
+        }
+
+        [xml]$resourceTable = Get-Content -LiteralPath $resourcePath -Raw
+        $resourceKeys = @($resourceTable.root.data | ForEach-Object { [string]$_.name })
+        $missingKeys = @($requiredKeys | Where-Object { $_ -notin $resourceKeys })
+        if ($missingKeys.Count -gt 0) {
+            throw "Localization table $culture is missing tray keys: $($missingKeys -join ', ')."
+        }
+    }
+
+    Add-StepResult -Name "Tray localization coverage" -Result "Passed" `
+        -Detail "Required tray strings are present in all $($requiredCultures.Count) supported languages."
+}
+
+function Assert-NoDuplicateProjectReferences {
+    $duplicates = [System.Collections.Generic.List[string]]::new()
+    Get-ChildItem -LiteralPath (Join-Path $repositoryRoot "src") -Recurse -Filter "*.csproj" -File |
+        ForEach-Object {
+            [xml]$project = Get-Content -LiteralPath $_.FullName -Raw
+            $references = @($project.SelectNodes("//*[local-name()='ProjectReference']") |
+                ForEach-Object { [string]$_.Include } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) })
+            $duplicateReferences = @($references |
+                Group-Object { $_.Trim() } |
+                Where-Object { $_.Count -gt 1 } |
+                ForEach-Object { $_.Name })
+            if ($duplicateReferences.Count -gt 0) {
+                $duplicates.Add("$($_.Name): $($duplicateReferences -join ', ')")
+            }
+        }
+
+    if ($duplicates.Count -gt 0) {
+        throw "Duplicate ProjectReference entries found: $($duplicates -join '; ')."
+    }
+
+    Add-StepResult -Name "Project reference consistency" -Result "Passed" `
+        -Detail "No duplicate ProjectReference entries were found under src."
 }
 
 function Assert-TestPackageContents {
@@ -190,7 +296,7 @@ function Assert-TestPackageContents {
             "//*[local-name()='StartupTask' and @TaskId='MiaDockStartupTask']")
         if ($null -eq $identity -or
             $identity.Name -ne "mymiamo.net.MiaDock" -or
-            $identity.Version -ne "1.5.3.0" -or
+            $identity.Version -ne "1.5.4.0" -or
             $null -eq $startupTask) {
             throw "The packaged identity, version or StartupTask declaration is invalid."
         }
@@ -202,7 +308,8 @@ function Assert-TestPackageContents {
             "Assets/Square150x150Logo.png",
             "MiaDock.App.exe",
             "WinUIEx.dll",
-            "WinUIEx.pri")
+            "WinUIEx.pri") + @(
+                Get-ExpectedFluentTrayAssets | ForEach-Object { "Assets/FluentIcons/$_" })
         $entryNames = @($archive.Entries | ForEach-Object {
             $_.FullName.Replace("\", "/")
         })
@@ -215,7 +322,7 @@ function Assert-TestPackageContents {
     }
 
     Add-StepResult -Name "Unsigned test package contents" -Result "Passed" `
-        -Detail "$($package.Name) contains the expected identity, StartupTask and runtime assets."
+        -Detail "$($package.Name) contains the expected identity, StartupTask, runtime and Fluent tray assets."
 }
 
 function Get-ApplicationOutputDirectory {
@@ -274,11 +381,21 @@ function Assert-NoStartupUnhandledException {
 
                 try {
                     $entry = $line | ConvertFrom-Json
+                    # ConvertFrom-Json materializes ISO timestamps as local DateTime values.
+                    # Read the raw wire value so an older UTC crash cannot be mistaken for a
+                    # startup-smoke failure after an offset conversion.
+                    $timestampMatch = [regex]::Match(
+                        $line,
+                        '"TimestampUtc"\s*:\s*"(?<timestamp>[^"]+)"',
+                        [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
+                    if (-not $timestampMatch.Success) {
+                        continue
+                    }
                     $timestamp = [DateTimeOffset]::MinValue
                     if (-not [DateTimeOffset]::TryParse(
-                        [string]$entry.timestampUtc,
+                        $timestampMatch.Groups["timestamp"].Value,
                         [System.Globalization.CultureInfo]::InvariantCulture,
-                        [System.Globalization.DateTimeStyles]::AssumeUniversal,
+                        [System.Globalization.DateTimeStyles]::RoundtripKind,
                         [ref]$timestamp)) {
                         continue
                     }
@@ -371,21 +488,27 @@ function Invoke-ApplicationSmokeTest {
 
     $startedAtUtc = [DateTimeOffset]::UtcNow
     $process = Start-Process -FilePath $executable -PassThru
-    Start-Sleep -Seconds 10
-    $runningProcess = Get-Process -Id $process.Id -ErrorAction SilentlyContinue
-    if ($null -eq $runningProcess) {
-        throw "MiaDock.App exited during the startup smoke test."
-    }
+    try {
+        Start-Sleep -Seconds 10
+        $runningProcess = Get-Process -Id $process.Id -ErrorAction SilentlyContinue
+        if ($null -eq $runningProcess) {
+            throw "MiaDock.App exited during the startup smoke test."
+        }
 
-    $responding = $runningProcess.Responding
-    $mainWindowHandle = $runningProcess.MainWindowHandle
-    Assert-NoStartupUnhandledException -StartedAtUtc $startedAtUtc
-    Stop-Process -Id $runningProcess.Id -Force
-    if (-not $responding) {
-        throw "MiaDock.App entered a non-responding state during startup."
-    }
-    if ($mainWindowHandle -eq [IntPtr]::Zero) {
-        throw "MiaDock.App did not create a top-level window during startup."
+        $responding = $runningProcess.Responding
+        $mainWindowHandle = $runningProcess.MainWindowHandle
+        Assert-NoStartupUnhandledException -StartedAtUtc $startedAtUtc
+        if (-not $responding) {
+            throw "MiaDock.App entered a non-responding state during startup."
+        }
+        if ($mainWindowHandle -eq [IntPtr]::Zero) {
+            throw "MiaDock.App did not create a top-level window during startup."
+        }
+    } finally {
+        $smokeProcess = Get-Process -Id $process.Id -ErrorAction SilentlyContinue
+        if ($null -ne $smokeProcess) {
+            Stop-Process -Id $smokeProcess.Id -Force
+        }
     }
 
     Add-StepResult -Name "Unpackaged startup smoke test" -Result "Passed" `
@@ -403,6 +526,9 @@ try {
         }
 
         Assert-ManifestConsistency
+        Assert-FluentTrayIconResources
+        Assert-LocalizationCoverage
+        Assert-NoDuplicateProjectReferences
 
         Invoke-DotNetStep -Name "Core tests" -Arguments @(
             "test",
