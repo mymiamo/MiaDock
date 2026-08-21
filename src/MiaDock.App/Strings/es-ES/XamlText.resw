@@ -2154,4 +2154,9 @@
   <data name="XamlText.DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Opciones de extracción de Windows</value></data>
   <data name="XamlText.DeviceHub.Eject" xml:space="preserve"><value>Expulsar de forma segura</value></data>
   <data name="XamlText.DeviceHub.Batteries" xml:space="preserve"><value>Baterías de dispositivos</value></data>
+  <data name="XamlText.Theme.Apply.Description" xml:space="preserve"><value>Confirma la selección del tema; los ajustes de tamaño y movimiento se muestran de inmediato en el dock.</value></data>
+  <data name="XamlText.Theme.Apply.Button" xml:space="preserve"><value>Aplicar tema</value></data>
+  <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Aplicar el tema seleccionado</value></data>
+  <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Tema listo para aplicar</value></data>
+  <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Tu selección no ha cambiado el dock. Usa Aplicar tema para una transición segura.</value></data>
 </root>

@@ -181,6 +181,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         StoreUpdateSnapshot = storeUpdates?.Current ?? StoreUpdateSnapshot;
         BuildModuleItems();
         RebuildLocalizedOptions();
+        ApplyThemeCommand = new RelayCommand(ApplySelectedTheme, () => HasPendingTheme);
         LoadFrom(settingsService.Current);
         _settingsService.SettingsChanged += OnSettingsChanged;
         _music.PropertyChanged += OnMusicPropertyChanged;
@@ -247,6 +248,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
+    public IRelayCommand ApplyThemeCommand { get; }
     public IRelayCommand RestoreDefaultHotKeysCommand { get; }
     public IAsyncRelayCommand CheckForUpdatesCommand { get; }
     public IAsyncRelayCommand OpenStoreCommand { get; }
@@ -625,13 +627,12 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             OnPropertyChanged(nameof(IsBlurredGlassTheme));
             OnPropertyChanged(nameof(IsBackgroundColorEditable));
             OnPropertyChanged(nameof(IsAccentColorEditable));
-            if (_synchronizing) return;
-            var appearance = AppearanceThemePresets.ApplyWhenSafe(
-                _settingsService.Current.Appearance,
-                value);
-            ApplyAppearanceAndSave(appearance);
+            OnPropertyChanged(nameof(HasPendingTheme));
+            ApplyThemeCommand.NotifyCanExecuteChanged();
         }
     }
+
+    public bool HasPendingTheme => Theme != _settingsService.Current.Appearance.Theme;
     public string ThemeDescription => Theme switch
     {
         ThemeStyle.AppleLike => _localization.Text(
@@ -1138,7 +1139,20 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         RefreshHotKeyPresentation();
     }
 
-    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args) => LoadFrom(args.Current);
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
+    {
+        var pendingTheme = HasPendingTheme ? Theme : (ThemeStyle?)null;
+        LoadFrom(args.Current);
+
+        // Live appearance controls can still save while a theme is selected but
+        // not yet applied. Preserve that explicit selection until the user
+        // presses Apply, unless another source has actually changed the theme.
+        if (pendingTheme is { } selected &&
+            args.Previous.Appearance.Theme == args.Current.Appearance.Theme)
+        {
+            Theme = selected;
+        }
+    }
 
     private void OnMusicPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
@@ -1305,6 +1319,17 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         {
             _synchronizing = false;
         }
+
+        OnPropertyChanged(nameof(HasPendingTheme));
+        ApplyThemeCommand.NotifyCanExecuteChanged();
+    }
+
+    private void ApplySelectedTheme()
+    {
+        var appearance = AppearanceThemePresets.ApplyWhenSafe(
+            _settingsService.Current.Appearance,
+            Theme);
+        ApplyAppearanceAndSave(appearance);
     }
 
     private void ApplyAppearanceAndSave(AppearanceSettings appearance)

@@ -78,7 +78,12 @@ public sealed class TrayMenuItemTests
     [TestMethod]
     public void EverySemanticTrayIcon_ResolvesToAnIncludedFluentAsset()
     {
-        var assetsDirectory = Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", "..", "src", "MiaDock.App", "Assets", "FluentIcons");
+        var assetsDirectory = Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.App",
+            "Assets",
+            "FluentIcons");
         foreach (var key in Enum.GetValues<TrayIconKey>().Where(key => key != TrayIconKey.None))
         {
             var asset = FluentTrayIconResolver.GetAssetName(key);
@@ -107,5 +112,16 @@ public sealed class TrayMenuItemTests
         StringAssert.Contains(source, "CommandInvoked?.Invoke");
         StringAssert.Contains(source, "_icon.Dispose()");
         StringAssert.Contains(source, "_disposed = true;");
+    }
+
+    private static string FindRepositoryRoot()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null && !File.Exists(Path.Combine(current.FullName, "MiaDock.sln")))
+        {
+            current = current.Parent;
+        }
+
+        return current?.FullName ?? throw new DirectoryNotFoundException("MiaDock repository root was not found.");
     }
 }

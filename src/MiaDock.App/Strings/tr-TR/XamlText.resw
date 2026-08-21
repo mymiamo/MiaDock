@@ -2152,4 +2152,9 @@
   <data name="XamlText.DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Windows kaldırma seçenekleri</value></data>
   <data name="XamlText.DeviceHub.Eject" xml:space="preserve"><value>Güvenli çıkar</value></data>
   <data name="XamlText.DeviceHub.Batteries" xml:space="preserve"><value>Cihaz pilleri</value></data>
+  <data name="XamlText.Theme.Apply.Description" xml:space="preserve"><value>Tema seçimini onaylayın; boyut ve hareket ayarları dock üzerinde anında önizlenir.</value></data>
+  <data name="XamlText.Theme.Apply.Button" xml:space="preserve"><value>Temayı uygula</value></data>
+  <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Seçili temayı uygula</value></data>
+  <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Tema uygulanmaya hazır</value></data>
+  <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Seçiminiz dock’u değiştirmedi. Güvenli geçiş için Temayı uygula düğmesini kullanın.</value></data>
 </root>

@@ -485,6 +485,8 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "CornerRadius");
         StringAssert.Contains(text, "ConverterParameter=Invert");
         StringAssert.Contains(text, "ResetAppearanceCommand");
+        StringAssert.Contains(text, "ApplyThemeCommand");
+        StringAssert.Contains(text, "HasPendingTheme");
     }
 
     [TestMethod]

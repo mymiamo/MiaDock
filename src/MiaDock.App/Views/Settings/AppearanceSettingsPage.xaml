@@ -10,7 +10,7 @@
     <StackPanel Style="{StaticResource SettingsPageRootStackPanelStyle}">
       <StackPanel Style="{StaticResource SettingsPageHeaderStackPanelStyle}">
         <TextBlock Text="Görünüm" Style="{StaticResource SettingsPageTitleTextBlockStyle}" />
-        <TextBlock Text="Tema, boyut ve hareket ayarları dock üzerinde anında önizlenir."
+        <TextBlock Text="Tema seçimini onaylayın; boyut ve hareket ayarları dock üzerinde anında önizlenir."
                    Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
       </StackPanel>
 
@@ -33,9 +33,18 @@
                       HorizontalAlignment="Stretch"
                       MaxWidth="360"
                       AutomationProperties.Name="Tema" />
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <Button Content="Temayı uygula"
+                      Command="{Binding ApplyThemeCommand}"
+                      AutomationProperties.Name="Seçili temayı uygula" />
+            </StackPanel>
           </StackPanel>
         </Grid>
       </Border>
+      <InfoBar IsOpen="{Binding HasPendingTheme}"
+               Severity="Informational"
+               Title="Tema uygulanmaya hazır"
+               Message="Seçiminiz dock’u değiştirmedi. Güvenli geçiş için Temayı uygula düğmesini kullanın." />
       <InfoBar IsOpen="{Binding IsBlurredGlassTheme}"
                Severity="Informational"
                Title="Saydam Bulanık Cam"

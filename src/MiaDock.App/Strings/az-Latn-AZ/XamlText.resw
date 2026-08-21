@@ -2154,4 +2154,9 @@
   <data name="XamlText.DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Windows çıxarma seçimləri</value></data>
   <data name="XamlText.DeviceHub.Eject" xml:space="preserve"><value>Təhlükəsiz çıxar</value></data>
   <data name="XamlText.DeviceHub.Batteries" xml:space="preserve"><value>Cihaz batareyaları</value></data>
+  <data name="XamlText.Theme.Apply.Description" xml:space="preserve"><value>Mövzu seçimini təsdiqləyin; ölçü və hərəkət ayarları dock üzərində dərhal önizlənir.</value></data>
+  <data name="XamlText.Theme.Apply.Button" xml:space="preserve"><value>Mövzunu tətbiq et</value></data>
+  <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Seçilmiş mövzunu tətbiq et</value></data>
+  <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Mövzu tətbiq edilməyə hazırdır</value></data>
+  <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Seçiminiz dock-u dəyişdirmədi. Təhlükəsiz keçid üçün Mövzunu tətbiq et düyməsindən istifadə edin.</value></data>
 </root>

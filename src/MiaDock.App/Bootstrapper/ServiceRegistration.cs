@@ -300,7 +300,7 @@ public static class ServiceRegistration
         services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
         services.AddSingleton<IOnboardingWindowService, OnboardingWindowService>();
         services.AddSingleton<IApplicationLifetimeService, ApplicationLifetimeService>();
-        services.AddTransient<OverlayWindow>();
+        services.AddSingleton<OverlayWindow>();
         services.AddSingleton<IOverlayWindowService, OverlayWindowService>();
         services.AddSingleton<TrayMenuCoordinator>();
         services.AddSingleton<GlobalHotKeyCoordinator>();

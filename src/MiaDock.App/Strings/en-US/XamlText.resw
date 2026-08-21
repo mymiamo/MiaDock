@@ -2686,4 +2686,9 @@
   <data name="XamlText.DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Windows remove options</value></data>
   <data name="XamlText.DeviceHub.Eject" xml:space="preserve"><value>Eject safely</value></data>
   <data name="XamlText.DeviceHub.Batteries" xml:space="preserve"><value>Device batteries</value></data>
+  <data name="XamlText.Theme.Apply.Description" xml:space="preserve"><value>Confirm the theme selection; size and motion settings preview on the dock immediately.</value><comment>Tema seçimini onaylayın; boyut ve hareket ayarları dock üzerinde anında önizlenir.</comment></data>
+  <data name="XamlText.Theme.Apply.Button" xml:space="preserve"><value>Apply theme</value><comment>Temayı uygula</comment></data>
+  <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Apply the selected theme</value><comment>Seçili temayı uygula</comment></data>
+  <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Theme ready to apply</value><comment>Tema uygulanmaya hazır</comment></data>
+  <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Your selection has not changed the dock. Use Apply theme for a safe transition.</value><comment>Seçiminiz dock’u değiştirmedi. Güvenli geçiş için Temayı uygula düğmesini kullanın.</comment></data>
 </root>

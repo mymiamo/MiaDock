@@ -106,4 +106,16 @@ public sealed class AppearanceThemePresetsTests
         Assert.AreEqual(1, result.Opacity, 0.001);
         Assert.AreEqual(0.2, result.ShadowIntensity, 0.001);
     }
+
+    [TestMethod]
+    public void SwitchingFromTozPembeToApple_RestoresTheBlackDefaultPalette()
+    {
+        var dustyPink = AppearanceThemePresets.ApplyWhenSafe(
+            AppearanceSettings.Default,
+            ThemeStyle.TozPembe);
+
+        var result = AppearanceThemePresets.ApplyWhenSafe(dustyPink, ThemeStyle.AppleLike);
+
+        Assert.AreEqual(AppearanceSettings.Default, result);
+    }
 }

@@ -18,7 +18,5 @@ public interface IOverlayWindowService
 
     void SelectNextModuleFromShortcut();
 
-    void RefreshForThemeChange();
-
     void CloseForShutdown();
 }
