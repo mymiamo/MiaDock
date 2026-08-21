@@ -35,6 +35,7 @@ public sealed partial class IslandShell : UserControl
     private ContentMotionRequestedEventArgs? _pendingContentMotion;
     private IslandVisualMetrics? _appliedMetrics;
     private ThemeStyle _appliedTheme = ThemeStyle.AppleLike;
+    private ThemeBackdropKind _appliedBackdropKind = ThemeBackdropKind.None;
     private bool _edgeRevealHidden;
     private long _lastParallaxTimestamp;
     private Vector3 _lastParallaxTranslation;
@@ -374,17 +375,28 @@ public sealed partial class IslandShell : UserControl
 
     public void ApplySystemBackdrop(ThemeStyle theme)
     {
-        BackdropSurface.SystemBackdrop = theme switch
+        var backdropKind = theme.Descriptor().Capabilities.Backdrop;
+        _appliedTheme = theme;
+        if (_appliedBackdropKind == backdropKind)
         {
-            ThemeStyle.Windows11Mica => new MicaBackdrop { Kind = MicaKind.Base },
-            ThemeStyle.Windows11MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
-            ThemeStyle.AdaptiveFluent => new MicaBackdrop { Kind = MicaKind.Base },
-            ThemeStyle.Windows11Acrylic or ThemeStyle.Windows11AcrylicThin => new DesktopAcrylicBackdrop(),
-            ThemeStyle.BlurredGlass or ThemeStyle.NeutralFrostedGlass =>
+            // Adaptive Fluent and Windows 11 Mica share the same native Mica
+            // connection. Disconnecting and reconnecting it during a resource
+            // refresh can race the compositor and terminate the process with a
+            // misleading stack-buffer-overrun fast-fail.
+            SyncBackdropVisibility();
+            return;
+        }
+
+        BackdropSurface.SystemBackdrop = backdropKind switch
+        {
+            ThemeBackdropKind.Mica => new MicaBackdrop { Kind = MicaKind.Base },
+            ThemeBackdropKind.MicaAlt => new MicaBackdrop { Kind = MicaKind.BaseAlt },
+            ThemeBackdropKind.Acrylic or ThemeBackdropKind.AcrylicThin => new DesktopAcrylicBackdrop(),
+            ThemeBackdropKind.ColorlessAcrylic =>
                 ColorlessGlassBackdrop.IsSupported ? new ColorlessGlassBackdrop() : null,
             _ => null
         };
-        _appliedTheme = theme;
+        _appliedBackdropKind = backdropKind;
         SyncBackdropVisibility();
     }
 
@@ -393,6 +405,7 @@ public sealed partial class IslandShell : UserControl
         try
         {
             BackdropSurface.SystemBackdrop = null;
+            _appliedBackdropKind = ThemeBackdropKind.None;
         }
         catch (Exception)
         {

@@ -51,18 +51,19 @@ public sealed class ThemeService : IThemeService, IDisposable
                 Source = new Uri($"ms-appx:///Themes/{descriptor.ResourceFileName}")
             };
             resources.Add(_styleDictionary);
-        }
 
-        if (_customDictionary is null)
-        {
+            // Never mutate a ResourceDictionary that has already participated
+            // in XAML resource resolution. ThemeDictionaries are backed by
+            // native XAML objects and clearing them during a live theme change
+            // can race outstanding ThemeResource references and fail-fast the
+            // process as STATUS_STACK_BUFFER_OVERRUN. Replacing the detached
+            // dictionary clears every old palette without touching it again.
             _customDictionary = new ResourceDictionary();
             resources.Add(_customDictionary);
         }
-        else if (styleChanged)
+        else if (_customDictionary is null)
         {
-            ClearCustomResources();
-            // Custom values must remain after the theme dictionary so they
-            // continue to override its tokens without rebuilding controls.
+            _customDictionary = new ResourceDictionary();
             resources.Add(_customDictionary);
         }
 
@@ -105,15 +106,6 @@ public sealed class ThemeService : IThemeService, IDisposable
             accentColor.G,
             accentColor.B));
         _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(accentColor);
-    }
-
-    private void ClearCustomResources()
-    {
-        _customDictionary!.Clear();
-        // ThemeDictionaries is a separate collection; ResourceDictionary.Clear
-        // does not remove it. Leaving these entries behind pins Apple/OLED/pink
-        // colors over Adaptive Fluent's live system palette.
-        _customDictionary.ThemeDictionaries.Clear();
     }
 
     private void ApplyAdaptiveFluentPalette()

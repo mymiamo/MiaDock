@@ -130,6 +130,27 @@ public sealed class OverlayWindowTests
     }
 
     [TestMethod]
+    public void ThemeTransition_DoesNotDetachEquivalentNativeBackdrop()
+    {
+        var overlay = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+        var shell = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "IslandShell.xaml.cs"));
+        var applyStart = overlay.IndexOf("private void ApplyOverlayBackdrop", StringComparison.Ordinal);
+        var applyEnd = overlay.IndexOf("private void OnThemeEnvironmentChanged", applyStart, StringComparison.Ordinal);
+        var applyBody = overlay[applyStart..applyEnd];
+
+        Assert.DoesNotContain("Island.ClearSystemBackdrop()", applyBody, StringComparison.Ordinal);
+        StringAssert.Contains(shell, "private ThemeBackdropKind _appliedBackdropKind");
+        StringAssert.Contains(shell, "if (_appliedBackdropKind == backdropKind)");
+        StringAssert.Contains(shell, "_appliedBackdropKind = backdropKind");
+    }
+
+    [TestMethod]
     public void ExclusiveDirect3D_EdgeRevealHidesBeforeAnyPlacementOrTopmostUpdate()
     {
         var source = File.ReadAllText(Path.Combine(
@@ -209,7 +230,7 @@ public sealed class OverlayWindowTests
         // only a 1-bit GDI region could round.
         Assert.DoesNotContain("AddSystemBackdropTarget", overlay, StringComparison.Ordinal);
         StringAssert.Contains(glass, "AddSystemBackdropTarget(connectedTarget)");
-        StringAssert.Contains(shell, "BackdropSurface.SystemBackdrop = theme switch");
+        StringAssert.Contains(shell, "BackdropSurface.SystemBackdrop = backdropKind switch");
         StringAssert.Contains(shell, "new ColorlessGlassBackdrop()");
     }
 }

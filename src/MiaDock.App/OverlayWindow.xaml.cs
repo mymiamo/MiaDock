@@ -865,12 +865,11 @@ public sealed partial class OverlayWindow : Window
 
     private void ApplyOverlayBackdrop(ThemeStyle theme)
     {
-        Island.ClearSystemBackdrop();
-
         // Every material is hosted on the backdrop element, never on the window.
         // A window level backdrop would paint the whole HWND rectangle and could
         // only be rounded by a 1-bit GDI region, which destroys the edge
-        // anti-aliasing of the configured corner radius.
+        // anti-aliasing of the configured corner radius. IslandShell owns the
+        // transition so equivalent native backdrops are kept alive.
         ApplyTransparentWindowBackdrop();
         Island.ApplySystemBackdrop(theme);
     }
