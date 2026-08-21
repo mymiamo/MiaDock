@@ -107,13 +107,10 @@ public sealed class OverlayWindowTests
         StringAssert.Contains(source, "Color.FromArgb(0, 0, 0, 0)");
         Assert.DoesNotContain("_transparentWindowBackdrop.Color", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ResolveTransparentClearColor", source, StringComparison.Ordinal);
-        StringAssert.Contains(source, "or ThemeStyle.TozPembe");
         StringAssert.Contains(source, "RefreshRootThemeResources(appearance.Theme)");
         StringAssert.Contains(source, "Island.RefreshThemeResources()");
-        Assert.IsFalse(
-            System.Text.RegularExpressions.Regex.IsMatch(
-                source,
-                @"ThemeStyle\.TozPembe\s*\r?\n\s*\? ElementTheme\.Light"));
+        StringAssert.Contains(source, "theme == ThemeStyle.TozPembe");
+        StringAssert.Contains(source, "? ElementTheme.Light");
     }
 
     [TestMethod]
@@ -150,11 +147,8 @@ public sealed class OverlayWindowTests
         Assert.AreEqual(
             "Transparent",
             document.Root?.Attribute("Background")?.Value);
-        StringAssert.Contains(shell, "ThemeStyle.TozPembe or ThemeStyle.OledBlack");
-        Assert.IsFalse(
-            System.Text.RegularExpressions.Regex.IsMatch(
-                shell,
-                @"ThemeStyle\.TozPembe\s*\??\s*ElementTheme\.Light"));
+        StringAssert.Contains(shell, "appearance.Theme == ThemeStyle.TozPembe");
+        StringAssert.Contains(shell, "? ElementTheme.Light");
         StringAssert.Contains(shell, "Background = new SolidColorBrush(Color.FromArgb(0, 0, 0, 0))");
     }
 

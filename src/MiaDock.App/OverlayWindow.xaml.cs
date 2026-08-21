@@ -223,6 +223,30 @@ public sealed partial class OverlayWindow : Window
         ApplyEnvironment();
     }
 
+    public void RefreshForThemeChange()
+    {
+        if (!DispatcherQueue.HasThreadAccess)
+        {
+            DispatcherQueue.TryEnqueue(RefreshForThemeChange);
+            return;
+        }
+
+        // Keep the native dock window alive. Recreating this HWND also tears
+        // down singleton fullscreen/session event sources and can fail-fast
+        // while SettingsChanged is being raised. Re-resolve the appearance on a
+        // fresh dispatcher turn instead, which renews every ThemeResource while
+        // preserving the dock and Settings windows.
+        var appearance = _settings.Current.Appearance;
+        _themeService.Apply(appearance);
+        Island.Theme = appearance.Theme.ToString();
+        RefreshRootThemeResources(appearance.Theme);
+        Island.ApplyAppearance(appearance);
+        Island.RefreshThemeResources();
+        _windowController.UpdateOpacity(appearance.Opacity);
+        _windowController.UpdateLayout(Island.VisualSize, Island.VisualCornerRadii);
+        ApplyEnvironment();
+    }
+
     private void OnIslandPointerEntered(object sender, PointerRoutedEventArgs args)
     {
         _isPointerOverDock = true;
@@ -765,8 +789,10 @@ public sealed partial class OverlayWindow : Window
     private void RefreshRootThemeResources(ThemeStyle theme)
     {
         var target = theme.UsesColorlessGlass() ||
-                     theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack or ThemeStyle.TozPembe
+                     theme is ThemeStyle.AppleLike or ThemeStyle.OledBlack
             ? ElementTheme.Dark
+            : theme == ThemeStyle.TozPembe
+                ? ElementTheme.Light
             : ElementTheme.Default;
 
         // Replacing an application resource dictionary does not invalidate an

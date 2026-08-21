@@ -68,15 +68,16 @@ public sealed class OverlayWindowService : IOverlayWindowService, IDisposable
         }
 
         // SettingsChanged is raised while existing listeners are still updating
-        // their state. Queue the restart onto the next UI turn so the old dock
-        // can finish that callback before its HWND and visual tree are released.
-        if (!_dispatcher.TryEnqueue(RestartAfterThemeChange))
+        // their state. Refresh on the next UI turn after that work has completed.
+        // Closing and recreating the HWND here is unsafe: the dock shares native
+        // fullscreen and session services with the application lifetime.
+        if (!_dispatcher.TryEnqueue(RefreshAfterThemeChange))
         {
             Interlocked.Exchange(ref _themeRestartPending, 0);
         }
     }
 
-    private void RestartAfterThemeChange()
+    private void RefreshAfterThemeChange()
     {
         try
         {
@@ -85,16 +86,7 @@ public sealed class OverlayWindowService : IOverlayWindowService, IDisposable
                 return;
             }
 
-            var wasVisible = _window.IsDockVisible;
-            var previous = _window;
-            _window = null;
-            previous.Close();
-
-            var replacement = Current;
-            if (wasVisible)
-            {
-                replacement.ShowNoActivate();
-            }
+            _window.RefreshForThemeChange();
         }
         finally
         {
@@ -103,4 +95,6 @@ public sealed class OverlayWindowService : IOverlayWindowService, IDisposable
     }
 
     private OverlayWindow CreateWindow() => _services.GetRequiredService<OverlayWindow>();
+
+    public void RefreshForThemeChange() => Current.RefreshForThemeChange();
 }

@@ -230,9 +230,11 @@ public sealed partial class IslandShell : UserControl
         ArgumentNullException.ThrowIfNull(appearance);
         var background = ColorParser.ParseRgb(appearance.BackgroundColor);
         var accent = ColorParser.ParseRgb(appearance.AccentColor);
-        RequestedTheme = appearance.Theme is ThemeStyle.TozPembe or ThemeStyle.OledBlack ||
+        RequestedTheme = appearance.Theme is ThemeStyle.OledBlack ||
                          appearance.Theme.UsesColorlessGlass()
             ? ElementTheme.Dark
+            : appearance.Theme == ThemeStyle.TozPembe
+                ? ElementTheme.Light
             : appearance.Theme.UsesAdaptiveSolidPalette()
             ? SolidThemeContrastPaletteFactory.Create(background, accent).Primary.R > 127
                 ? ElementTheme.Dark
