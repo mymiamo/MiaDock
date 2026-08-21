@@ -105,6 +105,10 @@ public sealed class PerformanceGuardTests
         StringAssert.Contains(source, "Interlocked.Exchange");
         StringAssert.Contains(source, "var styleChanged");
         StringAssert.Contains(source, "resources.Add(_customDictionary)");
+        StringAssert.Contains(source, "_customDictionary.ThemeDictionaries.Clear()");
+        StringAssert.Contains(source, "ApplyAdaptiveFluentPalette()");
+        StringAssert.Contains(source, "UIColorType.Background");
+        StringAssert.Contains(source, "UIColorType.Accent");
     }
 
     [TestMethod]

@@ -884,8 +884,9 @@ public sealed partial class OverlayWindow : Window
                 return;
             }
 
-            Root.RequestedTheme = ElementTheme.Default;
+            RefreshRootThemeResources(ThemeStyle.AdaptiveFluent);
             Island.ApplyAppearance(_settings.Current.Appearance);
+            Island.RefreshThemeResources();
         }
 
         if (DispatcherQueue.HasThreadAccess)

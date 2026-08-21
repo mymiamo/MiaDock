@@ -60,7 +60,7 @@ public sealed class ThemeService : IThemeService, IDisposable
         }
         else if (styleChanged)
         {
-            _customDictionary.Clear();
+            ClearCustomResources();
             // Custom values must remain after the theme dictionary so they
             // continue to override its tokens without rebuilding controls.
             resources.Add(_customDictionary);
@@ -74,15 +74,19 @@ public sealed class ThemeService : IThemeService, IDisposable
         ArgumentNullException.ThrowIfNull(appearance);
         _lastAppearance = appearance;
         Apply(appearance.Theme);
+
+        if (appearance.Theme == ThemeStyle.AdaptiveFluent)
+        {
+            ApplyAdaptiveFluentPalette();
+            return;
+        }
+
         var surfaceColor = ParseColor(appearance.BackgroundColor);
         var accentColor = ParseColor(appearance.AccentColor);
-        if (appearance.Theme != ThemeStyle.AdaptiveFluent)
-        {
-            _customDictionary!["IslandStyleSurfaceBrush"] = CreateSurfaceBrush(
-                appearance.Theme,
-                surfaceColor,
-                appearance.Opacity);
-        }
+        _customDictionary!["IslandStyleSurfaceBrush"] = CreateSurfaceBrush(
+            appearance.Theme,
+            surfaceColor,
+            appearance.Opacity);
 
         if (appearance.Theme.UsesAdaptiveSolidPalette())
         {
@@ -95,16 +99,70 @@ public sealed class ThemeService : IThemeService, IDisposable
             return;
         }
 
-        if (appearance.Theme != ThemeStyle.AdaptiveFluent)
-        {
-            _customDictionary!["IslandStyleControlBrush"] = new SolidColorBrush(Color.FromArgb(
-                appearance.Theme.UsesColorlessGlass() ? (byte)0x20 : (byte)0x38,
-                accentColor.R,
-                accentColor.G,
-                accentColor.B));
-            _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(accentColor);
-        }
+        _customDictionary!["IslandStyleControlBrush"] = new SolidColorBrush(Color.FromArgb(
+            appearance.Theme.UsesColorlessGlass() ? (byte)0x20 : (byte)0x38,
+            accentColor.R,
+            accentColor.G,
+            accentColor.B));
+        _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(accentColor);
     }
+
+    private void ClearCustomResources()
+    {
+        _customDictionary!.Clear();
+        // ThemeDictionaries is a separate collection; ResourceDictionary.Clear
+        // does not remove it. Leaving these entries behind pins Apple/OLED/pink
+        // colors over Adaptive Fluent's live system palette.
+        _customDictionary.ThemeDictionaries.Clear();
+    }
+
+    private void ApplyAdaptiveFluentPalette()
+    {
+        var background = _uiSettings.GetColorValue(UIColorType.Background);
+        var foreground = _uiSettings.GetColorValue(UIColorType.Foreground);
+        var accent = _uiSettings.GetColorValue(UIColorType.Accent);
+        var palette = SolidThemeContrastPaletteFactory.Create(background, accent);
+        var secondary = palette.Secondary;
+        var isLight = RelativeLuminance(background) >= 0.5;
+        var surface = Color.FromArgb(isLight ? (byte)0xE6 : (byte)0xD9, background.R, background.G, background.B);
+        var control = Color.FromArgb(isLight ? (byte)0x18 : (byte)0x28, foreground.R, foreground.G, foreground.B);
+
+        var resources = _customDictionary!;
+        resources["IslandSurfaceBrush"] = new SolidColorBrush(surface);
+        resources["IslandStyleSurfaceBrush"] = new SolidColorBrush(surface);
+        resources["IslandSurfaceSecondaryBrush"] = new SolidColorBrush(control);
+        resources["IslandTextPrimaryBrush"] = new SolidColorBrush(foreground);
+        resources["IslandTextSecondaryBrush"] = new SolidColorBrush(secondary);
+        resources["IslandAccentBrush"] = new SolidColorBrush(accent);
+        resources["IslandStrokeBrush"] = new SolidColorBrush(Color.FromArgb(
+            isLight ? (byte)0x22 : (byte)0x32,
+            foreground.R,
+            foreground.G,
+            foreground.B));
+        resources["IslandControlFillBrush"] = new SolidColorBrush(control);
+        resources["IslandStyleControlBrush"] = new SolidColorBrush(control);
+        resources["IslandStyleAccentBrush"] = new SolidColorBrush(accent);
+        resources["IslandAccentForegroundBrush"] = new SolidColorBrush(palette.AccentForeground);
+        resources["IslandIconButtonRestBrush"] = new SolidColorBrush(Color.FromArgb(
+            isLight ? (byte)0x0D : (byte)0x18,
+            foreground.R,
+            foreground.G,
+            foreground.B));
+        resources["IslandIconButtonPointerOverBrush"] = new SolidColorBrush(Color.FromArgb(
+            isLight ? (byte)0x1F : (byte)0x32,
+            foreground.R,
+            foreground.G,
+            foreground.B));
+        resources["IslandIconButtonPressedBrush"] = new SolidColorBrush(Color.FromArgb(
+            isLight ? (byte)0x33 : (byte)0x4A,
+            foreground.R,
+            foreground.G,
+            foreground.B));
+        resources["IslandIconButtonForegroundBrush"] = new SolidColorBrush(foreground);
+    }
+
+    private static double RelativeLuminance(Color color) =>
+        (0.2126 * color.R + 0.7152 * color.G + 0.0722 * color.B) / byte.MaxValue;
 
     private static Brush CreateSurfaceBrush(ThemeStyle style, Color color, double opacity)
     {

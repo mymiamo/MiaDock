@@ -114,6 +114,22 @@ public sealed class OverlayWindowTests
     }
 
     [TestMethod]
+    public void AdaptiveFluent_SystemColorChangesForceThemeResourcesToResolveAgain()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Windows",
+            "OverlayWindow.xaml.cs"));
+        var handler = source.IndexOf("private void OnThemeEnvironmentChanged", StringComparison.Ordinal);
+        var nextHandler = source.IndexOf("private void OnFullscreenStateChanged", handler, StringComparison.Ordinal);
+        var body = source[handler..nextHandler];
+
+        StringAssert.Contains(body, "RefreshRootThemeResources(ThemeStyle.AdaptiveFluent)");
+        StringAssert.Contains(body, "Island.ApplyAppearance(_settings.Current.Appearance)");
+        StringAssert.Contains(body, "Island.RefreshThemeResources()");
+    }
+
+    [TestMethod]
     public void ExclusiveDirect3D_EdgeRevealHidesBeforeAnyPlacementOrTopmostUpdate()
     {
         var source = File.ReadAllText(Path.Combine(
