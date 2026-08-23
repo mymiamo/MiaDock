@@ -153,16 +153,16 @@ public sealed class MusicModuleViewModelTests
         using var viewModel = new MusicModuleViewModel(service, audioMeter: meter);
 
         viewModel.SetAudioMeterActive(true);
-        meter.Publish(new MediaAudioLevelSnapshot(true, 0.8, 0.9, 0.4));
+        meter.Publish(new MediaAudioLevelSnapshot(
+            MediaAudioLevelSource.ProcessSpectrum, 0.8, 0.9, 0.4, 0, 0));
 
         Assert.IsTrue(meter.IsActive);
-        Assert.AreEqual(0.8, viewModel.LeftAudioLevel, 0.0001);
-        Assert.AreEqual(0.9, viewModel.CenterAudioLevel, 0.0001);
-        Assert.AreEqual(0.4, viewModel.RightAudioLevel, 0.0001);
         Assert.AreEqual(0.8, viewModel.TrebleAudioLevel, 0.0001);
         Assert.AreEqual(0.9, viewModel.BassAudioLevel, 0.0001);
         Assert.AreEqual(0.4, viewModel.VocalAudioLevel, 0.0001);
         Assert.IsTrue(viewModel.IsAudioLevelAvailable);
+        Assert.IsTrue(viewModel.HasFrequencySpectrum);
+        Assert.AreEqual(MediaAudioLevelSource.ProcessSpectrum, viewModel.AudioLevelSource);
         Assert.IsTrue(viewModel.HasAudioActivity);
         Assert.IsFalse(viewModel.IsPlaying);
     }
@@ -198,14 +198,20 @@ public sealed class MusicModuleViewModelTests
         for (var index = 1; index <= 50_000; index++)
         {
             var level = index / 50_000d;
-            meter.Publish(new MediaAudioLevelSnapshot(true, level, level / 2, level / 4));
+            meter.Publish(new MediaAudioLevelSnapshot(
+                MediaAudioLevelSource.ProcessSpectrum,
+                level,
+                level / 2,
+                level / 4,
+                0,
+                0));
         }
 
         Assert.AreEqual(1, dispatcher.PendingCount);
         dispatcher.RunQueued();
-        Assert.AreEqual(1, viewModel.LeftAudioLevel, 0.0001);
-        Assert.AreEqual(0.5, viewModel.CenterAudioLevel, 0.0001);
-        Assert.AreEqual(0.25, viewModel.RightAudioLevel, 0.0001);
+        Assert.AreEqual(1, viewModel.TrebleAudioLevel, 0.0001);
+        Assert.AreEqual(0.5, viewModel.BassAudioLevel, 0.0001);
+        Assert.AreEqual(0.25, viewModel.VocalAudioLevel, 0.0001);
         Assert.AreEqual(0, dispatcher.PendingCount);
     }
 

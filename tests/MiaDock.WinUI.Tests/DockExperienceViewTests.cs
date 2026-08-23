@@ -96,9 +96,12 @@ public sealed class DockExperienceViewTests
         Assert.AreEqual("Collapsed", pause.Attribute("Visibility")?.Value);
         Assert.AreEqual("Collapsed", trackChange.Attribute("Visibility")?.Value);
         Assert.AreEqual("Collapsed", trailingMore.Attribute("Visibility")?.Value);
-        Assert.AreEqual("4", AttributeValue(mediaMeter, "BarWidth"));
-        Assert.AreEqual("18", AttributeValue(mediaMeter, "BarHeight"));
-        Assert.AreEqual("3", AttributeValue(mediaMeter, "BarSpacing"));
+        Assert.AreEqual("10", mediaMeter.Attribute("Width")?.Value);
+        Assert.AreEqual("14", mediaMeter.Attribute("Height")?.Value);
+        Assert.AreEqual("{ThemeResource IslandStyleAccentBrush}", mediaMeter.Attribute("Foreground")?.Value);
+        Assert.IsNull(mediaMeter.Attribute("BarWidth"));
+        Assert.IsNull(mediaMeter.Attribute("BarHeight"));
+        Assert.IsNull(mediaMeter.Attribute("BarSpacing"));
         Assert.AreEqual("12", title.Attribute("FontSize")?.Value);
         Assert.IsNull(title.Attribute("FontWeight"));
     }

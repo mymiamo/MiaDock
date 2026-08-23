@@ -33,6 +33,8 @@ public sealed class SensitiveDataRedactorTests
             ["source"] = "Recovery",
             ["generation"] = 42,
             ["phase"] = "before-native-read",
+            ["sourceMode"] = "EndpointSpectrum",
+            ["maximumSample"] = 0.1862,
             ["title"] = "Private song title",
             ["artist"] = "Private artist",
             ["filePath"] = @"C:\Users\someone\Music\private.mp3"
@@ -45,6 +47,8 @@ public sealed class SensitiveDataRedactorTests
         Assert.AreEqual("Recovery", result["source"]);
         Assert.AreEqual("42", result["generation"]);
         Assert.AreEqual("before-native-read", result["phase"]);
+        Assert.AreEqual("EndpointSpectrum", result["sourceMode"]);
+        Assert.AreEqual("0.1862", result["maximumSample"]);
         Assert.IsFalse(result.ContainsKey("title"));
         Assert.IsFalse(result.ContainsKey("artist"));
         Assert.IsFalse(result.ContainsKey("filePath"));

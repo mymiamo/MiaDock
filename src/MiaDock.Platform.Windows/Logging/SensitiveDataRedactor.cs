@@ -12,7 +12,9 @@ public sealed partial class SensitiveDataRedactor
         "isFullscreen", "source", "phase", "generation", "topologyGeneration",
         "trackRevision", "sequence", "sessionCount", "selected", "matchedCount",
         "failureCount", "retry", "cancellationReason", "packageVersion",
-        "osVersion", "architecture", "processArchitecture"
+        "osVersion", "architecture", "processArchitecture", "processId", "format",
+        "sessionPeak", "packetCount", "silentPacketCount", "maximumSample",
+        "fallbackReason", "sourceMode", "previousSourceMode"
     };
 
     private readonly string _userName = Environment.UserName;

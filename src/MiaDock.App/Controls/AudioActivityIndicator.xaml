@@ -10,19 +10,19 @@
               Spacing="{Binding BarSpacing, ElementName=Root}"
               HorizontalAlignment="Center"
               VerticalAlignment="Center">
-    <Rectangle x:Name="TrebleBar"
+    <Rectangle x:Name="LeadingBar"
                Width="{Binding BarWidth, ElementName=Root}"
                Height="{Binding BarHeight, ElementName=Root}"
                RadiusX="999" RadiusY="999"
                Fill="{Binding Foreground, ElementName=Root}"
                VerticalAlignment="Center" />
-    <Rectangle x:Name="BassBar"
+    <Rectangle x:Name="CenterBar"
                Width="{Binding BarWidth, ElementName=Root}"
                Height="{Binding BarHeight, ElementName=Root}"
                RadiusX="999" RadiusY="999"
                Fill="{Binding Foreground, ElementName=Root}"
                VerticalAlignment="Center" />
-    <Rectangle x:Name="VocalBar"
+    <Rectangle x:Name="TrailingBar"
                Width="{Binding BarWidth, ElementName=Root}"
                Height="{Binding BarHeight, ElementName=Root}"
                RadiusX="999" RadiusY="999"

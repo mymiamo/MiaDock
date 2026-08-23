@@ -88,7 +88,13 @@ internal sealed class AudioSpectrumAnalyzer
         _treble = Follow(_treble, Shape(trebleMagnitude));
         _bass = Follow(_bass, Shape(bassMagnitude));
         _vocal = Follow(_vocal, Shape(vocalMagnitude));
-        return new MediaAudioLevelSnapshot(true, _treble, _bass, _vocal);
+        return new MediaAudioLevelSnapshot(
+            MediaAudioLevelSource.ProcessSpectrum,
+            _treble,
+            _bass,
+            _vocal,
+            0,
+            0);
     }
 
     private double FindBandPeak(

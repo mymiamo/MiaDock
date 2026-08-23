@@ -1,4 +1,5 @@
 using MiaDock.Platform.Windows.Audio;
+using MiaDock.Modules.Media.Models;
 
 namespace MiaDock.Platform.Windows.Tests.Audio;
 
@@ -12,11 +13,12 @@ public sealed class AudioLevelSmootherTests
         var quiet = smoother.Update(0.05);
         var loud = smoother.Update(0.9);
 
-        Assert.IsTrue(loud.Center > quiet.Center);
-        Assert.IsTrue(loud.Left >= 0.18);
-        Assert.IsTrue(loud.Left <= 1);
-        Assert.IsLessThanOrEqualTo(1, loud.Center);
-        Assert.IsLessThanOrEqualTo(1, loud.Right);
+        Assert.IsGreaterThan(quiet.Amplitude, loud.Amplitude);
+        Assert.AreEqual(MediaAudioLevelSource.SessionPeak, loud.Source);
+        Assert.IsFalse(loud.HasFrequencySpectrum);
+        Assert.IsGreaterThanOrEqualTo(0, loud.LeftAmplitude);
+        Assert.IsLessThanOrEqualTo(1, loud.LeftAmplitude);
+        Assert.IsLessThanOrEqualTo(1, loud.RightAmplitude);
     }
 
     [TestMethod]
@@ -28,9 +30,9 @@ public sealed class AudioLevelSmootherTests
         var reset = smoother.Reset();
 
         Assert.IsFalse(reset.IsAvailable);
-        Assert.AreEqual(0.18, reset.Left, 0.0001);
-        Assert.AreEqual(0.18, reset.Center, 0.0001);
-        Assert.AreEqual(0.18, reset.Right, 0.0001);
+        Assert.AreEqual(MediaAudioLevelSource.Unavailable, reset.Source);
+        Assert.AreEqual(0, reset.LeftAmplitude, 0.0001);
+        Assert.AreEqual(0, reset.RightAmplitude, 0.0001);
     }
 
     [TestMethod]
@@ -40,7 +42,9 @@ public sealed class AudioLevelSmootherTests
 
         var leftHeavy = smoother.Update(0.95, 0.02);
 
-        Assert.IsGreaterThan(leftHeavy.Right, leftHeavy.Left);
-        Assert.IsGreaterThanOrEqualTo(leftHeavy.Left, leftHeavy.Center);
+        Assert.IsGreaterThan(leftHeavy.RightAmplitude, leftHeavy.LeftAmplitude);
+        Assert.AreEqual(0.18, leftHeavy.Treble, 0.0001);
+        Assert.AreEqual(0.18, leftHeavy.Bass, 0.0001);
+        Assert.AreEqual(0.18, leftHeavy.Vocal, 0.0001);
     }
 }

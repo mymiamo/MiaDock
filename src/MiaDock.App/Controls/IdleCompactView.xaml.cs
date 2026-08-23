@@ -163,10 +163,12 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
             return;
         }
 
-        if (args.PropertyName is nameof(MusicModuleViewModel.LeftAudioLevel)
-            or nameof(MusicModuleViewModel.CenterAudioLevel)
-            or nameof(MusicModuleViewModel.RightAudioLevel)
+        if (args.PropertyName is nameof(MusicModuleViewModel.TrebleAudioLevel)
+            or nameof(MusicModuleViewModel.BassAudioLevel)
+            or nameof(MusicModuleViewModel.VocalAudioLevel)
             or nameof(MusicModuleViewModel.IsAudioLevelAvailable)
+            or nameof(MusicModuleViewModel.AudioLevelSource)
+            or nameof(MusicModuleViewModel.AudioAmplitude)
             or nameof(MusicModuleViewModel.HasAudioActivity))
         {
             QueueMusicVisualRefresh();
@@ -207,6 +209,8 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
         MusicActivity.Visibility = _music.HasAudioActivity ? Visibility.Visible : Visibility.Collapsed;
         MusicActivity.IsPlaying = _music.IsPlaying;
         MusicActivity.IsAudioAvailable = _music.IsAudioLevelAvailable;
+        MusicActivity.AudioLevelSource = _music.AudioLevelSource;
+        MusicActivity.AmplitudeLevel = _music.AudioAmplitude;
         MusicActivity.TrebleLevel = _music.TrebleAudioLevel;
         MusicActivity.BassLevel = _music.BassAudioLevel;
         MusicActivity.VocalLevel = _music.VocalAudioLevel;

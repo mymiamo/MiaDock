@@ -86,22 +86,25 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
 
     public double VolumePercent => Current.Volume * 100;
 
-    public double LeftAudioLevel { get; private set; } = 0.18;
+    public double TrebleAudioLevel { get; private set; } = 0.18;
 
-    public double CenterAudioLevel { get; private set; } = 0.18;
+    public double BassAudioLevel { get; private set; } = 0.18;
 
-    public double RightAudioLevel { get; private set; } = 0.18;
+    public double VocalAudioLevel { get; private set; } = 0.18;
 
-    public double TrebleAudioLevel => LeftAudioLevel;
+    public double AudioAmplitude { get; private set; }
 
-    public double BassAudioLevel => CenterAudioLevel;
+    public MediaAudioLevelSource AudioLevelSource { get; private set; }
 
-    public double VocalAudioLevel => RightAudioLevel;
+    public bool HasFrequencySpectrum => AudioLevelSource is
+        MediaAudioLevelSource.EndpointSpectrum or MediaAudioLevelSource.ProcessSpectrum;
 
     public bool IsAudioLevelAvailable { get; private set; }
 
     public bool HasAudioActivity => Current.PlaybackStatus == PlaybackStatus.Playing ||
-        IsAudioLevelAvailable && Math.Max(LeftAudioLevel, Math.Max(CenterAudioLevel, RightAudioLevel)) > 0.205;
+        IsAudioLevelAvailable &&
+        (AudioAmplitude > 0.01 ||
+         Math.Max(TrebleAudioLevel, Math.Max(BassAudioLevel, VocalAudioLevel)) > 0.205);
 
     public void SetAudioMeterActive(bool active)
     {
@@ -316,15 +319,17 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
     private void ApplyAudioLevel(MediaAudioLevelSnapshot snapshot)
     {
         IsAudioLevelAvailable = snapshot.IsAvailable;
-        LeftAudioLevel = snapshot.Left;
-        CenterAudioLevel = snapshot.Center;
-        RightAudioLevel = snapshot.Right;
-        OnPropertyChanged(nameof(LeftAudioLevel));
-        OnPropertyChanged(nameof(CenterAudioLevel));
-        OnPropertyChanged(nameof(RightAudioLevel));
+        AudioLevelSource = snapshot.Source;
+        AudioAmplitude = snapshot.Amplitude;
+        TrebleAudioLevel = snapshot.Treble;
+        BassAudioLevel = snapshot.Bass;
+        VocalAudioLevel = snapshot.Vocal;
         OnPropertyChanged(nameof(TrebleAudioLevel));
         OnPropertyChanged(nameof(BassAudioLevel));
         OnPropertyChanged(nameof(VocalAudioLevel));
+        OnPropertyChanged(nameof(AudioAmplitude));
+        OnPropertyChanged(nameof(AudioLevelSource));
+        OnPropertyChanged(nameof(HasFrequencySpectrum));
         OnPropertyChanged(nameof(IsAudioLevelAvailable));
         OnPropertyChanged(nameof(HasAudioActivity));
     }

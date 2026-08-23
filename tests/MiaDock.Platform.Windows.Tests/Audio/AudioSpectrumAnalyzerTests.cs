@@ -3,6 +3,7 @@ using MiaDock.Platform.Windows.Audio;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
 using NAudio.Wave.SampleProviders;
+using MiaDock.Modules.Media.Models;
 
 namespace MiaDock.Platform.Windows.Tests.Audio;
 
@@ -26,6 +27,43 @@ public sealed class AudioSpectrumAnalyzerTests
         var bands = new[] { snapshot.Treble, snapshot.Bass, snapshot.Vocal };
         Assert.AreEqual(expectedDominantBand, Array.IndexOf(bands, bands.Max()));
         Assert.IsGreaterThan(0.65, bands[expectedDominantBand]);
+        Assert.AreEqual(MediaAudioLevelSource.ProcessSpectrum, snapshot.Source);
+        Assert.IsTrue(snapshot.HasFrequencySpectrum);
+    }
+
+    [TestMethod]
+    public void ProcessFloat32_SilenceRemainsAtMinimumBands()
+    {
+        var analyzer = new AudioSpectrumAnalyzer();
+        var silence = new float[AudioSpectrumAnalyzer.WindowSize * 2];
+
+        Assert.IsTrue(analyzer.ProcessFloat32(silence, 48000, 1, out var snapshot));
+
+        Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, snapshot.Treble, 0.0001);
+        Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, snapshot.Bass, 0.0001);
+        Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, snapshot.Vocal, 0.0001);
+    }
+
+    [TestMethod]
+    public void ProcessFloat32_MixedSignalActivatesAllFrequencyBands()
+    {
+        const int sampleRate = 48000;
+        var samples = new float[AudioSpectrumAnalyzer.WindowSize * 3];
+        for (var index = 0; index < samples.Length; index++)
+        {
+            var time = (double)index / sampleRate;
+            samples[index] = (float)(
+                0.28 * Math.Sin(2 * Math.PI * 80 * time) +
+                0.28 * Math.Sin(2 * Math.PI * 1000 * time) +
+                0.28 * Math.Sin(2 * Math.PI * 8000 * time));
+        }
+
+        var analyzer = new AudioSpectrumAnalyzer();
+        Assert.IsTrue(analyzer.ProcessFloat32(samples, sampleRate, 1, out var snapshot));
+
+        Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.2, snapshot.Bass);
+        Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.2, snapshot.Vocal);
+        Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.2, snapshot.Treble);
     }
 
     [TestMethod]
@@ -126,6 +164,9 @@ public sealed class AudioSpectrumAnalyzerTests
             var maximum = await activity.Task.WaitAsync(TimeSpan.FromSeconds(5));
             Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.1, maximum);
             Assert.IsGreaterThan(0.001f, endpointPeak);
+            // Keep the hardware signal alive long enough for MiaDock's
+            // process-candidate health window and endpoint fallback diagnostics.
+            await Task.Delay(1200);
         }
         finally
         {

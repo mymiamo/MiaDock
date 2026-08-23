@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.Services;
 using MiaDock.Core.Logging;
+using NAudio.CoreAudioApi;
 using NAudio.Wave;
 
 namespace MiaDock.Platform.Windows.Audio;
@@ -10,6 +11,11 @@ namespace MiaDock.Platform.Windows.Audio;
 public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 {
     private const int SampleIntervalMilliseconds = 33;
+    private const int SpectrumFreshnessMilliseconds = 400;
+    private const int MeterReadGraceMilliseconds = 1500;
+    private const int CandidateBackoffMilliseconds = 5000;
+    private const double MeaningfulSessionPeak = 0.004;
+    private const double MeaningfulPcmSample = 0.00001;
     private readonly IMediaSessionService _media;
     private readonly ILogService? _log;
     private readonly object _gate = new();
@@ -17,6 +23,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     private readonly AutoResetEvent _wake = new(false);
     private readonly AudioLevelSmoother _smoother = new();
     private readonly AudioSpectrumAnalyzer _spectrumAnalyzer = new();
+    private readonly AudioSpectrumAnalyzer _endpointSpectrumAnalyzer = new();
     private Thread? _worker;
     private bool _active;
     private volatile bool _needsRebind = true;
@@ -42,7 +49,28 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     private bool _spectrumVisualActivityObserved;
     private int _spectrumProbeBufferCount;
     private double _maximumObservedSample;
-    private bool _sessionPeakFallbackObserved;
+    private long _processCaptureStartedAt;
+    private int _processSilentPacketCount;
+    private bool _processCaptureHealthy;
+    private bool _processCaptureRejected;
+    private readonly Dictionary<uint, long> _unhealthyProcessIds = [];
+    private WasapiRecorder? _endpointLoopbackCapture;
+    private CaptureDataAvailableHandler? _endpointLoopbackDataHandler;
+    private MediaAudioLevelSnapshot _latestEndpointSpectrum = MediaAudioLevelSnapshot.Silent;
+    private long _latestEndpointSpectrumTimestamp;
+    private long _endpointCaptureStartedAt;
+    private long _endpointRetryAfter;
+    private int _endpointPacketCount;
+    private int _endpointSilentPacketCount;
+    private double _endpointMaximumObservedSample;
+    private bool _endpointCaptureHealthy;
+    private bool _endpointCaptureRejected;
+    private MediaAudioLevelSource _lastPublishedSource = MediaAudioLevelSource.Unavailable;
+    private ProcessCandidate[] _lastCandidates = [];
+    private float _lastLeftPeak;
+    private float _lastRightPeak;
+    private float _lastEndpointPeak;
+    private long _lastSuccessfulMeterRead;
 
     public WindowsMediaAudioMeterService(IMediaSessionService media, ILogService? log = null)
     {
@@ -108,13 +136,13 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     !_media.Current.HasMedia ||
                     _media.Current.PlaybackStatus != PlaybackStatus.Playing)
                 {
-                    StopSpectrumCapture();
+                    StopAllSpectrumCaptures();
                     Publish(_smoother.Reset());
                     _wake.WaitOne();
                     continue;
                 }
 
-                if (_needsRebind || _meters.Count == 0)
+                if (_needsRebind)
                 {
                     var diagnosticCheckpoint =
                         Interlocked.Exchange(ref _diagnosticCheckpointPending, 0) != 0;
@@ -126,20 +154,37 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     BindMeter(diagnosticCheckpoint);
                 }
 
-                if (TryReadPeaks(out var leftPeak, out var rightPeak, out var activeProcessId))
+                var meterReadSucceeded = TryReadPeaks(
+                        out var leftPeak,
+                        out var rightPeak,
+                        out var endpointPeak,
+                        out var candidates);
+                if (meterReadSucceeded)
                 {
-                    EnsureSpectrumCapture(activeProcessId);
-                    // The session meter is used only to choose the active media process.
-                    // Process loopback already contains isolated PCM for that process, so
-                    // scaling its FFT with a second driver-provided peak can incorrectly
-                    // flatten valid spectrum data to the minimum level.
-                    Publish(ReadSpectrumOrSessionPeak(leftPeak, rightPeak));
+                    _lastLeftPeak = leftPeak;
+                    _lastRightPeak = rightPeak;
+                    _lastEndpointPeak = endpointPeak;
+                    _lastCandidates = candidates.ToArray();
+                    _lastSuccessfulMeterRead = Environment.TickCount64;
+                    MaintainSpectrumCaptures(
+                        candidates,
+                        Math.Max(endpointPeak, Math.Max(leftPeak, rightPeak)));
+                    Publish(ReadBestAvailableSource(leftPeak, rightPeak));
+                    _wake.WaitOne(TimeSpan.FromMilliseconds(SampleIntervalMilliseconds));
+                }
+                else if (Environment.TickCount64 - _lastSuccessfulMeterRead <=
+                         MeterReadGraceMilliseconds)
+                {
+                    MaintainSpectrumCaptures(
+                        _lastCandidates,
+                        Math.Max(_lastEndpointPeak, Math.Max(_lastLeftPeak, _lastRightPeak)));
+                    Publish(ReadBestAvailableSource(_lastLeftPeak, _lastRightPeak));
                     _wake.WaitOne(TimeSpan.FromMilliseconds(SampleIntervalMilliseconds));
                 }
                 else
                 {
                     _needsRebind = true;
-                    StopSpectrumCapture();
+                    StopAllSpectrumCaptures();
                     Publish(_smoother.Reset());
                     _wake.WaitOne(TimeSpan.FromSeconds(2));
                 }
@@ -352,12 +397,13 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
     private bool TryReadPeaks(
         out float leftPeak,
         out float rightPeak,
-        out uint activeProcessId)
+        out float endpointPeak,
+        out IReadOnlyList<ProcessCandidate> candidates)
     {
         leftPeak = 0;
         rightPeak = 0;
-        activeProcessId = 0;
-        var activeProcessPeak = -1f;
+        endpointPeak = 0;
+        var candidateList = new List<ProcessCandidate>(_meters.Count);
         var succeeded = false;
         for (var meterIndex = 0; meterIndex < _meters.Count; meterIndex++)
         {
@@ -368,11 +414,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 leftPeak = Math.Max(leftPeak, sessionLeft);
                 rightPeak = Math.Max(rightPeak, sessionRight);
                 var sessionPeak = Math.Max(sessionLeft, sessionRight);
-                if (sessionPeak > activeProcessPeak)
-                {
-                    activeProcessPeak = sessionPeak;
-                    activeProcessId = _meterProcessIds[meterIndex];
-                }
+                candidateList.Add(new ProcessCandidate(_meterProcessIds[meterIndex], sessionPeak));
                 succeeded = true;
                 continue;
             }
@@ -383,11 +425,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 {
                     leftPeak = Math.Max(leftPeak, peak);
                     rightPeak = Math.Max(rightPeak, peak);
-                    if (peak > activeProcessPeak)
-                    {
-                        activeProcessPeak = peak;
-                        activeProcessId = _meterProcessIds[meterIndex];
-                    }
+                    candidateList.Add(new ProcessCandidate(_meterProcessIds[meterIndex], peak));
                     succeeded = true;
                 }
             }
@@ -398,9 +436,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             }
         }
 
-        if (succeeded &&
-            Math.Max(leftPeak, rightPeak) <= 0.001f &&
-            _endpointMeter is not null)
+        if (_endpointMeter is not null)
         {
             if (TryReadChannelPeaks(
                     _endpointMeter,
@@ -408,16 +444,15 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     out var endpointLeft,
                     out var endpointRight))
             {
-                leftPeak = endpointLeft;
-                rightPeak = endpointRight;
+                endpointPeak = Math.Max(endpointLeft, endpointRight);
             }
             else
             {
                 try
                 {
-                    if (_endpointMeter.GetPeakValue(out var endpointPeak) >= 0)
+                    if (_endpointMeter.GetPeakValue(out var masterPeak) >= 0)
                     {
-                        leftPeak = rightPeak = endpointPeak;
+                        endpointPeak = masterPeak;
                     }
                 }
                 catch (Exception exception) when (
@@ -428,10 +463,120 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             }
         }
 
-        return succeeded;
+        candidates = candidateList
+            .GroupBy(candidate => candidate.ProcessId)
+            .Select(group => group.MaxBy(candidate => candidate.SessionPeak))
+            .OrderByDescending(candidate => candidate.SessionPeak)
+            .ToArray();
+        return succeeded || endpointPeak >= MeaningfulSessionPeak;
     }
 
-    private void EnsureSpectrumCapture(uint processId)
+    private void MaintainSpectrumCaptures(
+        IReadOnlyList<ProcessCandidate> candidates,
+        double sessionPeak)
+    {
+        var now = Environment.TickCount64;
+        foreach (var expired in _unhealthyProcessIds
+                     .Where(pair => pair.Value <= now)
+                     .Select(pair => pair.Key)
+                     .ToArray())
+        {
+            _unhealthyProcessIds.Remove(expired);
+        }
+
+        if (_loopbackCapture is not null &&
+            candidates.All(candidate => candidate.ProcessId != _loopbackProcessId))
+        {
+            StopProcessSpectrumCapture();
+        }
+
+        var processFailedHealthCheck = false;
+        lock (_spectrumGate)
+        {
+            if (_loopbackCapture is not null && _processCaptureRejected)
+            {
+                processFailedHealthCheck = true;
+                _unhealthyProcessIds[_loopbackProcessId] = now + CandidateBackoffMilliseconds;
+            }
+            else if (_loopbackCapture is not null &&
+                !_processCaptureHealthy &&
+                ProcessLoopbackHealth.ShouldReject(
+                    sessionPeak,
+                    now - _processCaptureStartedAt,
+                    _spectrumProbeBufferCount,
+                    _maximumObservedSample,
+                    _spectrumVisualActivityObserved))
+            {
+                processFailedHealthCheck = true;
+                _processCaptureRejected = true;
+                _unhealthyProcessIds[_loopbackProcessId] = now + CandidateBackoffMilliseconds;
+                LogProcessHealth("rejected-active-session-silent-pcm");
+            }
+            else if (_processCaptureHealthy &&
+                     sessionPeak >= MeaningfulSessionPeak &&
+                     now - _latestSpectrumTimestamp > 1200)
+            {
+                processFailedHealthCheck = true;
+                _processCaptureRejected = true;
+                _unhealthyProcessIds[_loopbackProcessId] = now + CandidateBackoffMilliseconds;
+                LogProcessHealth("rejected-stale-pcm");
+            }
+        }
+
+        if (processFailedHealthCheck)
+        {
+            StopProcessSpectrumCapture();
+        }
+
+        if (_loopbackCapture is null)
+        {
+            var candidateProcessId = ProcessLoopbackHealth.SelectCandidate(
+                candidates.Select(candidate => (candidate.ProcessId, candidate.SessionPeak)),
+                _unhealthyProcessIds,
+                now);
+            if (candidateProcessId != 0)
+            {
+                var candidatePeak = candidates.First(candidate =>
+                    candidate.ProcessId == candidateProcessId).SessionPeak;
+                EnsureProcessSpectrumCapture(candidateProcessId, candidatePeak);
+            }
+        }
+
+        if (_processCaptureHealthy)
+        {
+            StopEndpointSpectrumCapture();
+            return;
+        }
+
+        var hasRetryableProcess = candidates.Any(candidate =>
+            candidate.ProcessId != 0 && !_unhealthyProcessIds.ContainsKey(candidate.ProcessId));
+        if (_loopbackCapture is null &&
+            !hasRetryableProcess &&
+            sessionPeak >= MeaningfulSessionPeak &&
+            now >= _endpointRetryAfter)
+        {
+            EnsureEndpointSpectrumCapture();
+        }
+
+        if (_endpointLoopbackCapture is not null && _endpointCaptureRejected)
+        {
+            StopEndpointSpectrumCapture();
+        }
+        else if (_endpointLoopbackCapture is not null &&
+            !_endpointCaptureHealthy &&
+            sessionPeak >= MeaningfulSessionPeak &&
+            now - _endpointCaptureStartedAt >= 800 &&
+            (_endpointPacketCount == 0 ||
+             _endpointMaximumObservedSample < MeaningfulPcmSample ||
+             !_endpointCaptureHealthy))
+        {
+            LogEndpointHealth("rejected-silent-endpoint-pcm");
+            _endpointRetryAfter = now + CandidateBackoffMilliseconds;
+            StopEndpointSpectrumCapture();
+        }
+    }
+
+    private void EnsureProcessSpectrumCapture(uint processId, double sessionPeak)
     {
         if (processId == 0)
         {
@@ -440,7 +585,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 
         if (_loopbackCapture is not null && _loopbackProcessId != processId)
         {
-            StopSpectrumCapture();
+            StopProcessSpectrumCapture();
         }
 
         lock (_spectrumGate)
@@ -461,7 +606,8 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     .BuildAsync()
                     .GetAwaiter()
                     .GetResult();
-                _loopbackDataHandler = (buffer, _, _, _) => OnLoopbackDataAvailable(buffer);
+                _loopbackDataHandler = (buffer, flags, _, _) =>
+                    OnProcessLoopbackDataAvailable(buffer, flags);
                 capture.DataAvailable += _loopbackDataHandler;
                 capture.RecordingStopped += OnLoopbackRecordingStopped;
                 _spectrumAnalyzer.Reset();
@@ -471,7 +617,10 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 _spectrumVisualActivityObserved = false;
                 _spectrumProbeBufferCount = 0;
                 _maximumObservedSample = 0;
-                _sessionPeakFallbackObserved = false;
+                _processCaptureStartedAt = Environment.TickCount64;
+                _processSilentPacketCount = 0;
+                _processCaptureHealthy = false;
+                _processCaptureRejected = false;
                 _loopbackCapture = capture;
                 _loopbackProcessId = processId;
                 capture.StartRecording();
@@ -480,7 +629,13 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     TechnicalEventIds.MediaAudioMeterBinding,
                     "MediaAudio",
                     $"Media spectrum loopback started for process {processId} " +
-                    $"({ResolveProcessName(processId)}) using {capture.WaveFormat}.");
+                    $"({ResolveProcessName(processId)}) using {capture.WaveFormat}.",
+                    properties: new Dictionary<string, object?>
+                    {
+                        ["processId"] = processId,
+                        ["sessionPeak"] = sessionPeak,
+                        ["format"] = capture.WaveFormat.ToString()
+                    });
             }
             catch (Exception exception) when (
                 exception is COMException or InvalidOperationException or NotSupportedException)
@@ -501,6 +656,8 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 _loopbackProcessId = 0;
                 _latestSpectrum = MediaAudioLevelSnapshot.Silent;
                 _latestSpectrumTimestamp = 0;
+                _unhealthyProcessIds[processId] =
+                    Environment.TickCount64 + CandidateBackoffMilliseconds;
                 _log?.Write(
                     TechnicalLogLevel.Warning,
                     TechnicalEventIds.MediaAudioMeterFailed,
@@ -511,37 +668,33 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
         }
     }
 
-    private void OnLoopbackDataAvailable(ReadOnlySpan<byte> buffer)
+    private void OnProcessLoopbackDataAvailable(
+        ReadOnlySpan<byte> buffer,
+        AudioClientBufferFlags flags)
     {
         lock (_spectrumGate)
         {
-            if (_disposed ||
-                _loopbackCapture is not { } capture ||
-                capture.WaveFormat.BitsPerSample != 32 ||
-                buffer.Length < sizeof(float))
+            if (_disposed || _loopbackCapture is not { } capture)
             {
                 return;
             }
 
-            var byteCount = buffer.Length - buffer.Length % sizeof(float);
-            var samples = MemoryMarshal.Cast<byte, float>(buffer[..byteCount]);
-            for (var index = 0; index < samples.Length; index++)
+            _spectrumProbeBufferCount++;
+            if ((flags & AudioClientBufferFlags.Silent) != 0)
             {
-                if (float.IsFinite(samples[index]))
-                {
-                    _maximumObservedSample = Math.Max(
-                        _maximumObservedSample,
-                        Math.Abs(samples[index]));
-                }
+                _processSilentPacketCount++;
             }
 
-            _spectrumProbeBufferCount++;
-            if (_spectrumAnalyzer.ProcessFloat32(
-                samples,
-                capture.WaveFormat.SampleRate,
-                capture.WaveFormat.Channels,
-                out var spectrum))
+            if (AudioCapturePacketProcessor.TryProcess(
+                    buffer,
+                    flags,
+                    capture.WaveFormat,
+                    _spectrumAnalyzer,
+                    MediaAudioLevelSource.ProcessSpectrum,
+                    out var spectrum,
+                    out var maximumSample))
             {
+                _maximumObservedSample = Math.Max(_maximumObservedSample, maximumSample);
                 _latestSpectrum = spectrum;
                 _latestSpectrumTimestamp = Environment.TickCount64;
                 if (!_spectrumDataObserved)
@@ -555,7 +708,9 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                         properties: new Dictionary<string, object?>
                         {
                             ["sampleRate"] = capture.WaveFormat.SampleRate,
-                            ["channels"] = capture.WaveFormat.Channels
+                            ["channels"] = capture.WaveFormat.Channels,
+                            ["processId"] = _loopbackProcessId,
+                            ["maximumSample"] = _maximumObservedSample
                         });
                 }
 
@@ -564,6 +719,8 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                     AudioSpectrumAnalyzer.MinimumScale + 0.02)
                 {
                     _spectrumVisualActivityObserved = true;
+                    _processCaptureHealthy = true;
+                    LogProcessHealth("accepted");
                     _log?.Write(
                         TechnicalLogLevel.Information,
                         TechnicalEventIds.MediaAudioMeterBinding,
@@ -572,15 +729,6 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
                 }
             }
 
-            if (_spectrumProbeBufferCount == 30 && !_spectrumVisualActivityObserved)
-            {
-                _log?.Write(
-                    TechnicalLogLevel.Warning,
-                    TechnicalEventIds.MediaAudioMeterFailed,
-                    "MediaAudio",
-                    $"Media spectrum loopback remained silent for process {_loopbackProcessId}; " +
-                    $"maximum sample {_maximumObservedSample:F6}.");
-            }
         }
     }
 
@@ -591,45 +739,237 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             return;
         }
 
+        lock (_spectrumGate)
+        {
+            if (_loopbackProcessId != 0)
+            {
+                _processCaptureRejected = true;
+            }
+        }
+
         _log?.Write(
             TechnicalLogLevel.Warning,
             TechnicalEventIds.MediaAudioMeterFailed,
             "MediaAudio",
-            "Media spectrum loopback stopped unexpectedly; rebinding.",
+            "Media process spectrum loopback stopped unexpectedly; selecting another source.",
             args.Exception);
-        RequestRebind();
+        _wake.Set();
     }
 
-    private MediaAudioLevelSnapshot ReadSpectrumOrSessionPeak(float leftPeak, float rightPeak)
+    private MediaAudioLevelSnapshot ReadBestAvailableSource(float leftPeak, float rightPeak)
+    {
+        MediaAudioLevelSnapshot processSpectrum;
+        MediaAudioLevelSnapshot endpointSpectrum;
+        bool processHealthy;
+        bool endpointHealthy;
+        lock (_spectrumGate)
+        {
+            var now = Environment.TickCount64;
+            processSpectrum = _latestSpectrum;
+            endpointSpectrum = _latestEndpointSpectrum;
+            processHealthy = _processCaptureHealthy &&
+                             now - _latestSpectrumTimestamp <= SpectrumFreshnessMilliseconds;
+            endpointHealthy = _endpointCaptureHealthy &&
+                              now - _latestEndpointSpectrumTimestamp <= SpectrumFreshnessMilliseconds;
+        }
+
+        var sessionPeak = Math.Max(leftPeak, rightPeak) >= MeaningfulSessionPeak
+            ? _smoother.Update(leftPeak, rightPeak)
+            : MediaAudioLevelSnapshot.Silent;
+        var selected = MediaAudioCaptureDecision.Select(
+            processSpectrum,
+            processHealthy,
+            endpointSpectrum,
+            endpointHealthy,
+            sessionPeak);
+        LogSourceTransition(selected.Source);
+        return selected;
+    }
+
+    private void EnsureEndpointSpectrumCapture()
     {
         lock (_spectrumGate)
         {
-            var spectrumHasActivity =
-                Math.Max(
-                    _latestSpectrum.Treble,
-                    Math.Max(_latestSpectrum.Bass, _latestSpectrum.Vocal)) >
-                AudioSpectrumAnalyzer.MinimumScale + 0.02;
-            if (_loopbackCapture is not null &&
-                _latestSpectrum.IsAvailable &&
-                spectrumHasActivity &&
-                Environment.TickCount64 - _latestSpectrumTimestamp <= 350)
+            if (_endpointLoopbackCapture is not null || _disposed)
             {
-                return _latestSpectrum;
+                return;
             }
 
-            var fallback = _smoother.Update(leftPeak, rightPeak);
-            if (!_sessionPeakFallbackObserved && Math.Max(leftPeak, rightPeak) > 0.001f)
+            WasapiRecorder? capture = null;
+            try
             {
-                _sessionPeakFallbackObserved = true;
+                capture = new WasapiRecorderBuilder()
+                    .WithLoopbackCapture()
+                    .WithBufferLength(40)
+                    .Build();
+                _endpointLoopbackDataHandler = (buffer, flags, _, _) =>
+                    OnEndpointLoopbackDataAvailable(buffer, flags);
+                capture.DataAvailable += _endpointLoopbackDataHandler;
+                capture.RecordingStopped += OnEndpointLoopbackRecordingStopped;
+                _endpointSpectrumAnalyzer.Reset();
+                _latestEndpointSpectrum = MediaAudioLevelSnapshot.Silent;
+                _latestEndpointSpectrumTimestamp = 0;
+                _endpointCaptureStartedAt = Environment.TickCount64;
+                _endpointPacketCount = 0;
+                _endpointSilentPacketCount = 0;
+                _endpointMaximumObservedSample = 0;
+                _endpointCaptureHealthy = false;
+                _endpointCaptureRejected = false;
+                _endpointLoopbackCapture = capture;
+                capture.StartRecording();
                 _log?.Write(
                     TechnicalLogLevel.Information,
                     TechnicalEventIds.MediaAudioMeterBinding,
                     "MediaAudio",
-                    "Media visualizer is using the real Core Audio session-peak fallback.");
+                    "Process PCM was unavailable; default render endpoint spectrum capture started.",
+                    properties: new Dictionary<string, object?>
+                    {
+                        ["format"] = capture.WaveFormat.ToString(),
+                        ["fallbackReason"] = "process-candidates-unhealthy"
+                    });
+            }
+            catch (Exception exception) when (
+                exception is COMException or InvalidOperationException or NotSupportedException)
+            {
+                if (capture is not null)
+                {
+                    if (_endpointLoopbackDataHandler is not null)
+                    {
+                        capture.DataAvailable -= _endpointLoopbackDataHandler;
+                    }
+
+                    capture.RecordingStopped -= OnEndpointLoopbackRecordingStopped;
+                    capture.Dispose();
+                }
+
+                _endpointLoopbackDataHandler = null;
+                _endpointLoopbackCapture = null;
+                _endpointRetryAfter = Environment.TickCount64 + CandidateBackoffMilliseconds;
+                _log?.Write(
+                    TechnicalLogLevel.Warning,
+                    TechnicalEventIds.MediaAudioMeterFailed,
+                    "MediaAudio",
+                    "Default render endpoint spectrum capture could not be started.",
+                    exception);
+            }
+        }
+    }
+
+    private void OnEndpointLoopbackDataAvailable(
+        ReadOnlySpan<byte> buffer,
+        AudioClientBufferFlags flags)
+    {
+        lock (_spectrumGate)
+        {
+            if (_disposed || _endpointLoopbackCapture is not { } capture)
+            {
+                return;
             }
 
-            return fallback;
+            _endpointPacketCount++;
+            if ((flags & AudioClientBufferFlags.Silent) != 0)
+            {
+                _endpointSilentPacketCount++;
+            }
+
+            if (!AudioCapturePacketProcessor.TryProcess(
+                    buffer,
+                    flags,
+                    capture.WaveFormat,
+                    _endpointSpectrumAnalyzer,
+                    MediaAudioLevelSource.EndpointSpectrum,
+                    out var spectrum,
+                    out var maximumSample))
+            {
+                return;
+            }
+
+            _endpointMaximumObservedSample = Math.Max(
+                _endpointMaximumObservedSample,
+                maximumSample);
+            _latestEndpointSpectrum = spectrum;
+            _latestEndpointSpectrumTimestamp = Environment.TickCount64;
+            if (maximumSample >= MeaningfulPcmSample &&
+                Math.Max(spectrum.Treble, Math.Max(spectrum.Bass, spectrum.Vocal)) >
+                AudioSpectrumAnalyzer.MinimumScale + 0.02)
+            {
+                if (!_endpointCaptureHealthy)
+                {
+                    _endpointCaptureHealthy = true;
+                    LogEndpointHealth("accepted");
+                }
+            }
         }
+    }
+
+    private void OnEndpointLoopbackRecordingStopped(object? sender, StoppedEventArgs args)
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _endpointRetryAfter = Environment.TickCount64 + CandidateBackoffMilliseconds;
+        _endpointCaptureRejected = true;
+        _log?.Write(
+            TechnicalLogLevel.Warning,
+            TechnicalEventIds.MediaAudioMeterFailed,
+            "MediaAudio",
+            "Default render endpoint spectrum capture stopped unexpectedly.",
+            args.Exception);
+        _wake.Set();
+    }
+
+    private void LogProcessHealth(string state) =>
+        _log?.Write(
+            state == "accepted" ? TechnicalLogLevel.Information : TechnicalLogLevel.Warning,
+            state == "accepted"
+                ? TechnicalEventIds.MediaAudioMeterBinding
+                : TechnicalEventIds.MediaAudioMeterFailed,
+            "MediaAudio",
+            $"Media process spectrum candidate {state}.",
+            properties: new Dictionary<string, object?>
+            {
+                ["processId"] = _loopbackProcessId,
+                ["packetCount"] = _spectrumProbeBufferCount,
+                ["silentPacketCount"] = _processSilentPacketCount,
+                ["maximumSample"] = _maximumObservedSample
+            });
+
+    private void LogEndpointHealth(string state) =>
+        _log?.Write(
+            state == "accepted" ? TechnicalLogLevel.Information : TechnicalLogLevel.Warning,
+            state == "accepted"
+                ? TechnicalEventIds.MediaAudioMeterBinding
+                : TechnicalEventIds.MediaAudioMeterFailed,
+            "MediaAudio",
+            $"Media endpoint spectrum capture {state}.",
+            properties: new Dictionary<string, object?>
+            {
+                ["packetCount"] = _endpointPacketCount,
+                ["silentPacketCount"] = _endpointSilentPacketCount,
+                ["maximumSample"] = _endpointMaximumObservedSample
+            });
+
+    private void LogSourceTransition(MediaAudioLevelSource source)
+    {
+        if (_lastPublishedSource == source)
+        {
+            return;
+        }
+
+        var previous = _lastPublishedSource;
+        _lastPublishedSource = source;
+        _log?.Write(
+            TechnicalLogLevel.Information,
+            TechnicalEventIds.MediaAudioMeterBinding,
+            "MediaAudio",
+            $"Media visualizer source changed from {previous} to {source}.",
+            properties: new Dictionary<string, object?>
+            {
+                ["previousSourceMode"] = previous.ToString(),
+                ["sourceMode"] = source.ToString()
+            });
     }
 
     private static bool TryReadChannelPeaks(
@@ -700,7 +1040,12 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
 
     private void CleanupBinding()
     {
-        StopSpectrumCapture();
+        StopAllSpectrumCaptures();
+        _unhealthyProcessIds.Clear();
+        _endpointRetryAfter = 0;
+        _lastCandidates = [];
+        _lastLeftPeak = _lastRightPeak = _lastEndpointPeak = 0;
+        _lastSuccessfulMeterRead = 0;
         _meters.Clear();
         _channelBuffers.Clear();
         _meterProcessIds.Clear();
@@ -711,7 +1056,15 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
         _renderDevice = null;
     }
 
-    private void StopSpectrumCapture()
+    private void StopAllSpectrumCaptures()
+    {
+        StopProcessSpectrumCapture();
+        StopEndpointSpectrumCapture();
+        _smoother.Reset();
+        LogSourceTransition(MediaAudioLevelSource.Unavailable);
+    }
+
+    private void StopProcessSpectrumCapture()
     {
         WasapiRecorder? capture;
         lock (_spectrumGate)
@@ -722,6 +1075,7 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             _latestSpectrum = _spectrumAnalyzer.Reset();
             _latestSpectrumTimestamp = 0;
             _spectrumDataObserved = false;
+            _processCaptureHealthy = false;
         }
 
         if (capture is null)
@@ -735,6 +1089,46 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             _loopbackDataHandler = null;
         }
         capture.RecordingStopped -= OnLoopbackRecordingStopped;
+        try
+        {
+            capture.StopRecording();
+        }
+        catch (Exception exception) when (
+            exception is COMException or InvalidOperationException or ObjectDisposedException)
+        {
+            // The endpoint may disappear while the capture is being stopped.
+        }
+        finally
+        {
+            capture.Dispose();
+        }
+    }
+
+    private void StopEndpointSpectrumCapture()
+    {
+        WasapiRecorder? capture;
+        lock (_spectrumGate)
+        {
+            capture = _endpointLoopbackCapture;
+            _endpointLoopbackCapture = null;
+            _latestEndpointSpectrum = _endpointSpectrumAnalyzer.Reset();
+            _latestEndpointSpectrumTimestamp = 0;
+            _endpointCaptureHealthy = false;
+            _endpointCaptureRejected = false;
+        }
+
+        if (capture is null)
+        {
+            return;
+        }
+
+        if (_endpointLoopbackDataHandler is not null)
+        {
+            capture.DataAvailable -= _endpointLoopbackDataHandler;
+            _endpointLoopbackDataHandler = null;
+        }
+
+        capture.RecordingStopped -= OnEndpointLoopbackRecordingStopped;
         try
         {
             capture.StopRecording();
@@ -845,6 +1239,8 @@ public sealed class WindowsMediaAudioMeterService : IMediaAudioMeterService
             _wake.Dispose();
         }
     }
+
+    private readonly record struct ProcessCandidate(uint ProcessId, float SessionPeak);
 
     [ComVisible(true)]
     private sealed class DeviceNotificationCallback(Func<bool> isActive, Action changed)

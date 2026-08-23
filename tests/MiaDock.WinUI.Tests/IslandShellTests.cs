@@ -154,6 +154,8 @@ public sealed class IslandShellTests
         Assert.AreEqual("{Binding VocalAudioLevel}", indicator.Attribute("VocalLevel")?.Value);
         Assert.AreEqual("Center", indicator.Attribute("HorizontalAlignment")?.Value);
         Assert.AreEqual("{Binding IsAudioLevelAvailable}", indicator.Attribute("IsAudioAvailable")?.Value);
+        Assert.AreEqual("{Binding AudioLevelSource}", indicator.Attribute("AudioLevelSource")?.Value);
+        Assert.AreEqual("{Binding AudioAmplitude}", indicator.Attribute("AmplitudeLevel")?.Value);
         Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "Storyboard"));
     }
 
@@ -181,9 +183,9 @@ public sealed class IslandShellTests
             .ToHashSet(StringComparer.Ordinal);
 
         Assert.IsFalse(names.Contains("FallbackStoryboard"));
-        Assert.IsTrue(names.Contains("TrebleBar"));
-        Assert.IsTrue(names.Contains("BassBar"));
-        Assert.IsTrue(names.Contains("VocalBar"));
+        Assert.IsTrue(names.Contains("LeadingBar"));
+        Assert.IsTrue(names.Contains("CenterBar"));
+        Assert.IsTrue(names.Contains("TrailingBar"));
         var panel = document.Descendants().Single(element =>
             element.Name.LocalName == "StackPanel");
         Assert.AreEqual("Center", panel.Attribute("HorizontalAlignment")?.Value);
@@ -213,12 +215,14 @@ public sealed class IslandShellTests
         StringAssert.Contains(source, "Math.Max(bar.ActualHeight, 1) / 2");
         StringAssert.Contains(source, "motion.EnableIconAnimations");
         StringAssert.Contains(source, "_animationPreferences?.AnimationsEnabled == true");
-        StringAssert.Contains(source, "DispatcherQueueTimer");
-        StringAssert.Contains(source, "FallbackGracePeriodMilliseconds");
-        StringAssert.Contains(source, "CreateFallbackLevels");
-        StringAssert.Contains(source, "if (HasRealSignal)");
-        StringAssert.Contains(source, "StopFallbackMotion(resetPhase: true)");
+        StringAssert.Contains(source, "MediaAudioLevelSource.ProcessSpectrum");
+        StringAssert.Contains(source, "MediaAudioLevelSource.EndpointSpectrum");
+        StringAssert.Contains(source, "MediaAudioLevelSource.SessionPeak");
+        StringAssert.Contains(source, "UpdateAmplitudeLevels(AmplitudeLevel)");
+        StringAssert.Contains(source, "No fabricated movement");
         StringAssert.Contains(source, "!IsPlaying");
+        Assert.DoesNotContain("DispatcherQueueTimer", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("CreateFallbackLevels", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ResolveVisualLevel", source, StringComparison.Ordinal);
         Assert.DoesNotContain("FallbackStoryboard", source, StringComparison.Ordinal);
     }

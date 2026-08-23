@@ -1,13 +1,13 @@
 using System.Numerics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
-using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
 using MiaDock.App.Services;
 using MiaDock.Core.Presentation;
 using MiaDock.Core.Settings;
+using MiaDock.Modules.Media.Models;
 
 namespace MiaDock.App.Controls;
 
@@ -18,11 +18,8 @@ namespace MiaDock.App.Controls;
 public sealed partial class AudioActivityIndicator : UserControl
 {
     private const double MinimumScale = 0.18;
-    private const double RealSignalThreshold = MinimumScale + 0.025;
-    private const long FallbackGracePeriodMilliseconds = 550;
     private static readonly TimeSpan AttackDuration = TimeSpan.FromMilliseconds(48);
     private static readonly TimeSpan ReleaseDuration = TimeSpan.FromMilliseconds(128);
-    private static readonly TimeSpan FallbackFrameInterval = TimeSpan.FromMilliseconds(90);
 
     public static readonly DependencyProperty TrebleLevelProperty = DependencyProperty.Register(
         nameof(TrebleLevel), typeof(double), typeof(AudioActivityIndicator),
@@ -39,6 +36,12 @@ public sealed partial class AudioActivityIndicator : UserControl
     public static readonly DependencyProperty IsAudioAvailableProperty = DependencyProperty.Register(
         nameof(IsAudioAvailable), typeof(bool), typeof(AudioActivityIndicator),
         new PropertyMetadata(false, OnVisualPropertyChanged));
+    public static readonly DependencyProperty AudioLevelSourceProperty = DependencyProperty.Register(
+        nameof(AudioLevelSource), typeof(MediaAudioLevelSource), typeof(AudioActivityIndicator),
+        new PropertyMetadata(MediaAudioLevelSource.Unavailable, OnVisualPropertyChanged));
+    public static readonly DependencyProperty AmplitudeLevelProperty = DependencyProperty.Register(
+        nameof(AmplitudeLevel), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(0d, OnVisualPropertyChanged));
     public static readonly DependencyProperty IsSuppressedProperty = DependencyProperty.Register(
         nameof(IsSuppressed), typeof(bool), typeof(AudioActivityIndicator),
         new PropertyMetadata(false, OnVisualPropertyChanged));
@@ -58,14 +61,13 @@ public sealed partial class AudioActivityIndicator : UserControl
     private Visual? _trebleVisual;
     private Visual? _bassVisual;
     private Visual? _vocalVisual;
-    private DispatcherQueueTimer? _fallbackTimer;
     private bool _isLoaded;
-    private bool _isFallbackAnimating;
-    private long _flatSignalStartedAt;
-    private double _fallbackPhase;
     private double _trebleTarget = MinimumScale;
     private double _bassTarget = MinimumScale;
     private double _vocalTarget = MinimumScale;
+    private double _amplitudeLeading = MinimumScale;
+    private double _amplitudeCenter = MinimumScale;
+    private double _amplitudeTrailing = MinimumScale;
 
     public AudioActivityIndicator()
     {
@@ -81,6 +83,8 @@ public sealed partial class AudioActivityIndicator : UserControl
     public double VocalLevel { get => (double)GetValue(VocalLevelProperty); set => SetValue(VocalLevelProperty, value); }
     public bool IsPlaying { get => (bool)GetValue(IsPlayingProperty); set => SetValue(IsPlayingProperty, value); }
     public bool IsAudioAvailable { get => (bool)GetValue(IsAudioAvailableProperty); set => SetValue(IsAudioAvailableProperty, value); }
+    public MediaAudioLevelSource AudioLevelSource { get => (MediaAudioLevelSource)GetValue(AudioLevelSourceProperty); set => SetValue(AudioLevelSourceProperty, value); }
+    public double AmplitudeLevel { get => (double)GetValue(AmplitudeLevelProperty); set => SetValue(AmplitudeLevelProperty, value); }
     public bool IsSuppressed { get => (bool)GetValue(IsSuppressedProperty); set => SetValue(IsSuppressedProperty, value); }
     public double BarWidth { get => (double)GetValue(BarWidthProperty); set => SetValue(BarWidthProperty, value); }
     public double BarHeight { get => (double)GetValue(BarHeightProperty); set => SetValue(BarHeightProperty, value); }
@@ -108,7 +112,6 @@ public sealed partial class AudioActivityIndicator : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
         _isLoaded = false;
-        StopFallbackMotion(resetPhase: true);
         if (_settings is not null)
         {
             _settings.SettingsChanged -= OnSettingsChanged;
@@ -143,7 +146,6 @@ public sealed partial class AudioActivityIndicator : UserControl
     {
         if (!_isLoaded || Visibility != Visibility.Visible)
         {
-            StopFallbackMotion(resetPhase: true);
             ResetVisuals();
             return;
         }
@@ -151,124 +153,62 @@ public sealed partial class AudioActivityIndicator : UserControl
         EnsureVisuals();
         if (IsSuppressed)
         {
-            StopFallbackMotion(resetPhase: true);
             ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
             return;
         }
 
         if (!IsPlaying)
         {
-            StopFallbackMotion(resetPhase: true);
             ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
             return;
         }
 
-        if (HasRealSignal)
+        if (AudioLevelSource is MediaAudioLevelSource.ProcessSpectrum or
+            MediaAudioLevelSource.EndpointSpectrum)
         {
-            StopFallbackMotion(resetPhase: false);
             ApplyLevels(TrebleLevel, BassLevel, VocalLevel, animate: CanAnimate);
             return;
         }
 
-        if (!CanAnimate)
+        if (AudioLevelSource == MediaAudioLevelSource.SessionPeak)
         {
-            StopFallbackMotion(resetPhase: true);
-            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            var levels = UpdateAmplitudeLevels(AmplitudeLevel);
+            ApplyLevels(levels.Leading, levels.Center, levels.Trailing, animate: CanAnimate);
             return;
         }
 
-        StartFallbackMotion();
-        if (!_isFallbackAnimating)
-        {
-            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
-        }
+        // No fabricated movement: when Windows exposes neither spectrum nor
+        // session amplitude, use exactly the non-playing baseline state.
+        ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
     }
 
-    private bool HasRealSignal =>
-        IsAudioAvailable &&
-        Math.Max(TrebleLevel, Math.Max(BassLevel, VocalLevel)) > RealSignalThreshold;
-
-    private void StartFallbackMotion()
+    private (double Leading, double Center, double Trailing) UpdateAmplitudeLevels(double amplitude)
     {
-        if (_flatSignalStartedAt == 0)
-        {
-            _flatSignalStartedAt = Environment.TickCount64;
-        }
-
-        if (_fallbackTimer is null)
-        {
-            _fallbackTimer = DispatcherQueue.CreateTimer();
-            _fallbackTimer.Interval = FallbackFrameInterval;
-            _fallbackTimer.IsRepeating = true;
-            _fallbackTimer.Tick += OnFallbackTick;
-        }
-
-        if (!_fallbackTimer.IsRunning)
-        {
-            _fallbackTimer.Start();
-        }
+        var normalized = Math.Clamp(amplitude, 0, 1);
+        var leadingTarget = MinimumScale + normalized * 0.72;
+        var centerTarget = MinimumScale + Math.Pow(normalized, 0.72) * (1 - MinimumScale);
+        var trailingTarget = MinimumScale + normalized * 0.82;
+        _amplitudeLeading = FollowAmplitude(_amplitudeLeading, leadingTarget, 0.9, 0.34);
+        _amplitudeCenter = FollowAmplitude(_amplitudeCenter, centerTarget, 0.66, 0.18);
+        _amplitudeTrailing = FollowAmplitude(_amplitudeTrailing, trailingTarget, 0.78, 0.25);
+        return (_amplitudeLeading, _amplitudeCenter, _amplitudeTrailing);
     }
 
-    private void OnFallbackTick(DispatcherQueueTimer sender, object args)
-    {
-        if (!_isLoaded ||
-            Visibility != Visibility.Visible ||
-            IsSuppressed ||
-            !IsPlaying ||
-            !CanAnimate)
-        {
-            StopFallbackMotion(resetPhase: true);
-            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
-            return;
-        }
-
-        if (HasRealSignal)
-        {
-            UpdateVisuals();
-            return;
-        }
-
-        if (Environment.TickCount64 - _flatSignalStartedAt < FallbackGracePeriodMilliseconds)
-        {
-            return;
-        }
-
-        _isFallbackAnimating = true;
-        _fallbackPhase += 0.55;
-        var levels = CreateFallbackLevels(_fallbackPhase);
-        ApplyLevels(levels.Treble, levels.Bass, levels.Vocal, animate: true);
-    }
-
-    internal static (double Treble, double Bass, double Vocal) CreateFallbackLevels(double phase)
-    {
-        // This deliberately looks like a quiet three-band meter instead of a
-        // repeating pulse. It is used only when Windows supplies no usable
-        // process/session/endpoint level while playback is still active.
-        var treble = 0.28 + (0.42 * ((Math.Sin((phase * 1.73) + 1.2) + 1) / 2));
-        var bass = 0.36 + (0.52 * ((Math.Sin(phase * 0.83) + 1) / 2));
-        var vocal = 0.32 + (0.44 * ((Math.Sin((phase * 1.21) + 2.2) + 1) / 2));
-        return (treble, bass, vocal);
-    }
-
-    private void StopFallbackMotion(bool resetPhase)
-    {
-        _fallbackTimer?.Stop();
-        _flatSignalStartedAt = 0;
-        _isFallbackAnimating = false;
-        if (resetPhase)
-        {
-            _fallbackPhase = 0;
-        }
-    }
+    private static double FollowAmplitude(
+        double current,
+        double target,
+        double attack,
+        double release) =>
+        current + (target - current) * (target >= current ? attack : release);
 
     private void EnsureVisuals()
     {
-        _trebleVisual ??= ElementCompositionPreview.GetElementVisual(TrebleBar);
-        _bassVisual ??= ElementCompositionPreview.GetElementVisual(BassBar);
-        _vocalVisual ??= ElementCompositionPreview.GetElementVisual(VocalBar);
-        ConfigureVisual(_trebleVisual, TrebleBar);
-        ConfigureVisual(_bassVisual, BassBar);
-        ConfigureVisual(_vocalVisual, VocalBar);
+        _trebleVisual ??= ElementCompositionPreview.GetElementVisual(LeadingBar);
+        _bassVisual ??= ElementCompositionPreview.GetElementVisual(CenterBar);
+        _vocalVisual ??= ElementCompositionPreview.GetElementVisual(TrailingBar);
+        ConfigureVisual(_trebleVisual, LeadingBar);
+        ConfigureVisual(_bassVisual, CenterBar);
+        ConfigureVisual(_vocalVisual, TrailingBar);
     }
 
     private static void ConfigureVisual(Visual visual, FrameworkElement bar)
@@ -338,6 +278,7 @@ public sealed partial class AudioActivityIndicator : UserControl
         ResetVisual(_bassVisual);
         ResetVisual(_vocalVisual);
         _trebleTarget = _bassTarget = _vocalTarget = MinimumScale;
+        _amplitudeLeading = _amplitudeCenter = _amplitudeTrailing = MinimumScale;
     }
 
     private static void ResetVisual(Visual? visual)

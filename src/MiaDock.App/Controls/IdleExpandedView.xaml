@@ -163,6 +163,8 @@
                                             TrebleLevel="{Binding TrebleAudioLevel}"
                                             BassLevel="{Binding BassAudioLevel}"
                                             VocalLevel="{Binding VocalAudioLevel}"
+                                            AudioLevelSource="{Binding AudioLevelSource}"
+                                            AmplitudeLevel="{Binding AudioAmplitude}"
                                             IsPlaying="{Binding IsPlaying}"
                                             IsAudioAvailable="{Binding IsAudioLevelAvailable}" />
             </Grid>

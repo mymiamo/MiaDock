@@ -20,8 +20,9 @@ artwork at the leading edge, a single-line title, and a fixed trailing state are
   same surface-height ratio and left inset as the reference.
 - Metadata: begins after the artwork with 8 px compact grid spacing, remains
   vertically centered, and uses regular 12 px Segoe UI Variable Text.
-- Playing state: trailing area is 22 × 18 with three centered 4 px audio bars and
-  3 px spacing. Bars grow equally above and below their vertical center.
+- Playing state: trailing area contains the same 10 × 14 three-bar activity
+  indicator used by the main dock. Bars grow equally above and below their
+  vertical center and use the shared accent brush.
 - Paused state: the artwork remains mounted and visible beneath a 45% black scrim;
   the pause glyph remains fully opaque. The trailing area switches to the native
   Segoe Fluent Icons ellipsis glyph.
@@ -51,8 +52,8 @@ artwork at the leading edge, a single-line title, and a fixed trailing state are
 3. P2: paused and track-change states left baseline bars at the trailing edge.
    Fixed by switching those states to the native ellipsis glyph.
 4. P2: the first compact pass still carried too much visual weight. Refined to a
-   30 px artwork tile, 12 px title and centered 4 × 18 meter without changing the
-   user's dock-size preset.
+   30 px artwork tile, 12 px title and the main dock's centered 10 × 14 meter
+   without changing the user's dock-size preset.
 
 ## Final result
 
