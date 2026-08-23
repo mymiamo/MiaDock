@@ -10,7 +10,9 @@ public sealed record IslandLayoutOptions(
     double NotificationWidth,
     double NotificationHeight,
     double CornerRadius,
-    DockCornerRadii? CornerRadii = null)
+    DockCornerRadii? CornerRadii = null,
+    DockCornerStyle CornerStyle = DockCornerStyle.DynamicIsland,
+    double ContentScale = 1)
 {
     public static IslandLayoutOptions Default { get; } = new(
         292, 46,

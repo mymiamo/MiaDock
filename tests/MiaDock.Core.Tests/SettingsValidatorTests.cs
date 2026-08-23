@@ -18,7 +18,7 @@ public sealed class SettingsValidatorTests
 
         var result = SettingsValidator.Normalize(legacy);
 
-        Assert.AreEqual(30, result.SchemaVersion);
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
         Assert.AreEqual(AudibleNotificationSettings.Default, result.AudibleNotifications);
         Assert.IsTrue(result.AudibleNotifications.IsEnabled);
         Assert.IsTrue(result.AudibleNotifications.NetworkOfflineEnabled);
@@ -49,7 +49,7 @@ public sealed class SettingsValidatorTests
 
         var result = SettingsValidator.Normalize(legacy);
 
-        Assert.AreEqual(30, result.SchemaVersion);
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
         Assert.IsTrue(result.AudibleNotifications.HourlyEnabled);
         Assert.IsFalse(result.Modules["hourly-notification"].IsEnabled);
         Assert.AreEqual(4, result.Modules["hourly-notification"].EventDurationSeconds);
@@ -98,7 +98,7 @@ public sealed class SettingsValidatorTests
 
         var result = SettingsValidator.Normalize(legacy);
 
-        Assert.AreEqual(30, result.SchemaVersion);
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
         Assert.AreEqual("endpoint-id", result.AudibleNotifications.OutputDeviceId);
         Assert.AreEqual(100, result.AudibleNotifications.VolumePercent);
     }
@@ -645,6 +645,70 @@ public sealed class SettingsValidatorTests
         Assert.AreEqual(120, motion.ContentDelayMilliseconds);
         Assert.IsTrue(motion.EnableParallax);
         Assert.IsTrue(motion.EnableTransientBlur);
+    }
+
+    [TestMethod]
+    public void Normalize_UsesSafePersonalizationDefaultsForOlderSettings()
+    {
+        var older = MiaDockSettings.Default with
+        {
+            SchemaVersion = 30,
+            Appearance = MiaDockSettings.Default.Appearance with { Personalization = null }
+        };
+
+        var result = SettingsValidator.Normalize(older);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.AreEqual(DockSizePreset.Default, result.Appearance.EffectivePersonalization.SizePreset);
+        Assert.AreEqual(DockPersonalizationSettings.DefaultThickness,
+            result.Appearance.EffectivePersonalization.CustomThickness);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaThirty_PreservesLegacyEdgeMarginAsTopOffset()
+    {
+        var older = MiaDockSettings.Default with
+        {
+            SchemaVersion = 30,
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                EdgeMargin = 24,
+                Personalization = null
+            }
+        };
+
+        var result = SettingsValidator.Normalize(older);
+
+        Assert.AreEqual(24, result.Appearance.EffectivePersonalization.TopOffset);
+    }
+
+    [TestMethod]
+    public void Normalize_ClampsPersonalizationAndRestoresInvalidEnums()
+    {
+        var invalid = MiaDockSettings.Default with
+        {
+            Appearance = MiaDockSettings.Default.Appearance with
+            {
+                Personalization = new DockPersonalizationSettings(
+                    (DockSizePreset)99,
+                    500,
+                    (DockDensity)99,
+                    (DockIconSize)99,
+                    (DockCornerStyle)99,
+                    (AppearancePreset)99,
+                    -10)
+            }
+        };
+
+        var personalization = SettingsValidator.Normalize(invalid).Appearance.EffectivePersonalization;
+
+        Assert.AreEqual(DockSizePreset.Default, personalization.SizePreset);
+        Assert.AreEqual(DockPersonalizationSettings.MaximumThickness, personalization.CustomThickness);
+        Assert.AreEqual(DockDensity.Balanced, personalization.Density);
+        Assert.AreEqual(DockIconSize.Default, personalization.IconSize);
+        Assert.AreEqual(DockCornerStyle.DynamicIsland, personalization.CornerStyle);
+        Assert.AreEqual(AppearancePreset.Dynamic, personalization.Preset);
+        Assert.AreEqual(DockPersonalizationSettings.MinimumTopOffset, personalization.TopOffset);
     }
 
     [TestMethod]

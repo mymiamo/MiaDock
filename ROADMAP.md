@@ -3,6 +3,18 @@
 Bu yol haritası mevcut geliştirme durumunu ve yayın öncesi kalan doğrulamaları
 gösterir. Sürüm numaraları yalnız proje sahibi tarafından kesinleştirilir.
 
+## 1.6.0.0 — Motion & Personalization
+
+- Merkezî DockMetrics ile Compact, Default, Large ve güvenli Custom kalınlık seçenekleri.
+- Yoğunluk, içerik simge boyutu, köşe stili ve üst kenar mesafesi canlı önizlenebilir.
+- Minimal, Dynamic, Large ve Custom görünüm ön ayarları; ayarlar eski yapılandırmalarla uyumludur.
+- Motion tercihleri olay morfu ve dekoratif simge/kabuk vurgularını erişilebilir biçimde denetler; Windows azaltılmış hareket tercihi korunur.
+
+## 1.5.5.0 — Theme stability
+
+- Tema seçimi artık açık onay gerektirir; boyut ve hareket ayarları canlı uygulanmaya devam eder.
+- Adaptive Fluent sistem paleti, Tozpembe açık tema çözümlemesi ve canlı Mica geçişi sağlamlaştırıldı.
+
 ## 1.5.4.0 — Platform library integration cleanup
 
 - Device Hub: eşli Bluetooth cihazını dock'tan bağla / ayır. Yeni eşleştirme yok.

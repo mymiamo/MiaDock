@@ -22,8 +22,9 @@ public sealed partial class AudioActivityIndicator : UserControl
         new PropertyMetadata(false, OnVisualPropertyChanged));
 
     private bool _isLoaded;
-    private bool _isFallbackRunning;
-
+    private double _leftVisualLevel = 0.18;
+    private double _centerVisualLevel = 0.18;
+    private double _rightVisualLevel = 0.18;
     public AudioActivityIndicator() => InitializeComponent();
 
     public double LeftLevel { get => (double)GetValue(LeftLevelProperty); set => SetValue(LeftLevelProperty, value); }
@@ -41,7 +42,6 @@ public sealed partial class AudioActivityIndicator : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
         _isLoaded = false;
-        StopFallbackAnimation();
     }
 
     private static void OnVisualPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
@@ -56,7 +56,6 @@ public sealed partial class AudioActivityIndicator : UserControl
 
         if (!IsPlaying)
         {
-            StopFallbackAnimation();
             ApplyLevels(0.18, 0.18, 0.18);
             return;
         }
@@ -64,40 +63,41 @@ public sealed partial class AudioActivityIndicator : UserControl
         var peak = Math.Max(LeftLevel, Math.Max(CenterLevel, RightLevel));
         if (!IsAudioAvailable || peak <= 0.205)
         {
-            StartFallbackAnimation();
+            // A source can report playback before it exposes meter samples.
+            // Keep the indicator intentional and stable instead of inventing
+            // a perpetual unequal waveform.
+            ApplyStableLevels(0.52, 0.52, 0.52);
             return;
         }
 
-        StopFallbackAnimation();
         ApplyLevels(LeftLevel, CenterLevel, RightLevel);
-    }
-
-    private void StartFallbackAnimation()
-    {
-        if (_isFallbackRunning)
-        {
-            return;
-        }
-
-        FallbackStoryboard.Begin();
-        _isFallbackRunning = true;
-    }
-
-    private void StopFallbackAnimation()
-    {
-        if (!_isFallbackRunning)
-        {
-            return;
-        }
-
-        FallbackStoryboard.Stop();
-        _isFallbackRunning = false;
     }
 
     private void ApplyLevels(double left, double center, double right)
     {
-        LeftScale.ScaleY = Math.Clamp(left, 0.18, 1);
-        CenterScale.ScaleY = Math.Clamp(center, 0.18, 1);
-        RightScale.ScaleY = Math.Clamp(right, 0.18, 1);
+        _leftVisualLevel = ResolveVisualLevel(_leftVisualLevel, left);
+        _centerVisualLevel = ResolveVisualLevel(_centerVisualLevel, center);
+        _rightVisualLevel = ResolveVisualLevel(_rightVisualLevel, right);
+        LeftScale.ScaleY = _leftVisualLevel;
+        CenterScale.ScaleY = _centerVisualLevel;
+        RightScale.ScaleY = _rightVisualLevel;
+    }
+
+    private void ApplyStableLevels(double left, double center, double right)
+    {
+        _leftVisualLevel = Math.Clamp(left, 0.18, 1);
+        _centerVisualLevel = Math.Clamp(center, 0.18, 1);
+        _rightVisualLevel = Math.Clamp(right, 0.18, 1);
+        LeftScale.ScaleY = _leftVisualLevel;
+        CenterScale.ScaleY = _centerVisualLevel;
+        RightScale.ScaleY = _rightVisualLevel;
+    }
+
+    private static double ResolveVisualLevel(double current, double target)
+    {
+        var safeTarget = Math.Clamp(target, 0.18, 1);
+        return Math.Abs(safeTarget - 0.18) < 0.001
+            ? safeTarget
+            : Math.Clamp(current + ((safeTarget - current) * 0.45), 0.18, 1);
     }
 }

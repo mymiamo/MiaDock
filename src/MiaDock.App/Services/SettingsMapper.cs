@@ -20,17 +20,8 @@ public static class SettingsMapper
         _ => OverlayPosition.TopCenter
     };
 
-    public static IslandLayoutOptions ToLayoutOptions(AppearanceSettings settings) => new(
-        settings.CollapsedWidth,
-        settings.CollapsedHeight,
-        settings.HoverWidth,
-        settings.HoverHeight,
-        settings.ExpandedWidth,
-        settings.ExpandedHeight,
-        settings.NotificationWidth,
-        settings.NotificationHeight,
-        settings.CornerRadius,
-        settings.EffectiveCornerRadii);
+    public static IslandLayoutOptions ToLayoutOptions(AppearanceSettings settings) =>
+        DockMetrics.ToLayout(settings);
 
     public static IslandMotionOptions ToMotionOptions(MiaDockSettings settings)
     {
@@ -63,7 +54,9 @@ public static class SettingsMapper
             Springiness = motion.Springiness,
             ContentDelay = TimeSpan.FromMilliseconds(motion.ContentDelayMilliseconds),
             EnableParallax = motion.EnableParallax,
-            EnableTransientBlur = motion.EnableTransientBlur
+            EnableTransientBlur = motion.EnableTransientBlur,
+            EnableIconAnimations = motion.EnableIconAnimations,
+            EnableEventMorph = motion.EnableEventMorph
         };
     }
 

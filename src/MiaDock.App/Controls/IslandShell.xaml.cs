@@ -34,6 +34,7 @@ public sealed partial class IslandShell : UserControl
     private IslandVisualState _activeState = IslandVisualState.Collapsed;
     private ContentMotionRequestedEventArgs? _pendingContentMotion;
     private IslandVisualMetrics? _appliedMetrics;
+    private double _appliedContentScale = 1;
     private ThemeStyle _appliedTheme = ThemeStyle.AppleLike;
     private ThemeBackdropKind _appliedBackdropKind = ThemeBackdropKind.None;
     private bool _edgeRevealHidden;
@@ -132,6 +133,7 @@ public sealed partial class IslandShell : UserControl
     {
         _baseLayoutOptions = layoutOptions;
         _layoutOptions = CreateEffectiveLayout(layoutOptions, ModuleDisplay);
+        ApplyContentScale(_layoutOptions.ContentScale);
         _motionOptions = options;
         _animationPreferences = animationPreferences;
         if (_animationCoordinator is null)
@@ -721,11 +723,26 @@ public sealed partial class IslandShell : UserControl
         VisualSizeChanged?.Invoke(this, EventArgs.Empty);
     }
 
+    private void ApplyContentScale(double scale)
+    {
+        var normalized = Math.Clamp(scale, 0.85, 1.15);
+        if (NearlyEqual(_appliedContentScale, normalized))
+        {
+            return;
+        }
+
+        _appliedContentScale = normalized;
+        var visual = Microsoft.UI.Xaml.Hosting.ElementCompositionPreview.GetElementVisual(ContentHost);
+        visual.StopAnimation(nameof(visual.Scale));
+        visual.Scale = new Vector3((float)normalized, (float)normalized, 1);
+    }
+
     private void RefreshEffectiveLayout(ContentMotionRequestedEventArgs? contentMotion)
     {
         var effective = CreateEffectiveLayout(_baseLayoutOptions, ModuleDisplay);
         var layoutChanged = effective != _layoutOptions;
         _layoutOptions = effective;
+        ApplyContentScale(effective.ContentScale);
         if (contentMotion is not null && _activeState == IslandVisualState.ExpandedModule)
         {
             if (layoutChanged)

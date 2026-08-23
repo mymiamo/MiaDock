@@ -59,6 +59,7 @@ using MiaDock.Platform.Windows.Transfers;
 using MiaDock.Core.Localization;
 using MiaDock.Core.Updates;
 using MiaDock.Platform.Windows.Updates;
+using MiaDock.App.Animations;
 using MiaDock.Core.Focus;
 using MiaDock.Core.Applications;
 using MiaDock.Core.Lifecycle;
@@ -235,6 +236,7 @@ public static class ServiceRegistration
         services.AddSingleton<ILocalizationService>(provider =>
             provider.GetRequiredService<AppLocalizationService>());
         services.AddSingleton<IAnimationPreferenceService, WindowsAnimationPreferenceService>();
+        services.AddSingleton<IMicroInteractionCoordinator, MicroInteractionCoordinator>();
         services.AddSingleton<ISettingsPathProvider, SettingsPathProvider>();
         services.AddSingleton<ILogPathProvider, LocalLogPathProvider>();
         services.AddSingleton<SensitiveDataRedactor>();

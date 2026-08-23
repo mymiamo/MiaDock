@@ -155,7 +155,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         CancellationToken cancellationToken)
     {
         var duration = IslandAnimationProfile.DurationFor(transition, _options);
-        var isEventMorph = IslandAnimationProfile.IsEventMorph(transition);
+            var isEventMorph = MotionSemantics.UsesEventMorph(transition, _options);
         var boundsEasing = IslandAnimationProfile.BoundsEasingFor(transition, _options);
 
         try
@@ -197,7 +197,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
             // Event morph relies on width/height/radius interpolation — not a
             // shell ScaleTransform — so skip the decorative shell pulse there.
-            var shellTask = isEventMorph
+            var shellTask = isEventMorph || !MotionSemantics.UsesShellPulse(_options)
                 ? Task.CompletedTask
                 : _toolkitAnimations.AnimateShellScaleAsync(
                     _surface,
@@ -261,15 +261,17 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
                 _options.ContentRefreshDuration,
                 _applyMetrics,
                 cancellationToken);
-            var shellTask = _toolkitAnimations.AnimateShellScaleAsync(
-                _surface,
-                _options.ContentRefreshDuration,
-                _options.Preset,
-                _options.AnimationKind,
-                _options.Intensity,
-                _options.Springiness,
-                expanding,
-                cancellationToken);
+            var shellTask = MotionSemantics.UsesShellPulse(_options)
+                ? _toolkitAnimations.AnimateShellScaleAsync(
+                    _surface,
+                    _options.ContentRefreshDuration,
+                    _options.Preset,
+                    _options.AnimationKind,
+                    _options.Intensity,
+                    _options.Springiness,
+                    expanding,
+                    cancellationToken)
+                : Task.CompletedTask;
             await Task.WhenAll(boundsTask, shellTask);
             ApplyFinalStateIfCurrent(_activeState, sequence, cancellationToken);
         }
@@ -304,15 +306,17 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
                 _options.ContentRefreshDuration,
                 _applyMetrics,
                 cancellationToken);
-            var shellTask = _toolkitAnimations.AnimateShellScaleAsync(
-                _surface,
-                _options.ContentRefreshDuration,
-                _options.Preset,
-                _options.AnimationKind,
-                _options.Intensity,
-                _options.Springiness,
-                expanding,
-                cancellationToken);
+            var shellTask = MotionSemantics.UsesShellPulse(_options)
+                ? _toolkitAnimations.AnimateShellScaleAsync(
+                    _surface,
+                    _options.ContentRefreshDuration,
+                    _options.Preset,
+                    _options.AnimationKind,
+                    _options.Intensity,
+                    _options.Springiness,
+                    expanding,
+                    cancellationToken)
+                : Task.CompletedTask;
             await Task.WhenAll(boundsTask, shellTask);
 
             if (!IsCurrent(sequence, cancellationToken))

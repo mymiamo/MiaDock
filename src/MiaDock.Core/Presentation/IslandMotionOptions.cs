@@ -16,7 +16,9 @@ public sealed record IslandMotionOptions(
     double Springiness,
     TimeSpan ContentDelay,
     bool EnableParallax,
-    bool EnableTransientBlur)
+    bool EnableTransientBlur,
+    bool EnableIconAnimations = true,
+    bool EnableEventMorph = true)
 {
     public static IslandMotionOptions Default { get; } = new(
         TimeSpan.FromMilliseconds(170),

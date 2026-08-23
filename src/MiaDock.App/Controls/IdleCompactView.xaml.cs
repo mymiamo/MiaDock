@@ -14,7 +14,6 @@ using MiaDock.Modules.Media.ViewModels;
 using MiaDock.Modules.SystemStatus.Models;
 using MiaDock.Modules.SystemStatus.ViewModels;
 using Windows.UI;
-using Windows.UI.ViewManagement;
 
 namespace MiaDock.App.Controls;
 
@@ -26,7 +25,6 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     private readonly PrivacyModuleViewModel? _privacy;
     private readonly ILocalizationService? _localization;
     private readonly ISettingsService? _settings;
-    private readonly UISettings _uiSettings = new();
     private readonly Brush _microphoneBrush =
         new SolidColorBrush(Color.FromArgb(255, 74, 222, 128));
     private readonly Brush _cameraBrush =
@@ -142,7 +140,6 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
             _settings.SettingsChanged -= OnSettingsChanged;
         }
 
-        IdlePulseStoryboard.Stop();
         StopTimer();
     }
 
@@ -156,15 +153,6 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     {
         var shouldRun = _isLoaded && _isPresentationActive;
         _music?.SetAudioMeterActive(this, shouldRun);
-        var hasActivity = _privacy?.HasActiveUsage == true;
-        if (shouldRun && hasActivity && _uiSettings.AnimationsEnabled)
-        {
-            IdlePulseStoryboard.Begin();
-        }
-        else
-        {
-            IdlePulseStoryboard.Stop();
-        }
     }
 
     private void OnMusicPropertyChanged(object? sender, PropertyChangedEventArgs args)

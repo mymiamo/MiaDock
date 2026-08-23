@@ -354,7 +354,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.5.4.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.6.0.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -387,7 +387,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.5.4.0", packageVersion);
+        Assert.AreEqual("1.6.0.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 
@@ -855,7 +855,7 @@ public sealed class SettingsWindowTests
             "Settings",
             "AppearanceSettingsPage.xaml"));
 
-        StringAssert.Contains(text, "Value=\"{Binding EdgeMargin, Mode=TwoWay}\"");
+        StringAssert.Contains(text, "Value=\"{Binding TopOffset, Mode=TwoWay}\"");
         Assert.IsFalse(text.Contains("IsEdgeRevealShelfEnabled", StringComparison.Ordinal));
         StringAssert.Contains(text, "IsOn=\"{Binding LinkCornerRadii, Mode=TwoWay}\"");
         StringAssert.Contains(text, "Value=\"{Binding CornerRadius, Mode=TwoWay}\"");

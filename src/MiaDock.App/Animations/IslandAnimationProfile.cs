@@ -15,19 +15,19 @@ public static class IslandAnimationProfile
             IslandVisualState.Collapsed => new(
                 layout.CollapsedWidth,
                 layout.CollapsedHeight,
-                radii.Clamp(0, layout.CollapsedHeight / 2)),
+                ResolveCornerRadii(radii, layout.CollapsedHeight, layout.CornerStyle)),
             IslandVisualState.Hover => new(
                 layout.HoverWidth,
                 layout.HoverHeight,
-                radii.Clamp(0, layout.HoverHeight / 2)),
+                ResolveCornerRadii(radii, layout.HoverHeight, layout.CornerStyle)),
             IslandVisualState.ExpandedModule => new(
                 layout.ExpandedWidth,
                 layout.ExpandedHeight,
-                radii.Clamp(0, layout.ExpandedHeight / 2)),
+                ResolveCornerRadii(radii, layout.ExpandedHeight, layout.CornerStyle)),
             IslandVisualState.ModuleNotification => new(
                 layout.NotificationWidth,
                 layout.NotificationHeight,
-                radii.Clamp(0, layout.NotificationHeight / 2)),
+                ResolveCornerRadii(radii, layout.NotificationHeight, layout.CornerStyle)),
             _ => throw new ArgumentOutOfRangeException(nameof(state), state, null)
         };
     }
@@ -74,7 +74,7 @@ public static class IslandAnimationProfile
         IslandMotionOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        if (!IsEventMorph(transition) || options.Preset == MotionPreset.Off)
+        if (!IsEventMorph(transition) || !options.EnableEventMorph || options.Preset == MotionPreset.Off)
         {
             return BoundsEasingProfile.Cubic;
         }
@@ -89,5 +89,19 @@ public static class IslandAnimationProfile
             _ => options.Springiness
         };
         return BoundsEasingProfile.SoftSpring(springiness);
+    }
+
+    private static DockCornerRadii ResolveCornerRadii(
+        DockCornerRadii radii,
+        double height,
+        DockCornerStyle style)
+    {
+        var maximum = height / 2;
+        return style switch
+        {
+            DockCornerStyle.Soft => radii.Clamp(0, Math.Min(18, maximum)),
+            DockCornerStyle.Rounded => DockCornerRadii.Uniform(maximum),
+            _ => radii.Clamp(0, maximum)
+        };
     }
 }

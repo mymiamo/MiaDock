@@ -50,6 +50,55 @@
                Title="Saydam Bulanık Cam"
                Message="Bu tema sabit bir arka plan rengi kullanmaz; masaüstünü gerçek Windows Acrylic ile bulanık gösterir. Opaklık, yalnızca ince cam katmanının yoğunluğunu değiştirir." />
 
+      <TextBlock Text="Görünüm ön ayarı" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" />
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Minimal, Dinamik ve Büyük ön ayarları dock ölçülerini, yoğunluğu ve içerik ölçeğini birlikte ayarlar. Bir değeri elle değiştirmeniz Özel ön ayarına geçer."
+                     Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
+          <ComboBox ItemsSource="{Binding AppearancePresets}"
+                    DisplayMemberPath="Label"
+                    SelectedIndex="{Binding AppearancePresetIndex, Mode=TwoWay}"
+                    AutomationProperties.Name="Görünüm ön ayarı" />
+        </StackPanel>
+      </Border>
+
+      <TextBlock Text="Dock ölçeği" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" />
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="12">
+          <TextBlock Text="Dock boyutu" />
+          <ComboBox ItemsSource="{Binding DockSizePresets}"
+                    DisplayMemberPath="Label"
+                    SelectedIndex="{Binding DockSizePresetIndex, Mode=TwoWay}"
+                    AutomationProperties.Name="Dock boyutu" />
+          <Grid>
+            <TextBlock Text="Özel kalınlık" />
+            <TextBlock Text="{Binding CustomDockThickness}" HorizontalAlignment="Right" Opacity="0.7" />
+          </Grid>
+          <Slider Minimum="30" Maximum="54" StepFrequency="1"
+                  Value="{Binding CustomDockThickness, Mode=TwoWay}"
+                  AutomationProperties.Name="Özel dock kalınlığı" />
+          <Grid ColumnSpacing="16">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+            <StackPanel Spacing="6">
+              <TextBlock Text="Yatay yoğunluk" />
+              <ComboBox ItemsSource="{Binding DockDensities}" DisplayMemberPath="Label"
+                        SelectedIndex="{Binding DockDensityIndex, Mode=TwoWay}"
+                        AutomationProperties.Name="Dock yatay yoğunluğu" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="6">
+              <TextBlock Text="İçerik simge boyutu" />
+              <ComboBox ItemsSource="{Binding DockIconSizes}" DisplayMemberPath="Label"
+                        SelectedIndex="{Binding DockIconSizeIndex, Mode=TwoWay}"
+                        AutomationProperties.Name="Dock içerik simge boyutu" />
+            </StackPanel>
+          </Grid>
+          <TextBlock Text="Köşe stili" />
+          <ComboBox ItemsSource="{Binding DockCornerStyles}" DisplayMemberPath="Label"
+                    SelectedIndex="{Binding DockCornerStyleIndex, Mode=TwoWay}"
+                    AutomationProperties.Name="Dock köşe stili" />
+        </StackPanel>
+      </Border>
+
       <TextBlock Text="Dock boyutları" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" />
       <Border Style="{StaticResource SettingsCardBorderStyle}">
         <StackPanel Spacing="12">
@@ -92,8 +141,8 @@
             <TextBlock Text="Üst kenar boşluğu (piksel)" />
             <NumberBox x:Name="EdgeMarginBox"
                        Minimum="0"
-                       Maximum="96"
-                       Value="{Binding EdgeMargin, Mode=TwoWay}"
+                       Maximum="32"
+                       Value="{Binding TopOffset, Mode=TwoWay}"
                        IsEnabled="{Binding HasScreenEdgeSpacing}"
                        SpinButtonPlacementMode="Compact"
                        AutomationProperties.Name="Dock ekran kenarı mesafesi"
@@ -255,6 +304,14 @@
                         OffContent="Kapalı" OnContent="Açık"
                         IsOn="{Binding MotionTransientBlur, Mode=TwoWay}"
                         AutomationProperties.Name="Geçici cam vurgusu" />
+          <ToggleSwitch Header="Simge mikro etkileşimleri"
+                        OffContent="Kapalı" OnContent="Açık"
+                        IsOn="{Binding MotionIconAnimations, Mode=TwoWay}"
+                        AutomationProperties.Name="Simge mikro etkileşimleri" />
+          <ToggleSwitch Header="Olay geçiş morfu"
+                        OffContent="Kapalı" OnContent="Açık"
+                        IsOn="{Binding MotionEventMorph, Mode=TwoWay}"
+                        AutomationProperties.Name="Olay geçiş morfu" />
           <TextBlock Text="Windows'ta animasyonları azalt seçeneği açıksa bu ayarlar otomatik olarak devre dışı bırakılır."
                      Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
         </StackPanel>

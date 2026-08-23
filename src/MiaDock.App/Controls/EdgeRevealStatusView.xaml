@@ -3,25 +3,9 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="using:MiaDock.App.Controls"
+    xmlns:animations="using:MiaDock.App.Animations"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded">
-
-  <UserControl.Resources>
-    <Storyboard x:Name="ActivityPulseStoryboard" RepeatBehavior="Forever">
-      <DoubleAnimation Storyboard.TargetName="ActivityPulse"
-                       Storyboard.TargetProperty="Opacity"
-                       From="0.14" To="0.5" Duration="0:0:1.2"
-                       AutoReverse="True" />
-      <DoubleAnimation Storyboard.TargetName="ActivityPulseScale"
-                       Storyboard.TargetProperty="ScaleX"
-                       From="0.72" To="1" Duration="0:0:1.2"
-                       AutoReverse="True" />
-      <DoubleAnimation Storyboard.TargetName="ActivityPulseScale"
-                       Storyboard.TargetProperty="ScaleY"
-                       From="0.72" To="1" Duration="0:0:1.2"
-                       AutoReverse="True" />
-    </Storyboard>
-  </UserControl.Resources>
 
   <Grid x:Name="LayoutRoot"
         Height="15"
@@ -36,6 +20,7 @@
                 VerticalAlignment="Center">
       <Grid Width="8"
             Height="8"
+            animations:MicroMotion.StateKey="{Binding SummaryText}"
             AutomationProperties.AccessibilityView="Raw">
         <Ellipse x:Name="ActivityPulse"
                  Fill="{ThemeResource IslandStyleAccentBrush}"
@@ -77,6 +62,7 @@
                 FontSize="10"
                 Opacity="{Binding NetworkOpacity}"
                 Foreground="{Binding NetworkStatusBrush}"
+                animations:MicroMotion.StateKey="{Binding NetworkStatus}"
                 VerticalAlignment="Center"
                 ToolTipService.ToolTip="{Binding NetworkStatus}"
                 AutomationProperties.Name="{Binding NetworkStatus}" />
@@ -107,6 +93,7 @@
       <StackPanel Orientation="Horizontal"
                   Spacing="1"
                   Visibility="{Binding BluetoothVisibility}"
+                  animations:MicroMotion.StateKey="{Binding BluetoothStatus}"
                   ToolTipService.ToolTip="{Binding BluetoothStatus}"
                   AutomationProperties.Name="{Binding BluetoothStatus}">
         <FontIcon Glyph="&#xE702;"
@@ -126,6 +113,7 @@
       <StackPanel Orientation="Horizontal"
                   Spacing="1"
                   Visibility="{Binding BatteryVisibility}"
+                  animations:MicroMotion.StateKey="{Binding BatteryStatus}"
                   ToolTipService.ToolTip="{Binding BatteryStatus}"
                   AutomationProperties.Name="{Binding BatteryStatus}">
         <FontIcon Glyph="{Binding BatteryGlyph}"

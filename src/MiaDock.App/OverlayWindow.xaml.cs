@@ -125,12 +125,13 @@ public sealed partial class OverlayWindow : Window
         ApplyLocalization();
 
         var initialAppearance = settings.Current.Appearance;
+        var initialLayout = SettingsMapper.ToLayoutOptions(initialAppearance);
         _windowController = controllerFactory.Create(
             this,
             new OverlayWindowOptions(
                 SettingsMapper.ToOverlayPosition(settings.Current.General.Position),
-                new OverlaySize(initialAppearance.CollapsedWidth, initialAppearance.CollapsedHeight),
-                initialAppearance.EdgeMargin,
+                new OverlaySize(initialLayout.CollapsedWidth, initialLayout.CollapsedHeight),
+                initialAppearance.EffectivePersonalization.TopOffset,
                 initialAppearance.EffectiveCornerRadii));
         _windowHandleProvider.SetWindowHandle(_windowController.WindowHandle);
         _windowController.OutsidePointerPressed += OnOutsidePointerPressed;
@@ -680,7 +681,8 @@ public sealed partial class OverlayWindow : Window
 
         if (args.Previous.General.VisibilityMode != args.Current.General.VisibilityMode ||
             args.Previous.General.Position != args.Current.General.Position ||
-            args.Previous.Appearance.EdgeMargin != args.Current.Appearance.EdgeMargin ||
+            args.Previous.Appearance.EffectivePersonalization.TopOffset !=
+                args.Current.Appearance.EffectivePersonalization.TopOffset ||
             args.Previous.Monitor != args.Current.Monitor ||
             args.Previous.Fullscreen != args.Current.Fullscreen ||
             args.Previous.Privacy != args.Current.Privacy ||
@@ -1088,7 +1090,7 @@ public sealed partial class OverlayWindow : Window
         _windowController.UpdatePlacement(
             SettingsMapper.ToOverlayPosition(settings.General.Position),
             display.Id,
-            settings.Appearance.EdgeMargin);
+            settings.Appearance.EffectivePersonalization.TopOffset);
 
         var normalVisibilityAllowsDock = focus.AllowsNormalDock(
             settings.General.VisibilityMode != IslandVisibilityMode.EventsOnly);

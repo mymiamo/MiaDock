@@ -3,6 +3,36 @@
 En yeni sürüm her zaman bu sayfanın en üstünde yer alır.
 The latest release is always shown at the top of this page.
 
+## MiaDock 1.6.0
+
+### Türkçe
+
+* Dock ölçeği artık Compact, Default, Large veya güvenli bir özel kalınlık olarak ayarlanabilir. Yoğunluk, içerik simge boyutu, köşe stili ve üst kenar mesafesi anında önizlenir.
+* Minimal, Dynamic, Large ve Custom görünüm ön ayarları; hareket ve görünüm kişiselleştirmesini hızlandırır.
+* Olay morfu ve dekoratif simge/kabuk vurguları ayrı ayrı kapatılabilir. Windows sistem animasyonları kapalıyken MiaDock doğrudan ve güvenli geçişler kullanır.
+* Medya, gizlilik, Device Hub ve Clipboard Peek olayları ortak, iptal edilebilir geçiş hattından yararlanır; hızlı olaylarda görünmez ya da yanlış boyutlu yüzey bırakmaz.
+
+### English
+
+* Dock scale can now be Compact, Default, Large, or a safely bounded custom thickness. Density, content icon size, corner style, and top offset preview immediately.
+* Minimal, Dynamic, Large, and Custom appearance presets make motion and appearance personalization quicker.
+* Event morphs and decorative icon/shell emphasis can be disabled independently. When Windows system animations are off, MiaDock uses direct, safe transitions.
+* Media, privacy, Device Hub, and Clipboard Peek events share a cancellable transition path that avoids invisible or incorrectly sized surfaces during rapid events.
+
+## MiaDock 1.5.5
+
+### Türkçe
+
+* Tema seçimi artık dock'u hemen değiştirmez. Yeni görünüm için Temayı uygula düğmesiyle onay verin; boyut ve hareket ayarları anında önizlenmeye devam eder.
+* Tema geçişleri daha güvenli hâle getirildi; Adaptive Fluent, Windows'un sistem renkleriyle uyumlu kalır.
+* Tozpembe açık tema davranışı ve Mica/Akrilik geçişleri iyileştirildi.
+
+### English
+
+* Selecting a theme no longer changes the dock immediately. Confirm the new appearance with Apply theme; size and motion settings still preview live.
+* Theme transitions are safer, and Adaptive Fluent remains aligned with Windows system colors.
+* Tozpembe light-theme behavior and Mica/Acrylic transitions were improved.
+
 ## MiaDock 1.5.4
 
 ### Türkçe

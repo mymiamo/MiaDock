@@ -2691,4 +2691,18 @@
   <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Apply the selected theme</value><comment>Seçili temayı uygula</comment></data>
   <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Theme ready to apply</value><comment>Tema uygulanmaya hazır</comment></data>
   <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Your selection has not changed the dock. Use Apply theme for a safe transition.</value><comment>Seçiminiz dock’u değiştirmedi. Güvenli geçiş için Temayı uygula düğmesini kullanın.</comment></data>
+  <data name="XamlText.1.6.AppearancePreset" xml:space="preserve"><value>Appearance preset</value><comment>Görünüm ön ayarı</comment></data>
+  <data name="XamlText.1.6.AppearancePreset.Description" xml:space="preserve"><value>Minimal, Dynamic, and Large presets update dock dimensions, density, and content scale together. Changing a value manually switches to the Custom preset.</value><comment>Minimal, Dinamik ve Büyük ön ayarları dock ölçülerini, yoğunluğu ve içerik ölçeğini birlikte ayarlar. Bir değeri elle değiştirmeniz Özel ön ayarına geçer.</comment></data>
+  <data name="XamlText.1.6.DockScale" xml:space="preserve"><value>Dock scale</value><comment>Dock ölçeği</comment></data>
+  <data name="XamlText.1.6.DockSize" xml:space="preserve"><value>Dock size</value><comment>Dock boyutu</comment></data>
+  <data name="XamlText.1.6.CustomThickness" xml:space="preserve"><value>Custom thickness</value><comment>Özel kalınlık</comment></data>
+  <data name="XamlText.1.6.Density" xml:space="preserve"><value>Horizontal density</value><comment>Yatay yoğunluk</comment></data>
+  <data name="XamlText.1.6.IconSize" xml:space="preserve"><value>Content icon size</value><comment>İçerik simge boyutu</comment></data>
+  <data name="XamlText.1.6.CornerStyle" xml:space="preserve"><value>Corner style</value><comment>Köşe stili</comment></data>
+  <data name="XamlText.1.6.IconAnimations" xml:space="preserve"><value>Icon micro-interactions</value><comment>Simge mikro etkileşimleri</comment></data>
+  <data name="XamlText.1.6.EventMorph" xml:space="preserve"><value>Event transition morph</value><comment>Olay geçiş morfu</comment></data>
+  <data name="XamlText.1.6.Automation.CustomThickness" xml:space="preserve"><value>Custom dock thickness</value><comment>Özel dock kalınlığı</comment></data>
+  <data name="XamlText.1.6.Automation.Density" xml:space="preserve"><value>Dock horizontal density</value><comment>Dock yatay yoğunluğu</comment></data>
+  <data name="XamlText.1.6.Automation.IconSize" xml:space="preserve"><value>Dock content icon size</value><comment>Dock içerik simge boyutu</comment></data>
+  <data name="XamlText.1.6.Automation.CornerStyle" xml:space="preserve"><value>Dock corner style</value><comment>Dock köşe stili</comment></data>
 </root>

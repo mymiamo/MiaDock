@@ -23,7 +23,8 @@ public sealed record AppearanceSettings(
     MotionSettings? Motion = null,
     double EdgeMargin = 12,
     DockCornerRadii? CornerRadii = null,
-    bool LinkCornerRadii = true)
+    bool LinkCornerRadii = true,
+    DockPersonalizationSettings? Personalization = null)
 {
     public static AppearanceSettings Default { get; } = new(
         ThemeStyle.AppleLike,
@@ -41,8 +42,12 @@ public sealed record AppearanceSettings(
         MotionSettings.Default,
         12,
         DockCornerRadii.Uniform(23),
-        true);
+        true,
+        DockPersonalizationSettings.Default);
 
     public DockCornerRadii EffectiveCornerRadii =>
         CornerRadii ?? DockCornerRadii.Uniform(CornerRadius);
+
+    public DockPersonalizationSettings EffectivePersonalization =>
+        Personalization ?? DockPersonalizationSettings.Default;
 }

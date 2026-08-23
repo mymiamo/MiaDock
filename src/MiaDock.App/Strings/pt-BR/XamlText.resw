@@ -2159,4 +2159,18 @@
   <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Aplicar o tema selecionado</value></data>
   <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Tema pronto para aplicar</value></data>
   <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Sua seleção não alterou o dock. Use Aplicar tema para uma transição segura.</value></data>
+  <data name="XamlText.1.6.AppearancePreset" xml:space="preserve"><value>Predefinição de aparência</value></data>
+  <data name="XamlText.1.6.AppearancePreset.Description" xml:space="preserve"><value>As predefinições Minimal, Dinâmica e Grande atualizam juntas as dimensões, a densidade e a escala do conteúdo do dock. Alterar um valor manualmente muda para a predefinição Personalizada.</value></data>
+  <data name="XamlText.1.6.DockScale" xml:space="preserve"><value>Escala do dock</value></data>
+  <data name="XamlText.1.6.DockSize" xml:space="preserve"><value>Tamanho do dock</value></data>
+  <data name="XamlText.1.6.CustomThickness" xml:space="preserve"><value>Espessura personalizada</value></data>
+  <data name="XamlText.1.6.Density" xml:space="preserve"><value>Densidade horizontal</value></data>
+  <data name="XamlText.1.6.IconSize" xml:space="preserve"><value>Tamanho dos ícones</value></data>
+  <data name="XamlText.1.6.CornerStyle" xml:space="preserve"><value>Estilo de cantos</value></data>
+  <data name="XamlText.1.6.IconAnimations" xml:space="preserve"><value>Microinterações de ícones</value></data>
+  <data name="XamlText.1.6.EventMorph" xml:space="preserve"><value>Morfismo de transição de eventos</value></data>
+  <data name="XamlText.1.6.Automation.CustomThickness" xml:space="preserve"><value>Espessura personalizada do dock</value></data>
+  <data name="XamlText.1.6.Automation.Density" xml:space="preserve"><value>Densidade horizontal do dock</value></data>
+  <data name="XamlText.1.6.Automation.IconSize" xml:space="preserve"><value>Tamanho dos ícones do dock</value></data>
+  <data name="XamlText.1.6.Automation.CornerStyle" xml:space="preserve"><value>Estilo de cantos do dock</value></data>
 </root>

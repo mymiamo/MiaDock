@@ -1,5 +1,6 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MiaDock.App.Animations;
 using MiaDock.App.Services;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
@@ -92,6 +93,7 @@ public sealed partial class ModuleNotificationHost : UserControl
         }
 
         ApplyControlVisibility();
+        MicroMotion.PlayNotification(ViewHost);
     }
 
     private void ApplyControlVisibility()

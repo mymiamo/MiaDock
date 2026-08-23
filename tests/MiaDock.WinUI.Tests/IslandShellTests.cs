@@ -155,7 +155,7 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
-    public void AudioActivityIndicator_HasRealLevelBarsAndFallbackAnimation()
+    public void AudioActivityIndicator_HasRealLevelBarsWithoutContinuousStoryboard()
     {
         var document = LoadControl("AudioActivityIndicator.xaml");
         var names = document.Descendants()
@@ -163,17 +163,20 @@ public sealed class IslandShellTests
             .Select(attribute => attribute.Value)
             .ToHashSet(StringComparer.Ordinal);
 
-        Assert.IsTrue(names.Contains("FallbackStoryboard"));
+        Assert.IsFalse(names.Contains("FallbackStoryboard"));
         Assert.IsTrue(names.Contains("LeftScale"));
         Assert.IsTrue(names.Contains("CenterScale"));
         Assert.IsTrue(names.Contains("RightScale"));
         Assert.IsTrue(document.Descendants()
             .Where(element => element.Name.LocalName == "Rectangle")
-            .All(element => element.Attribute("Width")?.Value == "2"));
+            .All(element =>
+                element.Attribute("Width")?.Value == "2" &&
+                element.Attribute("RenderTransformOrigin")?.Value == "0.5,1" &&
+                element.Attribute("VerticalAlignment")?.Value == "Bottom"));
     }
 
     [TestMethod]
-    public void IdleClock_HasIndependentPulseAndMusicActivityIndicator()
+    public void IdleClock_HasEventDrivenPrivacyIndicatorAndMusicActivityIndicator()
     {
         var document = LoadControl("IdleCompactView.xaml");
         var names = document.Descendants()
@@ -181,7 +184,7 @@ public sealed class IslandShellTests
             .Select(attribute => attribute.Value)
             .ToHashSet(StringComparer.Ordinal);
 
-        Assert.IsTrue(names.Contains("IdlePulseStoryboard"));
+        Assert.IsFalse(names.Contains("IdlePulseStoryboard"));
         Assert.IsTrue(names.Contains("MusicActivity"));
         Assert.IsTrue(names.Contains("ActivityDot"));
 

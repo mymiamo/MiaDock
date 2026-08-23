@@ -2159,4 +2159,18 @@
   <data name="XamlText.Theme.Apply.Automation" xml:space="preserve"><value>Seçilmiş mövzunu tətbiq et</value></data>
   <data name="XamlText.Theme.Apply.Title" xml:space="preserve"><value>Mövzu tətbiq edilməyə hazırdır</value></data>
   <data name="XamlText.Theme.Apply.Message" xml:space="preserve"><value>Seçiminiz dock-u dəyişdirmədi. Təhlükəsiz keçid üçün Mövzunu tətbiq et düyməsindən istifadə edin.</value></data>
+  <data name="XamlText.1.6.AppearancePreset" xml:space="preserve"><value>Görünüş seçimi</value></data>
+  <data name="XamlText.1.6.AppearancePreset.Description" xml:space="preserve"><value>Minimal, Dinamik və Böyük seçimləri dock ölçülərini, sıxlığını və məzmun miqyasını birlikdə yeniləyir. Dəyəri əl ilə dəyişmək Xüsusi seçimə keçir.</value></data>
+  <data name="XamlText.1.6.DockScale" xml:space="preserve"><value>Dock miqyası</value></data>
+  <data name="XamlText.1.6.DockSize" xml:space="preserve"><value>Dock ölçüsü</value></data>
+  <data name="XamlText.1.6.CustomThickness" xml:space="preserve"><value>Xüsusi qalınlıq</value></data>
+  <data name="XamlText.1.6.Density" xml:space="preserve"><value>Üfüqi sıxlıq</value></data>
+  <data name="XamlText.1.6.IconSize" xml:space="preserve"><value>Məzmun ikon ölçüsü</value></data>
+  <data name="XamlText.1.6.CornerStyle" xml:space="preserve"><value>Künc üslubu</value></data>
+  <data name="XamlText.1.6.IconAnimations" xml:space="preserve"><value>İkon mikro qarşılıqlı təsirləri</value></data>
+  <data name="XamlText.1.6.EventMorph" xml:space="preserve"><value>Hadisə keçid morfu</value></data>
+  <data name="XamlText.1.6.Automation.CustomThickness" xml:space="preserve"><value>Xüsusi dock qalınlığı</value></data>
+  <data name="XamlText.1.6.Automation.Density" xml:space="preserve"><value>Dock üfüqi sıxlığı</value></data>
+  <data name="XamlText.1.6.Automation.IconSize" xml:space="preserve"><value>Dock məzmun ikon ölçüsü</value></data>
+  <data name="XamlText.1.6.Automation.CornerStyle" xml:space="preserve"><value>Dock künc üslubu</value></data>
 </root>

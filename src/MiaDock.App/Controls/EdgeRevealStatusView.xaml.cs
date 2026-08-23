@@ -9,7 +9,6 @@ using MiaDock.Modules.Media.ViewModels;
 using MiaDock.Modules.SystemStatus.Models;
 using MiaDock.Modules.SystemStatus.ViewModels;
 using Windows.UI;
-using Windows.UI.ViewManagement;
 
 namespace MiaDock.App.Controls;
 
@@ -19,7 +18,6 @@ public sealed partial class EdgeRevealStatusView : UserControl, IModuleViewActiv
     private readonly SystemActivityViewModel? _systemActivity;
     private readonly PrivacyModuleViewModel? _privacy;
     private readonly IAppLocalizationService? _localization;
-    private readonly UISettings _uiSettings = new();
     private readonly Brush _microphoneBrush =
         new SolidColorBrush(Color.FromArgb(255, 74, 222, 128));
     private readonly Brush _cameraBrush =
@@ -118,7 +116,6 @@ public sealed partial class EdgeRevealStatusView : UserControl, IModuleViewActiv
             _localization.LanguageChanged -= OnLanguageChanged;
         }
 
-        ActivityPulseStoryboard.Stop();
     }
 
     private void OnDashboardPropertyChanged(object? sender, PropertyChangedEventArgs args)
@@ -219,18 +216,8 @@ public sealed partial class EdgeRevealStatusView : UserControl, IModuleViewActiv
 
     private void UpdatePresentationActivity()
     {
-        var shouldPulse = _isLoaded &&
-                          _isPresentationActive &&
-                          _privacy?.HasActiveUsage == true &&
-                          _uiSettings.AnimationsEnabled;
-        if (shouldPulse)
-        {
-            ActivityPulseStoryboard.Begin();
-        }
-        else
-        {
-            ActivityPulseStoryboard.Stop();
-        }
+        // Privacy feedback is now event-driven through MicroMotion rather
+        // than a continuous storyboard pulse.
     }
 
     private void UpdateAutomationName()

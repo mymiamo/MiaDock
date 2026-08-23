@@ -21,6 +21,7 @@ namespace MiaDock.App;
 
 public partial class App : Application
 {
+    internal static IServiceProvider? Services { get; private set; }
     private readonly ServiceProvider _services;
     private IOverlayWindowService? _overlayWindow;
     private ISettingsWindowService? _settingsWindow;
@@ -36,6 +37,7 @@ public partial class App : Application
     {
         InitializeComponent();
         _services = ServiceRegistration.BuildServiceProvider();
+        Services = _services;
         _log = _services.GetRequiredService<ILogService>();
         _exceptionCoordinator = _services.GetRequiredService<AppExceptionCoordinator>();
         _exceptionCoordinator.Attach(this);

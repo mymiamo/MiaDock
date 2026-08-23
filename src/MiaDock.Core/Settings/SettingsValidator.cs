@@ -44,6 +44,34 @@ public static class SettingsValidator
             Springiness = ClampFinite(motion.Springiness, 0, 1, MotionSettings.Default.Springiness),
             ContentDelayMilliseconds = Math.Clamp(motion.ContentDelayMilliseconds, 0, 120)
         };
+        var personalization = appearance.EffectivePersonalization with
+        {
+            SizePreset = EnumValue(
+                appearance.EffectivePersonalization.SizePreset,
+                DockPersonalizationSettings.Default.SizePreset),
+            CustomThickness = ClampFinite(
+                appearance.EffectivePersonalization.CustomThickness,
+                DockPersonalizationSettings.MinimumThickness,
+                DockPersonalizationSettings.MaximumThickness,
+                DockPersonalizationSettings.Default.CustomThickness),
+            Density = EnumValue(
+                appearance.EffectivePersonalization.Density,
+                DockPersonalizationSettings.Default.Density),
+            IconSize = EnumValue(
+                appearance.EffectivePersonalization.IconSize,
+                DockPersonalizationSettings.Default.IconSize),
+            CornerStyle = EnumValue(
+                appearance.EffectivePersonalization.CornerStyle,
+                DockPersonalizationSettings.Default.CornerStyle),
+            Preset = EnumValue(
+                appearance.EffectivePersonalization.Preset,
+                DockPersonalizationSettings.Default.Preset),
+            TopOffset = ClampFinite(
+                appearance.EffectivePersonalization.TopOffset,
+                DockPersonalizationSettings.MinimumTopOffset,
+                DockPersonalizationSettings.MaximumTopOffset,
+                DockPersonalizationSettings.Default.TopOffset)
+        };
         var cornerRadii = appearance.EffectiveCornerRadii;
         cornerRadii = new DockCornerRadii(
             ClampFinite(cornerRadii.TopLeft, 0, 48, appearance.CornerRadius),
@@ -79,7 +107,8 @@ public static class SettingsValidator
             ShadowIntensity = ClampFinite(appearance.ShadowIntensity, 0, 1, AppearanceSettings.Default.ShadowIntensity),
             AnimationSpeed = ClampFinite(appearance.AnimationSpeed, 0.5, 2, AppearanceSettings.Default.AnimationSpeed),
             AnimationKind = EnumValue(appearance.AnimationKind, AppearanceSettings.Default.AnimationKind),
-            Motion = motion
+            Motion = motion,
+            Personalization = personalization
         };
 
         var media = settings.Media ?? MediaSettings.Default;
@@ -887,6 +916,23 @@ public static class SettingsValidator
         {
             general = general with { ShowUsbDeviceEvents = true };
             settings = settings with { General = general };
+        }
+
+        if (settings.SchemaVersion < 31)
+        {
+            // EdgeMargin was the only placement offset before 1.6. Preserve
+            // it as the top-offset default instead of shifting existing docks.
+            appearance = appearance with
+            {
+                Personalization = DockPersonalizationSettings.Default with
+                {
+                    TopOffset = ClampFinite(
+                        appearance.EdgeMargin,
+                        DockPersonalizationSettings.MinimumTopOffset,
+                        DockPersonalizationSettings.MaximumTopOffset,
+                        DockPersonalizationSettings.Default.TopOffset)
+                }
+            };
         }
 
         var modules = settings.Modules;

@@ -81,6 +81,15 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private double _motionContentDelayMilliseconds;
     private bool _motionParallax;
     private bool _motionTransientBlur;
+    private bool _motionIconAnimations = true;
+    private bool _motionEventMorph = true;
+    private DockSizePreset _dockSizePreset;
+    private double _dockThickness;
+    private DockDensity _dockDensity;
+    private DockIconSize _dockIconSize;
+    private DockCornerStyle _dockCornerStyle;
+    private AppearancePreset _appearancePreset;
+    private double _topOffset;
     private string? _selectedSourceId;
     private MediaFallbackSetting _mediaFallback;
     private VolumeTargetSetting _volumeTarget;
@@ -230,6 +239,11 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<SettingOption<ThemeStyle>> Themes { get; private set; } = [];
     public IReadOnlyList<SettingOption<IslandAnimationKind>> AnimationKinds { get; private set; } = [];
     public IReadOnlyList<SettingOption<MotionPreset>> MotionPresets { get; private set; } = [];
+    public IReadOnlyList<SettingOption<DockSizePreset>> DockSizePresets { get; private set; } = [];
+    public IReadOnlyList<SettingOption<DockDensity>> DockDensities { get; private set; } = [];
+    public IReadOnlyList<SettingOption<DockIconSize>> DockIconSizes { get; private set; } = [];
+    public IReadOnlyList<SettingOption<DockCornerStyle>> DockCornerStyles { get; private set; } = [];
+    public IReadOnlyList<SettingOption<AppearancePreset>> AppearancePresets { get; private set; } = [];
     public IReadOnlyList<SettingOption<MediaFallbackSetting>> MediaFallbackModes { get; private set; } = [];
     public IReadOnlyList<SettingOption<VolumeTargetSetting>> VolumeTargets { get; private set; } = [];
     public IReadOnlyList<SettingOption<FullscreenNotificationStyle>> FullscreenStyles { get; private set; } = [];
@@ -244,7 +258,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public bool IsMediaLoading => _music.ServiceState == MediaServiceState.Initializing;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.5.4.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.6.0.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }
@@ -683,13 +697,28 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public double NotificationHeight { get => _notificationHeight; set => Set(value, ref _notificationHeight, s => s with { Appearance = s.Appearance with { NotificationHeight = value } }); }
     public double EdgeMargin
     {
-        get => _edgeMargin;
+        get => _topOffset;
         set
         {
             var wasAttached = IsAttachedToScreenEdge;
-            Set(value, ref _edgeMargin, s => s with
+            if (!SetProperty(ref _edgeMargin, value) || _synchronizing)
             {
-                Appearance = s.Appearance with { EdgeMargin = value }
+                return;
+            }
+
+            _topOffset = value;
+            OnPropertyChanged(nameof(TopOffset));
+            _settingsService.Update(s => s with
+            {
+                Appearance = s.Appearance with
+                {
+                    EdgeMargin = value,
+                    Personalization = s.Appearance.EffectivePersonalization with
+                    {
+                        TopOffset = value,
+                        Preset = AppearancePreset.Custom
+                    }
+                }
             });
             if (wasAttached != IsAttachedToScreenEdge)
             {
@@ -700,7 +729,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     }
     public bool IsAttachedToScreenEdge
     {
-        get => EdgeMargin <= 0.01;
+        get => TopOffset <= 0.01;
         set
         {
             if (value == IsAttachedToScreenEdge)
@@ -768,6 +797,99 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public string AccentColor { get => _accentColor; set => Set(value, ref _accentColor, s => s with { Appearance = s.Appearance with { AccentColor = value } }); }
     public double Opacity { get => _opacity; set => Set(value, ref _opacity, s => s with { Appearance = s.Appearance with { Opacity = value } }); }
     public double ShadowIntensity { get => _shadowIntensity; set => Set(value, ref _shadowIntensity, s => s with { Appearance = s.Appearance with { ShadowIntensity = value } }); }
+    public DockSizePreset DockSizePreset
+    {
+        get => _dockSizePreset;
+        set
+        {
+            SetPersonalization(value, ref _dockSizePreset, personalization => personalization with
+            {
+                SizePreset = value,
+                Preset = AppearancePreset.Custom
+            }, nameof(DockSizePreset));
+            OnPropertyChanged(nameof(DockSizePresetIndex));
+        }
+    }
+    public double DockThickness => _dockThickness;
+    public double CustomDockThickness
+    {
+        get => _dockThickness;
+        set => SetPersonalization(value, ref _dockThickness, personalization => personalization with
+        {
+            SizePreset = DockSizePreset.Custom,
+            CustomThickness = value,
+            Preset = AppearancePreset.Custom
+        }, nameof(CustomDockThickness), nameof(DockThickness));
+    }
+    public DockDensity DockDensity
+    {
+        get => _dockDensity;
+        set
+        {
+            SetPersonalization(value, ref _dockDensity, personalization => personalization with
+            {
+                Density = value,
+                Preset = AppearancePreset.Custom
+            }, nameof(DockDensity));
+            OnPropertyChanged(nameof(DockDensityIndex));
+        }
+    }
+    public DockIconSize DockIconSize
+    {
+        get => _dockIconSize;
+        set
+        {
+            SetPersonalization(value, ref _dockIconSize, personalization => personalization with
+            {
+                IconSize = value,
+                Preset = AppearancePreset.Custom
+            }, nameof(DockIconSize));
+            OnPropertyChanged(nameof(DockIconSizeIndex));
+        }
+    }
+    public DockCornerStyle DockCornerStyle
+    {
+        get => _dockCornerStyle;
+        set
+        {
+            SetPersonalization(value, ref _dockCornerStyle, personalization => personalization with
+            {
+                CornerStyle = value,
+                Preset = AppearancePreset.Custom
+            }, nameof(DockCornerStyle));
+            OnPropertyChanged(nameof(DockCornerStyleIndex));
+        }
+    }
+    public AppearancePreset AppearancePreset
+    {
+        get => _appearancePreset;
+        set
+        {
+            if (!SetProperty(ref _appearancePreset, value) || _synchronizing)
+            {
+                return;
+            }
+
+            _settingsService.Update(settings => settings with
+            {
+                Appearance = DockMetrics.ApplyPreset(settings.Appearance, value)
+            });
+        }
+    }
+    public double TopOffset
+    {
+        get => _topOffset;
+        set
+        {
+            SetPersonalization(value, ref _topOffset, personalization => personalization with
+            {
+                TopOffset = value,
+                Preset = AppearancePreset.Custom
+            }, nameof(TopOffset));
+            OnPropertyChanged(nameof(IsAttachedToScreenEdge));
+            OnPropertyChanged(nameof(HasScreenEdgeSpacing));
+        }
+    }
     public double AnimationSpeed { get => _animationSpeed; set => Set(value, ref _animationSpeed, s => s with { Appearance = s.Appearance with { AnimationSpeed = value, Motion = ResolveMotion(s.Appearance) with { Speed = value } } }); }
     public IslandAnimationKind AnimationKind { get => _animationKind; set { Set(value, ref _animationKind, s => s with { Appearance = s.Appearance with { AnimationKind = value } }); OnPropertyChanged(nameof(AnimationKindIndex)); } }
     public MotionPreset MotionPreset { get => _motionPreset; set { Set(value, ref _motionPreset, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { Preset = value } } }); OnPropertyChanged(nameof(MotionPresetIndex)); } }
@@ -776,6 +898,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public double MotionContentDelayMilliseconds { get => _motionContentDelayMilliseconds; set => Set(value, ref _motionContentDelayMilliseconds, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { ContentDelayMilliseconds = checked((int)Math.Round(value)) } } }); }
     public bool MotionParallax { get => _motionParallax; set => Set(value, ref _motionParallax, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { EnableParallax = value } } }); }
     public bool MotionTransientBlur { get => _motionTransientBlur; set => Set(value, ref _motionTransientBlur, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { EnableTransientBlur = value } } }); }
+    public bool MotionIconAnimations { get => _motionIconAnimations; set => Set(value, ref _motionIconAnimations, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { EnableIconAnimations = value } } }); }
+    public bool MotionEventMorph { get => _motionEventMorph; set => Set(value, ref _motionEventMorph, s => s with { Appearance = s.Appearance with { Motion = ResolveMotion(s.Appearance) with { EnableEventMorph = value } } }); }
     public string? SelectedSourceId { get => _selectedSourceId; set { Set(value, ref _selectedSourceId, s => s with { Media = s.Media with { SelectedSourceId = value } }); OnPropertyChanged(nameof(MediaSourceIndex)); } }
     public MediaFallbackSetting MediaFallback { get => _mediaFallback; set { Set(value, ref _mediaFallback, s => s with { Media = s.Media with { Fallback = value } }); OnPropertyChanged(nameof(MediaFallbackIndex)); } }
     public VolumeTargetSetting VolumeTarget { get => _volumeTarget; set { Set(value, ref _volumeTarget, s => s with { Media = s.Media with { VolumeTarget = value } }); OnPropertyChanged(nameof(VolumeTargetIndex)); } }
@@ -861,6 +985,11 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public int ThemeIndex { get => IndexOf(Themes, Theme); set => Theme = ValueAt(Themes, value, Theme); }
     public int AnimationKindIndex { get => IndexOf(AnimationKinds, AnimationKind); set => AnimationKind = ValueAt(AnimationKinds, value, AnimationKind); }
     public int MotionPresetIndex { get => IndexOf(MotionPresets, MotionPreset); set => MotionPreset = ValueAt(MotionPresets, value, MotionPreset); }
+    public int DockSizePresetIndex { get => IndexOf(DockSizePresets, DockSizePreset); set => DockSizePreset = ValueAt(DockSizePresets, value, DockSizePreset); }
+    public int DockDensityIndex { get => IndexOf(DockDensities, DockDensity); set => DockDensity = ValueAt(DockDensities, value, DockDensity); }
+    public int DockIconSizeIndex { get => IndexOf(DockIconSizes, DockIconSize); set => DockIconSize = ValueAt(DockIconSizes, value, DockIconSize); }
+    public int DockCornerStyleIndex { get => IndexOf(DockCornerStyles, DockCornerStyle); set => DockCornerStyle = ValueAt(DockCornerStyles, value, DockCornerStyle); }
+    public int AppearancePresetIndex { get => IndexOf(AppearancePresets, AppearancePreset); set => AppearancePreset = ValueAt(AppearancePresets, value, AppearancePreset); }
     public int MediaFallbackIndex { get => IndexOf(MediaFallbackModes, MediaFallback); set => MediaFallback = ValueAt(MediaFallbackModes, value, MediaFallback); }
     public int VolumeTargetIndex { get => IndexOf(VolumeTargets, VolumeTarget); set => VolumeTarget = ValueAt(VolumeTargets, value, VolumeTarget); }
     public int FullscreenStyleIndex { get => IndexOf(FullscreenStyles, FullscreenStyle); set => FullscreenStyle = ValueAt(FullscreenStyles, value, FullscreenStyle); }
@@ -919,6 +1048,31 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         }
 
         _settingsService.Update(update);
+    }
+
+    private void SetPersonalization<T>(
+        T value,
+        ref T field,
+        Func<DockPersonalizationSettings, DockPersonalizationSettings> update,
+        string propertyName,
+        string? additionalPropertyName = null)
+    {
+        if (!SetProperty(ref field, value, propertyName) || _synchronizing)
+        {
+            return;
+        }
+
+        _settingsService.Update(settings => settings with
+        {
+            Appearance = settings.Appearance with
+            {
+                Personalization = update(settings.Appearance.EffectivePersonalization)
+            }
+        });
+        if (additionalPropertyName is not null)
+        {
+            OnPropertyChanged(additionalPropertyName);
+        }
     }
 
     private void SetAudibleNotification(
@@ -1040,6 +1194,38 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             new(MotionPreset.Springy, L("Yaylı", "Springy")),
             new(MotionPreset.Dynamic, L("Dinamik", "Dynamic"))
         ];
+        DockSizePresets =
+        [
+            new(DockSizePreset.Compact, L("Kompakt", "Compact")),
+            new(DockSizePreset.Default, L("Varsayılan", "Default")),
+            new(DockSizePreset.Large, L("Büyük", "Large")),
+            new(DockSizePreset.Custom, L("Özel", "Custom"))
+        ];
+        DockDensities =
+        [
+            new(DockDensity.Compact, L("Sıkı", "Compact")),
+            new(DockDensity.Balanced, L("Dengeli", "Balanced")),
+            new(DockDensity.Spacious, L("Geniş", "Spacious"))
+        ];
+        DockIconSizes =
+        [
+            new(DockIconSize.Small, L("Küçük", "Small")),
+            new(DockIconSize.Default, L("Varsayılan", "Default")),
+            new(DockIconSize.Large, L("Büyük", "Large"))
+        ];
+        DockCornerStyles =
+        [
+            new(DockCornerStyle.DynamicIsland, "Dynamic Island"),
+            new(DockCornerStyle.Soft, L("Yumuşak", "Soft")),
+            new(DockCornerStyle.Rounded, L("Yuvarlak", "Rounded"))
+        ];
+        AppearancePresets =
+        [
+            new(AppearancePreset.Minimal, L("Minimal", "Minimal")),
+            new(AppearancePreset.Dynamic, L("Dinamik", "Dynamic")),
+            new(AppearancePreset.Large, L("Büyük", "Large")),
+            new(AppearancePreset.Custom, L("Özel", "Custom"))
+        ];
         MediaFallbackModes =
         [
             new(MediaFallbackSetting.SelectedOnly, L("Yalnızca seçili uygulama", "Selected app only")),
@@ -1102,11 +1288,13 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
                  {
                      nameof(Languages), nameof(VisibilityModes), nameof(InteractionModes), nameof(Positions),
                      nameof(ClockHourFormats), nameof(ClockDateFormats),
-                     nameof(Themes), nameof(AnimationKinds), nameof(MotionPresets), nameof(MediaFallbackModes), nameof(VolumeTargets),
+                     nameof(Themes), nameof(AnimationKinds), nameof(MotionPresets), nameof(DockSizePresets), nameof(DockDensities),
+                     nameof(DockIconSizes), nameof(DockCornerStyles), nameof(AppearancePresets), nameof(MediaFallbackModes), nameof(VolumeTargets),
                      nameof(FullscreenStyles), nameof(FullscreenBehaviors), nameof(MonitorModes), nameof(LaunchModes), nameof(CloseBehaviors),
                      nameof(LanguageIndex), nameof(VisibilityModeIndex), nameof(InteractionModeIndex),
                      nameof(PositionIndex), nameof(ClockHourFormatIndex), nameof(ClockDateFormatIndex),
-                     nameof(ThemeIndex), nameof(AnimationKindIndex), nameof(MotionPresetIndex),
+                     nameof(ThemeIndex), nameof(AnimationKindIndex), nameof(MotionPresetIndex), nameof(DockSizePresetIndex),
+                     nameof(DockDensityIndex), nameof(DockIconSizeIndex), nameof(DockCornerStyleIndex), nameof(AppearancePresetIndex),
                      nameof(MediaFallbackIndex), nameof(VolumeTargetIndex), nameof(FullscreenStyleIndex), nameof(FullscreenBehaviorIndex),
                      nameof(FullscreenEdgeRevealDescription), nameof(FullscreenEdgeRevealInfo),
                      nameof(MonitorModeIndex), nameof(LaunchModeIndex), nameof(CloseBehaviorIndex),
@@ -1229,6 +1417,19 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             MotionContentDelayMilliseconds = motion.ContentDelayMilliseconds;
             MotionParallax = motion.EnableParallax;
             MotionTransientBlur = motion.EnableTransientBlur;
+            MotionIconAnimations = motion.EnableIconAnimations;
+            MotionEventMorph = motion.EnableEventMorph;
+            var personalization = settings.Appearance.EffectivePersonalization;
+            DockSizePreset = personalization.SizePreset;
+            _dockThickness = personalization.CustomThickness;
+            OnPropertyChanged(nameof(DockThickness));
+            OnPropertyChanged(nameof(CustomDockThickness));
+            DockDensity = personalization.Density;
+            DockIconSize = personalization.IconSize;
+            DockCornerStyle = personalization.CornerStyle;
+            AppearancePreset = personalization.Preset;
+            _topOffset = personalization.TopOffset;
+            OnPropertyChanged(nameof(TopOffset));
             SelectedSourceId = settings.Media.SelectedSourceId;
             MediaFallback = settings.Media.Fallback;
             VolumeTarget = settings.Media.VolumeTarget;
@@ -1367,6 +1568,19 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             MotionContentDelayMilliseconds = motion.ContentDelayMilliseconds;
             MotionParallax = motion.EnableParallax;
             MotionTransientBlur = motion.EnableTransientBlur;
+            MotionIconAnimations = motion.EnableIconAnimations;
+            MotionEventMorph = motion.EnableEventMorph;
+            var personalization = appearance.EffectivePersonalization;
+            DockSizePreset = personalization.SizePreset;
+            _dockThickness = personalization.CustomThickness;
+            OnPropertyChanged(nameof(DockThickness));
+            OnPropertyChanged(nameof(CustomDockThickness));
+            DockDensity = personalization.Density;
+            DockIconSize = personalization.IconSize;
+            DockCornerStyle = personalization.CornerStyle;
+            AppearancePreset = personalization.Preset;
+            _topOffset = personalization.TopOffset;
+            OnPropertyChanged(nameof(TopOffset));
         }
         finally
         {
@@ -1394,7 +1608,11 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
                      nameof(AnimationSpeed), nameof(AnimationKind), nameof(AnimationKindIndex),
                      nameof(MotionPreset), nameof(MotionPresetIndex), nameof(MotionIntensity),
                      nameof(MotionSpringiness), nameof(MotionContentDelayMilliseconds),
-                     nameof(MotionParallax), nameof(MotionTransientBlur),
+                     nameof(MotionParallax), nameof(MotionTransientBlur), nameof(MotionIconAnimations), nameof(MotionEventMorph),
+                     nameof(DockSizePreset), nameof(DockSizePresetIndex), nameof(DockThickness), nameof(CustomDockThickness),
+                     nameof(DockDensity), nameof(DockDensityIndex), nameof(DockIconSize), nameof(DockIconSizeIndex),
+                     nameof(DockCornerStyle), nameof(DockCornerStyleIndex), nameof(AppearancePreset), nameof(AppearancePresetIndex),
+                     nameof(TopOffset),
                      nameof(ThemeDescription), nameof(IsBlurredGlassTheme), nameof(IsBackgroundColorEditable), nameof(IsAccentColorEditable)
                  })
         {

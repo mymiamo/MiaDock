@@ -9,7 +9,9 @@ public sealed record MotionSettings(
     double Springiness,
     int ContentDelayMilliseconds,
     bool EnableParallax,
-    bool EnableTransientBlur)
+    bool EnableTransientBlur,
+    bool EnableIconAnimations = true,
+    bool EnableEventMorph = true)
 {
     public static MotionSettings Default { get; } = new(
         MotionPreset.Balanced,
