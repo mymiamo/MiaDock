@@ -207,11 +207,11 @@ public sealed partial class EdgeRevealStatusView : UserControl, IModuleViewActiv
 
         _music.SetAudioMeterActive(this, _isLoaded && _isPresentationActive);
         MusicActivity.Visibility = _music.HasAudioActivity ? Visibility.Visible : Visibility.Collapsed;
-        MusicActivity.IsPlaying = _music.HasAudioActivity;
+        MusicActivity.IsPlaying = _music.IsPlaying;
         MusicActivity.IsAudioAvailable = _music.IsAudioLevelAvailable;
-        MusicActivity.LeftLevel = _music.LeftAudioLevel;
-        MusicActivity.CenterLevel = _music.CenterAudioLevel;
-        MusicActivity.RightLevel = _music.RightAudioLevel;
+        MusicActivity.TrebleLevel = _music.TrebleAudioLevel;
+        MusicActivity.BassLevel = _music.BassAudioLevel;
+        MusicActivity.VocalLevel = _music.VocalAudioLevel;
     }
 
     private void UpdatePresentationActivity()

@@ -159,8 +159,12 @@ public sealed class MusicModuleViewModelTests
         Assert.AreEqual(0.8, viewModel.LeftAudioLevel, 0.0001);
         Assert.AreEqual(0.9, viewModel.CenterAudioLevel, 0.0001);
         Assert.AreEqual(0.4, viewModel.RightAudioLevel, 0.0001);
+        Assert.AreEqual(0.8, viewModel.TrebleAudioLevel, 0.0001);
+        Assert.AreEqual(0.9, viewModel.BassAudioLevel, 0.0001);
+        Assert.AreEqual(0.4, viewModel.VocalAudioLevel, 0.0001);
         Assert.IsTrue(viewModel.IsAudioLevelAvailable);
         Assert.IsTrue(viewModel.HasAudioActivity);
+        Assert.IsFalse(viewModel.IsPlaying);
     }
 
     [TestMethod]

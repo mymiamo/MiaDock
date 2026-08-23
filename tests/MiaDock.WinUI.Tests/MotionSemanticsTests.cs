@@ -50,7 +50,7 @@ public sealed class MotionSemanticsTests
     }
 
     [TestMethod]
-    public void MicroAnimationSurfaces_KeepCompactMusicGlyphAndUseStateKeys()
+    public void MicroAnimationSurfaces_UseCompactMusicArtworkAndStateKeys()
     {
         var root = Directory.GetCurrentDirectory();
         while (!File.Exists(Path.Combine(root, "MiaDock.sln")))
@@ -63,7 +63,9 @@ public sealed class MotionSemanticsTests
         var transport = File.ReadAllText(Path.Combine(root, "src", "MiaDock.App", "Controls", "MediaTransportControls.xaml"));
         var notifications = File.ReadAllText(Path.Combine(root, "src", "MiaDock.App", "Controls", "ModuleNotificationHost.xaml.cs"));
 
-        StringAssert.Contains(compactMusic, "Glyph=\"&#xE8D6;\"");
+        StringAssert.Contains(compactMusic, "x:Name=\"CompactArtwork\"");
+        StringAssert.Contains(compactMusic, "x:Name=\"ArtworkStateOverlay\"");
+        StringAssert.Contains(compactMusic, "x:Name=\"TrackChangeGlyph\"");
         StringAssert.Contains(compactMusic, "animations:MicroMotion.StateKey");
         StringAssert.Contains(transport, "animations:MicroMotion.IsInteractive");
         StringAssert.Contains(transport, "animations:MicroMotion.StateKey=\"{Binding PlaybackGlyph}\"");

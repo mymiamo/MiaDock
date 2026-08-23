@@ -75,6 +75,8 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
 
     public string PlaybackGlyph => Current.PlaybackStatus == PlaybackStatus.Playing ? "\uE769" : "\uE768";
 
+    public bool IsPlaying => Current.PlaybackStatus == PlaybackStatus.Playing;
+
     public double ProgressPercent => Current.Duration <= TimeSpan.Zero
         ? 0
         : Math.Clamp(
@@ -89,6 +91,12 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
     public double CenterAudioLevel { get; private set; } = 0.18;
 
     public double RightAudioLevel { get; private set; } = 0.18;
+
+    public double TrebleAudioLevel => LeftAudioLevel;
+
+    public double BassAudioLevel => CenterAudioLevel;
+
+    public double VocalAudioLevel => RightAudioLevel;
 
     public bool IsAudioLevelAvailable { get; private set; }
 
@@ -231,6 +239,7 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
         _displayedPosition = snapshot.Position;
         NotifyTimelineProperties();
         OnPropertyChanged(nameof(PlaybackGlyph));
+        OnPropertyChanged(nameof(IsPlaying));
         OnPropertyChanged(nameof(IsMediaAvailable));
         OnPropertyChanged(nameof(VolumePercent));
         OnPropertyChanged(nameof(HasAudioActivity));
@@ -313,6 +322,9 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(LeftAudioLevel));
         OnPropertyChanged(nameof(CenterAudioLevel));
         OnPropertyChanged(nameof(RightAudioLevel));
+        OnPropertyChanged(nameof(TrebleAudioLevel));
+        OnPropertyChanged(nameof(BassAudioLevel));
+        OnPropertyChanged(nameof(VocalAudioLevel));
         OnPropertyChanged(nameof(IsAudioLevelAvailable));
         OnPropertyChanged(nameof(HasAudioActivity));
     }

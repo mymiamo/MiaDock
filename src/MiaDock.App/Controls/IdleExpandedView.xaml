@@ -160,10 +160,10 @@
               <local:AudioActivityIndicator x:Name="MusicActivity"
                                             HorizontalAlignment="Right"
                                             Foreground="{ThemeResource IslandTextPrimaryBrush}"
-                                            LeftLevel="{Binding LeftAudioLevel}"
-                                            CenterLevel="{Binding CenterAudioLevel}"
-                                            RightLevel="{Binding RightAudioLevel}"
-                                            IsPlaying="{Binding HasAudioActivity}"
+                                            TrebleLevel="{Binding TrebleAudioLevel}"
+                                            BassLevel="{Binding BassAudioLevel}"
+                                            VocalLevel="{Binding VocalAudioLevel}"
+                                            IsPlaying="{Binding IsPlaying}"
                                             IsAudioAvailable="{Binding IsAudioLevelAvailable}" />
             </Grid>
 

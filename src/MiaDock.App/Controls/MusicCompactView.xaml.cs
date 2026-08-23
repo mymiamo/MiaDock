@@ -1,6 +1,10 @@
+using System.ComponentModel;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MiaDock.App.Animations;
 using MiaDock.App.Services;
+using MiaDock.Modules.Media.Models;
 using MiaDock.Modules.Media.ViewModels;
 
 namespace MiaDock.App.Controls;
@@ -8,13 +12,20 @@ namespace MiaDock.App.Controls;
 public sealed partial class MusicCompactView : UserControl, IModuleViewActivationAware
 {
     private MusicModuleViewModel? _viewModel;
+    private readonly DispatcherQueueTimer _trackTransitionTimer;
     private long _visibilityCallbackToken;
     private bool _isPresentationActive;
+    private bool _isTrackTransition;
+    private TrackIdentity? _displayedTrack;
 
     public MusicCompactView()
     {
         InitializeComponent();
         DataContextChanged += OnDataContextChanged;
+        _trackTransitionTimer = DispatcherQueue.CreateTimer();
+        _trackTransitionTimer.IsRepeating = false;
+        _trackTransitionTimer.Interval = TimeSpan.FromMilliseconds(650);
+        _trackTransitionTimer.Tick += OnTrackTransitionElapsed;
     }
 
     private void OnLoaded(object sender, RoutedEventArgs args)
@@ -26,6 +37,8 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
 
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
+        _trackTransitionTimer.Stop();
+        _isTrackTransition = false;
         _viewModel?.SetAudioMeterActive(this, false);
         AttachViewModel(null);
         if (_visibilityCallbackToken != 0)
@@ -48,8 +61,19 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
     {
         if (ReferenceEquals(_viewModel, viewModel)) return;
         _viewModel?.SetAudioMeterActive(this, false);
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        }
 
         _viewModel = viewModel;
+        _displayedTrack = viewModel is null ? null : TrackIdentity.From(viewModel.Current);
+        if (_viewModel is not null)
+        {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        }
+
+        UpdatePlaybackVisual();
     }
 
     private void OnVisibilityChanged(DependencyObject sender, DependencyProperty property) => UpdateMeterActivity();
@@ -64,5 +88,60 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
         _viewModel?.SetAudioMeterActive(
             this,
             IsLoaded && _isPresentationActive && Visibility == Visibility.Visible);
+
+    private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
+    {
+        if (args.PropertyName != nameof(MusicModuleViewModel.Current) || _viewModel is null)
+        {
+            return;
+        }
+
+        var nextTrack = TrackIdentity.From(_viewModel.Current);
+        if (_displayedTrack is not null && nextTrack is not null && nextTrack != _displayedTrack)
+        {
+            StartTrackTransition();
+        }
+
+        _displayedTrack = nextTrack;
+        UpdatePlaybackVisual();
+    }
+
+    private void StartTrackTransition()
+    {
+        _isTrackTransition = true;
+        _trackTransitionTimer.Stop();
+        _trackTransitionTimer.Start();
+        UpdatePlaybackVisual();
+        MicroMotion.PlayAttention(ArtworkStateOverlay);
+    }
+
+    private void OnTrackTransitionElapsed(DispatcherQueueTimer sender, object args)
+    {
+        _isTrackTransition = false;
+        UpdatePlaybackVisual();
+    }
+
+    private void UpdatePlaybackVisual()
+    {
+        var hasMedia = _viewModel?.Current.HasMedia == true;
+        var isPaused = hasMedia && _viewModel?.IsPlaying != true;
+        ArtworkStateOverlay.Visibility = _isTrackTransition || isPaused
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        PausedGlyph.Visibility = isPaused && !_isTrackTransition
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        TrackChangeGlyph.Visibility = _isTrackTransition
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        var showStaticTrailingState = _isTrackTransition || isPaused;
+        MusicActivity.Visibility = showStaticTrailingState
+            ? Visibility.Collapsed
+            : Visibility.Visible;
+        TrailingMoreGlyph.Visibility = showStaticTrailingState
+            ? Visibility.Visible
+            : Visibility.Collapsed;
+        MusicActivity.IsSuppressed = _isTrackTransition;
+    }
 
 }

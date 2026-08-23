@@ -9,49 +9,78 @@
 
   <Grid x:Name="LayoutRoot"
         Style="{StaticResource DockCompactModuleLayoutStyle}"
+        Padding="10,0"
+        ColumnSpacing="8"
         FlowDirection="LeftToRight"
         AutomationProperties.Name="{Binding Current.Track.Title}">
     <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="32" />
       <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="10" />
+      <ColumnDefinition Width="22" />
     </Grid.ColumnDefinitions>
 
-    <Grid x:Name="MusicIdentity"
-          MinWidth="0"
-          ColumnSpacing="7"
-          FlowDirection="LeftToRight"
-          animations:MicroMotion.StateKey="{Binding Current.Track.Title}">
-      <Grid.ColumnDefinitions>
-        <ColumnDefinition Width="18" />
-        <ColumnDefinition Width="*" />
-      </Grid.ColumnDefinitions>
-
-      <FontIcon x:Name="MusicGlyph"
-                Glyph="&#xE8D6;"
-                Style="{StaticResource DockModuleIconStyle}"
-                Foreground="{ThemeResource IslandTextPrimaryBrush}"
-                AutomationProperties.Name="Müzik" />
-
-      <TextBlock x:Name="TrackTitleText"
-                 Grid.Column="1"
-                 VerticalAlignment="Center"
-                 MaxLines="1"
-                 TextTrimming="CharacterEllipsis"
-                 Style="{StaticResource DockBodyTextStyle}"
-                 FontWeight="SemiBold"
-                 Text="{Binding Current.Track.Title}"
-                 ToolTipService.ToolTip="{Binding Current.Track.Title}" />
+    <Grid x:Name="ArtworkHost"
+          Width="30"
+          Height="30"
+          VerticalAlignment="Center">
+      <local:AlbumArtwork x:Name="CompactArtwork"
+                          ArtworkCornerRadius="7" />
+      <Grid x:Name="ArtworkStateOverlay"
+            Visibility="Collapsed"
+            animations:MicroMotion.StateKey="{Binding PlaybackGlyph}">
+        <Border Background="{ThemeResource MediaArtworkScrimBrush}"
+                CornerRadius="7" />
+        <FontIcon x:Name="PausedGlyph"
+                  Glyph="&#xE769;"
+                  FontSize="16"
+                  Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                  Visibility="Collapsed"
+                  AutomationProperties.AccessibilityView="Raw" />
+        <FontIcon x:Name="TrackChangeGlyph"
+                  Glyph="&#xE893;"
+                  FontSize="16"
+                  Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                  Visibility="Collapsed"
+                  AutomationProperties.AccessibilityView="Raw" />
+      </Grid>
     </Grid>
 
-    <local:AudioActivityIndicator x:Name="MusicActivity"
-                                  Grid.Column="1"
-                                  Width="10"
-                                  HorizontalAlignment="Right"
-                                  Foreground="{ThemeResource IslandTextPrimaryBrush}"
-                                  LeftLevel="{Binding LeftAudioLevel}"
-                                  CenterLevel="{Binding CenterAudioLevel}"
-                                  RightLevel="{Binding RightAudioLevel}"
-                                  IsPlaying="{Binding HasAudioActivity}"
-                                  IsAudioAvailable="{Binding IsAudioLevelAvailable}" />
+    <TextBlock x:Name="TrackTitleText"
+               Grid.Column="1"
+               VerticalAlignment="Center"
+               MaxLines="1"
+               TextTrimming="CharacterEllipsis"
+               Style="{StaticResource DockBodyTextStyle}"
+               FontSize="12"
+               Text="{Binding Current.Track.Title}"
+               ToolTipService.ToolTip="{Binding Current.Track.Title}"
+               animations:MicroMotion.StateKey="{Binding Current.Track.Title}" />
+
+    <Grid x:Name="TrailingStateHost"
+          Grid.Column="2"
+          Width="22"
+          Height="18"
+          HorizontalAlignment="Center"
+          VerticalAlignment="Center">
+      <local:AudioActivityIndicator x:Name="MusicActivity"
+                                    Width="20"
+                                    Height="18"
+                                    BarWidth="4"
+                                    BarHeight="18"
+                                    BarSpacing="3"
+                                    HorizontalAlignment="Center"
+                                    Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                                    TrebleLevel="{Binding TrebleAudioLevel}"
+                                    BassLevel="{Binding BassAudioLevel}"
+                                    VocalLevel="{Binding VocalAudioLevel}"
+                                    IsPlaying="{Binding IsPlaying}"
+                                    IsAudioAvailable="{Binding IsAudioLevelAvailable}" />
+      <FontIcon x:Name="TrailingMoreGlyph"
+                Glyph="&#xE712;"
+                FontSize="16"
+                Foreground="{ThemeResource IslandTextPrimaryBrush}"
+                Visibility="Collapsed"
+                AutomationProperties.AccessibilityView="Raw" />
+    </Grid>
   </Grid>
 </UserControl>

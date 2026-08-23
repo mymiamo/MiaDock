@@ -326,6 +326,7 @@ internal static class CoreAudioNative
     internal const uint StorageModeRead = 0;
     internal const ushort VariantTypeStringPointer = 31;
     internal static readonly Guid EndpointVolumeId = typeof(IAudioEndpointVolume).GUID;
+    internal static readonly Guid MeterInformationId = typeof(IAudioMeterInformation).GUID;
     internal static readonly Guid SessionManagerId = typeof(IAudioSessionManager2).GUID;
     internal static PropertyKey DeviceFriendlyNameKey => new()
     {

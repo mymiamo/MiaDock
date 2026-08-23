@@ -2,7 +2,9 @@
     x:Class="MiaDock.App.Controls.CollapsedIslandView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:local="using:MiaDock.App.Controls">
+    xmlns:local="using:MiaDock.App.Controls"
+    Loaded="OnLoaded"
+    Unloaded="OnUnloaded">
 
   <Grid Padding="{StaticResource IslandCompactPadding}" ColumnSpacing="9">
     <Grid.ColumnDefinitions>
@@ -23,10 +25,10 @@
                                   Width="10"
                                   Height="14"
                                   Foreground="{ThemeResource IslandStyleAccentBrush}"
-                                  LeftLevel="{Binding LeftAudioLevel}"
-                                  CenterLevel="{Binding CenterAudioLevel}"
-                                  RightLevel="{Binding RightAudioLevel}"
-                                  IsPlaying="{Binding HasAudioActivity}"
+                                  TrebleLevel="{Binding TrebleAudioLevel}"
+                                  BassLevel="{Binding BassAudioLevel}"
+                                  VocalLevel="{Binding VocalAudioLevel}"
+                                  IsPlaying="{Binding IsPlaying}"
                                   IsAudioAvailable="{Binding IsAudioLevelAvailable}" />
   </Grid>
 </UserControl>

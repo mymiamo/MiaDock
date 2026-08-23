@@ -1,103 +1,353 @@
+using System.Numerics;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Composition;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Hosting;
+using MiaDock.App.Services;
+using MiaDock.Core.Presentation;
+using MiaDock.Core.Settings;
 
 namespace MiaDock.App.Controls;
 
+/// <summary>
+/// Renders the selected media session's three real audio levels. This control
+/// owns only its bar visuals, so it never competes with island shell motion.
+/// </summary>
 public sealed partial class AudioActivityIndicator : UserControl
 {
-    public static readonly DependencyProperty LeftLevelProperty = DependencyProperty.Register(
-        nameof(LeftLevel), typeof(double), typeof(AudioActivityIndicator),
-        new PropertyMetadata(0.18, OnVisualPropertyChanged));
-    public static readonly DependencyProperty CenterLevelProperty = DependencyProperty.Register(
-        nameof(CenterLevel), typeof(double), typeof(AudioActivityIndicator),
-        new PropertyMetadata(0.18, OnVisualPropertyChanged));
-    public static readonly DependencyProperty RightLevelProperty = DependencyProperty.Register(
-        nameof(RightLevel), typeof(double), typeof(AudioActivityIndicator),
-        new PropertyMetadata(0.18, OnVisualPropertyChanged));
+    private const double MinimumScale = 0.18;
+    private const double RealSignalThreshold = MinimumScale + 0.025;
+    private const long FallbackGracePeriodMilliseconds = 550;
+    private static readonly TimeSpan AttackDuration = TimeSpan.FromMilliseconds(48);
+    private static readonly TimeSpan ReleaseDuration = TimeSpan.FromMilliseconds(128);
+    private static readonly TimeSpan FallbackFrameInterval = TimeSpan.FromMilliseconds(90);
+
+    public static readonly DependencyProperty TrebleLevelProperty = DependencyProperty.Register(
+        nameof(TrebleLevel), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(MinimumScale, OnVisualPropertyChanged));
+    public static readonly DependencyProperty BassLevelProperty = DependencyProperty.Register(
+        nameof(BassLevel), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(MinimumScale, OnVisualPropertyChanged));
+    public static readonly DependencyProperty VocalLevelProperty = DependencyProperty.Register(
+        nameof(VocalLevel), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(MinimumScale, OnVisualPropertyChanged));
     public static readonly DependencyProperty IsPlayingProperty = DependencyProperty.Register(
         nameof(IsPlaying), typeof(bool), typeof(AudioActivityIndicator),
         new PropertyMetadata(false, OnVisualPropertyChanged));
     public static readonly DependencyProperty IsAudioAvailableProperty = DependencyProperty.Register(
         nameof(IsAudioAvailable), typeof(bool), typeof(AudioActivityIndicator),
         new PropertyMetadata(false, OnVisualPropertyChanged));
+    public static readonly DependencyProperty IsSuppressedProperty = DependencyProperty.Register(
+        nameof(IsSuppressed), typeof(bool), typeof(AudioActivityIndicator),
+        new PropertyMetadata(false, OnVisualPropertyChanged));
+    public static readonly DependencyProperty BarWidthProperty = DependencyProperty.Register(
+        nameof(BarWidth), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(2d, OnVisualPropertyChanged));
+    public static readonly DependencyProperty BarHeightProperty = DependencyProperty.Register(
+        nameof(BarHeight), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(14d, OnVisualPropertyChanged));
+    public static readonly DependencyProperty BarSpacingProperty = DependencyProperty.Register(
+        nameof(BarSpacing), typeof(double), typeof(AudioActivityIndicator),
+        new PropertyMetadata(1.5d, OnVisualPropertyChanged));
 
+    private readonly long _visibilityRegistration;
+    private ISettingsService? _settings;
+    private IAnimationPreferenceService? _animationPreferences;
+    private Visual? _trebleVisual;
+    private Visual? _bassVisual;
+    private Visual? _vocalVisual;
+    private DispatcherQueueTimer? _fallbackTimer;
     private bool _isLoaded;
-    private double _leftVisualLevel = 0.18;
-    private double _centerVisualLevel = 0.18;
-    private double _rightVisualLevel = 0.18;
-    public AudioActivityIndicator() => InitializeComponent();
+    private bool _isFallbackAnimating;
+    private long _flatSignalStartedAt;
+    private double _fallbackPhase;
+    private double _trebleTarget = MinimumScale;
+    private double _bassTarget = MinimumScale;
+    private double _vocalTarget = MinimumScale;
 
-    public double LeftLevel { get => (double)GetValue(LeftLevelProperty); set => SetValue(LeftLevelProperty, value); }
-    public double CenterLevel { get => (double)GetValue(CenterLevelProperty); set => SetValue(CenterLevelProperty, value); }
-    public double RightLevel { get => (double)GetValue(RightLevelProperty); set => SetValue(RightLevelProperty, value); }
+    public AudioActivityIndicator()
+    {
+        InitializeComponent();
+        _visibilityRegistration = RegisterPropertyChangedCallback(
+            VisibilityProperty,
+            (_, _) => UpdateVisuals());
+        SizeChanged += OnSizeChanged;
+    }
+
+    public double TrebleLevel { get => (double)GetValue(TrebleLevelProperty); set => SetValue(TrebleLevelProperty, value); }
+    public double BassLevel { get => (double)GetValue(BassLevelProperty); set => SetValue(BassLevelProperty, value); }
+    public double VocalLevel { get => (double)GetValue(VocalLevelProperty); set => SetValue(VocalLevelProperty, value); }
     public bool IsPlaying { get => (bool)GetValue(IsPlayingProperty); set => SetValue(IsPlayingProperty, value); }
     public bool IsAudioAvailable { get => (bool)GetValue(IsAudioAvailableProperty); set => SetValue(IsAudioAvailableProperty, value); }
+    public bool IsSuppressed { get => (bool)GetValue(IsSuppressedProperty); set => SetValue(IsSuppressedProperty, value); }
+    public double BarWidth { get => (double)GetValue(BarWidthProperty); set => SetValue(BarWidthProperty, value); }
+    public double BarHeight { get => (double)GetValue(BarHeightProperty); set => SetValue(BarHeightProperty, value); }
+    public double BarSpacing { get => (double)GetValue(BarSpacingProperty); set => SetValue(BarSpacingProperty, value); }
 
     private void OnLoaded(object sender, RoutedEventArgs args)
     {
         _isLoaded = true;
+        _settings = App.Services?.GetService<ISettingsService>();
+        _animationPreferences = App.Services?.GetService<IAnimationPreferenceService>();
+        if (_settings is not null)
+        {
+            _settings.SettingsChanged += OnSettingsChanged;
+        }
+
+        if (_animationPreferences is not null)
+        {
+            _animationPreferences.AnimationsEnabledChanged += OnAnimationsEnabledChanged;
+        }
+
+        EnsureVisuals();
         UpdateVisuals();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
         _isLoaded = false;
+        StopFallbackMotion(resetPhase: true);
+        if (_settings is not null)
+        {
+            _settings.SettingsChanged -= OnSettingsChanged;
+            _settings = null;
+        }
+
+        if (_animationPreferences is not null)
+        {
+            _animationPreferences.AnimationsEnabledChanged -= OnAnimationsEnabledChanged;
+            _animationPreferences = null;
+        }
+
+        ResetVisuals();
     }
 
     private static void OnVisualPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args) =>
         ((AudioActivityIndicator)sender).UpdateVisuals();
 
+    private void OnSizeChanged(object sender, SizeChangedEventArgs args)
+    {
+        if (_isLoaded)
+        {
+            EnsureVisuals();
+        }
+    }
+
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args) => UpdateVisuals();
+
+    private void OnAnimationsEnabledChanged(object? sender, EventArgs args) => UpdateVisuals();
+
     private void UpdateVisuals()
     {
-        if (!_isLoaded)
+        if (!_isLoaded || Visibility != Visibility.Visible)
         {
+            StopFallbackMotion(resetPhase: true);
+            ResetVisuals();
+            return;
+        }
+
+        EnsureVisuals();
+        if (IsSuppressed)
+        {
+            StopFallbackMotion(resetPhase: true);
+            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
             return;
         }
 
         if (!IsPlaying)
         {
-            ApplyLevels(0.18, 0.18, 0.18);
+            StopFallbackMotion(resetPhase: true);
+            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
             return;
         }
 
-        var peak = Math.Max(LeftLevel, Math.Max(CenterLevel, RightLevel));
-        if (!IsAudioAvailable || peak <= 0.205)
+        if (HasRealSignal)
         {
-            // A source can report playback before it exposes meter samples.
-            // Keep the indicator intentional and stable instead of inventing
-            // a perpetual unequal waveform.
-            ApplyStableLevels(0.52, 0.52, 0.52);
+            StopFallbackMotion(resetPhase: false);
+            ApplyLevels(TrebleLevel, BassLevel, VocalLevel, animate: CanAnimate);
             return;
         }
 
-        ApplyLevels(LeftLevel, CenterLevel, RightLevel);
+        if (!CanAnimate)
+        {
+            StopFallbackMotion(resetPhase: true);
+            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            return;
+        }
+
+        StartFallbackMotion();
+        if (!_isFallbackAnimating)
+        {
+            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+        }
     }
 
-    private void ApplyLevels(double left, double center, double right)
+    private bool HasRealSignal =>
+        IsAudioAvailable &&
+        Math.Max(TrebleLevel, Math.Max(BassLevel, VocalLevel)) > RealSignalThreshold;
+
+    private void StartFallbackMotion()
     {
-        _leftVisualLevel = ResolveVisualLevel(_leftVisualLevel, left);
-        _centerVisualLevel = ResolveVisualLevel(_centerVisualLevel, center);
-        _rightVisualLevel = ResolveVisualLevel(_rightVisualLevel, right);
-        LeftScale.ScaleY = _leftVisualLevel;
-        CenterScale.ScaleY = _centerVisualLevel;
-        RightScale.ScaleY = _rightVisualLevel;
+        if (_flatSignalStartedAt == 0)
+        {
+            _flatSignalStartedAt = Environment.TickCount64;
+        }
+
+        if (_fallbackTimer is null)
+        {
+            _fallbackTimer = DispatcherQueue.CreateTimer();
+            _fallbackTimer.Interval = FallbackFrameInterval;
+            _fallbackTimer.IsRepeating = true;
+            _fallbackTimer.Tick += OnFallbackTick;
+        }
+
+        if (!_fallbackTimer.IsRunning)
+        {
+            _fallbackTimer.Start();
+        }
     }
 
-    private void ApplyStableLevels(double left, double center, double right)
+    private void OnFallbackTick(DispatcherQueueTimer sender, object args)
     {
-        _leftVisualLevel = Math.Clamp(left, 0.18, 1);
-        _centerVisualLevel = Math.Clamp(center, 0.18, 1);
-        _rightVisualLevel = Math.Clamp(right, 0.18, 1);
-        LeftScale.ScaleY = _leftVisualLevel;
-        CenterScale.ScaleY = _centerVisualLevel;
-        RightScale.ScaleY = _rightVisualLevel;
+        if (!_isLoaded ||
+            Visibility != Visibility.Visible ||
+            IsSuppressed ||
+            !IsPlaying ||
+            !CanAnimate)
+        {
+            StopFallbackMotion(resetPhase: true);
+            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            return;
+        }
+
+        if (HasRealSignal)
+        {
+            UpdateVisuals();
+            return;
+        }
+
+        if (Environment.TickCount64 - _flatSignalStartedAt < FallbackGracePeriodMilliseconds)
+        {
+            return;
+        }
+
+        _isFallbackAnimating = true;
+        _fallbackPhase += 0.55;
+        var levels = CreateFallbackLevels(_fallbackPhase);
+        ApplyLevels(levels.Treble, levels.Bass, levels.Vocal, animate: true);
     }
 
-    private static double ResolveVisualLevel(double current, double target)
+    internal static (double Treble, double Bass, double Vocal) CreateFallbackLevels(double phase)
     {
-        var safeTarget = Math.Clamp(target, 0.18, 1);
-        return Math.Abs(safeTarget - 0.18) < 0.001
-            ? safeTarget
-            : Math.Clamp(current + ((safeTarget - current) * 0.45), 0.18, 1);
+        // This deliberately looks like a quiet three-band meter instead of a
+        // repeating pulse. It is used only when Windows supplies no usable
+        // process/session/endpoint level while playback is still active.
+        var treble = 0.28 + (0.42 * ((Math.Sin((phase * 1.73) + 1.2) + 1) / 2));
+        var bass = 0.36 + (0.52 * ((Math.Sin(phase * 0.83) + 1) / 2));
+        var vocal = 0.32 + (0.44 * ((Math.Sin((phase * 1.21) + 2.2) + 1) / 2));
+        return (treble, bass, vocal);
+    }
+
+    private void StopFallbackMotion(bool resetPhase)
+    {
+        _fallbackTimer?.Stop();
+        _flatSignalStartedAt = 0;
+        _isFallbackAnimating = false;
+        if (resetPhase)
+        {
+            _fallbackPhase = 0;
+        }
+    }
+
+    private void EnsureVisuals()
+    {
+        _trebleVisual ??= ElementCompositionPreview.GetElementVisual(TrebleBar);
+        _bassVisual ??= ElementCompositionPreview.GetElementVisual(BassBar);
+        _vocalVisual ??= ElementCompositionPreview.GetElementVisual(VocalBar);
+        ConfigureVisual(_trebleVisual, TrebleBar);
+        ConfigureVisual(_bassVisual, BassBar);
+        ConfigureVisual(_vocalVisual, VocalBar);
+    }
+
+    private static void ConfigureVisual(Visual visual, FrameworkElement bar)
+    {
+        visual.CenterPoint = new Vector3(
+            (float)(Math.Max(bar.ActualWidth, 1) / 2),
+            (float)(Math.Max(bar.ActualHeight, 1) / 2),
+            0);
+    }
+
+    private void ApplyLevels(double treble, double bass, double vocal, bool animate)
+    {
+        ApplyLevel(_trebleVisual, ref _trebleTarget, treble, animate);
+        ApplyLevel(_bassVisual, ref _bassTarget, bass, animate);
+        ApplyLevel(_vocalVisual, ref _vocalTarget, vocal, animate);
+    }
+
+    private static void ApplyLevel(Visual? visual, ref double previousTarget, double target, bool animate)
+    {
+        if (visual is null)
+        {
+            return;
+        }
+
+        var safeTarget = Math.Clamp(target, MinimumScale, 1);
+        if (!animate)
+        {
+            visual.StopAnimation("Scale.Y");
+            visual.Scale = new Vector3(1, (float)safeTarget, 1);
+            previousTarget = safeTarget;
+            return;
+        }
+
+        var animation = visual.Compositor.CreateScalarKeyFrameAnimation();
+        animation.Duration = safeTarget >= previousTarget ? AttackDuration : ReleaseDuration;
+        animation.InsertKeyFrame(
+            1,
+            (float)safeTarget,
+            visual.Compositor.CreateCubicBezierEasingFunction(
+                new Vector2(0.2f, 0),
+                new Vector2(0, 1)));
+        // A new value replaces the previous Scale.Y animation while Composition
+        // continues from the level currently presented on screen.
+        visual.StartAnimation("Scale.Y", animation);
+        previousTarget = safeTarget;
+    }
+
+    private bool CanAnimate
+    {
+        get
+        {
+            var appearance = _settings?.Current.Appearance;
+            var motion = appearance is null
+                ? MotionSettings.Default
+                : appearance.Motion ?? MotionSettings.FromLegacy(
+                    appearance.AnimationKind,
+                    appearance.AnimationSpeed);
+            return _animationPreferences?.AnimationsEnabled == true &&
+                   motion.EnableIconAnimations &&
+                   motion.Preset != MotionPreset.Off;
+        }
+    }
+
+    private void ResetVisuals()
+    {
+        ResetVisual(_trebleVisual);
+        ResetVisual(_bassVisual);
+        ResetVisual(_vocalVisual);
+        _trebleTarget = _bassTarget = _vocalTarget = MinimumScale;
+    }
+
+    private static void ResetVisual(Visual? visual)
+    {
+        if (visual is null)
+        {
+            return;
+        }
+
+        visual.StopAnimation("Scale.Y");
+        visual.Scale = new Vector3(1, (float)MinimumScale, 1);
     }
 }

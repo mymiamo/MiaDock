@@ -37,6 +37,50 @@ public static class MediaAudioSessionMatcher
                aliases.Any(alias => source.Contains(alias, StringComparison.Ordinal));
     }
 
+    public static bool IsMatch(
+        string? mediaSourceId,
+        string? processName,
+        string? executablePath)
+    {
+        if (IsMatch(mediaSourceId, processName))
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(mediaSourceId) ||
+            string.IsNullOrWhiteSpace(executablePath))
+        {
+            return false;
+        }
+
+        var appSeparator = mediaSourceId.IndexOf('!');
+        if (appSeparator <= 0)
+        {
+            return false;
+        }
+
+        var packageFamily = mediaSourceId[..appSeparator];
+        var publisherSeparator = packageFamily.LastIndexOf('_');
+        if (publisherSeparator <= 0 || publisherSeparator + 1 >= packageFamily.Length)
+        {
+            return false;
+        }
+
+        var packageName = NormalizeToken(packageFamily[..publisherSeparator]);
+        var publisherId = NormalizeToken(packageFamily[(publisherSeparator + 1)..]);
+        var path = NormalizeToken(executablePath);
+        return packageName.Length >= 3 &&
+               publisherId.Length >= 3 &&
+               path.Contains(packageName, StringComparison.Ordinal) &&
+               path.Contains(publisherId, StringComparison.Ordinal);
+    }
+
+    private static string NormalizeToken(string value) =>
+        new(value
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToLowerInvariant)
+            .ToArray());
+
     internal static string Normalize(string value)
     {
         var candidate = value.Trim();

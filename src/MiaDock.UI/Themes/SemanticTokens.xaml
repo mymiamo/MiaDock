@@ -19,6 +19,7 @@
       <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#28FFFFFF" />
       <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#42FFFFFF" />
       <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FFFFFFFF" />
+      <SolidColorBrush x:Key="MediaArtworkScrimBrush" Color="#73000000" />
       <CornerRadius x:Key="IslandIconButtonCornerRadius">999</CornerRadius>
     </ResourceDictionary>
     <ResourceDictionary x:Key="Light">
@@ -37,6 +38,7 @@
       <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="#22000000" />
       <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="#33000000" />
       <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="#FF17181B" />
+      <SolidColorBrush x:Key="MediaArtworkScrimBrush" Color="#73000000" />
       <CornerRadius x:Key="IslandIconButtonCornerRadius">10</CornerRadius>
     </ResourceDictionary>
     <ResourceDictionary x:Key="HighContrast">
@@ -55,6 +57,9 @@
       <SolidColorBrush x:Key="IslandIconButtonPointerOverBrush" Color="{ThemeResource SystemColorHighlightColor}" />
       <SolidColorBrush x:Key="IslandIconButtonPressedBrush" Color="{ThemeResource SystemColorHotlightColor}" />
       <SolidColorBrush x:Key="IslandIconButtonForegroundBrush" Color="{ThemeResource SystemColorButtonTextColor}" />
+      <SolidColorBrush x:Key="MediaArtworkScrimBrush"
+                       Color="{ThemeResource SystemColorWindowColor}"
+                       Opacity="0.5" />
       <CornerRadius x:Key="IslandIconButtonCornerRadius">10</CornerRadius>
     </ResourceDictionary>
   </ResourceDictionary.ThemeDictionaries>

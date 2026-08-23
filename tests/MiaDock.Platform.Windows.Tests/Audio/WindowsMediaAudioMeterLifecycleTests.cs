@@ -68,6 +68,68 @@ public sealed class WindowsMediaAudioMeterLifecycleTests
             StringComparison.Ordinal));
     }
 
+    [TestMethod]
+    public void WorkerSamplesAtThirtyFramesPerSecondWithoutChangingAudioSessionBinding()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.Platform.Windows",
+            "Audio",
+            "WindowsMediaAudioMeterService.cs"));
+
+        StringAssert.Contains(source, "SampleIntervalMilliseconds = 33");
+        StringAssert.Contains(source, "TimeSpan.FromMilliseconds(SampleIntervalMilliseconds)");
+        StringAssert.Contains(source, "MediaAudioSessionMatcher.IsMatch(sourceId, processName, processPath)");
+    }
+
+    [TestMethod]
+    public void WorkerFallsBackToTheSessionPeakWhenPerChannelMeteringIsUnavailable()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.Platform.Windows",
+            "Audio",
+            "WindowsMediaAudioMeterService.cs"));
+
+        StringAssert.Contains(source, "TryReadChannelPeaks(meter, channelPeaks");
+        StringAssert.Contains(source, "meter.GetPeakValue(out var peak)");
+        StringAssert.Contains(source, "The caller will use GetPeakValue instead.");
+    }
+
+    [TestMethod]
+    public void WorkerCapturesTheSelectedMediaProcessAndFeedsFrequencySpectrum()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.Platform.Windows",
+            "Audio",
+            "WindowsMediaAudioMeterService.cs"));
+
+        StringAssert.Contains(source, "WithProcessLoopback(");
+        StringAssert.Contains(source, "ProcessLoopbackMode.IncludeTargetProcessTree");
+        StringAssert.Contains(source, "AudioSpectrumAnalyzer");
+        StringAssert.Contains(source, "WithBufferLength(40)");
+        StringAssert.Contains(source, "Media spectrum data is available.");
+        StringAssert.Contains(source, "Media spectrum contains visual activity.");
+        StringAssert.Contains(source, "Publish(ReadSpectrumOrSessionPeak(leftPeak, rightPeak));");
+        StringAssert.Contains(source, "_smoother.Update(leftPeak, rightPeak)");
+        StringAssert.Contains(source, "real Core Audio session-peak fallback");
+        StringAssert.Contains(source, "CoreAudioNative.MeterInformationId");
+        StringAssert.Contains(source, "Math.Max(leftPeak, rightPeak) <= 0.001f");
+        StringAssert.Contains(source, "_endpointMeter.GetPeakValue(out var endpointPeak)");
+        StringAssert.Contains(source, "AudioSpectrumAnalyzer.MinimumScale + 0.02");
+        StringAssert.Contains(source, "spectrumHasActivity");
+        StringAssert.Contains(source, "Media spectrum loopback stopped unexpectedly; rebinding.");
+        Assert.DoesNotContain("args.Exception is null", source, StringComparison.Ordinal);
+        StringAssert.Contains(source, "RequestRebind();");
+        Assert.DoesNotContain("GateBand(", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("ReadSpectrum(Math.Max(", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("WasapiLoopbackCapture", source, StringComparison.Ordinal);
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = new DirectoryInfo(AppContext.BaseDirectory);

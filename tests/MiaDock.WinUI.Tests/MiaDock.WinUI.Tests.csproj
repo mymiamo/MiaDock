@@ -19,6 +19,8 @@
     <Content Include="..\..\src\MiaDock.UI\Themes\*.xaml" Link="Themes\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\*.xaml" Link="Controls\%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\ExpandedModuleHost.xaml.cs" Link="Controls\ExpandedModuleHost.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Controls\AudioActivityIndicator.xaml.cs" Link="Controls\AudioActivityIndicator.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
+    <Content Include="..\..\src\MiaDock.App\Controls\CollapsedIslandView.xaml.cs" Link="Controls\CollapsedIslandView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\CompactModuleHost.xaml.cs" Link="Controls\CompactModuleHost.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\ModuleNotificationHost.xaml.cs" Link="Controls\ModuleNotificationHost.xaml.cs" CopyToOutputDirectory="PreserveNewest" />
     <Content Include="..\..\src\MiaDock.App\Controls\IdleCompactView.xaml.cs" Link="Controls\IdleCompactView.xaml.cs" CopyToOutputDirectory="PreserveNewest" />

@@ -6,24 +6,27 @@
              Unloaded="OnUnloaded"
              Foreground="White"
              AutomationProperties.Name="Müzik etkinliği">
-  <StackPanel Orientation="Horizontal" Spacing="1.5" VerticalAlignment="Center">
-    <Rectangle Width="2" Height="14" RadiusX="1" RadiusY="1"
+  <StackPanel Orientation="Horizontal"
+              Spacing="{Binding BarSpacing, ElementName=Root}"
+              HorizontalAlignment="Center"
+              VerticalAlignment="Center">
+    <Rectangle x:Name="TrebleBar"
+               Width="{Binding BarWidth, ElementName=Root}"
+               Height="{Binding BarHeight, ElementName=Root}"
+               RadiusX="999" RadiusY="999"
                Fill="{Binding Foreground, ElementName=Root}"
-               VerticalAlignment="Bottom"
-               RenderTransformOrigin="0.5,1">
-      <Rectangle.RenderTransform><ScaleTransform x:Name="LeftScale" ScaleY="0.18" /></Rectangle.RenderTransform>
-    </Rectangle>
-    <Rectangle Width="2" Height="14" RadiusX="1" RadiusY="1"
+               VerticalAlignment="Center" />
+    <Rectangle x:Name="BassBar"
+               Width="{Binding BarWidth, ElementName=Root}"
+               Height="{Binding BarHeight, ElementName=Root}"
+               RadiusX="999" RadiusY="999"
                Fill="{Binding Foreground, ElementName=Root}"
-               VerticalAlignment="Bottom"
-               RenderTransformOrigin="0.5,1">
-      <Rectangle.RenderTransform><ScaleTransform x:Name="CenterScale" ScaleY="0.18" /></Rectangle.RenderTransform>
-    </Rectangle>
-    <Rectangle Width="2" Height="14" RadiusX="1" RadiusY="1"
+               VerticalAlignment="Center" />
+    <Rectangle x:Name="VocalBar"
+               Width="{Binding BarWidth, ElementName=Root}"
+               Height="{Binding BarHeight, ElementName=Root}"
+               RadiusX="999" RadiusY="999"
                Fill="{Binding Foreground, ElementName=Root}"
-               VerticalAlignment="Bottom"
-               RenderTransformOrigin="0.5,1">
-      <Rectangle.RenderTransform><ScaleTransform x:Name="RightScale" ScaleY="0.18" /></Rectangle.RenderTransform>
-    </Rectangle>
+               VerticalAlignment="Center" />
   </StackPanel>
 </UserControl>

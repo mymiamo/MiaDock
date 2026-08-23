@@ -56,23 +56,51 @@ public sealed class DockExperienceViewTests
     }
 
     [TestMethod]
-    public void MusicCompactView_UsesTrailingMeterAndUnboxedMusicIcon()
+    public void MusicCompactView_UsesArtworkPlaybackStatesAndTrailingMeter()
     {
         var document = LoadControl("MusicCompactView.xaml");
         var root = FindNamedElement(document, "LayoutRoot");
-        var identity = FindNamedElement(document, "MusicIdentity");
+        var artwork = FindNamedElement(document, "ArtworkHost");
+        var overlay = FindNamedElement(document, "ArtworkStateOverlay");
         var mediaMeter = FindNamedElement(document, "MusicActivity");
-        var musicIcon = FindNamedElement(document, "MusicGlyph");
+        var compactArtwork = FindNamedElement(document, "CompactArtwork");
+        var pause = FindNamedElement(document, "PausedGlyph");
+        var trackChange = FindNamedElement(document, "TrackChangeGlyph");
+        var trailingMore = FindNamedElement(document, "TrailingMoreGlyph");
+        var trailingHost = FindNamedElement(document, "TrailingStateHost");
         var title = FindNamedElement(document, "TrackTitleText");
+        var columns = root.Elements()
+            .Single(element => element.Name.LocalName == "Grid.ColumnDefinitions")
+            .Elements()
+            .ToArray();
 
-        Assert.AreEqual("1", AttributeValue(mediaMeter, "Grid.Column"));
+        Assert.AreEqual("2", AttributeValue(trailingHost, "Grid.Column"));
         Assert.AreEqual("LeftToRight", root.Attribute("FlowDirection")?.Value);
-        Assert.AreSame(identity.Elements()
-            .First(element => element.Name.LocalName != "Grid.ColumnDefinitions"), musicIcon);
+        Assert.IsNull(AttributeValue(artwork, "Grid.Column"));
         Assert.AreEqual("1", AttributeValue(title, "Grid.Column"));
-        Assert.IsEmpty(root.Elements()
-            .Where(element => element.Name.LocalName == "Border")
-            .ToArray());
+        Assert.AreEqual("10,0", root.Attribute("Padding")?.Value);
+        Assert.AreEqual("8", root.Attribute("ColumnSpacing")?.Value);
+        Assert.AreEqual("30", artwork.Attribute("Width")?.Value);
+        Assert.AreEqual("30", artwork.Attribute("Height")?.Value);
+        Assert.AreEqual("32", columns[0].Attribute("Width")?.Value);
+        Assert.AreEqual("22", columns[2].Attribute("Width")?.Value);
+        Assert.AreEqual("AlbumArtwork", compactArtwork.Name.LocalName);
+        Assert.AreEqual("7", compactArtwork.Attribute("ArtworkCornerRadius")?.Value);
+        Assert.IsNull(compactArtwork.Attribute("Visibility"));
+        Assert.AreEqual("Grid", overlay.Name.LocalName);
+        Assert.AreEqual("Collapsed", overlay.Attribute("Visibility")?.Value);
+        Assert.IsNull(overlay.Attribute("Opacity"));
+        Assert.IsTrue(overlay.Elements().Any(element =>
+            element.Name.LocalName == "Border" &&
+            element.Attribute("Background")?.Value == "{ThemeResource MediaArtworkScrimBrush}"));
+        Assert.AreEqual("Collapsed", pause.Attribute("Visibility")?.Value);
+        Assert.AreEqual("Collapsed", trackChange.Attribute("Visibility")?.Value);
+        Assert.AreEqual("Collapsed", trailingMore.Attribute("Visibility")?.Value);
+        Assert.AreEqual("4", AttributeValue(mediaMeter, "BarWidth"));
+        Assert.AreEqual("18", AttributeValue(mediaMeter, "BarHeight"));
+        Assert.AreEqual("3", AttributeValue(mediaMeter, "BarSpacing"));
+        Assert.AreEqual("12", title.Attribute("FontSize")?.Value);
+        Assert.IsNull(title.Attribute("FontWeight"));
     }
 
     [TestMethod]

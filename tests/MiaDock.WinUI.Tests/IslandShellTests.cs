@@ -149,13 +149,30 @@ public sealed class IslandShellTests
         var indicator = document.Descendants().Single(element =>
             element.Name.LocalName == "AudioActivityIndicator");
 
-        Assert.AreEqual("{Binding LeftAudioLevel}", indicator.Attribute("LeftLevel")?.Value);
+        Assert.AreEqual("{Binding TrebleAudioLevel}", indicator.Attribute("TrebleLevel")?.Value);
+        Assert.AreEqual("{Binding BassAudioLevel}", indicator.Attribute("BassLevel")?.Value);
+        Assert.AreEqual("{Binding VocalAudioLevel}", indicator.Attribute("VocalLevel")?.Value);
+        Assert.AreEqual("Center", indicator.Attribute("HorizontalAlignment")?.Value);
         Assert.AreEqual("{Binding IsAudioLevelAvailable}", indicator.Attribute("IsAudioAvailable")?.Value);
         Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "Storyboard"));
     }
 
     [TestMethod]
-    public void AudioActivityIndicator_HasRealLevelBarsWithoutContinuousStoryboard()
+    public void CollapsedMusicView_KeepsAudioMeterActiveWhilePresented()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "CollapsedIslandView.xaml.cs"));
+
+        StringAssert.Contains(source, "IModuleViewActivationAware");
+        StringAssert.Contains(source, "SetPresentationActive(bool isActive)");
+        StringAssert.Contains(source, "SetAudioMeterActive(this, IsLoaded && _isPresentationActive)");
+        StringAssert.Contains(source, "_music?.SetAudioMeterActive(this, false)");
+    }
+
+    [TestMethod]
+    public void AudioActivityIndicator_HasCenteredPillBarsWithoutContinuousStoryboard()
     {
         var document = LoadControl("AudioActivityIndicator.xaml");
         var names = document.Descendants()
@@ -164,15 +181,63 @@ public sealed class IslandShellTests
             .ToHashSet(StringComparer.Ordinal);
 
         Assert.IsFalse(names.Contains("FallbackStoryboard"));
-        Assert.IsTrue(names.Contains("LeftScale"));
-        Assert.IsTrue(names.Contains("CenterScale"));
-        Assert.IsTrue(names.Contains("RightScale"));
+        Assert.IsTrue(names.Contains("TrebleBar"));
+        Assert.IsTrue(names.Contains("BassBar"));
+        Assert.IsTrue(names.Contains("VocalBar"));
+        var panel = document.Descendants().Single(element =>
+            element.Name.LocalName == "StackPanel");
+        Assert.AreEqual("Center", panel.Attribute("HorizontalAlignment")?.Value);
         Assert.IsTrue(document.Descendants()
             .Where(element => element.Name.LocalName == "Rectangle")
             .All(element =>
-                element.Attribute("Width")?.Value == "2" &&
-                element.Attribute("RenderTransformOrigin")?.Value == "0.5,1" &&
-                element.Attribute("VerticalAlignment")?.Value == "Bottom"));
+                element.Attribute("Width")?.Value == "{Binding BarWidth, ElementName=Root}" &&
+                element.Attribute("Height")?.Value == "{Binding BarHeight, ElementName=Root}" &&
+                element.Attribute("VerticalAlignment")?.Value == "Center" &&
+                element.Attribute("RadiusX")?.Value == "999" &&
+                element.Attribute("RadiusY")?.Value == "999"));
+    }
+
+    [TestMethod]
+    public void AudioActivityIndicator_UsesCancelableCompositionLevelsAndRespectsMotionPreferences()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "AudioActivityIndicator.xaml.cs"));
+
+        StringAssert.Contains(source, "CreateScalarKeyFrameAnimation");
+        StringAssert.Contains(source, "visual.StartAnimation(\"Scale.Y\", animation)");
+        StringAssert.Contains(source, "AttackDuration");
+        StringAssert.Contains(source, "ReleaseDuration");
+        StringAssert.Contains(source, "visual.StopAnimation(\"Scale.Y\")");
+        StringAssert.Contains(source, "Math.Max(bar.ActualHeight, 1) / 2");
+        StringAssert.Contains(source, "motion.EnableIconAnimations");
+        StringAssert.Contains(source, "_animationPreferences?.AnimationsEnabled == true");
+        StringAssert.Contains(source, "DispatcherQueueTimer");
+        StringAssert.Contains(source, "FallbackGracePeriodMilliseconds");
+        StringAssert.Contains(source, "CreateFallbackLevels");
+        StringAssert.Contains(source, "if (HasRealSignal)");
+        StringAssert.Contains(source, "StopFallbackMotion(resetPhase: true)");
+        StringAssert.Contains(source, "!IsPlaying");
+        Assert.DoesNotContain("ResolveVisualLevel", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("FallbackStoryboard", source, StringComparison.Ordinal);
+    }
+
+    [TestMethod]
+    public void MusicCompactView_UsesPauseAndShortTrackChangeArtworkStates()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            AppContext.BaseDirectory,
+            "Controls",
+            "MusicCompactView.xaml.cs"));
+
+        StringAssert.Contains(source, "TimeSpan.FromMilliseconds(650)");
+        StringAssert.Contains(source, "TrackIdentity.From(_viewModel.Current)");
+        StringAssert.Contains(source, "MusicActivity.IsSuppressed = _isTrackTransition");
+        StringAssert.Contains(source, "MusicActivity.Visibility = showStaticTrailingState");
+        StringAssert.Contains(source, "TrailingMoreGlyph.Visibility = showStaticTrailingState");
+        StringAssert.Contains(source, "PausedGlyph.Visibility");
+        StringAssert.Contains(source, "TrackChangeGlyph.Visibility");
     }
 
     [TestMethod]
