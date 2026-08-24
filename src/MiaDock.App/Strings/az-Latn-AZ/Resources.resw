@@ -1299,4 +1299,12 @@
   <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Dayandır</value></data>
   <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>Davranış yalnız dock və tam ekran pəncərəsi eyni ekranda olduqda tətbiq edilir. Xüsusi Direct3D tam ekranda kənarda gizlət dock-u tam bağlayır; borderless tam ekranda siçanla açma davam edir.</value></data>
   <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Tam gizlət dock-u bağlayır. Yalnız bildirişlər normal dock-u gizlədir. Kənarda gizlət borderless tam ekranda düzgün kənarda açılır, xüsusi Direct3D-də oyunu qorumaq üçün bağlı qalır.</value></data>
+  <data name="Media.Settings.AudioVisualizer.Title" xml:space="preserve"><value>Səs vizuallaşdırıcısı</value></data>
+  <data name="Media.Settings.AudioVisualizer.StableDescription" xml:space="preserve"><value>Səsə reaksiya verən vizuallaşdırıcı stabil standartdır və real media sessiyasının səs səviyyəsini izləyir.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Title" xml:space="preserve"><value>Real vaxt səs spektri</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Description" xml:space="preserve"><value>Seçilmiş sistem səs çıxışını bas, orta və yüksək tezliklər üçün təhlil edir; digər tətbiq və bildiriş səsləri də vizuallaşdırıcıya təsir edə bilər. Yaxalama mövcud olmadıqda MiaDock seçilmiş media sessiyasının real səs səviyyəsinə qayıdır.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Badge" xml:space="preserve"><value>Eksperimental</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Spektr səs çıxışı</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Spektrin dinləyəcəyi çıxışı seçin. SteelSeries Sonar istifadə edirsinizsə, media tətbiqinə təyin etdiyiniz kanalı seçin.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Windows standartı</value></data>
 </root>

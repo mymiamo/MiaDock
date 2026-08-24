@@ -66,6 +66,7 @@
                                     Width="10"
                                     Height="14"
                                     HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
                                     Foreground="{ThemeResource IslandStyleAccentBrush}"
                                     TrebleLevel="{Binding TrebleAudioLevel}"
                                     BassLevel="{Binding BassAudioLevel}"

@@ -1,107 +1,190 @@
-using System.Numerics;
 using MiaDock.Modules.Media.Models;
+using NAudio.Dsp;
 
 namespace MiaDock.Platform.Windows.Audio;
 
 /// <summary>
-/// Converts PCM samples into the three frequency bands used by the compact
-/// media visualizer. Snapshot order is treble, bass, then vocal/mid.
+/// Buffers up to eight independent channels and converts the latest PCM window
+/// into the three frequency bands consumed by the compact media visualizer.
+/// FFT work is performed only by the owning meter worker.
 /// </summary>
 internal sealed class AudioSpectrumAnalyzer
 {
     internal const int WindowSize = 2048;
+    internal const int HopSize = WindowSize / 2;
+    internal const int MaximumAnalysisChannels = 8;
     internal const double MinimumScale = 0.18;
-    private const int HopSize = WindowSize / 2;
     private const double NoiseFloorDecibels = -68;
     private const double VisualCeilingDecibels = -12;
-    private readonly float[] _monoWindow = new float[WindowSize];
-    private readonly Complex[] _fft = new Complex[WindowSize];
-    private int _sampleCount;
+    private readonly FftProcessor _fft = new(WindowSize, FftWindowType.Hann);
+    private readonly float[][] _channelRings = CreateChannelBuffers();
+    private readonly float[] _analysisWindow = new float[WindowSize];
+    private readonly Complex[] _spectrum = new Complex[(WindowSize / 2) + 1];
+    private long _framesWritten;
+    private long _lastAnalyzedFrame;
+    private int _writeIndex;
+    private int _sampleRate;
+    private int _channelCount;
     private double _treble = MinimumScale;
     private double _bass = MinimumScale;
     private double _vocal = MinimumScale;
 
+    public void Configure(int sampleRate, int channelCount)
+    {
+        if (sampleRate <= 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(sampleRate));
+        }
+
+        if (channelCount is < 1 or > MaximumAnalysisChannels)
+        {
+            throw new ArgumentOutOfRangeException(nameof(channelCount));
+        }
+
+        if (_sampleRate == sampleRate && _channelCount == channelCount)
+        {
+            return;
+        }
+
+        ResetCore();
+        _sampleRate = sampleRate;
+        _channelCount = channelCount;
+    }
+
+    public void WriteInterleaved(ReadOnlySpan<float> samples, int frameCount, int channelCount)
+    {
+        if (frameCount <= 0 || channelCount != _channelCount ||
+            samples.Length < checked(frameCount * channelCount))
+        {
+            return;
+        }
+
+        for (var frame = 0; frame < frameCount; frame++)
+        {
+            var frameOffset = frame * channelCount;
+            for (var channel = 0; channel < channelCount; channel++)
+            {
+                var sample = samples[frameOffset + channel];
+                _channelRings[channel][_writeIndex] =
+                    float.IsFinite(sample) ? Math.Clamp(sample, -1, 1) : 0;
+            }
+
+            _writeIndex = (_writeIndex + 1) % WindowSize;
+            _framesWritten++;
+        }
+    }
+
+    public bool TryAnalyze(out MediaAudioLevelSnapshot snapshot)
+    {
+        snapshot = MediaAudioLevelSnapshot.Silent;
+        if (_sampleRate <= 0 || _channelCount <= 0 ||
+            _framesWritten < WindowSize ||
+            _framesWritten - _lastAnalyzedFrame < HopSize)
+        {
+            return false;
+        }
+
+        var frequencyPerBin = (double)_sampleRate / WindowSize;
+        var nyquist = _sampleRate / 2d;
+        var bassMagnitude = 0d;
+        var vocalMagnitude = 0d;
+        var trebleMagnitude = 0d;
+
+        for (var channel = 0; channel < _channelCount; channel++)
+        {
+            CopyLatestWindow(_channelRings[channel], _analysisWindow);
+            _fft.RealForward(_analysisWindow, _spectrum);
+            bassMagnitude = Math.Max(bassMagnitude, FindBandPeak(55, 250, frequencyPerBin));
+            vocalMagnitude = Math.Max(vocalMagnitude, FindBandPeak(250, Math.Min(4000, nyquist), frequencyPerBin));
+            trebleMagnitude = Math.Max(trebleMagnitude, FindBandPeak(4000, Math.Min(16000, nyquist), frequencyPerBin));
+        }
+
+        _lastAnalyzedFrame = _framesWritten;
+        _treble = Follow(_treble, Shape(trebleMagnitude));
+        _bass = Follow(_bass, Shape(bassMagnitude));
+        _vocal = Follow(_vocal, Shape(vocalMagnitude));
+        snapshot = new MediaAudioLevelSnapshot(
+            MediaAudioLevelSource.SystemSpectrum,
+            _treble,
+            _bass,
+            _vocal,
+            0,
+            0);
+        return true;
+    }
+
+    // A convenient behavioral test seam for already-decoded PCM.
     public bool ProcessFloat32(
         ReadOnlySpan<float> interleavedSamples,
         int sampleRate,
         int channelCount,
         out MediaAudioLevelSnapshot snapshot)
     {
-        snapshot = MediaAudioLevelSnapshot.Silent;
-        if (sampleRate <= 0 || channelCount <= 0 || interleavedSamples.Length < channelCount)
+        var selectedChannels = Math.Min(channelCount, MaximumAnalysisChannels);
+        if (sampleRate <= 0 || selectedChannels <= 0 ||
+            interleavedSamples.Length < channelCount)
         {
+            snapshot = MediaAudioLevelSnapshot.Silent;
             return false;
         }
 
-        var produced = false;
-        var frameCount = interleavedSamples.Length / channelCount;
-        for (var frame = 0; frame < frameCount; frame++)
+        Configure(sampleRate, selectedChannels);
+        if (selectedChannels == channelCount)
         {
-            double mono = 0;
-            var frameOffset = frame * channelCount;
-            for (var channel = 0; channel < channelCount; channel++)
+            WriteInterleaved(
+                interleavedSamples,
+                interleavedSamples.Length / channelCount,
+                selectedChannels);
+        }
+        else
+        {
+            var frames = interleavedSamples.Length / channelCount;
+            var selected = AudioCapturePacketProcessor.SelectChannelIndices(channelCount);
+            var scratch = new float[checked(frames * selected.Length)];
+            for (var frame = 0; frame < frames; frame++)
             {
-                var sample = interleavedSamples[frameOffset + channel];
-                mono += float.IsFinite(sample) ? Math.Clamp(sample, -1, 1) : 0;
+                for (var channel = 0; channel < selected.Length; channel++)
+                {
+                    scratch[(frame * selected.Length) + channel] =
+                        interleavedSamples[(frame * channelCount) + selected[channel]];
+                }
             }
 
-            _monoWindow[_sampleCount++] = (float)(mono / channelCount);
-            if (_sampleCount < WindowSize)
-            {
-                continue;
-            }
-
-            snapshot = AnalyzeWindow(sampleRate);
-            produced = true;
-            Array.Copy(_monoWindow, WindowSize - HopSize, _monoWindow, 0, HopSize);
-            _sampleCount = HopSize;
+            WriteInterleaved(scratch, frames, selected.Length);
         }
 
-        return produced;
+        return TryAnalyze(out snapshot);
     }
 
     public MediaAudioLevelSnapshot Reset()
     {
-        Array.Clear(_monoWindow);
-        _sampleCount = 0;
-        _treble = _bass = _vocal = MinimumScale;
+        ResetCore();
+        _sampleRate = 0;
+        _channelCount = 0;
         return MediaAudioLevelSnapshot.Silent;
     }
 
-    private MediaAudioLevelSnapshot AnalyzeWindow(int sampleRate)
+    private void ResetCore()
     {
-        var windowSum = 0d;
-        for (var index = 0; index < WindowSize; index++)
+        foreach (var channel in _channelRings)
         {
-            var hann = 0.5 - 0.5 * Math.Cos(2 * Math.PI * index / (WindowSize - 1));
-            windowSum += hann;
-            _fft[index] = new Complex(_monoWindow[index] * hann, 0);
+            Array.Clear(channel);
         }
 
-        TransformInPlace(_fft);
-        var frequencyPerBin = (double)sampleRate / WindowSize;
-        var nyquist = sampleRate / 2d;
-        var bassMagnitude = FindBandPeak(55, 250, frequencyPerBin, windowSum);
-        var vocalMagnitude = FindBandPeak(250, Math.Min(4000, nyquist), frequencyPerBin, windowSum);
-        var trebleMagnitude = FindBandPeak(4000, Math.Min(16000, nyquist), frequencyPerBin, windowSum);
-
-        _treble = Follow(_treble, Shape(trebleMagnitude));
-        _bass = Follow(_bass, Shape(bassMagnitude));
-        _vocal = Follow(_vocal, Shape(vocalMagnitude));
-        return new MediaAudioLevelSnapshot(
-            MediaAudioLevelSource.ProcessSpectrum,
-            _treble,
-            _bass,
-            _vocal,
-            0,
-            0);
+        _framesWritten = 0;
+        _lastAnalyzedFrame = 0;
+        _writeIndex = 0;
+        _treble = _bass = _vocal = MinimumScale;
     }
 
-    private double FindBandPeak(
-        double minimumFrequency,
-        double maximumFrequency,
-        double frequencyPerBin,
-        double windowSum)
+    private void CopyLatestWindow(float[] ring, float[] destination)
+    {
+        var tail = WindowSize - _writeIndex;
+        ring.AsSpan(_writeIndex, tail).CopyTo(destination);
+        ring.AsSpan(0, _writeIndex).CopyTo(destination.AsSpan(tail));
+    }
+
+    private double FindBandPeak(double minimumFrequency, double maximumFrequency, double frequencyPerBin)
     {
         if (maximumFrequency <= minimumFrequency || frequencyPerBin <= 0)
         {
@@ -109,11 +192,14 @@ internal sealed class AudioSpectrumAnalyzer
         }
 
         var firstBin = Math.Max(1, (int)Math.Ceiling(minimumFrequency / frequencyPerBin));
-        var lastBin = Math.Min(WindowSize / 2, (int)Math.Floor(maximumFrequency / frequencyPerBin));
+        var lastBin = Math.Min(_spectrum.Length - 1, (int)Math.Floor(maximumFrequency / frequencyPerBin));
         var peak = 0d;
         for (var bin = firstBin; bin <= lastBin; bin++)
         {
-            peak = Math.Max(peak, _fft[bin].Magnitude * 2 / windowSum);
+            var value = _spectrum[bin];
+            peak = Math.Max(
+                peak,
+                Math.Sqrt((value.Real * value.Real) + (value.Imaginary * value.Imaginary)) * 2);
         }
 
         return peak;
@@ -137,44 +223,18 @@ internal sealed class AudioSpectrumAnalyzer
 
     private static double Follow(double current, double target)
     {
-        var response = target >= current ? 0.78 : 0.24;
+        var response = target >= current ? 0.86 : 0.32;
         return current + (target - current) * response;
     }
 
-    private static void TransformInPlace(Complex[] buffer)
+    private static float[][] CreateChannelBuffers()
     {
-        for (int source = 1, target = 0; source < buffer.Length; source++)
+        var result = new float[MaximumAnalysisChannels][];
+        for (var index = 0; index < result.Length; index++)
         {
-            var bit = buffer.Length >> 1;
-            for (; (target & bit) != 0; bit >>= 1)
-            {
-                target ^= bit;
-            }
-
-            target ^= bit;
-            if (source < target)
-            {
-                (buffer[source], buffer[target]) = (buffer[target], buffer[source]);
-            }
+            result[index] = new float[WindowSize];
         }
 
-        for (var length = 2; length <= buffer.Length; length <<= 1)
-        {
-            var phaseStep = -2 * Math.PI / length;
-            var root = new Complex(Math.Cos(phaseStep), Math.Sin(phaseStep));
-            for (var start = 0; start < buffer.Length; start += length)
-            {
-                var phase = Complex.One;
-                var half = length >> 1;
-                for (var offset = 0; offset < half; offset++)
-                {
-                    var even = buffer[start + offset];
-                    var odd = buffer[start + offset + half] * phase;
-                    buffer[start + offset] = even + odd;
-                    buffer[start + offset + half] = even - odd;
-                    phase *= root;
-                }
-            }
-        }
+        return result;
     }
 }

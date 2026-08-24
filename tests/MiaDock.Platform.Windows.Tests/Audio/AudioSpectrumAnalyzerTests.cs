@@ -1,9 +1,5 @@
-using System.Runtime.InteropServices;
-using MiaDock.Platform.Windows.Audio;
-using NAudio.CoreAudioApi;
-using NAudio.Wave;
-using NAudio.Wave.SampleProviders;
 using MiaDock.Modules.Media.Models;
+using MiaDock.Platform.Windows.Audio;
 
 namespace MiaDock.Platform.Windows.Tests.Audio;
 
@@ -14,20 +10,23 @@ public sealed class AudioSpectrumAnalyzerTests
     [DataRow(8000, 0)]
     [DataRow(100, 1)]
     [DataRow(1000, 2)]
-    public void ProcessFloat32_MapsToneToTrebleBassAndVocalInDisplayOrder(
+    public void ProcessFloat32_MapsToneToExpectedDisplayBand(
         int frequency,
         int expectedDominantBand)
     {
         const int sampleRate = 48000;
-        var samples = CreateTone(frequency, sampleRate, AudioSpectrumAnalyzer.WindowSize * 2);
         var analyzer = new AudioSpectrumAnalyzer();
 
-        Assert.IsTrue(analyzer.ProcessFloat32(samples, sampleRate, 1, out var snapshot));
+        Assert.IsTrue(analyzer.ProcessFloat32(
+            CreateTone(frequency, sampleRate, AudioSpectrumAnalyzer.WindowSize * 2),
+            sampleRate,
+            1,
+            out var snapshot));
 
         var bands = new[] { snapshot.Treble, snapshot.Bass, snapshot.Vocal };
         Assert.AreEqual(expectedDominantBand, Array.IndexOf(bands, bands.Max()));
         Assert.IsGreaterThan(0.65, bands[expectedDominantBand]);
-        Assert.AreEqual(MediaAudioLevelSource.ProcessSpectrum, snapshot.Source);
+        Assert.AreEqual(MediaAudioLevelSource.SystemSpectrum, snapshot.Source);
         Assert.IsTrue(snapshot.HasFrequencySpectrum);
     }
 
@@ -35,9 +34,12 @@ public sealed class AudioSpectrumAnalyzerTests
     public void ProcessFloat32_SilenceRemainsAtMinimumBands()
     {
         var analyzer = new AudioSpectrumAnalyzer();
-        var silence = new float[AudioSpectrumAnalyzer.WindowSize * 2];
 
-        Assert.IsTrue(analyzer.ProcessFloat32(silence, 48000, 1, out var snapshot));
+        Assert.IsTrue(analyzer.ProcessFloat32(
+            new float[AudioSpectrumAnalyzer.WindowSize * 2],
+            48000,
+            1,
+            out var snapshot));
 
         Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, snapshot.Treble, 0.0001);
         Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, snapshot.Bass, 0.0001);
@@ -45,40 +47,49 @@ public sealed class AudioSpectrumAnalyzerTests
     }
 
     [TestMethod]
-    public void ProcessFloat32_MixedSignalActivatesAllFrequencyBands()
+    public void ProcessFloat32_OppositePhaseStereoDoesNotCancel()
     {
         const int sampleRate = 48000;
-        var samples = new float[AudioSpectrumAnalyzer.WindowSize * 3];
-        for (var index = 0; index < samples.Length; index++)
+        var samples = new float[AudioSpectrumAnalyzer.WindowSize * 2 * 2];
+        for (var frame = 0; frame < samples.Length / 2; frame++)
         {
-            var time = (double)index / sampleRate;
-            samples[index] = (float)(
-                0.28 * Math.Sin(2 * Math.PI * 80 * time) +
-                0.28 * Math.Sin(2 * Math.PI * 1000 * time) +
-                0.28 * Math.Sin(2 * Math.PI * 8000 * time));
+            var sample = (float)(0.8 * Math.Sin(2 * Math.PI * 1000 * frame / sampleRate));
+            samples[frame * 2] = sample;
+            samples[(frame * 2) + 1] = -sample;
         }
 
         var analyzer = new AudioSpectrumAnalyzer();
-        Assert.IsTrue(analyzer.ProcessFloat32(samples, sampleRate, 1, out var snapshot));
-
-        Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.2, snapshot.Bass);
-        Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.2, snapshot.Vocal);
-        Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.2, snapshot.Treble);
+        Assert.IsTrue(analyzer.ProcessFloat32(samples, sampleRate, 2, out var snapshot));
+        Assert.IsGreaterThan(0.65, snapshot.Vocal);
     }
 
     [TestMethod]
-    public void Reset_ClearsBufferedSamplesAndReturnsUnavailableBaseline()
+    public void ProcessFloat32_AnalyzesAllEightChannelsAtNinetySixKilohertz()
+    {
+        const int sampleRate = 96000;
+        const int channels = 8;
+        var frames = AudioSpectrumAnalyzer.WindowSize * 2;
+        var samples = new float[frames * channels];
+        for (var frame = 0; frame < frames; frame++)
+        {
+            samples[(frame * channels) + 7] =
+                (float)(0.8 * Math.Sin(2 * Math.PI * 8000 * frame / sampleRate));
+        }
+
+        var analyzer = new AudioSpectrumAnalyzer();
+        Assert.IsTrue(analyzer.ProcessFloat32(samples, sampleRate, channels, out var snapshot));
+        Assert.IsGreaterThan(snapshot.Vocal, snapshot.Treble);
+        Assert.IsGreaterThan(snapshot.Bass, snapshot.Treble);
+    }
+
+    [TestMethod]
+    public void Reset_DropsBufferedFrames()
     {
         var analyzer = new AudioSpectrumAnalyzer();
         var samples = CreateTone(100, 48000, AudioSpectrumAnalyzer.WindowSize * 2);
         Assert.IsTrue(analyzer.ProcessFloat32(samples, 48000, 1, out _));
 
-        var reset = analyzer.Reset();
-
-        Assert.IsFalse(reset.IsAvailable);
-        Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, reset.Treble, 0.0001);
-        Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, reset.Bass, 0.0001);
-        Assert.AreEqual(AudioSpectrumAnalyzer.MinimumScale, reset.Vocal, 0.0001);
+        Assert.IsFalse(analyzer.Reset().IsAvailable);
         Assert.IsFalse(analyzer.ProcessFloat32(
             samples.AsSpan(0, AudioSpectrumAnalyzer.WindowSize / 2),
             48000,
@@ -86,102 +97,13 @@ public sealed class AudioSpectrumAnalyzerTests
             out _));
     }
 
-    [TestMethod]
-    [TestCategory("AudioHardware")]
-    public async Task ProcessLoopback_CapturesRealPcmAndProducesVisualActivity()
-    {
-        if (!string.Equals(
-            Environment.GetEnvironmentVariable("MIADOCK_RUN_AUDIO_LOOPBACK_TEST"),
-            "1",
-            StringComparison.Ordinal))
-        {
-            Assert.Inconclusive("Set MIADOCK_RUN_AUDIO_LOOPBACK_TEST=1 for the real-device check.");
-        }
-
-        var analyzer = new AudioSpectrumAnalyzer();
-        var activity = new TaskCompletionSource<double>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        using var capture = await new WasapiRecorderBuilder()
-            .WithProcessLoopback(
-                (uint)Environment.ProcessId,
-                ProcessLoopbackMode.IncludeTargetProcessTree)
-            .WithBufferLength(40)
-            .BuildAsync();
-        CaptureDataAvailableHandler handler = (buffer, _, _, _) =>
-        {
-            if (capture.WaveFormat.BitsPerSample != 32)
-            {
-                return;
-            }
-
-            var byteCount = buffer.Length - buffer.Length % sizeof(float);
-            var samples = MemoryMarshal.Cast<byte, float>(buffer[..byteCount]);
-            if (analyzer.ProcessFloat32(
-                    samples,
-                    capture.WaveFormat.SampleRate,
-                    capture.WaveFormat.Channels,
-                    out var snapshot))
-            {
-                var maximum = Math.Max(snapshot.Treble, Math.Max(snapshot.Bass, snapshot.Vocal));
-                if (maximum > AudioSpectrumAnalyzer.MinimumScale + 0.1)
-                {
-                    activity.TrySetResult(maximum);
-                }
-            }
-        };
-        capture.DataAvailable += handler;
-
-        await using var playback = await new WasapiPlayerBuilder()
-            .WithDefaultDeviceStreamRouting()
-            .WithLatency(80)
-            .BuildAsync();
-        using var endpointEnumerator = new MMDeviceEnumerator();
-        using var endpoint = endpointEnumerator.GetDefaultAudioEndpoint(
-            DataFlow.Render,
-            Role.Multimedia);
-        var tone = new SignalGenerator(48000, 2)
-        {
-            Frequency = 1000,
-            Gain = 0.04,
-            Type = SignalGeneratorType.Sin
-        };
-
-        try
-        {
-            playback.Init(tone.ToWaveProvider());
-            capture.StartRecording();
-            playback.Play();
-            var endpointPeak = 0f;
-            var endpointDeadline = Environment.TickCount64 + 5000;
-            while (endpointPeak <= 0.001f && Environment.TickCount64 < endpointDeadline)
-            {
-                endpointPeak = Math.Max(
-                    endpointPeak,
-                    endpoint.AudioMeterInformation.MasterPeakValue);
-                await Task.Delay(20);
-            }
-
-            var maximum = await activity.Task.WaitAsync(TimeSpan.FromSeconds(5));
-            Assert.IsGreaterThan(AudioSpectrumAnalyzer.MinimumScale + 0.1, maximum);
-            Assert.IsGreaterThan(0.001f, endpointPeak);
-            // Keep the hardware signal alive long enough for MiaDock's
-            // process-candidate health window and endpoint fallback diagnostics.
-            await Task.Delay(1200);
-        }
-        finally
-        {
-            playback.Stop();
-            capture.StopRecording();
-            capture.DataAvailable -= handler;
-        }
-    }
-
     private static float[] CreateTone(int frequency, int sampleRate, int sampleCount)
     {
         var samples = new float[sampleCount];
         for (var index = 0; index < samples.Length; index++)
         {
-            samples[index] = (float)(0.8 * Math.Sin(2 * Math.PI * frequency * index / sampleRate));
+            samples[index] =
+                (float)(0.8 * Math.Sin(2 * Math.PI * frequency * index / sampleRate));
         }
 
         return samples;

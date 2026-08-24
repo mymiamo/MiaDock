@@ -57,6 +57,60 @@
           </StackPanel>
         </Grid>
       </Border>
+
+      <TextBlock Text="{Binding AudioVisualizerTitle}"
+                 Style="{StaticResource SettingsSectionTitleTextBlockStyle}"
+                 Margin="0,8,0,0" />
+      <TextBlock Text="{Binding AudioReactiveDefaultDescription}"
+                 Style="{StaticResource SettingsPageDescriptionTextBlockStyle}"
+                 TextWrapping="Wrap" />
+
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <Grid ColumnSpacing="14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="44" />
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <FontIcon Glyph="&#xE9D9;" FontSize="20" VerticalAlignment="Center" />
+          <StackPanel Grid.Column="1" Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+              <TextBlock Text="{Binding ExperimentalSpectrumTitle}"
+                         Style="{StaticResource SettingsCardTitleTextBlockStyle}"
+                         VerticalAlignment="Center" />
+              <Border Background="{ThemeResource AccentFillColorSecondaryBrush}"
+                      CornerRadius="999"
+                      Padding="8,2">
+                <TextBlock Text="{Binding ExperimentalBadgeText}"
+                           FontSize="11"
+                           FontWeight="SemiBold" />
+              </Border>
+            </StackPanel>
+            <TextBlock Text="{Binding ExperimentalSpectrumDescription}"
+                       Style="{StaticResource SettingsCardDescriptionTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <TextBlock Text="{Binding SpectrumOutputDeviceTitle}"
+                       Style="{StaticResource SettingsCardTitleTextBlockStyle}"
+                       Margin="0,8,0,0" />
+            <TextBlock Text="{Binding SpectrumOutputDeviceDescription}"
+                       Style="{StaticResource SettingsCardDescriptionTextBlockStyle}"
+                       TextWrapping="Wrap" />
+            <ComboBox ItemsSource="{Binding SpectrumOutputDevices}"
+                      DisplayMemberPath="Label"
+                      SelectedIndex="{Binding SpectrumOutputDeviceIndex, Mode=TwoWay}"
+                      IsEnabled="{Binding ExperimentalSpectrumEnabled}"
+                      HorizontalAlignment="Stretch"
+                      MaxWidth="420"
+                      AutomationProperties.Name="{Binding SpectrumOutputDeviceTitle}"
+                      AutomationProperties.HelpText="{Binding SpectrumOutputDeviceDescription}" />
+          </StackPanel>
+          <ToggleSwitch Grid.Column="2"
+                        IsOn="{Binding ExperimentalSpectrumEnabled, Mode=TwoWay}"
+                        VerticalAlignment="Center"
+                        AutomationProperties.Name="{Binding ExperimentalSpectrumTitle}"
+                        AutomationProperties.HelpText="{Binding ExperimentalSpectrumDescription}" />
+        </Grid>
+      </Border>
     </StackPanel>
   </ScrollViewer>
 </UserControl>

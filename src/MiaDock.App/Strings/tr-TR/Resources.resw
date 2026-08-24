@@ -1307,4 +1307,12 @@
   <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Durdur</value></data>
   <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>Davranış yalnız dock ile tam ekran pencere aynı monitördeyse uygulanır. Özel Direct3D tam ekranda kenarda gizle dock'u tamamen kapatır; borderless tam ekranda fareyle açma sürer.</value></data>
   <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Tamamen gizle dock'u kapatır. Yalnız bildirimler normal dock'u gizler. Kenarda gizle borderless tam ekranda doğru kenarda açılır; özel Direct3D'de oyunu korumak için kapalı kalır.</value></data>
+  <data name="Media.Settings.AudioVisualizer.Title" xml:space="preserve"><value>Ses görselleştirici</value></data>
+  <data name="Media.Settings.AudioVisualizer.StableDescription" xml:space="preserve"><value>Ses düzeyine duyarlı görselleştirici stabil varsayılandır ve gerçek medya oturumu ses düzeyini izler.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Title" xml:space="preserve"><value>Gerçek zamanlı ses spektrumu</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Description" xml:space="preserve"><value>Seçili sistem ses çıkışını bas, orta ve tiz frekanslar için analiz eder; diğer uygulama ve bildirim sesleri de görselleştiriciyi etkileyebilir. Yakalama kullanılamazsa MiaDock otomatik olarak seçili medya oturumunun gerçek ses düzeyine döner.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Badge" xml:space="preserve"><value>Deneysel</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Spectrum ses çıkışı</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Spectrum'un dinleyeceği çıkışı seçin. SteelSeries Sonar kullanıyorsanız medya uygulamasına atadığınız kanalı seçin.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Windows varsayılanı</value></data>
 </root>

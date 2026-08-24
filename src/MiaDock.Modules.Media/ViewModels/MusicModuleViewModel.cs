@@ -96,8 +96,7 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
 
     public MediaAudioLevelSource AudioLevelSource { get; private set; }
 
-    public bool HasFrequencySpectrum => AudioLevelSource is
-        MediaAudioLevelSource.EndpointSpectrum or MediaAudioLevelSource.ProcessSpectrum;
+    public bool HasFrequencySpectrum => AudioLevelSource == MediaAudioLevelSource.SystemSpectrum;
 
     public bool IsAudioLevelAvailable { get; private set; }
 

@@ -4,8 +4,7 @@ public enum MediaAudioLevelSource
 {
     Unavailable,
     SessionPeak,
-    EndpointSpectrum,
-    ProcessSpectrum
+    SystemSpectrum
 }
 
 /// <summary>
@@ -23,8 +22,7 @@ public sealed record MediaAudioLevelSnapshot(
 {
     public bool IsAvailable => Source != MediaAudioLevelSource.Unavailable;
 
-    public bool HasFrequencySpectrum => Source is
-        MediaAudioLevelSource.EndpointSpectrum or MediaAudioLevelSource.ProcessSpectrum;
+    public bool HasFrequencySpectrum => Source == MediaAudioLevelSource.SystemSpectrum;
 
     public double Amplitude => Math.Max(LeftAmplitude, RightAmplitude);
 

@@ -1,5 +1,4 @@
 using System.Runtime.InteropServices;
-using MiaDock.Modules.Media.Models;
 using MiaDock.Platform.Windows.Audio;
 using NAudio.CoreAudioApi;
 using NAudio.Wave;
@@ -10,46 +9,99 @@ namespace MiaDock.Platform.Windows.Tests.Audio;
 public sealed class AudioCapturePacketProcessorTests
 {
     [TestMethod]
-    public void TryProcess_SilentFlagIsNotAcceptedAsPcmEvidence()
+    public void TryDecode_SilentPacketProducesZeroFramesWithoutBecomingAnError()
     {
-        var bytes = MemoryMarshal.AsBytes(new float[AudioSpectrumAnalyzer.WindowSize].AsSpan());
+        var bytes = MemoryMarshal.AsBytes(new float[32].AsSpan());
+        var destination = Enumerable.Repeat(1f, 32).ToArray();
 
-        var result = AudioCapturePacketProcessor.TryProcess(
+        var result = AudioCapturePacketProcessor.TryDecode(
             bytes,
             AudioClientBufferFlags.Silent,
             WaveFormat.CreateIeeeFloatWaveFormat(48000, 1),
-            new AudioSpectrumAnalyzer(),
-            MediaAudioLevelSource.ProcessSpectrum,
-            out _,
-            out var maximum);
-
-        Assert.IsFalse(result);
-        Assert.AreEqual(0, maximum);
-    }
-
-    [TestMethod]
-    public void TryProcess_DecodesPcm16WithoutTreatingIntegersAsFloat()
-    {
-        var samples = new short[AudioSpectrumAnalyzer.WindowSize * 2];
-        for (var index = 0; index < samples.Length; index++)
-        {
-            samples[index] = (short)(short.MaxValue * 0.7 *
-                Math.Sin(2 * Math.PI * 1000 * index / 48000));
-        }
-
-        var result = AudioCapturePacketProcessor.TryProcess(
-            MemoryMarshal.AsBytes(samples.AsSpan()),
-            AudioClientBufferFlags.None,
-            new WaveFormat(48000, 16, 1),
-            new AudioSpectrumAnalyzer(),
-            MediaAudioLevelSource.EndpointSpectrum,
-            out var snapshot,
+            [0],
+            destination,
+            out var frames,
             out var maximum);
 
         Assert.IsTrue(result);
-        Assert.AreEqual(MediaAudioLevelSource.EndpointSpectrum, snapshot.Source);
-        Assert.IsGreaterThan(0.6, maximum);
-        Assert.IsGreaterThan(snapshot.Bass, snapshot.Vocal);
-        Assert.IsGreaterThan(snapshot.Treble, snapshot.Vocal);
+        Assert.AreEqual(32, frames);
+        Assert.AreEqual(0, maximum);
+        Assert.IsTrue(destination.All(sample => sample == 0));
+    }
+
+    [TestMethod]
+    public void TryDecode_FloatExtensibleSelectsEightDistributedChannels()
+    {
+        const int channels = 16;
+        var selected = AudioCapturePacketProcessor.SelectChannelIndices(channels);
+        var samples = Enumerable.Range(0, channels).Select(index => index / 16f).ToArray();
+        var destination = new float[selected.Length];
+        var format = new WaveFormatExtensible(96000, 32, channels, true, 32, 0);
+
+        Assert.IsTrue(AudioCapturePacketProcessor.TryDecode(
+            MemoryMarshal.AsBytes(samples.AsSpan()),
+            AudioClientBufferFlags.None,
+            format,
+            selected,
+            destination,
+            out var frames,
+            out _));
+
+        Assert.AreEqual(1, frames);
+        Assert.HasCount(AudioSpectrumAnalyzer.MaximumAnalysisChannels, selected);
+        Assert.AreEqual(0, selected[0]);
+        Assert.AreEqual(channels - 1, selected[^1]);
+        Assert.AreEqual(samples[^1], destination[^1], 0.0001);
+    }
+
+    [TestMethod]
+    public void TryDecode_ConvertsPcmSixteenTwentyFourAndThirtyTwo()
+    {
+        AssertDecoded([0x00, 0x40], new WaveFormat(48000, 16, 1), 0.5f);
+        AssertDecoded([0x00, 0x00, 0x40], new WaveFormat(48000, 24, 1), 0.5f);
+        AssertDecoded([0x00, 0x00, 0x00, 0x40],
+            new WaveFormatExtensible(48000, 32, 1, false, 32, 0), 0.5f);
+    }
+
+    [TestMethod]
+    public void TryDecode_ReplacesNonFiniteFloatAndRejectsIncompleteFrame()
+    {
+        var nonFinite = new[] { float.NaN, float.PositiveInfinity, -0.5f };
+        var decoded = new float[nonFinite.Length];
+        Assert.IsTrue(AudioCapturePacketProcessor.TryDecode(
+            MemoryMarshal.AsBytes(nonFinite.AsSpan()),
+            AudioClientBufferFlags.None,
+            WaveFormat.CreateIeeeFloatWaveFormat(44100, 1),
+            [0],
+            decoded,
+            out var frames,
+            out var maximum));
+        CollectionAssert.AreEqual(new[] { 0f, 0f, -0.5f }, decoded);
+        Assert.AreEqual(3, frames);
+        Assert.AreEqual(0.5, maximum, 0.0001);
+
+        Assert.IsFalse(AudioCapturePacketProcessor.TryDecode(
+            [0x01],
+            AudioClientBufferFlags.None,
+            new WaveFormat(48000, 16, 1),
+            [0],
+            new float[1],
+            out _,
+            out _));
+    }
+
+    private static void AssertDecoded(byte[] bytes, WaveFormat format, float expected)
+    {
+        var destination = new float[1];
+        Assert.IsTrue(AudioCapturePacketProcessor.TryDecode(
+            bytes,
+            AudioClientBufferFlags.None,
+            format,
+            [0],
+            destination,
+            out var frames,
+            out _));
+        Assert.AreEqual(1, frames);
+        Assert.AreEqual(expected, destination[0], 0.0001);
     }
 }

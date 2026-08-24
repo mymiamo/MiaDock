@@ -1299,4 +1299,12 @@
   <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Parar</value></data>
   <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>O comportamento se aplica somente quando o dock e a janela em tela cheia estão no mesmo monitor. Ocultar na borda fecha o dock completamente no Direct3D exclusivo; a revelação pelo ponteiro continua disponível na tela cheia sem bordas.</value></data>
   <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Ocultar completamente fecha o dock. Somente notificações oculta o dock normal. Ocultar na borda abre na borda correta na tela cheia sem bordas e permanece fechado no Direct3D exclusivo para proteger o jogo.</value></data>
+  <data name="Media.Settings.AudioVisualizer.Title" xml:space="preserve"><value>Visualizador de áudio</value></data>
+  <data name="Media.Settings.AudioVisualizer.StableDescription" xml:space="preserve"><value>O visualizador reativo ao áudio é o padrão estável e acompanha o nível de áudio real da sessão de mídia.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Title" xml:space="preserve"><value>Espectro de áudio em tempo real</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Description" xml:space="preserve"><value>Analisa a saída de áudio do sistema selecionada para graves, médios e agudos; sons de outros aplicativos e notificações também podem afetar o visualizador. Se a captura não estiver disponível, o MiaDock usa o nível de áudio real da sessão de mídia selecionada.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Badge" xml:space="preserve"><value>Experimental</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Saída de áudio do espectro</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Escolha a saída que o espectro deve ouvir. Se você usa o SteelSeries Sonar, selecione o canal atribuído ao aplicativo de mídia.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Padrão do Windows</value></data>
 </root>

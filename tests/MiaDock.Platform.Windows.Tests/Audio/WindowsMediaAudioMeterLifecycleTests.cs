@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using MiaDock.Modules.Media.Models;
 using MiaDock.Platform.Windows.Audio;
 
 namespace MiaDock.Platform.Windows.Tests.Audio;
@@ -7,12 +8,74 @@ namespace MiaDock.Platform.Windows.Tests.Audio;
 public sealed class WindowsMediaAudioMeterLifecycleTests
 {
     [TestMethod]
+    public void PlaybackGate_TransientSessionHandoff_KeepsSpectrumRunning()
+    {
+        var gate = new SpectrumPlaybackGate();
+        const long startedAt = 10_000;
+
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Playing, false, startedAt));
+        Assert.IsTrue(gate.Evaluate(true, true, false, PlaybackStatus.Stopped, false, startedAt + 100));
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Playing, false, startedAt + 600));
+        Assert.IsTrue(gate.Evaluate(
+            true,
+            true,
+            false,
+            PlaybackStatus.Stopped,
+            false,
+            startedAt + SpectrumPlaybackGate.StopGraceMilliseconds + 500));
+    }
+
+    [TestMethod]
+    public void PlaybackGate_StablePause_StopsAfterGracePeriod()
+    {
+        var gate = new SpectrumPlaybackGate();
+        const long startedAt = 20_000;
+        var pauseAt = startedAt + 100;
+
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Playing, false, startedAt));
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Paused, false, pauseAt));
+        Assert.IsTrue(gate.Evaluate(
+            true,
+            true,
+            true,
+            PlaybackStatus.Paused,
+            false,
+            pauseAt + SpectrumPlaybackGate.StopGraceMilliseconds - 1));
+        Assert.IsFalse(gate.Evaluate(
+            true,
+            true,
+            true,
+            PlaybackStatus.Paused,
+            false,
+            pauseAt + SpectrumPlaybackGate.StopGraceMilliseconds));
+    }
+
+    [TestMethod]
+    public void PlaybackGate_MisreportedPauseWithOutputSignal_KeepsSpectrumRunning()
+    {
+        var gate = new SpectrumPlaybackGate();
+
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Playing, false, 100));
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Paused, true, 10_000));
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Paused, true, 20_000));
+    }
+
+    [TestMethod]
+    public void PlaybackGate_DisableOrInactive_StopsImmediately()
+    {
+        var gate = new SpectrumPlaybackGate();
+
+        Assert.IsTrue(gate.Evaluate(true, true, true, PlaybackStatus.Playing, false, 100));
+        Assert.IsFalse(gate.Evaluate(false, true, true, PlaybackStatus.Playing, true, 101));
+        Assert.IsFalse(gate.Evaluate(true, false, true, PlaybackStatus.Playing, true, 102));
+    }
+
+    [TestMethod]
     public void ChannelPeakBuffer_IsMarshaledAsCallerAllocatedFloatArray()
     {
         var method = typeof(IAudioMeterInformation).GetMethod(
             nameof(IAudioMeterInformation.GetChannelsPeakValues));
         Assert.IsNotNull(method);
-
         var bufferParameter = method.GetParameters()[1];
         var marshalAs = bufferParameter
             .GetCustomAttributes(typeof(MarshalAsAttribute), inherit: false)
@@ -24,122 +87,5 @@ public sealed class WindowsMediaAudioMeterLifecycleTests
         Assert.AreEqual(UnmanagedType.R4, marshalAs.ArraySubType);
         Assert.AreEqual(0, marshalAs.SizeParamIndex);
         Assert.IsTrue(bufferParameter.IsOut);
-    }
-
-    [TestMethod]
-    public void WorkerCleanup_GuardsDetachedComObjectsAndDisposedShutdown()
-    {
-        var sourcePath = Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "MiaDock.Platform.Windows",
-            "Audio",
-            "WindowsMediaAudioMeterService.cs");
-        var source = File.ReadAllText(sourcePath);
-
-        StringAssert.Contains(source, "catch (Exception)");
-        StringAssert.Contains(source, "TryCleanupAudio();");
-        StringAssert.Contains(source, "InvalidComObjectException");
-        StringAssert.Contains(source, "MediaAudioMeterFailed");
-        Assert.IsFalse(source.Contains("FinalReleaseComObject", StringComparison.Ordinal));
-        Assert.IsFalse(source.Contains(
-            "catch (Exception) when (!_disposed)",
-            StringComparison.Ordinal));
-
-        var systemActivitySource = File.ReadAllText(Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "MiaDock.Platform.Windows",
-            "Audio",
-            "WindowsSystemActivityService.cs"));
-        var sessionHandleSource = File.ReadAllText(Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "MiaDock.Platform.Windows",
-            "Audio",
-            "AudioSessionHandle.cs"));
-        Assert.DoesNotContain("FinalReleaseComObject", systemActivitySource, StringComparison.Ordinal);
-        Assert.DoesNotContain("FinalReleaseComObject", sessionHandleSource, StringComparison.Ordinal);
-        StringAssert.Contains(systemActivitySource, "AudioTopologyRebind");
-        StringAssert.Contains(systemActivitySource, "AudioTopologyDebounceInterval");
-        StringAssert.Contains(systemActivitySource, "_audioRebindTimer.Change(");
-        Assert.IsFalse(systemActivitySource.Contains(
-            "FlushAsync(timeout.Token)",
-            StringComparison.Ordinal));
-    }
-
-    [TestMethod]
-    public void WorkerSamplesAtThirtyFramesPerSecondWithoutChangingAudioSessionBinding()
-    {
-        var source = File.ReadAllText(Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "MiaDock.Platform.Windows",
-            "Audio",
-            "WindowsMediaAudioMeterService.cs"));
-
-        StringAssert.Contains(source, "SampleIntervalMilliseconds = 33");
-        StringAssert.Contains(source, "TimeSpan.FromMilliseconds(SampleIntervalMilliseconds)");
-        StringAssert.Contains(source, "MediaAudioSessionMatcher.IsMatch(sourceId, processName, processPath)");
-    }
-
-    [TestMethod]
-    public void WorkerFallsBackToTheSessionPeakWhenPerChannelMeteringIsUnavailable()
-    {
-        var source = File.ReadAllText(Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "MiaDock.Platform.Windows",
-            "Audio",
-            "WindowsMediaAudioMeterService.cs"));
-
-        StringAssert.Contains(source, "TryReadChannelPeaks(meter, channelPeaks");
-        StringAssert.Contains(source, "meter.GetPeakValue(out var peak)");
-        StringAssert.Contains(source, "The caller will use GetPeakValue instead.");
-    }
-
-    [TestMethod]
-    public void WorkerCapturesTheSelectedMediaProcessAndFeedsFrequencySpectrum()
-    {
-        var source = File.ReadAllText(Path.Combine(
-            FindRepositoryRoot(),
-            "src",
-            "MiaDock.Platform.Windows",
-            "Audio",
-            "WindowsMediaAudioMeterService.cs"));
-
-        StringAssert.Contains(source, "WithProcessLoopback(");
-        StringAssert.Contains(source, "ProcessLoopbackMode.IncludeTargetProcessTree");
-        StringAssert.Contains(source, "AudioSpectrumAnalyzer");
-        StringAssert.Contains(source, "WithBufferLength(40)");
-        StringAssert.Contains(source, "Media spectrum data is available.");
-        StringAssert.Contains(source, "Media spectrum contains visual activity.");
-        StringAssert.Contains(source, "Publish(ReadBestAvailableSource(leftPeak, rightPeak));");
-        StringAssert.Contains(source, "_smoother.Update(leftPeak, rightPeak)");
-        StringAssert.Contains(source, "WithLoopbackCapture()");
-        StringAssert.Contains(source, "MediaAudioLevelSource.EndpointSpectrum");
-        StringAssert.Contains(source, "MediaAudioCaptureDecision.Select(");
-        StringAssert.Contains(source, "AudioClientBufferFlags.Silent");
-        StringAssert.Contains(source, "ProcessLoopbackHealth.ShouldReject(");
-        StringAssert.Contains(source, "CoreAudioNative.MeterInformationId");
-        StringAssert.Contains(source, "_endpointMeter.GetPeakValue(out var masterPeak)");
-        StringAssert.Contains(source, "AudioSpectrumAnalyzer.MinimumScale + 0.02");
-        StringAssert.Contains(source, "Media process spectrum loopback stopped unexpectedly");
-        Assert.DoesNotContain("args.Exception is null", source, StringComparison.Ordinal);
-        StringAssert.Contains(source, "StopEndpointSpectrumCapture();");
-        Assert.DoesNotContain("GateBand(", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("ReadSpectrum(Math.Max(", source, StringComparison.Ordinal);
-        Assert.DoesNotContain("WasapiLoopbackCapture", source, StringComparison.Ordinal);
-    }
-
-    private static string FindRepositoryRoot()
-    {
-        var current = new DirectoryInfo(AppContext.BaseDirectory);
-        while (current is not null && !File.Exists(Path.Combine(current.FullName, "MiaDock.sln")))
-        {
-            current = current.Parent;
-        }
-
-        return current?.FullName ?? throw new DirectoryNotFoundException("Repository root not found.");
     }
 }

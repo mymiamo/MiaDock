@@ -1676,4 +1676,12 @@
   <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Stop</value></data>
   <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>The behavior applies only when the dock and fullscreen window are on the same display. Hide at edge closes the dock completely for exclusive Direct3D; pointer reveal remains available for borderless fullscreen.</value></data>
   <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Hide completely closes the dock. Notifications only hides the normal dock. Hide at edge opens at the correct edge in borderless fullscreen, and stays closed in exclusive Direct3D to protect the game.</value></data>
+  <data name="Media.Settings.AudioVisualizer.Title" xml:space="preserve"><value>Audio visualizer</value></data>
+  <data name="Media.Settings.AudioVisualizer.StableDescription" xml:space="preserve"><value>The audio-reactive visualizer is the stable default and follows the real media-session audio level.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Title" xml:space="preserve"><value>Real-time audio spectrum</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Description" xml:space="preserve"><value>Analyzes the selected system audio output for bass, mids, and treble; sounds from other apps and notifications can also affect the visualizer. MiaDock falls back to the selected media session's real audio level when capture is unavailable.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Badge" xml:space="preserve"><value>Experimental</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Spectrum audio output</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Choose the output the spectrum listens to. If you use SteelSeries Sonar, select the channel assigned to the media app.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Windows default</value></data>
 </root>

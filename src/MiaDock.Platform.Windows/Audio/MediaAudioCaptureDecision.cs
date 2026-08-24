@@ -5,20 +5,16 @@ namespace MiaDock.Platform.Windows.Audio;
 internal static class MediaAudioCaptureDecision
 {
     internal static MediaAudioLevelSnapshot Select(
-        MediaAudioLevelSnapshot processSpectrum,
-        bool processIsHealthy,
-        MediaAudioLevelSnapshot endpointSpectrum,
-        bool endpointIsHealthy,
+        bool spectrumEnabled,
+        MediaAudioLevelSnapshot systemSpectrum,
+        bool spectrumIsFresh,
         MediaAudioLevelSnapshot sessionPeak)
     {
-        if (processIsHealthy && processSpectrum.Source == MediaAudioLevelSource.ProcessSpectrum)
+        if (spectrumEnabled &&
+            spectrumIsFresh &&
+            systemSpectrum.Source == MediaAudioLevelSource.SystemSpectrum)
         {
-            return processSpectrum;
-        }
-
-        if (endpointIsHealthy && endpointSpectrum.Source == MediaAudioLevelSource.EndpointSpectrum)
-        {
-            return endpointSpectrum;
+            return systemSpectrum;
         }
 
         return sessionPeak.IsAvailable ? sessionPeak : MediaAudioLevelSnapshot.Silent;

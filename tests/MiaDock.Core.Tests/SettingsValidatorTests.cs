@@ -8,6 +8,59 @@ namespace MiaDock.Core.Tests;
 public sealed class SettingsValidatorTests
 {
     [TestMethod]
+    public void Normalize_SchemaThirtyOne_DisablesExperimentalSpectrumByDefault()
+    {
+        var legacy = MiaDockSettings.Default with
+        {
+            SchemaVersion = 31,
+            Media = MiaDockSettings.Default.Media with
+            {
+                ExperimentalSpectrumEnabled = true
+            }
+        };
+
+        var result = SettingsValidator.Normalize(legacy);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.IsFalse(result.Media.ExperimentalSpectrumEnabled);
+        Assert.IsNull(result.Media.SpectrumOutputDeviceId);
+    }
+
+    [TestMethod]
+    public void Normalize_SchemaThirtyTwo_DefaultsSpectrumOutputDevice()
+    {
+        var legacy = MiaDockSettings.Default with
+        {
+            SchemaVersion = 32,
+            Media = MiaDockSettings.Default.Media with
+            {
+                SpectrumOutputDeviceId = "legacy-endpoint"
+            }
+        };
+
+        var result = SettingsValidator.Normalize(legacy);
+
+        Assert.AreEqual(MiaDockSettings.CurrentSchemaVersion, result.SchemaVersion);
+        Assert.IsNull(result.Media.SpectrumOutputDeviceId);
+    }
+
+    [TestMethod]
+    public void Normalize_CurrentSchema_TrimsSpectrumOutputDevice()
+    {
+        var settings = MiaDockSettings.Default with
+        {
+            Media = MiaDockSettings.Default.Media with
+            {
+                SpectrumOutputDeviceId = "  sonar-media  "
+            }
+        };
+
+        var result = SettingsValidator.Normalize(settings);
+
+        Assert.AreEqual("sonar-media", result.Media.SpectrumOutputDeviceId);
+    }
+
+    [TestMethod]
     public void Normalize_SchemaTwentySevenWithoutAudibleNotifications_AddsEnabledDefaults()
     {
         var legacy = MiaDockSettings.Default with

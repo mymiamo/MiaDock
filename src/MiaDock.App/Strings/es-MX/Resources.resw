@@ -1299,4 +1299,12 @@
   <data name="AudibleNotifications.Stop" xml:space="preserve"><value>Detener</value></data>
   <data name="Fullscreen.EdgeReveal.Description" xml:space="preserve"><value>El comportamiento se aplica solo cuando el dock y la ventana a pantalla completa están en la misma pantalla. Ocultar en el borde cierra por completo el dock en Direct3D exclusivo; la apertura con el puntero se mantiene en pantalla completa sin bordes.</value></data>
   <data name="Fullscreen.EdgeReveal.Info" xml:space="preserve"><value>Ocultar completamente cierra el dock. Solo notificaciones oculta el dock normal. Ocultar en el borde se abre en el borde correcto en pantalla completa sin bordes y permanece cerrado en Direct3D exclusivo para proteger el juego.</value></data>
+  <data name="Media.Settings.AudioVisualizer.Title" xml:space="preserve"><value>Visualizador de audio</value></data>
+  <data name="Media.Settings.AudioVisualizer.StableDescription" xml:space="preserve"><value>El visualizador reactivo al audio es la opción estable predeterminada y sigue el nivel de audio real de la sesión multimedia.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Title" xml:space="preserve"><value>Espectro de audio en tiempo real</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Description" xml:space="preserve"><value>Analiza la salida de audio del sistema seleccionada para obtener graves, medios y agudos; los sonidos de otras aplicaciones y notificaciones también pueden afectar al visualizador. Si la captura no está disponible, MiaDock usa el nivel de audio real de la sesión multimedia seleccionada.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.Badge" xml:space="preserve"><value>Experimental</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Salida de audio del espectro</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Elige la salida que escuchará el espectro. Si usas SteelSeries Sonar, selecciona el canal asignado a la aplicación multimedia.</value></data>
+  <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Predeterminada de Windows</value></data>
 </root>

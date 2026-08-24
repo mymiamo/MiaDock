@@ -17,7 +17,7 @@ public sealed record MiaDockSettings(
     AudibleNotificationSettings AudibleNotifications,
     IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules)
 {
-    public const int CurrentSchemaVersion = 31;
+    public const int CurrentSchemaVersion = 33;
 
     public static MiaDockSettings Default { get; } = new(
         CurrentSchemaVersion,

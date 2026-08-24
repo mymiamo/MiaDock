@@ -93,6 +93,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     private string? _selectedSourceId;
     private MediaFallbackSetting _mediaFallback;
     private VolumeTargetSetting _volumeTarget;
+    private bool _experimentalSpectrumEnabled;
+    private string? _spectrumOutputDeviceId;
     private bool _fullscreenEnabled;
     private FullscreenDockBehavior _fullscreenBehavior;
     private double _fullscreenNotificationSeconds;
@@ -228,6 +230,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
         }
         _ = RefreshStartupStatusAsync();
         _ = RefreshAudibleOutputDevicesAsync();
+        _ = RefreshSpectrumOutputDevicesAsync();
     }
 
     public IReadOnlyList<SettingOption<AppLanguage>> Languages { get; private set; } = [];
@@ -268,6 +271,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IAsyncRelayCommand OpenStoreCommand { get; }
     public IAsyncRelayCommand ClearClipboardHistoryCommand { get; }
     public IReadOnlyList<SettingOption<string?>> AudibleOutputDevices { get; private set; } = [];
+    public IReadOnlyList<SettingOption<string?>> SpectrumOutputDevices { get; private set; } = [];
     public bool AudibleNotificationsEnabled
     {
         get => _audibleNotificationsEnabled;
@@ -903,6 +907,38 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public string? SelectedSourceId { get => _selectedSourceId; set { Set(value, ref _selectedSourceId, s => s with { Media = s.Media with { SelectedSourceId = value } }); OnPropertyChanged(nameof(MediaSourceIndex)); } }
     public MediaFallbackSetting MediaFallback { get => _mediaFallback; set { Set(value, ref _mediaFallback, s => s with { Media = s.Media with { Fallback = value } }); OnPropertyChanged(nameof(MediaFallbackIndex)); } }
     public VolumeTargetSetting VolumeTarget { get => _volumeTarget; set { Set(value, ref _volumeTarget, s => s with { Media = s.Media with { VolumeTarget = value } }); OnPropertyChanged(nameof(VolumeTargetIndex)); } }
+    public bool ExperimentalSpectrumEnabled { get => _experimentalSpectrumEnabled; set => Set(value, ref _experimentalSpectrumEnabled, s => s with { Media = s.Media with { ExperimentalSpectrumEnabled = value } }); }
+    public string? SpectrumOutputDeviceId
+    {
+        get => _spectrumOutputDeviceId;
+        set
+        {
+            Set(value, ref _spectrumOutputDeviceId, settings => settings with
+            {
+                Media = settings.Media with { SpectrumOutputDeviceId = value }
+            });
+            OnPropertyChanged(nameof(SpectrumOutputDeviceIndex));
+        }
+    }
+    public int SpectrumOutputDeviceIndex
+    {
+        get => IndexOf(SpectrumOutputDevices, SpectrumOutputDeviceId);
+        set => SpectrumOutputDeviceId = ValueAt(
+            SpectrumOutputDevices,
+            value,
+            SpectrumOutputDeviceId);
+    }
+    public string AudioVisualizerTitle => _localization.Get("Media.Settings.AudioVisualizer.Title");
+    public string AudioReactiveDefaultDescription => _localization.Get("Media.Settings.AudioVisualizer.StableDescription");
+    public string ExperimentalSpectrumTitle => _localization.Get("Media.Settings.ExperimentalSpectrum.Title");
+    public string ExperimentalSpectrumDescription => _localization.Get("Media.Settings.ExperimentalSpectrum.Description");
+    public string ExperimentalBadgeText => _localization.Get("Media.Settings.ExperimentalSpectrum.Badge");
+    public string SpectrumOutputDeviceTitle =>
+        _localization.Get("Media.Settings.ExperimentalSpectrum.OutputDevice.Title");
+    public string SpectrumOutputDeviceDescription =>
+        _localization.Get("Media.Settings.ExperimentalSpectrum.OutputDevice.Description");
+    public string SpectrumDefaultOutputDeviceText =>
+        _localization.Get("Media.Settings.ExperimentalSpectrum.OutputDevice.Default");
     public bool FullscreenEnabled
     {
         get => _fullscreenEnabled;
@@ -1305,6 +1341,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
                      nameof(ClipboardHistoryDescriptionText), nameof(ClipboardEventModeText), nameof(ClipboardImageEventsText),
                      nameof(ClipboardClearHistoryText),
                      nameof(AudibleNotificationsTitle), nameof(AudibleNotificationsDescription),
+                     nameof(AudioVisualizerTitle), nameof(AudioReactiveDefaultDescription), nameof(ExperimentalSpectrumTitle), nameof(ExperimentalSpectrumDescription), nameof(ExperimentalBadgeText),
+                     nameof(SpectrumOutputDeviceTitle), nameof(SpectrumOutputDeviceDescription), nameof(SpectrumDefaultOutputDeviceText),
                      nameof(AudibleNotificationsMasterTitle), nameof(AudibleNotificationsMasterDescription),
                      nameof(AudibleNotificationsEventsTitle), nameof(NetworkOfflineSoundTitle),
                      nameof(NetworkOfflineSoundDescription), nameof(ConnectedWithoutInternetSoundTitle),
@@ -1433,6 +1471,8 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             SelectedSourceId = settings.Media.SelectedSourceId;
             MediaFallback = settings.Media.Fallback;
             VolumeTarget = settings.Media.VolumeTarget;
+            ExperimentalSpectrumEnabled = settings.Media.ExperimentalSpectrumEnabled;
+            SpectrumOutputDeviceId = settings.Media.SpectrumOutputDeviceId;
             FullscreenEnabled = settings.Fullscreen.Enabled;
             FullscreenBehavior = settings.Fullscreen.Behavior;
             FullscreenNotificationSeconds = settings.Fullscreen.NotificationSeconds;
@@ -2137,6 +2177,34 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
             AudibleOutputDevices = options;
             OnPropertyChanged(nameof(AudibleOutputDevices));
             OnPropertyChanged(nameof(AudibleOutputDeviceIndex));
+        });
+    }
+
+    private async Task RefreshSpectrumOutputDevicesAsync()
+    {
+        if (_audioDeviceCatalog is null) return;
+        IReadOnlyList<AudioDeviceInfo> devices;
+        try { devices = await _audioDeviceCatalog.GetOutputDevicesAsync(); }
+        catch { return; }
+        DispatchNotificationUpdate(() =>
+        {
+            var options = new List<SettingOption<string?>>
+            {
+                new(null, SpectrumDefaultOutputDeviceText)
+            };
+            options.AddRange(devices.Where(device => device.IsActive)
+                .Select(device => new SettingOption<string?>(device.Id, device.DisplayName)));
+            if (!string.IsNullOrWhiteSpace(SpectrumOutputDeviceId) &&
+                options.All(option => option.Value != SpectrumOutputDeviceId))
+            {
+                options.Add(new(
+                    SpectrumOutputDeviceId,
+                    $"{SpectrumOutputDeviceId} ({SpectrumOutputDeviceDescription})"));
+            }
+
+            SpectrumOutputDevices = options;
+            OnPropertyChanged(nameof(SpectrumOutputDevices));
+            OnPropertyChanged(nameof(SpectrumOutputDeviceIndex));
         });
     }
 

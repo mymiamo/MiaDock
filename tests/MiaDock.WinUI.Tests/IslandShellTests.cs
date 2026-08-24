@@ -200,7 +200,7 @@ public sealed class IslandShellTests
     }
 
     [TestMethod]
-    public void AudioActivityIndicator_UsesCancelableCompositionLevelsAndRespectsMotionPreferences()
+    public void AudioActivityIndicator_UsesRealSourcesAndOptOutDecorativeFallback()
     {
         var source = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -212,16 +212,18 @@ public sealed class IslandShellTests
         StringAssert.Contains(source, "AttackDuration");
         StringAssert.Contains(source, "ReleaseDuration");
         StringAssert.Contains(source, "visual.StopAnimation(\"Scale.Y\")");
-        StringAssert.Contains(source, "Math.Max(bar.ActualHeight, 1) / 2");
+        StringAssert.Contains(source, "ConfigureVisual(visual, bar)");
+        StringAssert.Contains(source, "(float)(height / 2)");
         StringAssert.Contains(source, "motion.EnableIconAnimations");
         StringAssert.Contains(source, "_animationPreferences?.AnimationsEnabled == true");
-        StringAssert.Contains(source, "MediaAudioLevelSource.ProcessSpectrum");
-        StringAssert.Contains(source, "MediaAudioLevelSource.EndpointSpectrum");
+        StringAssert.Contains(source, "MediaAudioLevelSource.SystemSpectrum");
+        Assert.DoesNotContain("MediaAudioLevelSource.ProcessSpectrum", source, StringComparison.Ordinal);
         StringAssert.Contains(source, "MediaAudioLevelSource.SessionPeak");
         StringAssert.Contains(source, "UpdateAmplitudeLevels(AmplitudeLevel)");
-        StringAssert.Contains(source, "No fabricated movement");
         StringAssert.Contains(source, "!IsPlaying");
-        Assert.DoesNotContain("DispatcherQueueTimer", source, StringComparison.Ordinal);
+        StringAssert.Contains(source, "DispatcherQueueTimer");
+        StringAssert.Contains(source, "IsDecorativeFallbackAllowed");
+        StringAssert.Contains(source, "ExperimentalSpectrumEnabled != true");
         Assert.DoesNotContain("CreateFallbackLevels", source, StringComparison.Ordinal);
         Assert.DoesNotContain("ResolveVisualLevel", source, StringComparison.Ordinal);
         Assert.DoesNotContain("FallbackStoryboard", source, StringComparison.Ordinal);

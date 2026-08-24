@@ -154,7 +154,7 @@ public sealed class MusicModuleViewModelTests
 
         viewModel.SetAudioMeterActive(true);
         meter.Publish(new MediaAudioLevelSnapshot(
-            MediaAudioLevelSource.ProcessSpectrum, 0.8, 0.9, 0.4, 0, 0));
+            MediaAudioLevelSource.SystemSpectrum, 0.8, 0.9, 0.4, 0, 0));
 
         Assert.IsTrue(meter.IsActive);
         Assert.AreEqual(0.8, viewModel.TrebleAudioLevel, 0.0001);
@@ -162,7 +162,7 @@ public sealed class MusicModuleViewModelTests
         Assert.AreEqual(0.4, viewModel.VocalAudioLevel, 0.0001);
         Assert.IsTrue(viewModel.IsAudioLevelAvailable);
         Assert.IsTrue(viewModel.HasFrequencySpectrum);
-        Assert.AreEqual(MediaAudioLevelSource.ProcessSpectrum, viewModel.AudioLevelSource);
+        Assert.AreEqual(MediaAudioLevelSource.SystemSpectrum, viewModel.AudioLevelSource);
         Assert.IsTrue(viewModel.HasAudioActivity);
         Assert.IsFalse(viewModel.IsPlaying);
     }
@@ -199,7 +199,7 @@ public sealed class MusicModuleViewModelTests
         {
             var level = index / 50_000d;
             meter.Publish(new MediaAudioLevelSnapshot(
-                MediaAudioLevelSource.ProcessSpectrum,
+                MediaAudioLevelSource.SystemSpectrum,
                 level,
                 level / 2,
                 level / 4,

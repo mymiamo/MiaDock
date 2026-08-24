@@ -1,6 +1,7 @@
 using System.Numerics;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Composition;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
@@ -12,14 +13,18 @@ using MiaDock.Modules.Media.Models;
 namespace MiaDock.App.Controls;
 
 /// <summary>
-/// Renders the selected media session's three real audio levels. This control
-/// owns only its bar visuals, so it never competes with island shell motion.
+/// Renders the system spectrum or selected-session levels when available, with
+/// the legacy decorative motion as an opt-out fallback while spectrum is off.
+/// This control owns only its bar visuals, so it never competes with island shell motion.
 /// </summary>
 public sealed partial class AudioActivityIndicator : UserControl
 {
     private const double MinimumScale = 0.18;
+    private const double SessionAmplitudeThreshold = 0.01;
+    private const long DecorativeFallbackGraceMilliseconds = 550;
     private static readonly TimeSpan AttackDuration = TimeSpan.FromMilliseconds(48);
     private static readonly TimeSpan ReleaseDuration = TimeSpan.FromMilliseconds(128);
+    private static readonly TimeSpan DecorativeFrameInterval = TimeSpan.FromMilliseconds(90);
 
     public static readonly DependencyProperty TrebleLevelProperty = DependencyProperty.Register(
         nameof(TrebleLevel), typeof(double), typeof(AudioActivityIndicator),
@@ -61,7 +66,11 @@ public sealed partial class AudioActivityIndicator : UserControl
     private Visual? _trebleVisual;
     private Visual? _bassVisual;
     private Visual? _vocalVisual;
+    private DispatcherQueueTimer? _decorativeTimer;
     private bool _isLoaded;
+    private bool _isDecorativeAnimating;
+    private long _flatSignalStartedAt;
+    private double _decorativePhase;
     private double _trebleTarget = MinimumScale;
     private double _bassTarget = MinimumScale;
     private double _vocalTarget = MinimumScale;
@@ -112,6 +121,7 @@ public sealed partial class AudioActivityIndicator : UserControl
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
         _isLoaded = false;
+        DisposeDecorativeTimer();
         if (_settings is not null)
         {
             _settings.SettingsChanged -= OnSettingsChanged;
@@ -146,6 +156,7 @@ public sealed partial class AudioActivityIndicator : UserControl
     {
         if (!_isLoaded || Visibility != Visibility.Visible)
         {
+            StopDecorativeMotion(resetPhase: true);
             ResetVisuals();
             return;
         }
@@ -153,33 +164,135 @@ public sealed partial class AudioActivityIndicator : UserControl
         EnsureVisuals();
         if (IsSuppressed)
         {
+            StopDecorativeMotion(resetPhase: true);
             ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
             return;
         }
 
         if (!IsPlaying)
         {
+            StopDecorativeMotion(resetPhase: true);
             ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
             return;
         }
 
-        if (AudioLevelSource is MediaAudioLevelSource.ProcessSpectrum or
-            MediaAudioLevelSource.EndpointSpectrum)
+        if (AudioLevelSource == MediaAudioLevelSource.SystemSpectrum)
         {
+            StopDecorativeMotion(resetPhase: false);
             ApplyLevels(TrebleLevel, BassLevel, VocalLevel, animate: CanAnimate);
             return;
         }
 
-        if (AudioLevelSource == MediaAudioLevelSource.SessionPeak)
+        if (AudioLevelSource == MediaAudioLevelSource.SessionPeak &&
+            AmplitudeLevel > SessionAmplitudeThreshold)
         {
+            StopDecorativeMotion(resetPhase: false);
             var levels = UpdateAmplitudeLevels(AmplitudeLevel);
             ApplyLevels(levels.Leading, levels.Center, levels.Trailing, animate: CanAnimate);
             return;
         }
 
-        // No fabricated movement: when Windows exposes neither spectrum nor
-        // session amplitude, use exactly the non-playing baseline state.
+        if (IsDecorativeFallbackAllowed && CanAnimate)
+        {
+            StartDecorativeMotion();
+            if (!_isDecorativeAnimating)
+            {
+                ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            }
+            return;
+        }
+
+        StopDecorativeMotion(resetPhase: true);
         ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+    }
+
+    private bool IsDecorativeFallbackAllowed =>
+        _settings?.Current.Media.ExperimentalSpectrumEnabled != true;
+
+    private void StartDecorativeMotion()
+    {
+        if (_flatSignalStartedAt == 0)
+        {
+            _flatSignalStartedAt = Environment.TickCount64;
+        }
+
+        if (_decorativeTimer is null)
+        {
+            _decorativeTimer = DispatcherQueue.CreateTimer();
+            _decorativeTimer.Interval = DecorativeFrameInterval;
+            _decorativeTimer.IsRepeating = true;
+            _decorativeTimer.Tick += OnDecorativeTick;
+        }
+
+        if (!_decorativeTimer.IsRunning)
+        {
+            _decorativeTimer.Start();
+        }
+    }
+
+    private void OnDecorativeTick(DispatcherQueueTimer sender, object args)
+    {
+        if (!_isLoaded ||
+            Visibility != Visibility.Visible ||
+            IsSuppressed ||
+            !IsPlaying ||
+            !IsDecorativeFallbackAllowed ||
+            !CanAnimate)
+        {
+            StopDecorativeMotion(resetPhase: true);
+            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            return;
+        }
+
+        if (AudioLevelSource == MediaAudioLevelSource.SystemSpectrum ||
+            AudioLevelSource == MediaAudioLevelSource.SessionPeak &&
+            AmplitudeLevel > SessionAmplitudeThreshold)
+        {
+            UpdateVisuals();
+            return;
+        }
+
+        if (Environment.TickCount64 - _flatSignalStartedAt <
+            DecorativeFallbackGraceMilliseconds)
+        {
+            return;
+        }
+
+        _isDecorativeAnimating = true;
+        _decorativePhase += 0.55;
+        var levels = CreateDecorativeLevels(_decorativePhase);
+        ApplyLevels(levels.Leading, levels.Center, levels.Trailing, animate: true);
+    }
+
+    private static (double Leading, double Center, double Trailing) CreateDecorativeLevels(double phase)
+    {
+        var leading = 0.28 + (0.42 * ((Math.Sin((phase * 1.73) + 1.2) + 1) / 2));
+        var center = 0.36 + (0.52 * ((Math.Sin(phase * 0.83) + 1) / 2));
+        var trailing = 0.32 + (0.44 * ((Math.Sin((phase * 1.21) + 2.2) + 1) / 2));
+        return (leading, center, trailing);
+    }
+
+    private void StopDecorativeMotion(bool resetPhase)
+    {
+        _decorativeTimer?.Stop();
+        _flatSignalStartedAt = 0;
+        _isDecorativeAnimating = false;
+        if (resetPhase)
+        {
+            _decorativePhase = 0;
+        }
+    }
+
+    private void DisposeDecorativeTimer()
+    {
+        StopDecorativeMotion(resetPhase: true);
+        if (_decorativeTimer is null)
+        {
+            return;
+        }
+
+        _decorativeTimer.Tick -= OnDecorativeTick;
+        _decorativeTimer = null;
     }
 
     private (double Leading, double Center, double Trailing) UpdateAmplitudeLevels(double amplitude)
@@ -213,26 +326,38 @@ public sealed partial class AudioActivityIndicator : UserControl
 
     private static void ConfigureVisual(Visual visual, FrameworkElement bar)
     {
+        var width = bar.ActualWidth > 0
+            ? bar.ActualWidth
+            : double.IsFinite(bar.Width) && bar.Width > 0 ? bar.Width : 1;
+        var height = bar.ActualHeight > 0
+            ? bar.ActualHeight
+            : double.IsFinite(bar.Height) && bar.Height > 0 ? bar.Height : 1;
         visual.CenterPoint = new Vector3(
-            (float)(Math.Max(bar.ActualWidth, 1) / 2),
-            (float)(Math.Max(bar.ActualHeight, 1) / 2),
+            (float)(width / 2),
+            (float)(height / 2),
             0);
     }
 
     private void ApplyLevels(double treble, double bass, double vocal, bool animate)
     {
-        ApplyLevel(_trebleVisual, ref _trebleTarget, treble, animate);
-        ApplyLevel(_bassVisual, ref _bassTarget, bass, animate);
-        ApplyLevel(_vocalVisual, ref _vocalTarget, vocal, animate);
+        ApplyLevel(_trebleVisual, LeadingBar, ref _trebleTarget, treble, animate);
+        ApplyLevel(_bassVisual, CenterBar, ref _bassTarget, bass, animate);
+        ApplyLevel(_vocalVisual, TrailingBar, ref _vocalTarget, vocal, animate);
     }
 
-    private static void ApplyLevel(Visual? visual, ref double previousTarget, double target, bool animate)
+    private static void ApplyLevel(
+        Visual? visual,
+        FrameworkElement bar,
+        ref double previousTarget,
+        double target,
+        bool animate)
     {
         if (visual is null)
         {
             return;
         }
 
+        ConfigureVisual(visual, bar);
         var safeTarget = Math.Clamp(target, MinimumScale, 1);
         if (!animate)
         {

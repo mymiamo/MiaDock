@@ -11,6 +11,9 @@ The latest release is always shown at the top of this page.
 * Minimal, Dynamic, Large ve Custom görünüm ön ayarları; hareket ve görünüm kişiselleştirmesini hızlandırır.
 * Olay morfu ve dekoratif simge/kabuk vurguları ayrı ayrı kapatılabilir. Windows sistem animasyonları kapalıyken MiaDock doğrudan ve güvenli geçişler kullanır.
 * Medya, gizlilik, Device Hub ve Clipboard Peek olayları ortak, iptal edilebilir geçiş hattından yararlanır; hızlı olaylarda görünmez ya da yanlış boyutlu yüzey bırakmaz.
+* Deneysel medya spectrum'u eklendi. Özellik varsayılan olarak kapalıdır ve Medya ayarlarından uygulamayı yeniden başlatmadan açılıp kapatılabilir.
+* Spectrum'un dinleyeceği Windows ses çıkışı seçilebilir. SteelSeries Sonar gibi sanal kanallar desteklenir; yakalama kullanılamazsa medya uygulamasının gerçek ses seviyesine güvenle dönülür.
+* Apple Music ve hızlı medya oturumu değişimleri artık çalışan spectrum kaydını kesmez.
 
 ### English
 
@@ -18,6 +21,9 @@ The latest release is always shown at the top of this page.
 * Minimal, Dynamic, Large, and Custom appearance presets make motion and appearance personalization quicker.
 * Event morphs and decorative icon/shell emphasis can be disabled independently. When Windows system animations are off, MiaDock uses direct, safe transitions.
 * Media, privacy, Device Hub, and Clipboard Peek events share a cancellable transition path that avoids invisible or incorrectly sized surfaces during rapid events.
+* An experimental media spectrum is available. It is disabled by default and can be toggled live from Media settings without restarting the app.
+* You can select the Windows audio output that spectrum listens to. Virtual channels such as SteelSeries Sonar are supported, with safe fallback to the media app's real audio level when capture is unavailable.
+* Apple Music and rapid media-session changes no longer interrupt an active spectrum capture.
 
 ## MiaDock 1.5.5
 

@@ -115,7 +115,10 @@ public static class SettingsValidator
         media = media with
         {
             Fallback = EnumValue(media.Fallback, MediaSettings.Default.Fallback),
-            VolumeTarget = EnumValue(media.VolumeTarget, MediaSettings.Default.VolumeTarget)
+            VolumeTarget = EnumValue(media.VolumeTarget, MediaSettings.Default.VolumeTarget),
+            SpectrumOutputDeviceId = string.IsNullOrWhiteSpace(media.SpectrumOutputDeviceId)
+                ? null
+                : media.SpectrumOutputDeviceId.Trim()
         };
 
         var monitor = settings.Monitor ?? MonitorSettings.Default;
@@ -931,6 +934,28 @@ public static class SettingsValidator
                         DockPersonalizationSettings.MinimumTopOffset,
                         DockPersonalizationSettings.MaximumTopOffset,
                         DockPersonalizationSettings.Default.TopOffset)
+                }
+            };
+        }
+
+        if (settings.SchemaVersion < 32)
+        {
+            settings = settings with
+            {
+                Media = (settings.Media ?? MediaSettings.Default) with
+                {
+                    ExperimentalSpectrumEnabled = false
+                }
+            };
+        }
+
+        if (settings.SchemaVersion < 33)
+        {
+            settings = settings with
+            {
+                Media = (settings.Media ?? MediaSettings.Default) with
+                {
+                    SpectrumOutputDeviceId = null
                 }
             };
         }
