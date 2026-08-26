@@ -3,6 +3,58 @@
 En yeni sürüm her zaman bu sayfanın en üstünde yer alır.
 The latest release is always shown at the top of this page.
 
+## MiaDock 1.6.3
+
+### Türkçe
+
+* Zaman modülünün genişletilmiş görünümü yerel Zamanlayıcı/Kronometre sekmeleriyle yenilendi.
+* Zamanlayıcı artık gerçek duruma bağlı 224 px dairesel ilerleme halkası, hızlı süre seçimleri ve güvenli saat/dakika/saniye alanları kullanıyor.
+* Hazır süreler sayacı anında başlatmak yerine alanları dolduruyor; elle düzenleme seçimi temizliyor ve sıfır sürede başlatma engelleniyor.
+* Kronometre ve tur listesi aynı Fluent görsel dilinde yenilendi; geniş düzende iki sütun, dar düzende dikey ve kaydırılabilir akış kullanılıyor.
+* Genişletilmiş Zaman görünümündeki yinelenen başlık kaldırıldı; hazır süre metinleri artık kesilmiyor ve timer içeriği alt modül navigasyonunun arkasında kalmıyor.
+* Clipboard Peek; içerik türüne özel simgeler, modern geçerli pano kartı, kompakt renk biçimi satırları ve seçili öğeyi belirginleştiren yeni geçmiş görünümüyle yenilendi.
+* Hassas pano içeriği varsayılan olarak gizli kalıyor; görsel önizlemelerde gecikmiş yükleme sonuçlarının yanlış öğeye uygulanması engelleniyor.
+
+### English
+
+* The expanded Time module now uses native Timer/Stopwatch tabs.
+* Timer uses a real state-driven 224 px circular progress ring, quick duration choices, and safely bounded hours/minutes/seconds fields.
+* Presets fill the duration fields instead of starting immediately; manual edits clear the preset, and a zero duration cannot start.
+* Stopwatch and laps share the same Fluent visual language, using two columns when wide and a vertical scrollable flow when narrow.
+* The duplicate expanded Time header is removed, quick-duration labels no longer clip, and timer content no longer falls behind bottom module navigation.
+* Clipboard Peek now has type-specific icons, a modern current-clipboard hero, compact color-format rows, and a refreshed history view with clear current-item selection.
+* Sensitive clipboard content remains hidden by default, and stale thumbnail results can no longer overwrite the preview for a newer item.
+
+## MiaDock 1.6.2
+
+### Türkçe
+
+* Güncel deneysel System Spectrum motoru Store paketine dâhil edildi; özellik Medya ayarlarından açılabilir.
+* Spectrum'un dinleyeceği Windows çıkışı seçilebilir; SteelSeries Sonar sanal kanalları desteklenir.
+* Apple Music ve hızlı medya oturumu geçişleri çalışan spectrum kaydını artık kesmez.
+* Spectrum kullanılamadığında seçili medya oturumunun gerçek ses seviyesi güvenli fallback olarak kullanılır.
+
+### English
+
+* The current experimental System Spectrum engine is included in the Store package and can be enabled from Media settings.
+* The Windows output monitored by spectrum is selectable, including SteelSeries Sonar virtual channels.
+* Apple Music and rapid media-session transitions no longer interrupt an active spectrum capture.
+* When spectrum is unavailable, the selected media session's real audio level is used as the safe fallback.
+
+## MiaDock 1.6.1
+
+### Türkçe
+
+* Gerçek zamanlı ses spectrum'u artık deneysel ve isteğe bağlıdır; varsayılan görselleştirici gerçek medya oturumu ses düzeyini kullanır.
+* Spectrum kapalıyken gerçek ses seviyesi alınamazsa eski merkezlenmiş üç çubuk animasyonu devreye girer.
+* Spectrum yakalama yaşam döngüsü, kaynak fallback'i ve canlı açma/kapatma davranışı daha güvenli hâle getirildi.
+
+### English
+
+* Real-time audio spectrum is now experimental and opt-in; the default visualizer follows the real media-session audio level.
+* When spectrum is off and a real audio level is unavailable, the legacy centered three-bar animation takes over.
+* Spectrum capture lifecycle, source fallback, and live toggle behavior are more resilient.
+
 ## MiaDock 1.6.0
 
 ### Türkçe

@@ -1,0 +1,11 @@
+<UserControl x:Class="MiaDock.App.Controls.CallAppIconView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded">
+  <Grid>
+    <FontIcon x:Name="FallbackIcon" Glyph="{Binding ActivityGlyph}" FontSize="30"
+              Foreground="{ThemeResource IslandStyleAccentBrush}" />
+    <Image x:Name="AppIcon" Margin="13" Stretch="Uniform" Visibility="Collapsed" />
+  </Grid>
+</UserControl>

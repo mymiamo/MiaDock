@@ -261,7 +261,7 @@ public sealed partial class SettingsViewModel : ObservableObject, IDisposable
     public IReadOnlyList<MediaSourceInfo> MediaSources => _music.Sources;
     public bool IsMediaLoading => _music.ServiceState == MediaServiceState.Initializing;
     public IReadOnlyList<DisplayDescriptor> Displays => _displayTopology?.Displays ?? Array.Empty<DisplayDescriptor>();
-    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.6.0.0";
+    public string VersionText => Assembly.GetEntryAssembly()?.GetName().Version?.ToString(4) ?? "1.6.3.0";
     public string SettingsFilePath => _settingsService.SettingsFilePath;
     public IRelayCommand ResetAllCommand { get; }
     public IRelayCommand ResetAppearanceCommand { get; }

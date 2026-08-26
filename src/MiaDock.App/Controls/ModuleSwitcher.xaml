@@ -1,8 +1,10 @@
 <UserControl x:Class="MiaDock.App.Controls.ModuleSwitcher"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             IsTabStop="True"
+             xmlns:animations="using:MiaDock.App.Animations"
              AutomationProperties.Name="Modüller arasında geçiş"
+             Loaded="OnLoaded"
+             Unloaded="OnUnloaded"
              KeyDown="OnKeyDown"
              PointerWheelChanged="OnPointerWheelChanged"
              ManipulationMode="TranslateX"
@@ -10,6 +12,9 @@
   <Border x:Name="SwitcherRoot"
           Height="48"
           Style="{StaticResource DockSectionStyle}"
+          Background="Transparent"
+          BorderBrush="Transparent"
+          BorderThickness="0"
           Padding="2">
     <Grid ColumnSpacing="4">
       <Grid.ColumnDefinitions>
@@ -20,46 +25,45 @@
 
       <Button Width="44"
               Height="44"
-              Style="{StaticResource DockIconButtonStyle}"
+              Style="{StaticResource ModuleSwitcherArrowStyle}"
+              animations:MicroMotion.IsInteractive="True"
               Click="OnPreviousClick"
               ToolTipService.ToolTip="Önceki modül"
               AutomationProperties.Name="Önceki modül">
         <FontIcon Glyph="&#xE76B;" FontSize="14" />
       </Button>
 
-      <ScrollViewer Grid.Column="1"
-                    HorizontalScrollMode="Enabled"
-                    HorizontalScrollBarVisibility="Hidden"
-                    VerticalScrollMode="Disabled"
-                    VerticalScrollBarVisibility="Disabled"
-                    HorizontalContentAlignment="Center">
-        <StackPanel Orientation="Horizontal" Spacing="3">
-          <Button x:Name="DefaultButton"
-                  Width="44"
-                  Height="44"
-                  Style="{StaticResource DockIconButtonStyle}"
-                  Click="OnDefaultClick"
-                  ToolTipService.ToolTip="Ana dock"
-                  AutomationProperties.Name="Ana dock">
-            <Grid>
-              <FontIcon Glyph="&#xE80F;" FontSize="14" />
-              <Border x:Name="DefaultIndicator"
-                      Width="4" Height="2"
-                      Margin="0,0,0,2"
-                      CornerRadius="1"
-                      Background="{ThemeResource IslandStyleAccentBrush}"
-                      HorizontalAlignment="Center"
-                      VerticalAlignment="Bottom" />
-            </Grid>
-          </Button>
-          <StackPanel x:Name="ModuleButtons" Orientation="Horizontal" Spacing="3" />
-        </StackPanel>
-      </ScrollViewer>
+      <Grid x:Name="TabViewport" Grid.Column="1">
+        <ScrollViewer x:Name="TabScrollViewer"
+                      HorizontalScrollMode="Enabled"
+                      HorizontalScrollBarVisibility="Hidden"
+                      VerticalScrollMode="Disabled"
+                      VerticalScrollBarVisibility="Disabled"
+                      HorizontalContentAlignment="Center">
+          <StackPanel Orientation="Horizontal" Spacing="4">
+            <Button x:Name="DefaultButton"
+                    Width="44"
+                    Height="44"
+                    Style="{StaticResource ModuleSwitcherItemStyle}"
+                    animations:MicroMotion.IsInteractive="True"
+                    Click="OnDefaultClick"
+                    ToolTipService.ToolTip="Ana dock"
+                    AutomationProperties.Name="Ana dock">
+              <FontIcon x:Name="DefaultIcon"
+                        Glyph="&#xE80F;"
+                        FontSize="17"
+                        Foreground="{ThemeResource IslandTextSecondaryBrush}" />
+            </Button>
+            <StackPanel x:Name="ModuleButtons" Orientation="Horizontal" Spacing="4" />
+          </StackPanel>
+        </ScrollViewer>
+      </Grid>
 
       <Button Grid.Column="2"
               Width="44"
               Height="44"
-              Style="{StaticResource DockIconButtonStyle}"
+              Style="{StaticResource ModuleSwitcherArrowStyle}"
+              animations:MicroMotion.IsInteractive="True"
               Click="OnNextClick"
               ToolTipService.ToolTip="Sonraki modül"
               AutomationProperties.Name="Sonraki modül">

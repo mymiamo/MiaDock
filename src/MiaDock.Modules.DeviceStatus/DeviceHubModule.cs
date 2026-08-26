@@ -53,7 +53,7 @@ public sealed class DeviceHubModule : IIslandModule, IAsyncDisposable
         ? new ModulePresentation(ModuleId, Text("DeviceHub.Title", "Device Hub"), _viewModel.StatusText, "\uE7F4",
             _service.Current.BluetoothDevices.Any(device => device.ConnectionState == DeviceHubConnectionState.Connected)
                 ? ModuleIndicatorKind.StatusDot : ModuleIndicatorKind.None,
-            valueText: ConnectedCount().ToString(), presentationKind: ModulePresentationKind.Status)
+            valueText: _viewModel.ConnectedSummary, presentationKind: ModulePresentationKind.Status)
         : null;
 
     public event EventHandler<ModulePresentation?>? PresentationChanged;
@@ -140,9 +140,6 @@ public sealed class DeviceHubModule : IIslandModule, IAsyncDisposable
                 _ => AudibleNotificationCue.None
             }));
     }
-
-    private int ConnectedCount() => _service.Current.BluetoothDevices.Count(device =>
-        device.ConnectionState == DeviceHubConnectionState.Connected) + _service.Current.StorageDevices.Count;
 
     private static string Glyph(DeviceHubDeviceCategory category) => category switch
     {

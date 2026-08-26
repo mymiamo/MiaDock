@@ -140,7 +140,7 @@
     <value>Aplicativos ativos</value>
   </data>
   <data name="System.Call.IdleDetail" xml:space="preserve">
-    <value>Inferência local de chamadas</value>
+    <value>Detecção local · O áudio não é gravado</value>
   </data>
   <data name="Module.system-activity.Name" xml:space="preserve">
     <value>Chamada</value>
@@ -165,6 +165,9 @@
   </data>
   <data name="Dock.Home" xml:space="preserve">
     <value>Doca inicial</value>
+  </data>
+  <data name="Navigation.Selected" xml:space="preserve">
+    <value>Selecionado</value>
   </data>
   <data name="Dock.Show" xml:space="preserve">
     <value>Mostrar dock</value>
@@ -1307,4 +1310,44 @@
   <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Saída de áudio do espectro</value></data>
   <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Escolha a saída que o espectro deve ouvir. Se você usa o SteelSeries Sonar, selecione o canal atribuído ao aplicativo de mídia.</value></data>
   <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Padrão do Windows</value></data>
+  <data name="ClipboardPeek.Current" xml:space="preserve"><value>Área de transferência atual</value></data>
+  <data name="ClipboardPeek.SensitiveDescription" xml:space="preserve"><value>Este item da área de transferência está oculto para proteger sua privacidade.</value></data>
+  <data name="DeviceHub.Title" xml:space="preserve"><value>Central de dispositivos</value></data>
+  <data name="DeviceHub.Automation" xml:space="preserve"><value>Dispositivos conectados</value></data>
+  <data name="DeviceHub.AudioOutput" xml:space="preserve"><value>Saída de áudio</value></data>
+  <data name="DeviceHub.AudioOutputAutomation" xml:space="preserve"><value>Dispositivos de saída de áudio</value></data>
+  <data name="DeviceHub.Microphone" xml:space="preserve"><value>Microfone</value></data>
+  <data name="DeviceHub.MicrophoneAutomation" xml:space="preserve"><value>Dispositivos de microfone</value></data>
+  <data name="DeviceHub.Bluetooth" xml:space="preserve"><value>Bluetooth</value></data>
+  <data name="DeviceHub.BluetoothAutomation" xml:space="preserve"><value>Dispositivos Bluetooth</value></data>
+  <data name="DeviceHub.Storage" xml:space="preserve"><value>Armazenamento removível</value></data>
+  <data name="DeviceHub.StorageAutomation" xml:space="preserve"><value>Dispositivos de armazenamento removível</value></data>
+  <data name="DeviceHub.Empty" xml:space="preserve"><value>Nenhum dispositivo conectado foi encontrado.</value></data>
+  <data name="DeviceHub.SelectSound" xml:space="preserve"><value>Selecionar nas configurações de som</value></data>
+  <data name="DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Opções de remoção do Windows</value></data>
+  <data name="DeviceHub.Eject" xml:space="preserve"><value>Ejetar com segurança</value></data>
+  <data name="DeviceHub.Capacity" xml:space="preserve"><value>Capacidade</value></data>
+  <data name="DeviceHub.Available" xml:space="preserve"><value>Disponível</value></data>
+  <data name="DeviceHub.FileSystem" xml:space="preserve"><value>Sistema de arquivos</value></data>
+  <data name="DeviceHub.ConnectedSummary" xml:space="preserve"><value>{0} conectados</value></data>
+  <data name="System.Call.Title" xml:space="preserve"><value>Chamada</value></data>
+  <data name="System.Call.Detected" xml:space="preserve"><value>Chamada detectada</value></data>
+  <data name="System.Call.AppTitle" xml:space="preserve"><value>Chamada do {0}</value></data>
+  <data name="System.Call.AppEnded" xml:space="preserve"><value>A chamada do {0} terminou</value></data>
+  <data name="System.Call.UnknownApp" xml:space="preserve"><value>Aplicativo de comunicação</value></data>
+  <data name="System.Call.PossibleBadge" xml:space="preserve"><value>Possível atividade</value></data>
+  <data name="System.Call.Waiting" xml:space="preserve"><value>Aguardando</value></data>
+  <data name="System.Call.Active" xml:space="preserve"><value>Ativa</value></data>
+  <data name="System.Call.PossibleDetail" xml:space="preserve"><value>Foi encontrada atividade de microfone de comunicação, mas não foi possível confirmar uma chamada.</value></data>
+  <data name="System.Call.PossibleAppDetail" xml:space="preserve"><value>Foi encontrada atividade de microfone do {0}, mas não foi possível confirmar uma chamada.</value></data>
+  <data name="System.Call.Automation" xml:space="preserve"><value>Atividade de chamada</value></data>
+  <data name="System.Call.LocalDetection" xml:space="preserve"><value>Detecção local</value></data>
+  <data name="System.Call.Privacy" xml:space="preserve"><value>O áudio não é gravado nem enviado.</value></data>
+  <data name="System.Call.IdleDescription" xml:space="preserve"><value>Chamadas do Discord, Skype e WhatsApp podem ser detectadas localmente.</value></data>
+  <data name="System.Call.SupportedApps" xml:space="preserve"><value>Aplicativos compatíveis</value></data>
+  <data name="System.Call.Supported" xml:space="preserve"><value>Compatível</value></data>
+  <data name="System.Call.Information" xml:space="preserve"><value>Informações da chamada</value></data>
+  <data name="System.Call.Application" xml:space="preserve"><value>Aplicativo</value></data>
+  <data name="System.Call.Microphone" xml:space="preserve"><value>Microfone</value></data>
+  <data name="System.Call.AudioSession" xml:space="preserve"><value>Áudio da chamada</value></data>
 </root>

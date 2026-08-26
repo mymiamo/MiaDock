@@ -1,3 +1,5 @@
+using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MiaDock.Core.Localization;
@@ -28,6 +30,7 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
         _bluetoothConnection = bluetoothConnection;
         _localization = localization;
         _state = service.Current;
+        ReconcileRows();
         service.StateChanged += OnStateChanged;
         if (localization is not null) localization.LanguageChanged += OnLanguageChanged;
     }
@@ -39,6 +42,11 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(AudioInputDevices))]
     [NotifyPropertyChangedFor(nameof(StorageDevices))]
     [NotifyPropertyChangedFor(nameof(BatteryDevices))]
+    [NotifyPropertyChangedFor(nameof(HasAudioOutputs))]
+    [NotifyPropertyChangedFor(nameof(HasAudioInputs))]
+    [NotifyPropertyChangedFor(nameof(HasBluetoothDevices))]
+    [NotifyPropertyChangedFor(nameof(HasStorageDevices))]
+    [NotifyPropertyChangedFor(nameof(HasAnyDevices))]
     private DeviceHubState _state;
 
     public IReadOnlyList<DeviceHubDevice> BluetoothDevices => State.BluetoothDevices;
@@ -46,6 +54,15 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     public IReadOnlyList<DeviceHubDevice> AudioInputDevices => State.AudioInputDevices;
     public IReadOnlyList<DeviceHubDevice> StorageDevices => State.StorageDevices;
     public IReadOnlyList<DeviceHubDevice> BatteryDevices => State.BatteryDevices;
+    public ObservableCollection<DeviceHubDeviceRow> AudioOutputRows { get; } = [];
+    public ObservableCollection<DeviceHubDeviceRow> AudioInputRows { get; } = [];
+    public ObservableCollection<DeviceHubDeviceRow> BluetoothRows { get; } = [];
+    public ObservableCollection<DeviceHubDeviceRow> StorageRows { get; } = [];
+    public bool HasAudioOutputs => AudioOutputRows.Count > 0;
+    public bool HasAudioInputs => AudioInputRows.Count > 0;
+    public bool HasBluetoothDevices => BluetoothRows.Count > 0;
+    public bool HasStorageDevices => StorageRows.Count > 0;
+    public bool HasAnyDevices => HasAudioOutputs || HasAudioInputs || HasBluetoothDevices || HasStorageDevices;
     public int ConnectedDeviceCount => State.BluetoothDevices.Count(device =>
         device.ConnectionState == DeviceHubConnectionState.Connected) + State.StorageDevices.Count;
     public string CompactSummary => Text(
@@ -53,6 +70,9 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
         "{0} connected · {1} audio outputs",
         ConnectedDeviceCount,
         State.AudioOutputDevices.Count);
+    public string ConnectedSummary => ConnectedDeviceCount == 0
+        ? string.Empty
+        : Text("DeviceHub.ConnectedSummary", "{0} connected", ConnectedDeviceCount);
     public string StatusText => State.State switch
     {
         DeviceServiceState.Faulted => Text("DeviceHub.Unavailable", "Cihaz bilgileri şu anda kullanılamıyor."),
@@ -62,6 +82,24 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     public string ConnectText => Text("DeviceHub.Connect", "Connect");
     public string DisconnectText => Text("DeviceHub.Disconnect", "Disconnect");
     public string ManageBluetoothText => Text("DeviceHub.ManageBluetooth", "Manage in Bluetooth settings");
+    public string TitleText => Text("DeviceHub.Title", "Device Hub");
+    public string AutomationText => Text("DeviceHub.Automation", "Connected devices");
+    public string AudioOutputText => Text("DeviceHub.AudioOutput", "Audio output");
+    public string AudioOutputAutomationText => Text("DeviceHub.AudioOutputAutomation", "Audio output devices");
+    public string MicrophoneText => Text("DeviceHub.Microphone", "Microphone");
+    public string MicrophoneAutomationText => Text("DeviceHub.MicrophoneAutomation", "Microphone devices");
+    public string BluetoothText => Text("DeviceHub.Bluetooth", "Bluetooth");
+    public string BluetoothAutomationText => Text("DeviceHub.BluetoothAutomation", "Bluetooth devices");
+    public string StorageText => Text("DeviceHub.Storage", "Removable storage");
+    public string StorageAutomationText => Text("DeviceHub.StorageAutomation", "Removable storage devices");
+    public string EmptyText => Text("DeviceHub.Empty", "No connected devices found.");
+    public string SelectSoundText => Text("DeviceHub.SelectSound", "Select in sound settings");
+    public string WindowsRemoveOptionsText => Text("DeviceHub.WindowsRemoveOptions", "Windows remove options");
+    public string OpenText => Text("DeviceHub.Open", "Open");
+    public string EjectText => Text("DeviceHub.Eject", "Eject safely");
+    public string CapacityText => Text("DeviceHub.Capacity", "Capacity");
+    public string AvailableText => Text("DeviceHub.Available", "Available");
+    public string FileSystemText => Text("DeviceHub.FileSystem", "File system");
 
     [ObservableProperty]
     private bool _storageOperationOpen;
@@ -206,18 +244,107 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     private void OnStateChanged(object? sender, DeviceHubState state)
     {
         State = state;
+        ReconcileRows();
         OnPropertyChanged(nameof(ConnectedDeviceCount));
         OnPropertyChanged(nameof(CompactSummary));
+        OnPropertyChanged(nameof(ConnectedSummary));
     }
 
     private void OnLanguageChanged(object? sender, EventArgs e)
     {
         OnPropertyChanged(nameof(StatusText));
         OnPropertyChanged(nameof(CompactSummary));
+        OnPropertyChanged(nameof(ConnectedSummary));
         OnPropertyChanged(nameof(ConnectText));
         OnPropertyChanged(nameof(DisconnectText));
         OnPropertyChanged(nameof(ManageBluetoothText));
+        OnPropertyChanged(nameof(TitleText));
+        OnPropertyChanged(nameof(AutomationText));
+        OnPropertyChanged(nameof(AudioOutputText));
+        OnPropertyChanged(nameof(AudioOutputAutomationText));
+        OnPropertyChanged(nameof(MicrophoneText));
+        OnPropertyChanged(nameof(MicrophoneAutomationText));
+        OnPropertyChanged(nameof(BluetoothText));
+        OnPropertyChanged(nameof(BluetoothAutomationText));
+        OnPropertyChanged(nameof(StorageText));
+        OnPropertyChanged(nameof(StorageAutomationText));
+        OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(SelectSoundText));
+        OnPropertyChanged(nameof(WindowsRemoveOptionsText));
+        OnPropertyChanged(nameof(OpenText));
+        OnPropertyChanged(nameof(EjectText));
+        OnPropertyChanged(nameof(CapacityText));
+        OnPropertyChanged(nameof(AvailableText));
+        OnPropertyChanged(nameof(FileSystemText));
+        RefreshRowPresentations();
         _ = _service.RefreshAsync();
+    }
+
+    private void ReconcileRows()
+    {
+        Reconcile(AudioOutputRows, State.AudioOutputDevices);
+        Reconcile(AudioInputRows, State.AudioInputDevices);
+        Reconcile(BluetoothRows, State.BluetoothDevices);
+        Reconcile(StorageRows, State.StorageDevices);
+        OnPropertyChanged(nameof(HasAudioOutputs));
+        OnPropertyChanged(nameof(HasAudioInputs));
+        OnPropertyChanged(nameof(HasBluetoothDevices));
+        OnPropertyChanged(nameof(HasStorageDevices));
+        OnPropertyChanged(nameof(HasAnyDevices));
+    }
+
+    private static void Reconcile(
+        ObservableCollection<DeviceHubDeviceRow> rows,
+        IReadOnlyList<DeviceHubDevice> devices)
+    {
+        var desiredIds = devices.Select(device => device.Id).ToHashSet(StringComparer.Ordinal);
+        for (var index = rows.Count - 1; index >= 0; index--)
+        {
+            if (!desiredIds.Contains(rows[index].Id))
+            {
+                rows.RemoveAt(index);
+            }
+        }
+
+        for (var index = 0; index < devices.Count; index++)
+        {
+            var device = devices[index];
+            var currentIndex = -1;
+            for (var candidate = 0; candidate < rows.Count; candidate++)
+            {
+                if (string.Equals(rows[candidate].Id, device.Id, StringComparison.Ordinal))
+                {
+                    currentIndex = candidate;
+                    break;
+                }
+            }
+
+            if (currentIndex < 0)
+            {
+                rows.Insert(index, new DeviceHubDeviceRow(device, index == devices.Count - 1));
+            }
+            else
+            {
+                if (currentIndex != index)
+                {
+                    rows.Move(currentIndex, index);
+                }
+                rows[index].Update(device, index == devices.Count - 1);
+            }
+        }
+
+        for (var index = 0; index < rows.Count; index++)
+        {
+            rows[index].SetLast(index == rows.Count - 1);
+        }
+    }
+
+    private void RefreshRowPresentations()
+    {
+        foreach (var row in AudioOutputRows.Concat(AudioInputRows).Concat(BluetoothRows).Concat(StorageRows))
+        {
+            row.RefreshPresentation();
+        }
     }
 
     private string Text(string key, string fallback, params object?[] arguments)
@@ -231,5 +358,113 @@ public sealed partial class DeviceHubViewModel : ObservableObject, IDisposable
     {
         _service.StateChanged -= OnStateChanged;
         if (_localization is not null) _localization.LanguageChanged -= OnLanguageChanged;
+    }
+}
+
+public sealed class DeviceHubDeviceRow : ObservableObject
+{
+    private DeviceHubDevice _device;
+    private bool _isLast;
+
+    public DeviceHubDeviceRow(DeviceHubDevice device, bool isLast)
+    {
+        _device = device;
+        _isLast = isLast;
+    }
+
+    public DeviceHubDevice Device => _device;
+    public string Id => _device.Id;
+    public string DisplayName => _device.DisplayName;
+    public string? Detail => _device.Detail;
+    public string? TrailingText => _device.Category switch
+    {
+        DeviceHubDeviceCategory.Bluetooth => _device.BatteryText,
+        DeviceHubDeviceCategory.RemovableStorage => _device.FileSystem,
+        _ => null
+    };
+    public string Glyph => _device.Category switch
+    {
+        DeviceHubDeviceCategory.AudioOutput when _device.DeviceType is DeviceHubDeviceType.Headphones or DeviceHubDeviceType.Headset => "\uE7F6",
+        DeviceHubDeviceCategory.AudioOutput => "\uE767",
+        DeviceHubDeviceCategory.AudioInput => "\uE720",
+        DeviceHubDeviceCategory.RemovableStorage => "\uE88E",
+        DeviceHubDeviceCategory.Bluetooth => _device.DeviceType switch
+        {
+            DeviceHubDeviceType.Headphones or DeviceHubDeviceType.Headset => "\uE7F6",
+            DeviceHubDeviceType.Speaker => "\uE767",
+            DeviceHubDeviceType.Keyboard => "\uE765",
+            DeviceHubDeviceType.Mouse => "\uE962",
+            DeviceHubDeviceType.Gamepad => "\uE7FC",
+            _ => "\uE702"
+        },
+        _ => "\uE7F4"
+    };
+    public string AccessibilityText => string.Join(", ", new[] { DisplayName, Detail, TrailingText }
+        .Where(value => !string.IsNullOrWhiteSpace(value)));
+    public string VisualStateKey => $"{Id}|{_device.ConnectionState}|{_device.IsDefault}|{_device.BatteryPercentage}|{_device.FreeSpace}";
+    public bool CanConnect => _device.CanConnect;
+    public bool CanDisconnect => _device.CanDisconnect;
+    public bool CanOpen => _device.Capabilities.HasFlag(DeviceHubDeviceCapabilities.Open);
+    public bool CanEject => _device.CanEject || _device.Capabilities.HasFlag(DeviceHubDeviceCapabilities.Eject);
+    public bool HasDivider => !_isLast;
+    public bool HasCapacity => _device.TotalSpace is >= 0;
+    public bool HasAvailable => _device.FreeSpace is >= 0;
+    public bool HasFileSystem => !string.IsNullOrWhiteSpace(_device.FileSystem);
+    public string CapacityValue => FormatBytes(_device.TotalSpace);
+    public string AvailableValue => FormatBytes(_device.FreeSpace);
+    public string FileSystemValue => _device.FileSystem ?? string.Empty;
+
+    internal void Update(DeviceHubDevice device, bool isLast)
+    {
+        var deviceChanged = _device != device;
+        _device = device;
+        _isLast = isLast;
+        if (deviceChanged)
+        {
+            RefreshPresentation();
+        }
+        OnPropertyChanged(nameof(HasDivider));
+    }
+
+    internal void SetLast(bool isLast)
+    {
+        if (_isLast == isLast) return;
+        _isLast = isLast;
+        OnPropertyChanged(nameof(HasDivider));
+    }
+
+    internal void RefreshPresentation()
+    {
+        OnPropertyChanged(nameof(Device));
+        OnPropertyChanged(nameof(DisplayName));
+        OnPropertyChanged(nameof(Detail));
+        OnPropertyChanged(nameof(TrailingText));
+        OnPropertyChanged(nameof(Glyph));
+        OnPropertyChanged(nameof(AccessibilityText));
+        OnPropertyChanged(nameof(VisualStateKey));
+        OnPropertyChanged(nameof(CanConnect));
+        OnPropertyChanged(nameof(CanDisconnect));
+        OnPropertyChanged(nameof(CanOpen));
+        OnPropertyChanged(nameof(CanEject));
+        OnPropertyChanged(nameof(HasCapacity));
+        OnPropertyChanged(nameof(HasAvailable));
+        OnPropertyChanged(nameof(HasFileSystem));
+        OnPropertyChanged(nameof(CapacityValue));
+        OnPropertyChanged(nameof(AvailableValue));
+        OnPropertyChanged(nameof(FileSystemValue));
+    }
+
+    private static string FormatBytes(long? bytes)
+    {
+        if (bytes is null or < 0) return string.Empty;
+        string[] units = ["B", "KB", "MB", "GB", "TB"];
+        var value = (double)bytes.Value;
+        var unit = 0;
+        while (value >= 1024 && unit < units.Length - 1)
+        {
+            value /= 1024;
+            unit++;
+        }
+        return string.Format(CultureInfo.CurrentCulture, "{0:0.#} {1}", value, units[unit]);
     }
 }

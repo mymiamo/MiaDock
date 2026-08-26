@@ -34,11 +34,13 @@ public sealed partial class PrivacyModuleViewModel : ObservableObject, IDisposab
     [NotifyPropertyChangedFor(nameof(TitleText))]
     [NotifyPropertyChangedFor(nameof(SummaryText))]
     [NotifyPropertyChangedFor(nameof(EmptyText))]
+    [NotifyPropertyChangedFor(nameof(HeroDetailText))]
     [NotifyPropertyChangedFor(nameof(Indicator))]
     [NotifyPropertyChangedFor(nameof(StatusGlyph))]
     public partial PrivacyState State { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HeroDetailText))]
     public partial IReadOnlyList<PrivacyApplicationItemViewModel> Applications { get; set; } =
         Array.Empty<PrivacyApplicationItemViewModel>();
 
@@ -58,6 +60,14 @@ public sealed partial class PrivacyModuleViewModel : ObservableObject, IDisposab
                     : Text("Privacy_NoActiveDevices", "Aktif gizlilik kullanımı yok");
 
     public string EmptyText => Text("Privacy_NoActiveDevices", "Aktif gizlilik kullanımı yok");
+
+    public string HeroDetailText => HasActiveUsage
+        ? Applications.FirstOrDefault()?.DisplayName ?? DescriptionText
+        : DescriptionText;
+
+    public string DescriptionText => Text(
+        "Onboarding.Module.Privacy.Description",
+        "Mikrofon ve kamerayı kullanan uygulamaları gösterir.");
 
     public string ActiveApplicationsHeader =>
         Text("Privacy_ActiveApplications", "Aktif uygulamalar");
@@ -83,6 +93,8 @@ public sealed partial class PrivacyModuleViewModel : ObservableObject, IDisposab
         OnPropertyChanged(nameof(TitleText));
         OnPropertyChanged(nameof(SummaryText));
         OnPropertyChanged(nameof(EmptyText));
+        OnPropertyChanged(nameof(HeroDetailText));
+        OnPropertyChanged(nameof(DescriptionText));
         OnPropertyChanged(nameof(ActiveApplicationsHeader));
         Applications = CreateItems(State);
     }

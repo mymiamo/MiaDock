@@ -30,6 +30,8 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
     private readonly CoalescingActionScheduler _mixerSampleScheduler;
     private readonly Timer _audioRebindTimer;
     private readonly Timer _mixerMeterTimer;
+    private readonly Timer _callTransitionTimer;
+    private readonly CommunicationActivityStabilizer _callStabilizer = new();
     private readonly object _stateGate = new();
     private readonly object _startGate = new();
     private readonly HashSet<string> _cameraDeviceIds = new(StringComparer.Ordinal);
@@ -85,6 +87,11 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
             Timeout.InfiniteTimeSpan);
         _mixerMeterTimer = new Timer(
             _ => _mixerSampleScheduler.Request(),
+            null,
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan);
+        _callTransitionTimer = new Timer(
+            _ => RequestRefresh(),
             null,
             Timeout.InfiniteTimeSpan,
             Timeout.InfiniteTimeSpan);
@@ -307,6 +314,16 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         catch (ObjectDisposedException)
         {
         }
+
+        try
+        {
+            _callTransitionTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            _callTransitionTimer.Dispose();
+        }
+        catch (ObjectDisposedException)
+        {
+        }
+        _callStabilizer.Reset();
 
         if (_worker is null)
         {
@@ -605,12 +622,35 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
             session.Flow == AudioDataFlow.Capture &&
             session.State == AudioSessionState.Active &&
             session.ProcessId != Environment.ProcessId);
-        var activeProcessNames = _sessions
-            .Where(session => session.State == AudioSessionState.Active &&
+        var activeCaptureProcesses = _sessions
+            .Where(session => session.Flow == AudioDataFlow.Capture &&
+                              session.State == AudioSessionState.Active &&
+                              session.ProcessId != Environment.ProcessId &&
                               !string.IsNullOrWhiteSpace(session.ProcessName))
-            .Select(session => session.ProcessName)
-            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Select(session => new CommunicationProcessIdentity(
+                session.ProcessName,
+                session.ProcessExecutablePath))
+            .DistinctBy(identity => (identity.ProcessName, identity.ExecutablePath))
             .ToArray();
+        var activeRenderProcesses = _sessions
+            .Where(session => session.Flow == AudioDataFlow.Render &&
+                              session.State == AudioSessionState.Active &&
+                              session.ProcessId != Environment.ProcessId &&
+                              !string.IsNullOrWhiteSpace(session.ProcessName))
+            .Select(session => new CommunicationProcessIdentity(
+                session.ProcessName,
+                session.ProcessExecutablePath))
+            .DistinctBy(identity => (identity.ProcessName, identity.ExecutablePath))
+            .ToArray();
+        var previousCallActivity = Current.CallActivity;
+        var rawCallActivity = CommunicationActivityClassifier.Classify(
+            activeCaptureProcesses,
+            activeRenderProcesses,
+            previousCallActivity.State == CallActivityState.Detected
+                ? previousCallActivity.App
+                : CommunicationApp.Unknown);
+        var callActivity = _callStabilizer.Update(rawCallActivity, DateTimeOffset.UtcNow);
+        ScheduleCallTransitionEvaluation();
 
         _applicationSession = null;
         var appAvailability = ApplicationVolumeAvailability.Unavailable;
@@ -665,10 +705,11 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
                     ? CameraDeviceAvailability.Available
                     : CameraDeviceAvailability.NotFound,
             cameraAccess,
-            CommunicationActivityClassifier.Classify(microphoneActive, activeProcessNames),
+            callActivity,
             _defaultOutputDeviceId,
             _defaultOutputDeviceName);
         SetCurrent(snapshot);
+        LogCallTransition(previousCallActivity, callActivity);
         PublishMixerSnapshot();
         if (!_initializing && !_initialStateLogged && state is not SystemActivityServiceState.Initializing)
         {
@@ -998,6 +1039,51 @@ public sealed class WindowsSystemActivityService : ISystemActivityService, IAudi
         }
 
         _refreshScheduler.Request();
+    }
+
+    private void ScheduleCallTransitionEvaluation()
+    {
+        try
+        {
+            if (_callStabilizer.NextEvaluationAt is not { } dueAt)
+            {
+                _callTransitionTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+                return;
+            }
+
+            var delay = dueAt - DateTimeOffset.UtcNow;
+            if (delay < TimeSpan.FromMilliseconds(1))
+            {
+                delay = TimeSpan.FromMilliseconds(1);
+            }
+            _callTransitionTimer.Change(delay, Timeout.InfiniteTimeSpan);
+        }
+        catch (ObjectDisposedException)
+        {
+            // A pending one-shot transition can race with service shutdown.
+        }
+    }
+
+    private void LogCallTransition(CallActivityInfo previous, CallActivityInfo current)
+    {
+        if (previous.State == current.State && previous.App == current.App)
+        {
+            return;
+        }
+
+        _log.Write(
+            TechnicalLogLevel.Information,
+            TechnicalEventIds.CommunicationActivityChanged,
+            "SystemActivity",
+            "Communication activity state changed.",
+            properties: new Dictionary<string, object?>
+            {
+                ["state"] = current.State.ToString(),
+                ["provider"] = current.App.ToString(),
+                ["processName"] = current.ProcessName,
+                ["capture"] = current.HasCaptureActivity,
+                ["render"] = current.HasRenderActivity
+            });
     }
 
     private void PostRebindAudio()

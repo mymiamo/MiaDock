@@ -206,7 +206,7 @@ public sealed class ClipboardPeekModule : IIslandModule, IAsyncDisposable
         ModuleId,
         Text("ClipboardPeek.Title", "Clipboard Peek"),
         SafeSummary(item),
-        Glyph(item.Type),
+        ClipboardPeekViewModel.GlyphFor(item.Type),
         item.IsSensitive ? ModuleIndicatorKind.StatusDot : ModuleIndicatorKind.None,
         valueText: Text($"ClipboardPeek.Type.{item.Type}", item.Type.ToString()),
         isSensitive: true,
@@ -220,18 +220,6 @@ public sealed class ClipboardPeekModule : IIslandModule, IAsyncDisposable
             return string.Format(Text("ClipboardPeek.MultipleItems", "{0} items copied"), count);
         return item.DisplayText;
     }
-
-    private static string Glyph(ClipboardPeekContentType type) => type switch
-    {
-        ClipboardPeekContentType.Url => "\uE774",
-        ClipboardPeekContentType.Email => "\uE715",
-        ClipboardPeekContentType.Color => "\uE790",
-        ClipboardPeekContentType.File => "\uE8A5",
-        ClipboardPeekContentType.Folder => "\uE8B7",
-        ClipboardPeekContentType.Image => "\uEB9F",
-        ClipboardPeekContentType.Sensitive => "\uE72E",
-        _ => "\uE8C8"
-    };
 
     private static string CreateToken() =>
         Convert.ToBase64String(RandomNumberGenerator.GetBytes(12))

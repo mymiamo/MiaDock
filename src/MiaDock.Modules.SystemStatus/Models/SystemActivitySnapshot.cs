@@ -11,7 +11,7 @@ public sealed record SystemActivitySnapshot(
     MicrophoneUsageState MicrophoneUsage,
     CameraDeviceAvailability CameraDeviceAvailability,
     CameraAccessState CameraAccess,
-    CallActivityState CallActivity,
+    CallActivityInfo CallActivity,
     string? DefaultOutputDeviceId = null,
     string? DefaultOutputDeviceName = null)
 {
@@ -26,7 +26,7 @@ public sealed record SystemActivitySnapshot(
         MicrophoneUsageState.Unavailable,
         CameraDeviceAvailability.Unavailable,
         CameraAccessState.Unavailable,
-        CallActivityState.None);
+        CallActivityInfo.None);
 
     public int MasterVolumePercent => (int)Math.Round(Math.Clamp(MasterVolume, 0, 1) * 100);
 

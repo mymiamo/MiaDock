@@ -439,7 +439,7 @@ public sealed class VolumeModuleTests
         MicrophoneUsageState.Idle,
         CameraDeviceAvailability.Available,
         CameraAccessState.Allowed,
-        CallActivityState.None,
+        CallActivityInfo.None,
         "speakers",
         "Speakers");
 

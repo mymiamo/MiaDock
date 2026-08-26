@@ -4,7 +4,8 @@
              xmlns:animations="using:MiaDock.App.Animations">
   <Grid Style="{StaticResource DockNotificationLayoutStyle}"
         AutomationProperties.Name="{Binding PrimaryText}"
-        AutomationProperties.LiveSetting="Polite">
+        AutomationProperties.LiveSetting="Polite"
+        animations:MicroMotion.StateKey="{Binding PrimaryText}">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="Auto" />
       <ColumnDefinition Width="*" />
@@ -26,6 +27,7 @@
                   Tag="{Binding Id}"
                   IsEnabled="{Binding IsEnabled}"
                   MinHeight="44"
+                  Style="{StaticResource DockInlineButtonStyle}"
                   animations:MicroMotion.IsInteractive="True"
                   Click="OnCommandClick"
                   AutomationProperties.Name="{Binding DisplayName}" />

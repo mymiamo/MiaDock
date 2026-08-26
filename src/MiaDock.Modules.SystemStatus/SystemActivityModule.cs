@@ -124,21 +124,46 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     private ModuleEvent? CreateEvent(SystemActivitySnapshot previous, SystemActivitySnapshot current)
     {
-        if (previous.CallActivity == current.CallActivity)
+        if (previous.CallActivity.State == current.CallActivity.State &&
+            previous.CallActivity.App == current.CallActivity.App)
         {
             return null;
         }
 
         var now = DateTimeOffset.UtcNow;
+        if (current.CallActivity.State == CallActivityState.Detected)
+        {
+            var appName = current.CallActivity.DisplayName ?? Text("System.Call.UnknownApp", "Communication app");
+            return CreateStatusEvent(
+                Format("System.Call.AppTitle", "{0} call", appName),
+                Text("System.Call.Detected", "Call detected"),
+                _viewModel.ActivityGlyph,
+                ModuleEventPriority.High,
+                "system:call",
+                now);
+        }
+
+        if (previous.CallActivity.State == CallActivityState.Detected)
+        {
+            var appName = previous.CallActivity.DisplayName ?? Text("System.Call.UnknownApp", "Communication app");
+            return CreateStatusEvent(
+                Format("System.Call.AppEnded", "{0} call ended", appName),
+                string.Empty,
+                "\uE717",
+                ModuleEventPriority.High,
+                "system:call",
+                now);
+        }
+
         return CreateStatusEvent(
-            current.CallActivity == CallActivityState.Possible
+            current.CallActivity.State == CallActivityState.Possible
                 ? Text("Dock.CallPossible", "Olası arama etkinliği")
                 : Text("System.Call.Ended", "Arama etkinliği sona erdi"),
-            current.CallActivity == CallActivityState.Possible
-                ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
+            current.CallActivity.State == CallActivityState.Possible
+                ? _viewModel.PossibleDetail
                 : string.Empty,
             "\uE717",
-            ModuleEventPriority.High,
+            ModuleEventPriority.Normal,
             "system:call",
             now);
     }
@@ -166,18 +191,20 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     private ModulePresentation CreatePresentation(SystemActivitySnapshot snapshot)
     {
-        var hasOngoingActivity = snapshot.CallActivity == CallActivityState.Possible;
+        var detected = snapshot.CallActivity.State == CallActivityState.Detected;
+        var possible = snapshot.CallActivity.State == CallActivityState.Possible;
+        var hasOngoingActivity = detected || possible;
         return new ModulePresentation(
             ModuleId,
-            _viewModel.ActivityTitle,
-            _viewModel.ActivityDetail,
+            Text("System.Call.Title", "Call"),
+            _viewModel.CallText,
             _viewModel.ActivityGlyph,
             hasOngoingActivity ? ModuleIndicatorKind.StatusDot : ModuleIndicatorKind.None,
-            valueText: string.Empty,
+            valueText: _viewModel.CallStatusBadgeText,
             presentationKind: ModulePresentationKind.Status,
             commands: [],
             isPersistentOverride: hasOngoingActivity,
-            persistentPriorityOverride: hasOngoingActivity ? 450 : null);
+            persistentPriorityOverride: detected ? 450 : possible ? 225 : null);
     }
 
     private void OnLanguageChanged(object? sender, EventArgs args) =>
@@ -185,6 +212,13 @@ public sealed class SystemActivityModule : IIslandModule, IDisposable
 
     private string Text(string key, string fallback) =>
         _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    private string Format(string key, string fallback, params object?[] arguments)
+    {
+        var localized = _localization?.Get(key);
+        var format = localized is not null && localized != key ? localized : fallback;
+        return string.Format(format, arguments);
+    }
 
     public void Dispose()
     {

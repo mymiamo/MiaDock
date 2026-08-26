@@ -17,6 +17,39 @@
     <Setter Property="Padding" Value="14,12" />
   </Style>
 
+  <Style x:Key="DockHeroSectionStyle"
+         TargetType="Border"
+         BasedOn="{StaticResource DockSectionStyle}">
+    <Setter Property="CornerRadius" Value="18" />
+    <Setter Property="Padding" Value="18,16" />
+  </Style>
+
+  <Style x:Key="DockGroupedSectionStyle"
+         TargetType="Border"
+         BasedOn="{StaticResource DockSectionStyle}">
+    <Setter Property="Padding" Value="0" />
+  </Style>
+
+  <Style x:Key="DockGroupedRowStyle" TargetType="Border">
+    <Setter Property="MinHeight" Value="58" />
+    <Setter Property="Padding" Value="14,8" />
+    <Setter Property="Background" Value="Transparent" />
+  </Style>
+
+  <Style x:Key="DockMiniGroupedRowStyle"
+         TargetType="Border"
+         BasedOn="{StaticResource DockGroupedRowStyle}">
+    <Setter Property="MinHeight" Value="50" />
+    <Setter Property="Padding" Value="14,6" />
+  </Style>
+
+  <Style x:Key="DockInsetDividerStyle" TargetType="Border">
+    <Setter Property="Height" Value="1" />
+    <Setter Property="Margin" Value="56,0,14,0" />
+    <Setter Property="Background" Value="{ThemeResource DockDividerBrush}" />
+    <Setter Property="IsHitTestVisible" Value="False" />
+  </Style>
+
   <Style x:Key="DockModuleHeaderStyle" TargetType="Border">
     <Setter Property="Background" Value="Transparent" />
     <Setter Property="BorderThickness" Value="0" />
@@ -26,7 +59,7 @@
   <Style x:Key="DockStatusBadgeStyle" TargetType="Border">
     <Setter Property="MinHeight" Value="24" />
     <Setter Property="Background" Value="{ThemeResource DockStatusNeutralFillBrush}" />
-    <Setter Property="CornerRadius" Value="5" />
+    <Setter Property="CornerRadius" Value="8" />
     <Setter Property="Padding" Value="8,3" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
@@ -68,7 +101,7 @@
 
   <Style x:Key="DockExpandedModuleLayoutStyle" TargetType="Grid">
     <Setter Property="Padding" Value="16,6,16,8" />
-    <Setter Property="RowSpacing" Value="8" />
+    <Setter Property="RowSpacing" Value="10" />
   </Style>
 
   <Style x:Key="DockNotificationLayoutStyle" TargetType="Grid">
@@ -87,7 +120,7 @@
   <Style x:Key="DockModuleIconContainerStyle" TargetType="Border">
     <Setter Property="Width" Value="44" />
     <Setter Property="Height" Value="44" />
-    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="CornerRadius" Value="10" />
     <Setter Property="Background" Value="{ThemeResource DockStatusNeutralFillBrush}" />
     <Setter Property="VerticalAlignment" Value="Center" />
   </Style>
@@ -97,7 +130,40 @@
          BasedOn="{StaticResource DockModuleIconContainerStyle}">
     <Setter Property="Width" Value="40" />
     <Setter Property="Height" Value="40" />
-    <Setter Property="CornerRadius" Value="12" />
+    <Setter Property="CornerRadius" Value="10" />
+  </Style>
+
+  <Style x:Key="ModuleSwitcherItemStyle"
+         TargetType="Button"
+         BasedOn="{StaticResource IslandIconButtonStyle}">
+    <Setter Property="Width" Value="44" />
+    <Setter Property="Height" Value="44" />
+    <Setter Property="MinWidth" Value="44" />
+    <Setter Property="MinHeight" Value="44" />
+    <Setter Property="Padding" Value="0" />
+    <Setter Property="CornerRadius" Value="9" />
+    <Setter Property="HorizontalContentAlignment" Value="Center" />
+    <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{ThemeResource IslandTextSecondaryBrush}" />
+    <Setter Property="BorderBrush" Value="Transparent" />
+    <Setter Property="BorderThickness" Value="0" />
+    <Setter Property="UseSystemFocusVisuals" Value="True" />
+  </Style>
+
+  <Style x:Key="ModuleSwitcherArrowStyle"
+         TargetType="Button"
+         BasedOn="{StaticResource ModuleSwitcherItemStyle}">
+    <Setter Property="Opacity" Value="0.62" />
+    <Setter Property="CornerRadius" Value="8" />
+  </Style>
+
+  <Style x:Key="DockHeroIconContainerStyle"
+         TargetType="Border"
+         BasedOn="{StaticResource DockModuleIconContainerStyle}">
+    <Setter Property="Width" Value="56" />
+    <Setter Property="Height" Value="56" />
+    <Setter Property="CornerRadius" Value="16" />
   </Style>
 
   <Style x:Key="DockProgressBarStyle" TargetType="ProgressBar">
@@ -147,6 +213,13 @@
          TargetType="TextBlock"
          BasedOn="{StaticResource DockTitleTextStyle}">
     <Setter Property="FontSize" Value="13" />
+  </Style>
+
+  <Style x:Key="DockSectionHeaderTextStyle"
+         TargetType="TextBlock"
+         BasedOn="{StaticResource DockModuleHeaderTextStyle}">
+    <Setter Property="Margin" Value="4,0,4,6" />
+    <Setter Property="Foreground" Value="{ThemeResource IslandTextSecondaryBrush}" />
   </Style>
 
   <Style x:Key="DockStatusTextStyle"

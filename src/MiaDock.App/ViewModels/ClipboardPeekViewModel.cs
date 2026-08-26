@@ -20,6 +20,7 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     private CancellationTokenSource? _revealLifetime;
     private string? _revealedValue;
     private int _copyBusy;
+    private long _thumbnailGeneration;
 
     public ClipboardPeekViewModel(
         IClipboardPeekService service,
@@ -44,14 +45,17 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
         nameof(CurrentTypeText), nameof(CanCopy), nameof(CanOpen), nameof(CanOpenFolder),
         nameof(CanSaveImage), nameof(CanReveal), nameof(HasColorPreview), nameof(HasColorFormats),
         nameof(ColorHexText), nameof(ColorRgbText), nameof(ColorHslText), nameof(HasTextStats),
-        nameof(TextStatsText), nameof(CompactDetailText))]
+        nameof(ColorHexValue), nameof(ColorRgbValue), nameof(ColorHslValue), nameof(TextStatsText),
+        nameof(CompactDetailText), nameof(CurrentTypeGlyph), nameof(IsSensitiveHidden),
+        nameof(SafeCurrentAutomationText), nameof(CurrentSafeToolTipText), nameof(PresentationVisualKey))]
     public partial ClipboardPeekItem? SelectedItem { get; set; }
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(HasThumbnail))]
+    [NotifyPropertyChangedFor(nameof(HasThumbnail), nameof(HasPrimaryVisualPreview), nameof(PrimaryPreviewVisualKey))]
     public partial ImageSource? Thumbnail { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasColorPreview), nameof(HasPrimaryVisualPreview), nameof(PrimaryPreviewVisualKey))]
     public partial Brush? ColorPreviewBrush { get; set; }
 
     [ObservableProperty]
@@ -70,15 +74,26 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     [NotifyPropertyChangedFor(nameof(CanCopy))]
     public partial bool IsCopyBusy { get; set; }
 
+    [ObservableProperty]
+    public partial long SuccessFeedbackVersion { get; set; }
+
     public ClipboardPeekItem? CurrentItem => SelectedItem;
     public bool HasCurrentItem => CurrentItem is not null;
     public bool HasHistory => HistoryEntries.Count > 0;
     public bool HasThumbnail => Thumbnail is not null;
     public bool HasColorPreview => ColorPreviewBrush is not null;
+    public bool HasPrimaryVisualPreview => HasThumbnail || HasColorPreview;
+    public string PrimaryPreviewVisualKey => $"{CurrentItem?.Id ?? "empty"}:{HasThumbnail}:{HasColorPreview}";
     public bool HasColorFormats => ColorFormats is not null;
+    public string ColorHexLabel => "HEX";
+    public string ColorRgbLabel => "RGB";
+    public string ColorHslLabel => "HSL";
     public string ColorHexText => FormatColor("ClipboardPeek.Color.Hex", "HEX {0}", formats => formats.Hex);
     public string ColorRgbText => FormatColor("ClipboardPeek.Color.Rgb", "RGB {0}", formats => formats.RgbChannelsDisplay);
     public string ColorHslText => FormatColor("ClipboardPeek.Color.Hsl", "HSL {0}", formats => formats.HslDisplay);
+    public string ColorHexValue => ColorFormats?.Hex ?? string.Empty;
+    public string ColorRgbValue => ColorFormats?.RgbChannelsDisplay ?? string.Empty;
+    public string ColorHslValue => ColorFormats?.HslDisplay ?? string.Empty;
     public bool HasTextStats => ClipboardTextStats.TryCreate(CurrentItem) is not null;
     public string TextStatsText => ClipboardTextStats.TryCreate(CurrentItem) is { } stats
         ? string.Format(Text("ClipboardPeek.TextStats", "{0} words · {1} characters · {2} lines"), stats.WordCount, stats.CharacterCount, stats.LineCount)
@@ -93,9 +108,17 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     public bool CanSaveImage => CurrentItem?.AvailableActions.HasFlag(ClipboardPeekCapabilities.SaveImage) == true &&
                                 _windowHandle.WindowHandle != 0;
     public bool CanReveal => CurrentItem?.IsRevealable == true && _revealedValue is null;
+    public bool IsSensitiveHidden => CurrentItem?.IsSensitive == true && _revealedValue is null;
     public string CurrentDisplayText => _revealedValue ?? DisplayText(CurrentItem) ?? EmptyText;
     public string CurrentTypeText => CurrentItem is null ? string.Empty : TypeText(CurrentItem.Type);
+    public string CurrentTypeGlyph => GlyphFor(CurrentItem?.Type ?? ClipboardPeekContentType.Unknown);
+    public string SafeCurrentAutomationText => CurrentItem?.IsSensitive == true
+        ? Text("ClipboardPeek.SensitiveContent", "Sensitive content")
+        : CurrentDisplayText;
+    public string? CurrentSafeToolTipText => CurrentItem?.IsSensitive == true ? null : CurrentDisplayText;
+    public string PresentationVisualKey => $"{CurrentItem?.Id ?? "empty"}:{(_revealedValue is null ? "hidden" : "revealed")}";
     public string TitleText => Text("ClipboardPeek.Title", "Clipboard Peek");
+    public string CurrentClipboardText => Text("ClipboardPeek.Current", "Current clipboard");
     public string HistoryText => Text("ClipboardPeek.History", "Recent copies");
     public string ClearHistoryText => Text("ClipboardPeek.ClearHistory", "Clear history");
     public string CopyText => Text("ClipboardPeek.Copy", "Copy");
@@ -108,6 +131,9 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
     public string SaveImageText => Text("ClipboardPeek.SaveImage", "Save image");
     public string RevealText => Text("ClipboardPeek.Reveal", "Show once");
     public string EmptyText => Text("ClipboardPeek.Empty", "Copy something to see it here.");
+    public string SensitiveDescriptionText => Text(
+        "ClipboardPeek.SensitiveDescription",
+        "This clipboard item is hidden to protect your privacy.");
 
     private ClipboardColorFormats? ColorFormats =>
         ClipboardColorFormats.TryParse(CurrentItem?.ColorValue, out var formats) ? formats : null;
@@ -118,13 +144,17 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
         IsStatusOpen = false;
         UpdateColorPreview(value?.ColorValue);
         _ = LoadThumbnailAsync(value?.Image?.ThumbnailPng);
+        RebuildHistory();
         foreach (var property in new[]
                  {
                      nameof(CurrentItem), nameof(HasCurrentItem), nameof(CurrentDisplayText), nameof(CurrentTypeText),
                      nameof(CanCopy), nameof(CanOpen), nameof(CanOpenFolder), nameof(CanSaveImage), nameof(CanReveal),
                      nameof(OpenText), nameof(OpenFolderText), nameof(HasColorPreview), nameof(HasColorFormats),
-                     nameof(ColorHexText), nameof(ColorRgbText), nameof(ColorHslText), nameof(HasTextStats),
-                     nameof(TextStatsText), nameof(CompactDetailText)
+                     nameof(HasPrimaryVisualPreview), nameof(PrimaryPreviewVisualKey), nameof(ColorHexText),
+                     nameof(ColorRgbText), nameof(ColorHslText), nameof(ColorHexValue), nameof(ColorRgbValue),
+                     nameof(ColorHslValue), nameof(HasTextStats), nameof(TextStatsText), nameof(CompactDetailText),
+                     nameof(CurrentTypeGlyph), nameof(IsSensitiveHidden), nameof(SafeCurrentAutomationText),
+                     nameof(CurrentSafeToolTipText), nameof(PresentationVisualKey)
                  })
             OnPropertyChanged(property);
     }
@@ -192,6 +222,10 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
         _revealedValue = result.Value;
         OnPropertyChanged(nameof(CurrentDisplayText));
         OnPropertyChanged(nameof(CanReveal));
+        OnPropertyChanged(nameof(IsSensitiveHidden));
+        OnPropertyChanged(nameof(SafeCurrentAutomationText));
+        OnPropertyChanged(nameof(CurrentSafeToolTipText));
+        OnPropertyChanged(nameof(PresentationVisualKey));
         _revealLifetime = new CancellationTokenSource();
         _ = ClearRevealAfterDelayAsync(_revealLifetime.Token);
     }
@@ -208,6 +242,10 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
         _revealedValue = null;
         OnPropertyChanged(nameof(CurrentDisplayText));
         OnPropertyChanged(nameof(CanReveal));
+        OnPropertyChanged(nameof(IsSensitiveHidden));
+        OnPropertyChanged(nameof(SafeCurrentAutomationText));
+        OnPropertyChanged(nameof(CurrentSafeToolTipText));
+        OnPropertyChanged(nameof(PresentationVisualKey));
     }
 
     private async Task ClearRevealAfterDelayAsync(CancellationToken cancellationToken)
@@ -236,7 +274,10 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
             item,
             DisplayText(item) ?? string.Empty,
             TypeText(item.Type),
-            RelativeTime(item.CreatedAt, now))).ToArray();
+            RelativeTime(item.CreatedAt, now),
+            GlyphFor(item.Type),
+            ColorBrush(item.ColorValue),
+            string.Equals(item.Id, CurrentItem?.Id, StringComparison.Ordinal))).ToArray();
         OnPropertyChanged(nameof(HasHistory));
     }
 
@@ -260,27 +301,43 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
 
     private async Task LoadThumbnailAsync(byte[]? bytes)
     {
-        _thumbnailStream?.Dispose();
+        var generation = Interlocked.Increment(ref _thumbnailGeneration);
+        var previousStream = _thumbnailStream;
         _thumbnailStream = null;
+        previousStream?.Dispose();
         Thumbnail = null;
         if (bytes is not { Length: > 0 }) return;
+
+        InMemoryRandomAccessStream? pendingStream = null;
         try
         {
-            var stream = new InMemoryRandomAccessStream();
-            using var writer = new DataWriter(stream);
+            pendingStream = new InMemoryRandomAccessStream();
+            using var writer = new DataWriter(pendingStream);
             writer.WriteBytes(bytes);
             await writer.StoreAsync();
-            stream.Seek(0);
+            pendingStream.Seek(0);
             var image = new BitmapImage();
-            image.SetSource(stream);
-            _thumbnailStream = stream;
+            image.SetSource(pendingStream);
+
+            if (generation != Volatile.Read(ref _thumbnailGeneration))
+            {
+                return;
+            }
+
+            _thumbnailStream = pendingStream;
+            pendingStream = null;
             Thumbnail = image;
         }
         catch
         {
-            _thumbnailStream?.Dispose();
-            _thumbnailStream = null;
-            Thumbnail = null;
+            if (generation == Volatile.Read(ref _thumbnailGeneration))
+            {
+                Thumbnail = null;
+            }
+        }
+        finally
+        {
+            pendingStream?.Dispose();
         }
     }
 
@@ -296,6 +353,9 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
         color = Color.FromArgb(formats.Alpha, formats.Red, formats.Green, formats.Blue);
         return true;
     }
+
+    private static Brush? ColorBrush(string? value) =>
+        TryParseColor(value, out var color) ? new SolidColorBrush(color) : null;
 
     private bool TryBeginCopy()
     {
@@ -319,6 +379,10 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
                 ? InfoBarSeverity.Informational
                 : InfoBarSeverity.Error;
         StatusMessage = Text($"ClipboardPeek.Action.{result}", result.ToString());
+        if (result == ClipboardPeekActionResult.Succeeded)
+        {
+            SuccessFeedbackVersion++;
+        }
     }
 
     private void OnLanguageChanged(object? sender, EventArgs e)
@@ -329,10 +393,24 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
                      nameof(TitleText), nameof(HistoryText), nameof(ClearHistoryText), nameof(CopyText),
                      nameof(OpenText), nameof(OpenFolderText), nameof(SaveImageText), nameof(RevealText), nameof(EmptyText),
                      nameof(CurrentDisplayText), nameof(CurrentTypeText), nameof(ColorHexText), nameof(ColorRgbText),
-                     nameof(ColorHslText), nameof(TextStatsText), nameof(CompactDetailText)
+                     nameof(ColorHslText), nameof(TextStatsText), nameof(CompactDetailText), nameof(CurrentClipboardText),
+                     nameof(SensitiveDescriptionText), nameof(SafeCurrentAutomationText), nameof(CurrentSafeToolTipText)
                  })
             OnPropertyChanged(name);
     }
+
+    public static string GlyphFor(ClipboardPeekContentType type) => type switch
+    {
+        ClipboardPeekContentType.PlainText => "\uE8A5",
+        ClipboardPeekContentType.Url => "\uE774",
+        ClipboardPeekContentType.Email => "\uE715",
+        ClipboardPeekContentType.Color => "\uE790",
+        ClipboardPeekContentType.File => "\uE8A5",
+        ClipboardPeekContentType.Folder => "\uE8B7",
+        ClipboardPeekContentType.Image => "\uEB9F",
+        ClipboardPeekContentType.Sensitive => "\uE72E",
+        _ => "\uE8C8"
+    };
 
     private string TypeText(ClipboardPeekContentType type) =>
         Text($"ClipboardPeek.Type.{type}", type.ToString());
@@ -348,7 +426,10 @@ public sealed partial class ClipboardPeekViewModel : ObservableObject, IDisposab
         _service.StateChanged -= OnStateChanged;
         if (_localization is not null) _localization.LanguageChanged -= OnLanguageChanged;
         ClearReveal();
+        Interlocked.Increment(ref _thumbnailGeneration);
         _thumbnailStream?.Dispose();
+        _thumbnailStream = null;
+        Thumbnail = null;
     }
 }
 
@@ -356,4 +437,10 @@ public sealed record ClipboardPeekHistoryEntry(
     ClipboardPeekItem Item,
     string DisplayText,
     string TypeText,
-    string RelativeTime);
+    string RelativeTime,
+    string TypeGlyph,
+    Brush? ColorPreviewBrush,
+    bool IsSelected)
+{
+    public bool HasColorPreview => ColorPreviewBrush is not null;
+}

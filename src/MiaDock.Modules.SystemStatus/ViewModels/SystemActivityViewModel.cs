@@ -34,12 +34,19 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
     [NotifyPropertyChangedFor(nameof(IsApplicationVolumeAvailable))]
     [NotifyPropertyChangedFor(nameof(MicrophoneText))]
     [NotifyPropertyChangedFor(nameof(CameraText))]
-    [NotifyPropertyChangedFor(nameof(IsCameraInUse))]
     [NotifyPropertyChangedFor(nameof(CallText))]
     [NotifyPropertyChangedFor(nameof(MasterVolumeGlyph))]
     [NotifyPropertyChangedFor(nameof(ActivityTitle))]
     [NotifyPropertyChangedFor(nameof(ActivityDetail))]
     [NotifyPropertyChangedFor(nameof(ActivityGlyph))]
+    [NotifyPropertyChangedFor(nameof(IsCallIdle))]
+    [NotifyPropertyChangedFor(nameof(IsCallPossible))]
+    [NotifyPropertyChangedFor(nameof(IsCallDetected))]
+    [NotifyPropertyChangedFor(nameof(CallAppName))]
+    [NotifyPropertyChangedFor(nameof(CallStatusBadgeText))]
+    [NotifyPropertyChangedFor(nameof(CompactTrailingText))]
+    [NotifyPropertyChangedFor(nameof(PossibleDetail))]
+    [NotifyPropertyChangedFor(nameof(PresentationVisualKey))]
     public partial SystemActivitySnapshot Snapshot { get; set; }
 
     public string MasterVolumeText => Snapshot.IsMasterVolumeAvailable
@@ -79,23 +86,76 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
         }
     };
 
-    public bool IsCameraInUse =>
-        Snapshot.CameraDeviceAvailability == CameraDeviceAvailability.Available &&
-        Snapshot.CallActivity == CallActivityState.Possible;
+    public bool IsCallIdle => Snapshot.CallActivity.State == CallActivityState.None;
+    public bool IsCallPossible => Snapshot.CallActivity.State == CallActivityState.Possible;
+    public bool IsCallDetected => Snapshot.CallActivity.State == CallActivityState.Detected;
+    public string CallAppName => Snapshot.CallActivity.DisplayName ?? Text("System.Call.UnknownApp", "Communication app");
 
-    public string CallText => Snapshot.CallActivity == CallActivityState.Possible
-        ? Text("Dock.CallPossible", "Olası arama etkinliği")
-        : Text("System.Call.None", "Arama algılanmadı");
+    public string CallText => Snapshot.CallActivity.State switch
+    {
+        CallActivityState.Detected => Text("System.Call.Detected", "Call detected"),
+        CallActivityState.Possible => Text("Dock.CallPossible", "Possible call activity"),
+        _ => Text("System.Call.None", "No call detected")
+    };
 
-    public string ActivityTitle => Snapshot.CallActivity == CallActivityState.Possible
-        ? Text("Dock.CallPossible", "Olası arama etkinliği")
-        : Text("System.Call.None", "Arama algılanmadı");
+    public string ActivityTitle => Snapshot.CallActivity.State switch
+    {
+        CallActivityState.Detected => Format("System.Call.AppTitle", "{0} call", CallAppName),
+        CallActivityState.Possible => Text("Dock.CallPossible", "Possible call activity"),
+        _ => Text("System.Call.None", "No call detected")
+    };
 
-    public string ActivityDetail => Snapshot.CallActivity == CallActivityState.Possible
-        ? Text("System.Call.Detail", "Mikrofon ve iletişim sesi etkin")
-        : Text("System.Call.IdleDetail", "Yerel arama çıkarımı");
+    public string ActivityDetail => Snapshot.CallActivity.State switch
+    {
+        CallActivityState.Detected => Text("System.Call.Detected", "Call detected"),
+        CallActivityState.Possible => PossibleDetail,
+        _ => Text("System.Call.IdleDetail", "Local detection · Audio is not recorded")
+    };
 
-    public string ActivityGlyph => "\uE717";
+    public string ActivityGlyph => Snapshot.CallActivity.App switch
+    {
+        CommunicationApp.Discord => "\uE8BD",
+        CommunicationApp.Skype => "\uE714",
+        CommunicationApp.WhatsApp => "\uE717",
+        _ => "\uE717"
+    };
+
+    public string CallStatusBadgeText => Snapshot.CallActivity.State switch
+    {
+        CallActivityState.Detected => CallAppName,
+        CallActivityState.Possible => Text("System.Call.PossibleBadge", "Possible activity"),
+        _ => Text("System.Call.Waiting", "Waiting")
+    };
+
+    public string CompactTrailingText => IsCallDetected
+        ? Text("System.Call.Active", "Active")
+        : string.Empty;
+
+    public string PossibleDetail => Snapshot.CallActivity.App == CommunicationApp.Unknown
+        ? Text("System.Call.PossibleDetail", "Communication microphone activity was found, but a call could not be verified.")
+        : Format(
+            "System.Call.PossibleAppDetail",
+            "{0} microphone activity was found, but a call could not be verified.",
+            CallAppName);
+
+    public string PresentationVisualKey =>
+        $"{Snapshot.CallActivity.State}|{Snapshot.CallActivity.App}|{Snapshot.CallActivity.StartedAt:O}";
+    public string CallAutomationText => Text("System.Call.Automation", "Call activity");
+    public string LocalDetectionText => Text("System.Call.LocalDetection", "Local detection");
+    public string PrivacyText => Text("System.Call.Privacy", "Audio is not recorded or sent.");
+    public string IdleDescriptionText => Text(
+        "System.Call.IdleDescription",
+        "Discord, Skype, and WhatsApp calls can be detected locally.");
+    public string SupportedAppsText => Text("System.Call.SupportedApps", "Supported apps");
+    public string SupportedText => Text("System.Call.Supported", "Supported");
+    public string DiscordName => "Discord";
+    public string SkypeName => "Skype";
+    public string WhatsAppName => "WhatsApp";
+    public string CallInformationText => Text("System.Call.Information", "Call information");
+    public string ApplicationText => Text("System.Call.Application", "Application");
+    public string MicrophoneLabelText => Text("System.Call.Microphone", "Microphone");
+    public string AudioSessionLabelText => Text("System.Call.AudioSession", "Audio session");
+    public string ActiveText => Text("System.Call.Active", "Active");
 
     public string MasterVolumeGlyph => Snapshot.IsMasterMuted || Snapshot.MasterVolume <= 0
         ? "\uE74F"
@@ -140,10 +200,32 @@ public sealed partial class SystemActivityViewModel : ObservableObject, IDisposa
         OnPropertyChanged(nameof(CallText));
         OnPropertyChanged(nameof(ActivityTitle));
         OnPropertyChanged(nameof(ActivityDetail));
+        OnPropertyChanged(nameof(CallAppName));
+        OnPropertyChanged(nameof(CallStatusBadgeText));
+        OnPropertyChanged(nameof(CompactTrailingText));
+        OnPropertyChanged(nameof(PossibleDetail));
+        OnPropertyChanged(nameof(CallAutomationText));
+        OnPropertyChanged(nameof(LocalDetectionText));
+        OnPropertyChanged(nameof(PrivacyText));
+        OnPropertyChanged(nameof(IdleDescriptionText));
+        OnPropertyChanged(nameof(SupportedAppsText));
+        OnPropertyChanged(nameof(SupportedText));
+        OnPropertyChanged(nameof(CallInformationText));
+        OnPropertyChanged(nameof(ApplicationText));
+        OnPropertyChanged(nameof(MicrophoneLabelText));
+        OnPropertyChanged(nameof(AudioSessionLabelText));
+        OnPropertyChanged(nameof(ActiveText));
     }
 
     private string Text(string key, string fallback) =>
         _localization?.Get(key) is { } value && value != key ? value : fallback;
+
+    private string Format(string key, string fallback, params object?[] arguments)
+    {
+        var localized = _localization?.Get(key);
+        var format = localized is not null && localized != key ? localized : fallback;
+        return string.Format(format, arguments);
+    }
 
     public void Dispose()
     {

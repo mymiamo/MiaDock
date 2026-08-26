@@ -89,6 +89,55 @@ public sealed class TimeToolsServiceTests
     }
 
     [TestMethod]
+    public void PresetSelection_UpdatesEditorsWithoutStartingAndManualInputClearsSelection()
+    {
+        var service = new PublishingTimeToolsService();
+        using var viewModel = new TimeToolsViewModel(service);
+        var preset = viewModel.PresetDurations.Single(option => option.Minutes == 25);
+
+        viewModel.SelectPresetCommand.Execute(preset);
+
+        Assert.AreEqual(0, viewModel.CustomHours);
+        Assert.AreEqual(25, viewModel.CustomMinutes);
+        Assert.AreEqual(0, viewModel.CustomSeconds);
+        Assert.IsTrue(preset.IsSelected);
+        Assert.IsNull(service.LastStartedDuration);
+        Assert.AreEqual("25:00", viewModel.TimerText);
+
+        viewModel.CustomSeconds = 30;
+
+        Assert.IsTrue(viewModel.PresetDurations.All(option => !option.IsSelected));
+        Assert.AreEqual("25:30", viewModel.TimerText);
+    }
+
+    [TestMethod]
+    public void ZeroDuration_DisablesStartAndRunningTimerDisablesSetup()
+    {
+        var service = new PublishingTimeToolsService();
+        using var viewModel = new TimeToolsViewModel(service)
+        {
+            CustomHours = 0,
+            CustomMinutes = 0,
+            CustomSeconds = 0
+        };
+
+        Assert.IsFalse(viewModel.TimerPrimaryCommand.CanExecute(null));
+        Assert.IsTrue(viewModel.IsTimerSetupEnabled);
+
+        service.Publish(service.Current with
+        {
+            TimerState = TimerRunState.Running,
+            TimerDuration = TimeSpan.FromMinutes(5),
+            TimerRemaining = TimeSpan.FromMinutes(4)
+        });
+
+        Assert.IsFalse(viewModel.IsTimerSetupEnabled);
+        Assert.IsFalse(viewModel.SelectPresetCommand.CanExecute(viewModel.PresetDurations[0]));
+        Assert.AreEqual(20, viewModel.TimerProgressPercent, 0.001);
+        StringAssert.Contains(viewModel.TimerProgressAccessibleText, "20%");
+    }
+
+    [TestMethod]
     public async Task Timer_UsesMonotonicElapsedTimeWhenPaused()
     {
         var time = new MutableTimeProvider(DateTimeOffset.Parse("2026-07-22T10:00:00Z"));

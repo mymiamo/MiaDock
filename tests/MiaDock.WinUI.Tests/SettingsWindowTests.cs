@@ -354,7 +354,7 @@ public sealed class SettingsWindowTests
         Assert.AreEqual(
             "CN=FAC642FD-F594-4E90-B1DB-38F94EA36BCA",
             identity?.Attribute("Publisher")?.Value);
-        Assert.AreEqual("1.6.0.0", identity?.Attribute("Version")?.Value);
+        Assert.AreEqual("1.6.3.0", identity?.Attribute("Version")?.Value);
         Assert.AreEqual(
             "Eray Durupınar (mymiamo.net)",
             properties?.Element(packageNamespace + "PublisherDisplayName")?.Value);
@@ -387,7 +387,7 @@ public sealed class SettingsWindowTests
             .Attribute("version")
             ?.Value;
 
-        Assert.AreEqual("1.6.0.0", packageVersion);
+        Assert.AreEqual("1.6.3.0", packageVersion);
         Assert.AreEqual(packageVersion, applicationVersion);
     }
 
@@ -837,6 +837,7 @@ public sealed class SettingsWindowTests
         var text = document.ToString();
 
         Assert.HasCount(2, tabs);
+        Assert.IsTrue(tabs.All(tab => tab.Attribute("IsClosable")?.Value == "False"));
         Assert.IsTrue(document.Descendants().Any(element => element.Name.LocalName == "TabView"));
         StringAssert.Contains(text, "SelectedToolIndex, Mode=TwoWay");
         StringAssert.Contains(text, "ItemsSource=\"{Binding PresetDurations}\"");
@@ -844,7 +845,12 @@ public sealed class SettingsWindowTests
         StringAssert.Contains(text, "OnPresetClick");
         StringAssert.Contains(text, "TimerSecondaryText");
         StringAssert.Contains(text, "AccentButtonStyle");
-        StringAssert.Contains(text, "HasStopwatchActivity");
+        StringAssert.Contains(text, "LapTexts");
+        StringAssert.Contains(text, "NarrowLayout");
+        StringAssert.Contains(text, "WideLayout");
+        Assert.DoesNotContain("TimeTitleText", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("TimeToolsText", text, StringComparison.Ordinal);
+        StringAssert.Contains(text, "MinItemWidth=\"72\"");
     }
 
     [TestMethod]

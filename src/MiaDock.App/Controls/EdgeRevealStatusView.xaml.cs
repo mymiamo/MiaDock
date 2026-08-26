@@ -195,7 +195,8 @@ public sealed partial class EdgeRevealStatusView : UserControl, IModuleViewActiv
 
     private void UpdateCallActivity()
     {
-        var callDetected = _systemActivity?.Snapshot.CallActivity == CallActivityState.Possible;
+        var callDetected = _systemActivity?.Snapshot.CallActivity.State is
+            CallActivityState.Possible or CallActivityState.Detected;
         CallActivityIcon.Visibility = callDetected ? Visibility.Visible : Visibility.Collapsed;
     }
 

@@ -456,16 +456,16 @@ public sealed class IslandShellTests
     public void ExpandedDock_UsesBottomNavigationAndSharedActiveCenterHierarchy()
     {
         var switcher = LoadControl("ModuleSwitcher.xaml");
-        var rootGrid = switcher.Descendants()
-            .First(element => element.Name.LocalName == "Grid" &&
-                              element.Elements().Any(child => child.Name.LocalName == "ScrollViewer"));
-        var scrollViewer = rootGrid.Elements()
-            .Single(element => element.Name.LocalName == "ScrollViewer");
+        var switcherRoot = switcher.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "SwitcherRoot");
+        var rootGrid = switcherRoot.Elements().Single(element => element.Name.LocalName == "Grid");
+        var tabViewport = rootGrid.Elements().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "TabViewport");
         var navigationButtons = rootGrid.Elements()
             .Where(element => element.Name.LocalName == "Button")
             .ToArray();
 
-        Assert.AreEqual("1", scrollViewer.Attribute("Grid.Column")?.Value);
+        Assert.AreEqual("1", tabViewport.Attribute("Grid.Column")?.Value);
         Assert.HasCount(2, navigationButtons);
         Assert.IsTrue(navigationButtons.Any(button => button.Attribute("Grid.Column") is null));
         Assert.IsTrue(navigationButtons.Any(button => button.Attribute("Grid.Column")?.Value == "2"));
@@ -512,7 +512,17 @@ public sealed class IslandShellTests
         Assert.IsEmpty(sliders);
         var text = document.ToString();
         StringAssert.Contains(text, "CallText");
-        StringAssert.Contains(text, "Arama durumu");
+        StringAssert.Contains(text, "IsCallIdle");
+        StringAssert.Contains(text, "IsCallPossible");
+        StringAssert.Contains(text, "IsCallDetected");
+        StringAssert.Contains(text, "CallAppIconView");
+        StringAssert.Contains(text, "DurationText");
+        StringAssert.Contains(text, "SupportedAppsText");
+        StringAssert.Contains(text, "PrivacyText");
+        Assert.HasCount(1, document.Descendants()
+            .Where(element => element.Name.LocalName == "ScrollViewer").ToArray());
+        Assert.DoesNotContain("Arama durumu", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("Yerel çıkarım", text, StringComparison.Ordinal);
         Assert.DoesNotContain("MicrophoneText", text, StringComparison.Ordinal);
         Assert.DoesNotContain("CameraText", text, StringComparison.Ordinal);
         Assert.DoesNotContain("OpenMicrophonePrivacySettingsCommand", text, StringComparison.Ordinal);
@@ -588,6 +598,38 @@ public sealed class IslandShellTests
         StringAssert.Contains(source, "UpdateSelectionVisuals");
         StringAssert.Contains(source, "OnModulesChanged");
         Assert.IsFalse(source.Contains("new PropertyMetadata(null, OnDataChanged)", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void ModuleSwitcher_UsesIconOnlyPivotNavigationWithoutSelectionLine()
+    {
+        var document = LoadControl("ModuleSwitcher.xaml");
+        var source = document.ToString();
+        var code = File.ReadAllText(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.App",
+            "Controls",
+            "ModuleSwitcher.xaml.cs"));
+        var defaultButton = document.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "DefaultButton");
+        var switcherRoot = document.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "SwitcherRoot");
+        Assert.IsEmpty(document.Descendants()
+            .Where(element => element.Name.LocalName == "TextBlock")
+            .ToArray());
+        Assert.AreEqual(
+            "{StaticResource ModuleSwitcherItemStyle}",
+            defaultButton.Attribute("Style")?.Value);
+        Assert.AreEqual("Transparent", switcherRoot.Attribute("Background")?.Value);
+        Assert.AreEqual("0", switcherRoot.Attribute("BorderThickness")?.Value);
+        Assert.DoesNotContain("ModuleSwitcherSelectedSurfaceStyle", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("SelectedSurface", code, StringComparison.Ordinal);
+        Assert.DoesNotContain("SelectionIndicator", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("AnimationBuilder.Create()", code, StringComparison.Ordinal);
+        StringAssert.Contains(code, "SetItemStatus");
+        Assert.DoesNotContain("DefaultIndicator", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("CornerRadius(999)", code, StringComparison.Ordinal);
     }
 
     [TestMethod]

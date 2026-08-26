@@ -1,7 +1,10 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
 using Microsoft.UI.Xaml.Media;
+using MiaDock.App.Animations;
+using MiaDock.App.Services;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
 using Windows.System;
@@ -13,6 +16,11 @@ public sealed partial class ModuleSwitcher : UserControl
     private ILocalizationService? _localization;
     private readonly Dictionary<string, ModuleButtonVisual> _moduleButtons =
         new(StringComparer.Ordinal);
+    private readonly IMicroInteractionCoordinator? _microInteractions;
+    private readonly IAnimationPreferenceService? _animationPreferences;
+    private ModuleButtonVisual? _defaultVisual;
+    private ModuleButtonVisual? _selectedVisual;
+    private bool _isLoaded;
     public static readonly DependencyProperty ModulesProperty = DependencyProperty.Register(
         nameof(Modules), typeof(IReadOnlyList<ModuleDisplayState>), typeof(ModuleSwitcher),
         new PropertyMetadata(null, OnModulesChanged));
@@ -23,6 +31,9 @@ public sealed partial class ModuleSwitcher : UserControl
     public ModuleSwitcher()
     {
         InitializeComponent();
+        _microInteractions = App.Services?.GetService<IMicroInteractionCoordinator>();
+        _animationPreferences = App.Services?.GetService<IAnimationPreferenceService>();
+        _defaultVisual = new ModuleButtonVisual(DefaultButton, DefaultIcon);
         RebuildModuleButtons();
     }
 
@@ -64,45 +75,62 @@ public sealed partial class ModuleSwitcher : UserControl
         _moduleButtons.Clear();
         foreach (var module in Modules ?? Array.Empty<ModuleDisplayState>())
         {
-            var content = CreateButtonContent(module.Descriptor.IconGlyph, out var indicator);
+            var icon = CreateButtonIcon(module.Descriptor.IconGlyph);
             var button = new Button
             {
                 Width = 44,
                 Height = 44,
-                Style = ResourceStyle("DockIconButtonStyle"),
+                Style = ResourceStyle("ModuleSwitcherItemStyle"),
                 Tag = module.Descriptor.Id,
                 UseSystemFocusVisuals = true,
-                Content = content
+                Content = icon
             };
+            MicroMotion.SetIsInteractive(button, true);
             var displayName = LocalizedModuleName(module.Descriptor);
             ToolTipService.SetToolTip(button, displayName);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, displayName);
             button.Click += OnModuleClick;
             ModuleButtons.Children.Add(button);
-            _moduleButtons[module.Descriptor.Id] = new ModuleButtonVisual(button, indicator);
+            _moduleButtons[module.Descriptor.Id] = new ModuleButtonVisual(button, icon);
         }
 
+        UpdateAutomationSetMetadata();
         UpdateSelectionVisuals();
     }
 
     private void UpdateSelectionVisuals()
     {
         var defaultSelected = SelectedModuleId is null;
-        DefaultButton.Opacity = defaultSelected ? 1 : 0.72;
-        DefaultButton.Background = defaultSelected ? ResourceBrush("IslandControlFillBrush") : null;
-        DefaultIndicator.Visibility = defaultSelected ? Visibility.Visible : Visibility.Collapsed;
+        ModuleButtonVisual? selectedVisual = defaultSelected ? _defaultVisual : null;
+        if (_defaultVisual is not null)
+        {
+            ApplySelectionState(_defaultVisual, defaultSelected);
+        }
 
         foreach (var (moduleId, visual) in _moduleButtons)
         {
             var selected = string.Equals(moduleId, SelectedModuleId, StringComparison.Ordinal);
-            visual.Button.Opacity = selected ? 1 : 0.72;
-            visual.Button.Background = selected ? ResourceBrush("IslandControlFillBrush") : null;
-            visual.Indicator.Visibility = selected ? Visibility.Visible : Visibility.Collapsed;
+            ApplySelectionState(visual, selected);
+            if (selected)
+            {
+                selectedVisual = visual;
+            }
+        }
+
+        var changed = !ReferenceEquals(_selectedVisual?.Button, selectedVisual?.Button);
+        _selectedVisual = selectedVisual;
+        if (changed && selectedVisual is not null && _isLoaded)
+        {
+            _microInteractions?.PlayStateChange(selectedVisual.Button);
+            BringSelectedButtonIntoView(selectedVisual.Button);
         }
     }
 
     private void RefreshLocalizedLabels()
     {
+        var homeName = Text("Dock.Home", "Ana dock");
+        ToolTipService.SetToolTip(DefaultButton, homeName);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(DefaultButton, homeName);
         foreach (var module in Modules ?? Array.Empty<ModuleDisplayState>())
         {
             if (!_moduleButtons.TryGetValue(module.Descriptor.Id, out var visual))
@@ -114,32 +142,77 @@ public sealed partial class ModuleSwitcher : UserControl
             ToolTipService.SetToolTip(visual.Button, displayName);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(visual.Button, displayName);
         }
+
+        UpdateSelectionVisuals();
     }
 
-    private static UIElement CreateButtonContent(string glyph, out Border indicator)
+    private static FontIcon CreateButtonIcon(string glyph)
     {
-        var content = new Grid();
-        content.Children.Add(new FontIcon
+        return new FontIcon
         {
             Glyph = glyph,
-            FontSize = 14,
+            FontSize = 17,
             VerticalAlignment = VerticalAlignment.Center,
-            HorizontalAlignment = HorizontalAlignment.Center
-        });
-        indicator = new Border
-        {
-            Width = 4,
-            Height = 2,
-            Margin = new Thickness(0, 0, 0, 2),
-            CornerRadius = new CornerRadius(1),
-            Background = ResourceBrush("IslandStyleAccentBrush"),
             HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Bottom,
-            Visibility = Visibility.Collapsed
+            Foreground = ResourceBrush("IslandTextSecondaryBrush")
         };
-        content.Children.Add(indicator);
+    }
 
-        return content;
+    private void ApplySelectionState(ModuleButtonVisual visual, bool selected)
+    {
+        visual.Icon.Foreground = ResourceBrush(
+            selected ? "IslandTextPrimaryBrush" : "IslandTextSecondaryBrush");
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(
+            visual.Button,
+            selected ? Text("Navigation.Selected", "Seçili") : string.Empty);
+    }
+
+    private void UpdateAutomationSetMetadata()
+    {
+        var size = _moduleButtons.Count + 1;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetPositionInSet(DefaultButton, 1);
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetSizeOfSet(DefaultButton, size);
+        var position = 2;
+        foreach (var visual in _moduleButtons.Values)
+        {
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetPositionInSet(visual.Button, position++);
+            Microsoft.UI.Xaml.Automation.AutomationProperties.SetSizeOfSet(visual.Button, size);
+        }
+    }
+
+    private void BringSelectedButtonIntoView(Button button)
+    {
+        if (!button.IsLoaded || TabViewport.ActualWidth <= 0)
+        {
+            return;
+        }
+
+        try
+        {
+            var point = button.TransformToVisual(TabViewport).TransformPoint(default);
+            if (point.X < 0 || point.X + button.ActualWidth > TabViewport.ActualWidth)
+            {
+                button.StartBringIntoView(new BringIntoViewOptions
+                {
+                    AnimationDesired = _animationPreferences?.AnimationsEnabled != false,
+                    HorizontalAlignmentRatio = 0.5
+                });
+            }
+        }
+        catch (ArgumentException)
+        {
+            // Layout is being rebuilt; the queued layout pass will resolve the new bounds.
+        }
+    }
+
+    private void OnLoaded(object sender, RoutedEventArgs args)
+    {
+        _isLoaded = true;
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs args)
+    {
+        _isLoaded = false;
     }
 
     private void OnPreviousClick(object sender, RoutedEventArgs args) => RaisePrevious();
@@ -217,7 +290,13 @@ public sealed partial class ModuleSwitcher : UserControl
             : descriptor.DisplayName;
     }
 
-    private sealed record ModuleButtonVisual(Button Button, Border Indicator);
+    private string Text(string key, string fallback)
+    {
+        var value = _localization?.Get(key);
+        return value is not null && value != key ? value : fallback;
+    }
+
+    private sealed record ModuleButtonVisual(Button Button, FontIcon Icon);
 }
 
 public sealed class ModuleSelectedEventArgs(string moduleId) : EventArgs

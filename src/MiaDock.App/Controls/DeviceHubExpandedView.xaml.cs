@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using MiaDock.App.Animations;
 using MiaDock.Modules.DeviceStatus.ViewModels;
 
 namespace MiaDock.App.Controls;
@@ -45,12 +46,28 @@ public sealed partial class DeviceHubExpandedView : UserControl
             _expandedDevice.IsExpanded = false;
         }
         _expandedDevice = sender;
+        MicroMotion.PlayAttention(sender);
+    }
+
+    private void OnDeviceExpanderUnloaded(object sender, RoutedEventArgs args)
+    {
+        if (ReferenceEquals(_expandedDevice, sender))
+        {
+            _expandedDevice = null;
+        }
+    }
+
+    private void OnDeviceRowLoaded(object sender, RoutedEventArgs args)
+    {
+        if (sender is FrameworkElement element)
+        {
+            MicroMotion.PlayNotification(element);
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
-        if (args.PropertyName is nameof(DeviceHubViewModel.BatteryDevices) or
-            nameof(DeviceHubViewModel.StorageOperationError) or
+        if (args.PropertyName is nameof(DeviceHubViewModel.StorageOperationError) or
             nameof(DeviceHubViewModel.StorageOperationOpen) or
             nameof(DeviceHubViewModel.BluetoothOperationError) or
             nameof(DeviceHubViewModel.BluetoothOperationOpen))
@@ -66,9 +83,6 @@ public sealed partial class DeviceHubExpandedView : UserControl
             return;
         }
 
-        BatterySection.Visibility = _viewModel.BatteryDevices.Count > 0
-            ? Visibility.Visible
-            : Visibility.Collapsed;
         StorageInfoBar.Severity = _viewModel.StorageOperationError
             ? InfoBarSeverity.Error
             : InfoBarSeverity.Success;

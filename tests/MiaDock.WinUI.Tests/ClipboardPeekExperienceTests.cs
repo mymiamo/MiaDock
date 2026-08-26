@@ -6,7 +6,7 @@ namespace MiaDock.WinUI.Tests;
 public sealed class ClipboardPeekExperienceTests
 {
     [TestMethod]
-    public void ExpandedView_HasSingleScrollOwnerSelectableHistoryAndLiveStatus()
+    public void ExpandedView_HasFluentHeroSingleScrollOwnerAndTypeAwareHistory()
     {
         var document = LoadControl("ClipboardPeekExpandedView.xaml");
         var text = document.ToString();
@@ -14,6 +14,8 @@ public sealed class ClipboardPeekExperienceTests
         Assert.AreEqual(1, document.Descendants().Count(element => element.Name.LocalName == "ScrollViewer"));
         Assert.AreEqual(0, document.Descendants().Count(element => element.Name.LocalName == "ListView"));
         Assert.IsGreaterThanOrEqualTo(1, document.Descendants().Count(element => element.Name.LocalName == "ItemsControl"));
+        Assert.IsNotNull(document.Descendants().SingleOrDefault(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "HeroSurface"));
         StringAssert.Contains(text, "SelectItemCommand");
         StringAssert.Contains(text, "InfoBar");
         StringAssert.Contains(text, "AutomationProperties.LiveSetting");
@@ -24,6 +26,15 @@ public sealed class ClipboardPeekExperienceTests
         StringAssert.Contains(text, "ColorRgbText");
         StringAssert.Contains(text, "ColorHslText");
         StringAssert.Contains(text, "TextStatsText");
+        StringAssert.Contains(text, "CurrentTypeGlyph");
+        StringAssert.Contains(text, "TypeGlyph");
+        StringAssert.Contains(text, "IsSelected");
+        StringAssert.Contains(text, "NarrowClipboardLayout");
+        StringAssert.Contains(text, "WideClipboardLayout");
+        StringAssert.Contains(text, "MicroMotion.StateKey");
+        Assert.DoesNotContain("CurrentTypeText\" Style=\"{StaticResource DockCaptionTextStyle}", text, StringComparison.Ordinal);
+        Assert.AreEqual(0, document.Descendants().Count(element =>
+            element.Attribute("Text")?.Value == "{Binding TitleText}"));
     }
 
     [TestMethod]
@@ -33,12 +44,16 @@ public sealed class ClipboardPeekExperienceTests
         Assert.IsTrue(File.Exists(Path.Combine(AppContext.BaseDirectory, "Controls", "ClipboardPeekNotificationView.xaml")));
         var compact = LoadControl("ClipboardPeekCompactView.xaml").ToString();
         StringAssert.Contains(compact, "CompactDetailText");
+        StringAssert.Contains(compact, "CurrentTypeGlyph");
+        StringAssert.Contains(compact, "SafeCurrentAutomationText");
+        StringAssert.Contains(compact, "MicroMotion.StateKey");
         Assert.DoesNotContain("CopyColorFormatCommand", compact, StringComparison.Ordinal);
         var notification = LoadControl("ClipboardPeekNotificationView.xaml").ToString();
         StringAssert.Contains(notification, "Commands");
         StringAssert.Contains(notification, "Peek.Thumbnail");
         StringAssert.Contains(notification, "Peek.ColorPreviewBrush");
         StringAssert.Contains(notification, "MinHeight=\"44\"");
+        StringAssert.Contains(notification, "MicroMotion.IsInteractive");
     }
 
     [TestMethod]
@@ -72,7 +87,7 @@ public sealed class ClipboardPeekExperienceTests
                 .ToHashSet(StringComparer.Ordinal);
             expected ??= keys;
             Assert.IsTrue(expected.SetEquals(keys), $"Clipboard Peek resource mismatch in {culture}.");
-            Assert.HasCount(45, keys);
+            Assert.HasCount(47, keys);
         }
     }
 

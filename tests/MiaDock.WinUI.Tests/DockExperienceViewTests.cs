@@ -258,7 +258,7 @@ public sealed class DockExperienceViewTests
     }
 
     [TestMethod]
-    public void TimerExpandedView_UsesAccessibleFluentTabsAndAdaptivePresetLayout()
+    public void TimerExpandedView_UsesAccessibleTabsRingAndAdaptivePresetLayout()
     {
         var document = LoadControl("TimerExpandedView.xaml");
         var tabs = document.Descendants()
@@ -266,12 +266,20 @@ public sealed class DockExperienceViewTests
             .ToArray();
 
         Assert.HasCount(2, tabs);
-        Assert.IsTrue(tabs.All(tab => tab.Attribute("IsClosable")?.Value == "False"));
+        Assert.IsTrue(tabs.All(tab =>
+            tab.Attribute("IsClosable")?.Value == "False" &&
+            tab.Attribute("AutomationProperties.Name") is not null));
         var tabView = document.Descendants().Single(element => element.Name.LocalName == "TabView");
         Assert.AreEqual("{Binding SelectedToolIndex, Mode=TwoWay}", tabView.Attribute("SelectedIndex")?.Value);
         Assert.AreEqual("False", tabView.Attribute("IsAddTabButtonVisible")?.Value);
         Assert.AreEqual("False", tabView.Attribute("CanDragTabs")?.Value);
         Assert.AreEqual("False", tabView.Attribute("CanReorderTabs")?.Value);
+        Assert.IsTrue(document.Descendants().Any(element =>
+            element.Name.LocalName == "Ellipse" &&
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "TimerProgressArc"));
+        Assert.IsTrue(document.Descendants().Any(element =>
+            element.Name.LocalName == "AdaptiveTrigger" &&
+            element.Attribute("MinWindowWidth")?.Value == "540"));
 
         var numberBoxes = document.Descendants()
             .Where(element => element.Name.LocalName == "NumberBox")
@@ -286,8 +294,86 @@ public sealed class DockExperienceViewTests
         var presetList = FindNamedElement(document, "PresetList");
         Assert.AreEqual("{Binding PresetDurations}", presetList.Attribute("ItemsSource")?.Value);
         Assert.IsTrue(presetList.Descendants().Any(element =>
-            element.Name.LocalName == "UniformGridLayout"));
-        Assert.IsFalse(document.Descendants().Any(element => element.Name.LocalName == "ToggleButton"));
+            element.Name.LocalName == "UniformGridLayout" &&
+            element.Attribute("MinItemWidth")?.Value == "72"));
+        var presetButton = presetList.Descendants().Single(element =>
+            element.Name.LocalName == "ToggleButton");
+        Assert.IsNull(presetButton.Attribute("Width"));
+        Assert.AreEqual("72", presetButton.Attribute("MinWidth")?.Value);
+        Assert.IsTrue(presetButton.Descendants().Any(element =>
+            element.Name.LocalName == "TextBlock" &&
+            element.Attribute("TextTrimming")?.Value == "None" &&
+            element.Attribute("TextWrapping")?.Value == "Wrap"));
+
+        var text = document.ToString();
+        StringAssert.Contains(text, "IsTimerSetupEnabled");
+        StringAssert.Contains(text, "TimerProgressAccessibleText");
+        Assert.DoesNotContain("TimeTitleText", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("TimeToolsText", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("OnTimerToolClick", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("OnStopwatchToolClick", text, StringComparison.Ordinal);
+        var rootGrid = document.Root!.Elements().Single(element => element.Name.LocalName == "Grid");
+        Assert.IsTrue(rootGrid.Elements().Any(element => element.Name.LocalName == "TabView"));
+        Assert.IsFalse(rootGrid.Elements().Any(element =>
+            element.Name.LocalName == "Grid" &&
+            element.Descendants().Any(child => child.Attribute("Text")?.Value == "Zaman")));
+    }
+
+    [TestMethod]
+    public void GlobalModuleRedesign_UsesSharedHeroAndGroupedInsetResources()
+    {
+        var styles = XDocument.Load(Path.Combine(
+            FindRepositoryRoot(),
+            "src",
+            "MiaDock.UI",
+            "Themes",
+            "DockControlStyles.xaml"));
+        var keys = styles.Descendants()
+            .Attributes(XamlNamespace + "Key")
+            .Select(attribute => attribute.Value)
+            .ToArray();
+
+        CollectionAssert.Contains(keys, "DockHeroSectionStyle");
+        CollectionAssert.Contains(keys, "DockGroupedSectionStyle");
+        CollectionAssert.Contains(keys, "DockGroupedRowStyle");
+        CollectionAssert.Contains(keys, "DockInsetDividerStyle");
+
+        foreach (var fileName in new[]
+                 {
+                     "ExpandedMusicView.xaml",
+                     "VolumeExpandedView.xaml",
+                     "PrivacyExpandedView.xaml",
+                     "NetworkExpandedView.xaml",
+                     "BatteryExpandedView.xaml",
+                     "BluetoothExpandedView.xaml",
+                     "TransferExpandedView.xaml",
+                     "GenericExpandedModuleView.xaml"
+                 })
+        {
+            var document = LoadControl(fileName);
+            var source = document.ToString();
+            StringAssert.Contains(source, "DockHeroSectionStyle", fileName);
+            Assert.IsFalse(document.Descendants().Any(element =>
+                element.Name.LocalName == "ScrollViewer"),
+                $"{fileName} should leave vertical scroll ownership to ExpandedModuleHost.");
+        }
+    }
+
+    [TestMethod]
+    public void EventNotifications_UseSharedLayoutAndStateAwareMotion()
+    {
+        foreach (var fileName in new[]
+                 {
+                     "GenericModuleNotificationView.xaml",
+                     "NotificationModuleNotificationView.xaml",
+                     "TransferNotificationView.xaml",
+                     "StoreUpdateNotificationView.xaml"
+                 })
+        {
+            var source = LoadControl(fileName).ToString();
+            StringAssert.Contains(source, "DockNotificationLayoutStyle", fileName);
+            StringAssert.Contains(source, "MicroMotion.StateKey", fileName);
+        }
     }
 
     [TestMethod]
@@ -402,7 +488,8 @@ public sealed class DockExperienceViewTests
         Assert.IsEmpty(descendants.Where(element => element.Name.LocalName == "ListView").ToArray());
         Assert.IsGreaterThanOrEqualTo(4, descendants.Count(element => element.Name.LocalName == "ItemsControl"));
         Assert.IsTrue(descendants.Where(element => element.Name.LocalName == "Expander").All(element =>
-            element.Attribute("Expanding")?.Value == "OnDeviceExpanding"));
+            element.Attribute("Expanding")?.Value == "OnDeviceExpanding" &&
+            element.Attribute("Unloaded")?.Value == "OnDeviceExpanderUnloaded"));
         Assert.IsTrue(descendants.Where(element => element.Name.LocalName == "Button").All(element =>
             element.Attribute("MinHeight")?.Value == "44"));
 
@@ -413,6 +500,10 @@ public sealed class DockExperienceViewTests
         var text = document.ToString();
         StringAssert.Contains(text, "ConnectBluetoothCommand");
         StringAssert.Contains(text, "DisconnectBluetoothCommand");
+        StringAssert.Contains(text, "DeviceHubGroupStyle");
+        StringAssert.Contains(text, "MinHeight=\"62\"");
+        Assert.IsFalse(text.Contains("Device batteries", StringComparison.Ordinal));
+        Assert.IsFalse(text.Contains("Text=\"Device Hub\"", StringComparison.Ordinal));
 
         var codeBehind = File.ReadAllText(Path.Combine(
             AppContext.BaseDirectory,
@@ -430,4 +521,15 @@ public sealed class DockExperienceViewTests
 
     private static XDocument LoadControl(string fileName) => XDocument.Load(
         Path.Combine(AppContext.BaseDirectory, "Controls", fileName));
+
+    private static string FindRepositoryRoot()
+    {
+        var current = new DirectoryInfo(AppContext.BaseDirectory);
+        while (current is not null && !File.Exists(Path.Combine(current.FullName, "MiaDock.sln")))
+        {
+            current = current.Parent;
+        }
+
+        return current?.FullName ?? throw new DirectoryNotFoundException("Repository root not found.");
+    }
 }

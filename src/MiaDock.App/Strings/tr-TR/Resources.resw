@@ -140,7 +140,7 @@
     <value>Aktif uygulamalar</value>
   </data>
   <data name="System.Call.IdleDetail" xml:space="preserve">
-    <value>Yerel arama çıkarımı</value>
+    <value>Yerel algılama · Ses kaydedilmez</value>
   </data>
   <data name="Module.system-activity.Name" xml:space="preserve">
     <value>Arama</value>
@@ -165,6 +165,9 @@
   </data>
   <data name="Dock.Home" xml:space="preserve">
     <value>Ana dock</value>
+  </data>
+  <data name="Navigation.Selected" xml:space="preserve">
+    <value>Seçili</value>
   </data>
   <data name="Dock.Show" xml:space="preserve">
     <value>Dock'u göster</value>
@@ -1315,4 +1318,44 @@
   <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Title" xml:space="preserve"><value>Spectrum ses çıkışı</value></data>
   <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Description" xml:space="preserve"><value>Spectrum'un dinleyeceği çıkışı seçin. SteelSeries Sonar kullanıyorsanız medya uygulamasına atadığınız kanalı seçin.</value></data>
   <data name="Media.Settings.ExperimentalSpectrum.OutputDevice.Default" xml:space="preserve"><value>Windows varsayılanı</value></data>
+  <data name="ClipboardPeek.Current" xml:space="preserve"><value>Geçerli pano</value></data>
+  <data name="ClipboardPeek.SensitiveDescription" xml:space="preserve"><value>Gizliliğinizi korumak için bu pano öğesi gizlendi.</value></data>
+  <data name="DeviceHub.Title" xml:space="preserve"><value>Aygıt Merkezi</value></data>
+  <data name="DeviceHub.Automation" xml:space="preserve"><value>Bağlı aygıtlar</value></data>
+  <data name="DeviceHub.AudioOutput" xml:space="preserve"><value>Ses çıkışı</value></data>
+  <data name="DeviceHub.AudioOutputAutomation" xml:space="preserve"><value>Ses çıkışı aygıtları</value></data>
+  <data name="DeviceHub.Microphone" xml:space="preserve"><value>Mikrofon</value></data>
+  <data name="DeviceHub.MicrophoneAutomation" xml:space="preserve"><value>Mikrofon aygıtları</value></data>
+  <data name="DeviceHub.Bluetooth" xml:space="preserve"><value>Bluetooth</value></data>
+  <data name="DeviceHub.BluetoothAutomation" xml:space="preserve"><value>Bluetooth aygıtları</value></data>
+  <data name="DeviceHub.Storage" xml:space="preserve"><value>Çıkarılabilir depolama</value></data>
+  <data name="DeviceHub.StorageAutomation" xml:space="preserve"><value>Çıkarılabilir depolama aygıtları</value></data>
+  <data name="DeviceHub.Empty" xml:space="preserve"><value>Bağlı aygıt bulunamadı.</value></data>
+  <data name="DeviceHub.SelectSound" xml:space="preserve"><value>Ses ayarlarında seç</value></data>
+  <data name="DeviceHub.WindowsRemoveOptions" xml:space="preserve"><value>Windows kaldırma seçenekleri</value></data>
+  <data name="DeviceHub.Eject" xml:space="preserve"><value>Güvenle çıkar</value></data>
+  <data name="DeviceHub.Capacity" xml:space="preserve"><value>Kapasite</value></data>
+  <data name="DeviceHub.Available" xml:space="preserve"><value>Kullanılabilir</value></data>
+  <data name="DeviceHub.FileSystem" xml:space="preserve"><value>Dosya sistemi</value></data>
+  <data name="DeviceHub.ConnectedSummary" xml:space="preserve"><value>{0} bağlı</value></data>
+  <data name="System.Call.Title" xml:space="preserve"><value>Arama</value></data>
+  <data name="System.Call.Detected" xml:space="preserve"><value>Arama tespit edildi</value></data>
+  <data name="System.Call.AppTitle" xml:space="preserve"><value>{0} araması</value></data>
+  <data name="System.Call.AppEnded" xml:space="preserve"><value>{0} araması sona erdi</value></data>
+  <data name="System.Call.UnknownApp" xml:space="preserve"><value>İletişim uygulaması</value></data>
+  <data name="System.Call.PossibleBadge" xml:space="preserve"><value>Olası etkinlik</value></data>
+  <data name="System.Call.Waiting" xml:space="preserve"><value>Beklemede</value></data>
+  <data name="System.Call.Active" xml:space="preserve"><value>Etkin</value></data>
+  <data name="System.Call.PossibleDetail" xml:space="preserve"><value>İletişim mikrofon etkinliği bulundu ancak arama doğrulanamadı.</value></data>
+  <data name="System.Call.PossibleAppDetail" xml:space="preserve"><value>{0} mikrofon etkinliği bulundu ancak arama doğrulanamadı.</value></data>
+  <data name="System.Call.Automation" xml:space="preserve"><value>Arama etkinliği</value></data>
+  <data name="System.Call.LocalDetection" xml:space="preserve"><value>Yerel algılama</value></data>
+  <data name="System.Call.Privacy" xml:space="preserve"><value>Ses kaydedilmez veya gönderilmez.</value></data>
+  <data name="System.Call.IdleDescription" xml:space="preserve"><value>Discord, Skype ve WhatsApp aramaları yerel olarak algılanabilir.</value></data>
+  <data name="System.Call.SupportedApps" xml:space="preserve"><value>Desteklenen uygulamalar</value></data>
+  <data name="System.Call.Supported" xml:space="preserve"><value>Destekleniyor</value></data>
+  <data name="System.Call.Information" xml:space="preserve"><value>Arama bilgileri</value></data>
+  <data name="System.Call.Application" xml:space="preserve"><value>Uygulama</value></data>
+  <data name="System.Call.Microphone" xml:space="preserve"><value>Mikrofon</value></data>
+  <data name="System.Call.AudioSession" xml:space="preserve"><value>Arama sesi</value></data>
 </root>

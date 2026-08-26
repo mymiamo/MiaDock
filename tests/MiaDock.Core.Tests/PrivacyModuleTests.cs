@@ -44,6 +44,24 @@ public sealed class PrivacyModuleTests
     }
 
     [TestMethod]
+    public void PrivacyHeroDetail_UsesDescriptionWhenIdleAndLeadApplicationWhenActive()
+    {
+        var service = new FakePrivacyUsageService(PrivacyState.Empty);
+        var viewModel = new PrivacyModuleViewModel(service);
+
+        Assert.AreEqual(
+            "Mikrofon ve kamerayı kullanan uygulamaları gösterir.",
+            viewModel.HeroDetailText);
+
+        service.Publish(PrivacyState.FromApplications(
+        [
+            new("discord", 10, "Discord", "Discord PTB", null, true, false)
+        ]));
+
+        Assert.AreEqual("Discord PTB", viewModel.HeroDetailText);
+    }
+
+    [TestMethod]
     public async Task Activation_RaisesHighPriorityEventWhenMicrophoneStarts()
     {
         var service = new FakePrivacyUsageService(PrivacyState.Empty);

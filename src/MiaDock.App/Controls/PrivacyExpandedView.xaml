@@ -12,92 +12,86 @@
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
-      <RowDefinition Height="Auto" />
     </Grid.RowDefinitions>
 
-    <Border Style="{StaticResource DockSectionStyle}" Padding="12,10">
-      <Grid ColumnSpacing="10">
+    <Border Style="{StaticResource DockHeroSectionStyle}"
+            Padding="14,10">
+      <Grid ColumnSpacing="12">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="Auto" />
           <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
-        <FontIcon Glyph="{Binding StatusGlyph}"
-                  FontSize="18"
-                  Foreground="{ThemeResource IslandStyleAccentBrush}"
-                  VerticalAlignment="Center" />
-        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-          <TextBlock Text="{Binding TitleText}" Style="{StaticResource DockModuleHeaderTextStyle}" />
+        <Border Style="{StaticResource DockModuleIconContainerStyle}">
+          <FontIcon Glyph="{Binding StatusGlyph}"
+                    FontSize="20"
+                    Foreground="{ThemeResource IslandStyleAccentBrush}" />
+        </Border>
+        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
           <TextBlock Text="{Binding SummaryText}"
+                     MaxLines="1"
+                     TextTrimming="CharacterEllipsis"
+                     Style="{StaticResource DockTitleTextStyle}" />
+          <TextBlock Text="{Binding HeroDetailText}"
+                     MaxLines="1"
                      Style="{StaticResource DockCaptionTextStyle}"
-                     TextTrimming="CharacterEllipsis" />
+                     TextTrimming="CharacterEllipsis"
+                     ToolTipService.ToolTip="{Binding HeroDetailText}" />
+        </StackPanel>
+        <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="4">
+          <Button Width="44" Height="44"
+                  Style="{StaticResource DockIconButtonStyle}"
+                  animations:MicroMotion.IsInteractive="True"
+                  Command="{Binding OpenMicrophonePrivacySettingsCommand}"
+                  ToolTipService.ToolTip="Mikrofon gizlilik ayarlarını aç"
+                  AutomationProperties.Name="Mikrofon gizlilik ayarlarını aç"
+                  AutomationProperties.HelpText="Mikrofon gizlilik ayarlarını aç">
+            <FontIcon Glyph="&#xE720;" FontSize="14" />
+          </Button>
+          <Button Width="44" Height="44"
+                  Style="{StaticResource DockIconButtonStyle}"
+                  animations:MicroMotion.IsInteractive="True"
+                  Command="{Binding OpenCameraPrivacySettingsCommand}"
+                  ToolTipService.ToolTip="Kamera gizlilik ayarlarını aç"
+                  AutomationProperties.Name="Kamera gizlilik ayarlarını aç"
+                  AutomationProperties.HelpText="Kamera gizlilik ayarlarını aç">
+            <FontIcon Glyph="&#xE714;" FontSize="14" />
+          </Button>
         </StackPanel>
       </Grid>
     </Border>
 
-    <ScrollViewer Grid.Row="1"
-                  Margin="0,8,0,0"
-                  VerticalScrollBarVisibility="Auto"
-                  Visibility="{Binding HasActiveUsage, Converter={StaticResource BooleanToVisibility}}">
-      <ItemsControl ItemsSource="{Binding Applications}">
-        <ItemsControl.ItemTemplate>
-          <DataTemplate>
-            <Border Style="{StaticResource DockSectionStyle}" Padding="10,8" Margin="0,0,0,6">
-              <Grid ColumnSpacing="10">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="Auto" />
-                  <ColumnDefinition Width="*" />
-                </Grid.ColumnDefinitions>
-                <controls:PrivacyAppIconView DataContext="{Binding}" />
-                <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                  <TextBlock Text="{Binding DisplayName}"
+    <StackPanel Grid.Row="1"
+                Margin="0,10,0,0"
+                Visibility="{Binding HasActiveUsage, Converter={StaticResource BooleanToVisibility}}">
+      <TextBlock Text="{Binding ActiveApplicationsHeader}"
+                 Style="{StaticResource DockSectionHeaderTextStyle}" />
+      <Border Style="{StaticResource DockGroupedSectionStyle}">
+        <ItemsControl ItemsSource="{Binding Applications}">
+          <ItemsControl.ItemTemplate>
+            <DataTemplate>
+              <Border Style="{StaticResource DockMiniGroupedRowStyle}">
+                <Grid ColumnSpacing="12">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                  </Grid.ColumnDefinitions>
+                  <controls:PrivacyAppIconView DataContext="{Binding}" />
+                  <TextBlock Grid.Column="1" Text="{Binding DisplayName}"
+                             VerticalAlignment="Center"
                              Style="{StaticResource DockBodyTextStyle}"
                              TextTrimming="CharacterEllipsis" />
-                  <TextBlock Text="{Binding UsageText}"
-                             Style="{StaticResource DockCaptionTextStyle}"
+                  <TextBlock Grid.Column="2" Text="{Binding UsageText}"
+                             VerticalAlignment="Center"
+                             Style="{StaticResource DockStatusTextStyle}"
                              TextTrimming="CharacterEllipsis" />
-                </StackPanel>
-              </Grid>
-            </Border>
-          </DataTemplate>
-        </ItemsControl.ItemTemplate>
-      </ItemsControl>
-    </ScrollViewer>
-
-    <Border Grid.Row="1"
-            Style="{StaticResource DockSectionStyle}"
-            Padding="12,16"
-            VerticalAlignment="Center">
-      <Border.Visibility>
-        <Binding Path="HasActiveUsage" Converter="{StaticResource BooleanToVisibility}" ConverterParameter="Invert" />
-      </Border.Visibility>
-      <TextBlock Text="{Binding EmptyText}"
-                 HorizontalAlignment="Center"
-                 Style="{StaticResource DockCaptionTextStyle}" />
-    </Border>
-
-    <StackPanel Grid.Row="2"
-                Orientation="Horizontal"
-                Spacing="8"
-                Margin="0,8,0,0"
-                HorizontalAlignment="Right">
-      <Button Style="{StaticResource DockIconButtonStyle}"
-              Width="40"
-              Height="40"
-              animations:MicroMotion.IsInteractive="True"
-              Command="{Binding OpenMicrophonePrivacySettingsCommand}"
-              ToolTipService.ToolTip="Mikrofon gizlilik ayarlarını aç"
-              AutomationProperties.Name="Mikrofon gizlilik ayarlarını aç">
-        <FontIcon Glyph="&#xE720;" FontSize="13" />
-      </Button>
-      <Button Style="{StaticResource DockIconButtonStyle}"
-              Width="40"
-              Height="40"
-              animations:MicroMotion.IsInteractive="True"
-              Command="{Binding OpenCameraPrivacySettingsCommand}"
-              ToolTipService.ToolTip="Kamera gizlilik ayarlarını aç"
-              AutomationProperties.Name="Kamera gizlilik ayarlarını aç">
-        <FontIcon Glyph="&#xE714;" FontSize="13" />
-      </Button>
+                </Grid>
+              </Border>
+            </DataTemplate>
+          </ItemsControl.ItemTemplate>
+        </ItemsControl>
+      </Border>
     </StackPanel>
   </Grid>
 </UserControl>

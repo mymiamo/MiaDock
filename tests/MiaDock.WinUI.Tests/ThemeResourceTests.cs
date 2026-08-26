@@ -164,12 +164,21 @@ public sealed class ThemeResourceTests
         var statusBadgeText = styles["DockStatusBadgeStyle"].ToString();
         StringAssert.Contains(
             statusBadgeText,
-            "Property=\"CornerRadius\" Value=\"5\"");
+            "Property=\"CornerRadius\" Value=\"8\"");
         Assert.IsFalse(statusBadgeText.Contains("Value=\"999\"", StringComparison.Ordinal));
 
         var segmentToggleText = styles["DockSegmentToggleButtonStyle"].ToString();
         StringAssert.Contains(segmentToggleText, "Property=\"CornerRadius\" Value=\"6\"");
         StringAssert.Contains(segmentToggleText, "UseSystemFocusVisuals");
+
+        var switcherItemText = styles["ModuleSwitcherItemStyle"].ToString();
+        StringAssert.Contains(switcherItemText, "Property=\"Width\" Value=\"44\"");
+        StringAssert.Contains(switcherItemText, "Property=\"Height\" Value=\"44\"");
+        StringAssert.Contains(switcherItemText, "Property=\"CornerRadius\" Value=\"9\"");
+        StringAssert.Contains(switcherItemText, "Property=\"HorizontalContentAlignment\" Value=\"Center\"");
+        StringAssert.Contains(switcherItemText, "Property=\"VerticalContentAlignment\" Value=\"Center\"");
+        Assert.IsFalse(styles.ContainsKey("ModuleSwitcherSelectedSurfaceStyle"));
+        Assert.IsFalse(styles.ContainsKey("ModuleSwitcherIndicatorStyle"));
     }
 
     [DataRow("AppleLikeTheme.xaml")]

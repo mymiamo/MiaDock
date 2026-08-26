@@ -21,7 +21,7 @@ public sealed class SystemActivityModuleTests
         Assert.IsFalse(module.Descriptor.IsPersistent);
         Assert.AreEqual("system-activity", module.CurrentPresentation?.ModuleId);
         Assert.AreEqual(ModulePresentationKind.Status, module.CurrentPresentation?.PresentationKind);
-        Assert.AreEqual(string.Empty, module.CurrentPresentation?.ValueText);
+        Assert.AreEqual("Waiting", module.CurrentPresentation?.ValueText);
         Assert.AreEqual("\uE717", module.Descriptor.IconGlyph);
         Assert.AreEqual(280, module.Descriptor.MinimumExpandedHeight);
         Assert.IsFalse(module.CurrentPresentation?.IsPersistentOverride);
@@ -42,7 +42,7 @@ public sealed class SystemActivityModuleTests
     }
 
     [TestMethod]
-    public async Task CallActivity_RaisesHighPriorityEvent()
+    public async Task PossibleCallActivity_RaisesNormalPriorityEventAndUsesLowerPersistence()
     {
         var service = new FakeSystemActivityService(CreateSnapshot());
         var module = new SystemActivityModule(service, new SystemActivityViewModel(service));
@@ -53,15 +53,43 @@ public sealed class SystemActivityModuleTests
         service.Publish(CreateSnapshot() with
         {
             MicrophoneUsage = MicrophoneUsageState.Active,
-            CallActivity = CallActivityState.Possible
+            CallActivity = Possible(CommunicationApp.Discord)
         });
 
         Assert.IsNotNull(raised);
-        Assert.AreEqual(ModuleEventPriority.High, raised.Priority);
+        Assert.AreEqual(ModuleEventPriority.Normal, raised.Priority);
         Assert.AreEqual("system:call", raised.CoalescingKey);
         Assert.IsFalse(raised.Presentation.IsSensitive);
         Assert.IsTrue(module.CurrentPresentation?.IsPersistentOverride);
+        Assert.AreEqual(225, module.CurrentPresentation?.PersistentPriorityOverride);
+    }
+
+    [TestMethod]
+    public async Task DetectedCall_RaisesHighPriorityStartAndEndedEvents()
+    {
+        var service = new FakeSystemActivityService(CreateSnapshot());
+        var module = new SystemActivityModule(service, new SystemActivityViewModel(service));
+        await module.ActivateAsync();
+        var events = new List<ModuleEvent>();
+        module.EventOccurred += (_, moduleEvent) => events.Add(moduleEvent);
+
+        var detected = new CallActivityInfo(
+            CallActivityState.Detected,
+            CommunicationApp.Discord,
+            "Discord",
+            "discord",
+            "C:\\Apps\\Discord.exe",
+            DateTimeOffset.UtcNow,
+            true,
+            true);
+        service.Publish(CreateSnapshot() with { CallActivity = detected });
         Assert.AreEqual(450, module.CurrentPresentation?.PersistentPriorityOverride);
+        service.Publish(CreateSnapshot());
+
+        Assert.HasCount(2, events);
+        Assert.IsTrue(events.All(item => item.Priority == ModuleEventPriority.High));
+        StringAssert.Contains(events[0].Presentation.PrimaryText, "Discord");
+        StringAssert.Contains(events[1].Presentation.PrimaryText, "Discord");
     }
 
     [TestMethod]
@@ -147,7 +175,17 @@ public sealed class SystemActivityModuleTests
         MicrophoneUsageState.Idle,
         CameraDeviceAvailability.Available,
         CameraAccessState.Allowed,
-        CallActivityState.None);
+        CallActivityInfo.None);
+
+    private static CallActivityInfo Possible(CommunicationApp app) => new(
+        CallActivityState.Possible,
+        app,
+        app.ToString(),
+        app.ToString(),
+        null,
+        null,
+        true,
+        false);
 
     private sealed class FakeSystemActivityService(SystemActivitySnapshot current) : ISystemActivityService
     {
