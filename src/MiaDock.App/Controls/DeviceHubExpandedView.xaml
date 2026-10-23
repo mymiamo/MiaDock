@@ -2,6 +2,7 @@
              x:Name="Root"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons"
              xmlns:animations="using:MiaDock.App.Animations"
              xmlns:controls="using:MiaDock.App.Controls"
              Loaded="OnLoaded"
@@ -57,7 +58,7 @@
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <Border Style="{StaticResource DeviceHubGlyphContainerStyle}">
-                <FontIcon Glyph="{Binding Glyph}" FontSize="17" />
+                <icons:DockIcon IsFilled="{Binding IsConnected}" Glyph="{Binding Glyph}" FontSize="17" />
               </Border>
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                 <TextBlock Text="{Binding DisplayName}" Style="{StaticResource DockBodyTextStyle}"
@@ -75,7 +76,7 @@
             <AppBarButton Label="{Binding DataContext.SelectSoundText, ElementName=Root}"
                           Command="{Binding DataContext.OpenSoundSettingsCommand, ElementName=Root}"
                           AutomationProperties.Name="{Binding DataContext.SelectSoundText, ElementName=Root}">
-              <AppBarButton.Icon><FontIcon Glyph="&#xE713;" /></AppBarButton.Icon>
+              <AppBarButton.Icon><icons:DockIcon Glyph="&#xE713;" /></AppBarButton.Icon>
             </AppBarButton>
           </CommandBar>
         </Expander>
@@ -102,7 +103,7 @@
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <Border Style="{StaticResource DeviceHubGlyphContainerStyle}">
-                <FontIcon Glyph="{Binding Glyph}" FontSize="17" />
+                <icons:DockIcon IsFilled="{Binding IsConnected}" Glyph="{Binding Glyph}" FontSize="17" />
               </Border>
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                 <TextBlock Text="{Binding DisplayName}" Style="{StaticResource DockBodyTextStyle}"
@@ -122,19 +123,19 @@
                           CommandParameter="{Binding Device}"
                           Visibility="{Binding CanConnect, Converter={StaticResource BooleanToVisibility}}"
                           AutomationProperties.Name="{Binding DataContext.ConnectText, ElementName=Root}">
-              <AppBarButton.Icon><FontIcon Glyph="&#xE710;" /></AppBarButton.Icon>
+              <AppBarButton.Icon><icons:DockIcon Glyph="&#xE710;" /></AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton Label="{Binding DataContext.DisconnectText, ElementName=Root}"
                           Command="{Binding DataContext.DisconnectBluetoothCommand, ElementName=Root}"
                           CommandParameter="{Binding Device}"
                           Visibility="{Binding CanDisconnect, Converter={StaticResource BooleanToVisibility}}"
                           AutomationProperties.Name="{Binding DataContext.DisconnectText, ElementName=Root}">
-              <AppBarButton.Icon><FontIcon Glyph="&#xE738;" /></AppBarButton.Icon>
+              <AppBarButton.Icon><icons:DockIcon Glyph="&#xE738;" /></AppBarButton.Icon>
             </AppBarButton>
             <AppBarButton Label="{Binding DataContext.ManageBluetoothText, ElementName=Root}"
                           Command="{Binding DataContext.OpenBluetoothSettingsCommand, ElementName=Root}"
                           AutomationProperties.Name="{Binding DataContext.ManageBluetoothText, ElementName=Root}">
-              <AppBarButton.Icon><FontIcon Glyph="&#xE713;" /></AppBarButton.Icon>
+              <AppBarButton.Icon><icons:DockIcon Glyph="&#xE713;" /></AppBarButton.Icon>
             </AppBarButton>
           </CommandBar>
         </Expander>
@@ -161,7 +162,7 @@
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <Border Style="{StaticResource DeviceHubGlyphContainerStyle}">
-                <FontIcon Glyph="{Binding Glyph}" FontSize="17" />
+                <icons:DockIcon IsFilled="{Binding IsConnected}" Glyph="{Binding Glyph}" FontSize="17" />
               </Border>
               <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="2">
                 <TextBlock Text="{Binding DisplayName}" Style="{StaticResource DockBodyTextStyle}"
@@ -203,14 +204,14 @@
                             CommandParameter="{Binding Device}"
                             Visibility="{Binding CanOpen, Converter={StaticResource BooleanToVisibility}}"
                             AutomationProperties.Name="{Binding DataContext.OpenText, ElementName=Root}">
-                <AppBarButton.Icon><FontIcon Glyph="&#xE8E5;" /></AppBarButton.Icon>
+                <AppBarButton.Icon><icons:DockIcon Glyph="&#xE8E5;" /></AppBarButton.Icon>
               </AppBarButton>
               <AppBarButton Label="{Binding DataContext.EjectText, ElementName=Root}"
                             Command="{Binding DataContext.EjectStorageCommand, ElementName=Root}"
                             CommandParameter="{Binding Device}"
                             Visibility="{Binding CanEject, Converter={StaticResource BooleanToVisibility}}"
                             AutomationProperties.Name="{Binding DataContext.EjectText, ElementName=Root}">
-                <AppBarButton.Icon><FontIcon Glyph="&#xE7B2;" /></AppBarButton.Icon>
+                <AppBarButton.Icon><icons:DockIcon Glyph="&#xE7B2;" /></AppBarButton.Icon>
               </AppBarButton>
             </CommandBar>
           </StackPanel>
@@ -276,7 +277,7 @@
                     AutomationProperties.Name="{Binding WindowsRemoveOptionsText}"
                     ToolTipService.ToolTip="{Binding WindowsRemoveOptionsText}"
                     animations:MicroMotion.IsInteractive="True">
-              <FontIcon Glyph="&#xE7BA;" FontSize="15" />
+              <icons:DockIcon Glyph="&#xE7BA;" FontSize="15" />
             </Button>
           </Grid>
           <Border Style="{StaticResource DeviceHubGroupStyle}">
@@ -293,7 +294,7 @@
         <StackPanel HorizontalAlignment="Center" Spacing="8" Padding="20,34"
                     Visibility="{Binding HasAnyDevices, Converter={StaticResource BooleanToVisibility}, ConverterParameter=Invert}"
                     AutomationProperties.Name="{Binding EmptyText}">
-          <FontIcon Glyph="&#xE7F4;" FontSize="24" Opacity="0.62" />
+          <icons:DockIcon Glyph="&#xE7F4;" FontSize="24" Opacity="0.62" />
           <TextBlock Text="{Binding EmptyText}" Style="{StaticResource DockCaptionTextStyle}"
                      TextAlignment="Center" TextWrapping="Wrap" />
         </StackPanel>

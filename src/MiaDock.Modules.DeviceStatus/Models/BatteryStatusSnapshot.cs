@@ -10,6 +10,7 @@ public sealed record BatteryStatusSnapshot(
     BatteryAvailabilityState Availability = BatteryAvailabilityState.Unknown,
     DateTimeOffset? LastSuccessfulReadAtUtc = null)
 {
+    public bool HasReading => IsBatteryPresent && Availability is BatteryAvailabilityState.Available or BatteryAvailabilityState.TransientError;
     public static BatteryStatusSnapshot Default { get; } = new(
         DeviceServiceState.Stopped,
         false,

@@ -14,6 +14,19 @@
                    Style="{StaticResource SettingsPageDescriptionTextBlockStyle}" />
       </StackPanel>
 
+      <Border Style="{StaticResource SettingsCardBorderStyle}">
+        <StackPanel Spacing="8">
+          <TextBlock Text="Taşınabilir kişiselleştirme" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
+          <TextBlock Text="Tema, dock düzeni, favoriler ve Odak profillerini başka bilgisayara taşıyın. Uygulama tetikleyicileri ve monitör eşleştirmeleri taşınmaz."
+                     TextWrapping="Wrap" Style="{StaticResource SettingsCardDescriptionTextBlockStyle}" />
+          <StackPanel Orientation="Horizontal" Spacing="8">
+            <Button x:Name="ExportCustomizationButton" Content="Dışa aktar" Click="OnExportCustomizationClick" />
+            <Button x:Name="ImportCustomizationButton" Content="İçe aktar" Click="OnImportCustomizationClick" />
+          </StackPanel>
+          <TextBlock x:Name="TransferStatus" TextWrapping="Wrap" AutomationProperties.LiveSetting="Polite" />
+        </StackPanel>
+      </Border>
+
       <TextBlock Text="Tema" Style="{StaticResource SettingsSectionTitleTextBlockStyle}" />
       <Border Style="{StaticResource SettingsCardBorderStyle}">
         <Grid ColumnSpacing="14">

@@ -45,6 +45,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     }
 
     public string BatteryGlyph => _battery.IsCharging ? "\uE83E" : "\uE850";
+    public BatteryStatusSnapshot BatterySnapshot => _battery;
 
     public string BatteryText => _battery.IsBatteryPresent
         ? $"{_battery.ChargePercent}%"
@@ -79,6 +80,9 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     };
 
     public double NetworkOpacity => _network.Connectivity == NetworkConnectivityKind.Offline ? 0.48 : 1;
+    public bool NetworkIsConnected => _network.Connectivity is NetworkConnectivityKind.Internet
+        or NetworkConnectivityKind.LocalAccess or NetworkConnectivityKind.ConstrainedInternet;
+    public bool BluetoothIsConnected => ConnectedBluetoothCount > 0;
 
     public Brush NetworkStatusBrush => _network.Connectivity switch
     {
@@ -158,6 +162,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     private void OnBatteryChanged(object? sender, BatteryStatusSnapshot snapshot)
     {
         _battery = snapshot;
+        OnPropertyChanged(nameof(BatterySnapshot));
         OnPropertyChanged(nameof(BatteryGlyph));
         OnPropertyChanged(nameof(BatteryText));
         OnPropertyChanged(nameof(BatteryVisibility));
@@ -170,6 +175,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
         _network = snapshot;
         OnPropertyChanged(nameof(NetworkGlyph));
         OnPropertyChanged(nameof(NetworkOpacity));
+        OnPropertyChanged(nameof(NetworkIsConnected));
         OnPropertyChanged(nameof(NetworkStatusBrush));
         OnPropertyChanged(nameof(NetworkStatus));
         OnPropertyChanged(nameof(VpnVisibility));
@@ -182,6 +188,7 @@ public sealed class IdleDashboardViewModel : ObservableObject, IDisposable
     {
         _bluetooth = snapshot;
         OnPropertyChanged(nameof(ConnectedBluetoothCount));
+        OnPropertyChanged(nameof(BluetoothIsConnected));
         OnPropertyChanged(nameof(BluetoothCountText));
         OnPropertyChanged(nameof(BluetoothVisibility));
         OnPropertyChanged(nameof(BluetoothStatus));

@@ -25,6 +25,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     private OverlaySize _sizeInDips;
     private DockCornerRadii _cornerRadiiInDips;
     private double _marginInDips;
+    private double _horizontalOffsetInDips;
     private OverlayPlacement? _lastPlacement;
     private OverlayPlacement? _lastVisiblePlacement;
     private OverlayWorkArea? _lastDisplayBounds;
@@ -93,12 +94,49 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     public Exception? LastFailure { get; private set; }
 
     public bool IsVisible { get; private set; }
+    internal long NativePlacementOperations { get; private set; }
+
+    public double HorizontalOffsetInDips
+    {
+        get
+        {
+            if (_lastVisiblePlacement is not { } placement || _lastDpi == 0) return _horizontalOffsetInDips;
+            var display = _displayTopology.Find(_displayId) ?? _displayTopology.Primary;
+            var area = display.WorkArea;
+            var origin = _placementCalculator.Calculate(new(new(area.X, area.Y, area.Width, area.Height),
+                _sizeInDips, _lastDpi, _position, _marginInDips));
+            return (placement.X - origin.X) * 96d / _lastDpi;
+        }
+    }
+
+    public void UpdateHorizontalOffset(double offsetInDips)
+    {
+        ThrowIfDisposed();
+        if (!double.IsFinite(offsetInDips)) throw new ArgumentOutOfRangeException(nameof(offsetInDips));
+        if (_horizontalOffsetInDips == Math.Clamp(offsetInDips, -8192, 8192)) return;
+        _horizontalOffsetInDips = Math.Clamp(offsetInDips, -8192, 8192);
+        StopEdgeRevealAnimation();
+        Reposition();
+    }
 
     public event EventHandler? OutsidePointerPressed;
+
+    public bool TryGetPointerScreenX(out double screenX, out double scale)
+    {
+        screenX = scale = 0;
+        if (_disposed || !NativeMethods.GetCursorPos(out var point)) return false;
+        var dpi = NativeMethods.GetDpiForWindow(WindowHandle);
+        if (dpi == 0) return false;
+        screenX = point.X;
+        scale = dpi / 96d;
+        return true;
+    }
 
     public void ShowNoActivate()
     {
         ThrowIfDisposed();
+        if (IsVisible) return;
+        _lastPlacement = null; // restore position and topmost order after hiding
         Reposition();
         _ = NativeMethods.ShowWindow(WindowHandle, NativeConstants.SwShowNoActivate);
         IsVisible = true;
@@ -109,6 +147,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     public void Hide()
     {
         ThrowIfDisposed();
+        if (!IsVisible) return;
         StopEdgeRevealAnimation();
         _ = NativeMethods.ShowWindow(WindowHandle, NativeConstants.SwHide);
         IsVisible = false;
@@ -122,6 +161,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             throw new ArgumentOutOfRangeException(nameof(marginInDips));
         }
 
+        if (_position == position && _displayId == displayId && _marginInDips == marginInDips) return;
         _position = position;
         _displayId = displayId;
         _marginInDips = marginInDips;
@@ -143,6 +183,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             throw new ArgumentOutOfRangeException(nameof(cornerRadiiInDips));
         }
 
+        if (_sizeInDips == sizeInDips && _cornerRadiiInDips == cornerRadiiInDips) return;
         _sizeInDips = sizeInDips;
         _cornerRadiiInDips = cornerRadiiInDips;
         StopEdgeRevealAnimation();
@@ -482,7 +523,8 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             _sizeInDips,
             dpi,
             _position,
-            _marginInDips));
+            _marginInDips,
+            _horizontalOffsetInDips));
         var displayBounds = new OverlayWorkArea(
             display.Bounds.X,
             display.Bounds.Y,
@@ -518,6 +560,10 @@ internal sealed class OverlayWindowController : IOverlayWindowController
 
     private void ApplyPlacement(OverlayPlacement placement)
     {
+        // Layout/radius/DPI bookkeeping still runs in the caller. Only skip the
+        // native resize when physical pixels are unchanged. Native external
+        // moves invalidate this cache in the window-message handler.
+        if (_lastPlacement == placement) return;
         EnsureSetWindowPos(
             placement.X,
             placement.Y,
@@ -636,6 +682,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
         {
             throw new Win32Exception(Marshal.GetLastPInvokeError(), "Unable to position the overlay window.");
         }
+        NativePlacementOperations++;
     }
 
     private nint WindowMessageHandler(
@@ -688,6 +735,13 @@ internal sealed class OverlayWindowController : IOverlayWindowController
             {
                 return NativeConstants.HtTransparent;
             }
+        }
+        else if (message == 0x0047 /* WM_WINDOWPOSCHANGED */ && _lastPlacement is { } cached &&
+                 NativeMethods.GetWindowRect(WindowHandle, out var actual) &&
+                 (cached.X != actual.Left || cached.Y != actual.Top ||
+                  cached.Width != actual.Right - actual.Left || cached.Height != actual.Bottom - actual.Top))
+        {
+            _lastPlacement = null;
         }
         else if (message is NativeConstants.WmDpiChanged
             or NativeConstants.WmDisplayChange
@@ -801,6 +855,7 @@ internal sealed class OverlayWindowController : IOverlayWindowController
     {
         try
         {
+            _lastPlacement = null; // broadcasts can move the HWND independently
             StopEdgeRevealAnimation();
             SuppressWindowChrome();
             Reposition();

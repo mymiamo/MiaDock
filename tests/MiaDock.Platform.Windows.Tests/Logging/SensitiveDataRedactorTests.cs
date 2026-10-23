@@ -53,4 +53,15 @@ public sealed class SensitiveDataRedactorTests
         Assert.IsFalse(result.ContainsKey("artist"));
         Assert.IsFalse(result.ContainsKey("filePath"));
     }
+
+    [TestMethod]
+    public void UserNamedUser_DoesNotCorruptPathsOrRedactionMarkers()
+    {
+        var redactor = new SensitiveDataRedactor("User", @"C:\Users\User");
+        Assert.AreEqual("<user-path>", redactor.Redact(@"C:\Users\User\Music\private-song.mp3"));
+        Assert.AreEqual("<user-path>", redactor.Redact(@"C:\Users\another-user\private.txt"));
+        Assert.AreEqual("<path>", redactor.Redact(@"D:\UsersArchive\private.txt"));
+        Assert.AreEqual("Hello <user>; <user-path>", redactor.Redact(@"Hello User; C:\Users\User\secret.txt"));
+        Assert.AreEqual("<user-path>", redactor.Redact("/home/user/music/secret.mp3"));
+    }
 }

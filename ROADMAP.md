@@ -98,7 +98,18 @@ değiştirmez. Odak profilleri yalnızca MiaDock davranışını yönetir.
 - Dock içinden belgelenmiş yöntemle çıkış aygıtı seçimi.
 - Ses karıştırıcısında daha ayrıntılı aygıt ve destek durumu açıklamaları.
 - Kullanıcı geri bildirimlerine göre yeni yerleşik modüller ve Odak otomasyonları.
-- Performans ölçümlerinin tanılama ekranında gizlilik korumalı özeti.
+- Performans ölçümlerinin tanılama ekranında gizlilik korumalı özeti geliştirme
+  dalında eklendi; kararlı boşta/medya/spectrum karşılaştırması ve uzun kullanım
+  doğrulaması tamamlanmalıdır.
+
+## WinUI geliştirme dalı — 5 Ekim 2026
+
+`codex/winui-improvements`: aktarım kapasitesi, sağlayıcı kimliği sınırı ve yol
+maskeleme düzeltmeleri; favoriler, taşınabilir kişiselleştirme, ekran profilleri,
+kayıtlı yatay dock konumu, yeni pil simgeleri ve canlı performans özeti.
+[Uygulama, test ve kalan manuel kabul kaydı](doc/WINUI_IMPROVEMENTS_2026-10-05.md).
+Uyku/uyanma, ekran çıkarma, gerçek DPI/tam ekran oyun, ekran okuyucu ve uzun
+çalışma maddeleri bu değişikliklerle otomatik olarak tamamlanmış sayılmaz.
 
 ## Yayın Koşulları
 

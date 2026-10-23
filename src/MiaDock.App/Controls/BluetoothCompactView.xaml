@@ -1,10 +1,11 @@
 <UserControl x:Class="MiaDock.App.Controls.BluetoothCompactView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons">
   <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
         AutomationProperties.Name="{Binding StatusText}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
-    <FontIcon Glyph="&#xE702;" Style="{StaticResource DockModuleIconStyle}" />
+    <icons:DockIcon IsFilled="{Binding HasConnectedDevices}" Glyph="&#xE702;" Style="{StaticResource DockModuleIconStyle}" />
     <TextBlock Grid.Column="1" Text="{Binding StatusText}" VerticalAlignment="Center"
                MaxLines="1" TextTrimming="CharacterEllipsis"
                Style="{StaticResource DockBodyTextStyle}"

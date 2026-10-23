@@ -1,0 +1,10 @@
+{
+  "ads": [
+    {
+      "campaign_id": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "creative_url": "https://mymiamo.net/ads/creative?id=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "click_url": "https://mymiamo.net/api/v1/click?campaign=aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa&app=miadock",
+      "impression_token": "EXAMPLE_IMPRESSION_TOKEN_DO_NOT_USE"
+    }
+  ]
+}

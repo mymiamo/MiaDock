@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media;
 
 namespace MiaDock.App.Animations;
 
@@ -27,20 +28,35 @@ public static class MicroMotion
 
     public static void SetStateKey(DependencyObject element, object? value) => element.SetValue(StateKeyProperty, value);
 
-    public static void PlayAttention(FrameworkElement element) => Coordinator?.PlayAttention(element);
+    public static void PlayAttention(FrameworkElement element) { if (IsPresented(element)) Coordinator?.PlayAttention(element); }
 
-    public static void PlayNotification(FrameworkElement element) => Coordinator?.PlayNotification(element);
+    public static void PlayNotification(FrameworkElement element) { if (IsPresented(element)) Coordinator?.PlayNotification(element); }
+    internal static bool IsPresented(FrameworkElement element)
+    {
+        if (!element.IsLoaded) return false;
+        for (DependencyObject? current = element; current is not null; current = VisualTreeHelper.GetParent(current))
+            if (current is UIElement { Visibility: Visibility.Collapsed }) return false;
+        return true;
+    }
+    public static void CancelSubtree(DependencyObject root)
+    {
+        if (root is FrameworkElement element) Coordinator?.Cancel(element);
+        for (var i = 0; i < VisualTreeHelper.GetChildrenCount(root); i++) CancelSubtree(VisualTreeHelper.GetChild(root, i));
+    }
 
     private static IMicroInteractionCoordinator? Coordinator =>
         App.Services?.GetService<IMicroInteractionCoordinator>();
 
     private static void OnInteractiveChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
     {
-        if (sender is not Control control || !(bool)args.NewValue)
+        if (sender is not Control control)
         {
             return;
         }
 
+        control.PointerPressed -= OnPointerPressed;
+        control.KeyDown -= OnKeyDown;
+        if (!(bool)args.NewValue) { Coordinator?.Cancel(control); return; }
         EnsureWired(control);
         control.PointerPressed += OnPointerPressed;
         control.KeyDown += OnKeyDown;
@@ -48,7 +64,7 @@ public static class MicroMotion
 
     private static void OnStateKeyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs args)
     {
-        if (sender is FrameworkElement element && element.IsLoaded && args.OldValue is not null)
+        if (sender is FrameworkElement element && IsPresented(element) && args.OldValue is not null)
         {
             Coordinator?.PlayStateChange(element);
         }

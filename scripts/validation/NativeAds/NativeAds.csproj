@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows10.0.26100.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.22000.0</TargetPlatformMinVersion>
+    <UseWinUI>true</UseWinUI><WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier><Platforms>x64</Platforms><PlatformTarget>x64</PlatformTarget>
+    <ApplicationManifest>../../../src/MiaDock.App/app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <ProjectReference Include="../../../src/MiaDock.Core/MiaDock.Core.csproj" />
+    <ProjectReference Include="../../../src/MiaDock.UI/MiaDock.UI.csproj" />
+    <Page Include="../../../src/MiaDock.App/Controls/MiamoAdsSlider.xaml" Link="Controls/MiamoAdsSlider.xaml" />
+    <Compile Include="../../../src/MiaDock.App/Controls/MiamoAdsSlider.xaml.cs" Link="Controls/MiamoAdsSlider.xaml.cs" />
+    <Compile Include="../../../src/MiaDock.App/Services/IAppLocalizationService.cs" Link="Services/IAppLocalizationService.cs" />
+  </ItemGroup>
+</Project>

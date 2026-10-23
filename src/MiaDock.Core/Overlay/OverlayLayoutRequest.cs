@@ -5,4 +5,5 @@ public sealed record OverlayLayoutRequest(
     OverlaySize SizeInDips,
     uint Dpi,
     OverlayPosition Position,
-    double MarginInDips = 12);
+    double MarginInDips = 12,
+    double HorizontalOffsetInDips = 0);

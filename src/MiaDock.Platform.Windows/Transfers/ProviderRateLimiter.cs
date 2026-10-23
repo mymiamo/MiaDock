@@ -5,9 +5,13 @@ namespace MiaDock.Platform.Windows.Transfers;
 public sealed class ProviderRateLimiter
 {
     private static readonly TimeSpan Window = TimeSpan.FromSeconds(1);
+    public const int MaximumTrackedProviders = 4096;
     private readonly TimeProvider _timeProvider;
     private readonly object _gate = new();
     private readonly Dictionary<string, Queue<DateTimeOffset>> _updates = new(StringComparer.Ordinal);
+    private DateTimeOffset _nextSweep;
+
+    public int TrackedProviderCount { get { lock (_gate) return _updates.Count; } }
 
     public ProviderRateLimiter(TimeProvider? timeProvider = null)
     {
@@ -20,8 +24,17 @@ public sealed class ProviderRateLimiter
         var now = _timeProvider.GetUtcNow();
         lock (_gate)
         {
+            if (now >= _nextSweep)
+            {
+                foreach (var expired in _updates.Where(pair => now - pair.Value.Last() >= Window)
+                             .Select(pair => pair.Key).ToArray())
+                    _updates.Remove(expired);
+                _nextSweep = now + Window;
+            }
             if (!_updates.TryGetValue(providerId, out var history))
             {
+                // Never evict a live provider: that would reset its rate limit.
+                if (_updates.Count >= MaximumTrackedProviders) return false;
                 history = new Queue<DateTimeOffset>();
                 _updates[providerId] = history;
             }

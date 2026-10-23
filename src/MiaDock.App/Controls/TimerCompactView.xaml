@@ -1,10 +1,11 @@
 <UserControl x:Class="MiaDock.App.Controls.TimerCompactView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons">
   <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
         AutomationProperties.Name="{Binding CompactStatusText}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-    <FontIcon Glyph="&#xE823;" Style="{StaticResource DockModuleIconStyle}" />
+    <icons:DockIcon Glyph="&#xE823;" Style="{StaticResource DockModuleIconStyle}" />
     <TextBlock Grid.Column="1" Text="{Binding CompactStatusText}" VerticalAlignment="Center"
                MaxLines="1" TextTrimming="CharacterEllipsis"
                Style="{StaticResource DockBodyTextStyle}"

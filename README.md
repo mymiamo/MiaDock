@@ -11,7 +11,7 @@
 [![CI](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml/badge.svg)](https://github.com/mymiamo/MiaDock/actions/workflows/dotnet.yml)
 [![License](https://img.shields.io/github/license/mymiamo/MiaDock)](LICENSE)
 
-[Version **1.6.3.0** · Releases](https://github.com/mymiamo/MiaDock/releases)
+[Source version **1.7.3.0** · Releases](https://github.com/mymiamo/MiaDock/releases)
 
 <a href="https://get.microsoft.com/installer/download/9pml784d0fdk?referrer=appbadge" target="_self">
   <img src="https://get.microsoft.com/images/en-us%20dark.svg" width="200" alt="Download MiaDock from the Microsoft Store" />
@@ -22,7 +22,7 @@
 
 MiaDock is a lightweight, always-on-top Windows 11 overlay built with C#, .NET, WinUI 3, XAML, and the Windows App SDK. It stays outside the desktop work area, avoids stealing keyboard focus during normal use, and presents system events through compact, hover, expanded, and temporary notification states.
 
-The application works locally without an account, server connection, telemetry, or a custom updater. Updates are distributed through Microsoft Store.
+Core dock features work locally without an account or a custom updater. Settings can fetch sponsored content from Miamo's public HTTPS endpoints; no secret API key is embedded in the desktop app. API examples contain placeholders only: [Miamo Ads examples](examples/miamo-ads/README.md). Updates are distributed through Microsoft Store.
 
 Version 1.6 adds controlled dock sizing, appearance presets and accessible,
 event-driven motion refinements. Release validation details are tracked in the

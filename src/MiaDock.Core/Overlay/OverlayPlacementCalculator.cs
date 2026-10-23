@@ -29,6 +29,8 @@ public sealed class OverlayPlacementCalculator : IOverlayPlacementCalculator
         }
 
         var scale = request.Dpi / DefaultDpi;
+        if (!double.IsFinite(request.HorizontalOffsetInDips))
+            throw new ArgumentOutOfRangeException(nameof(request), "The horizontal offset must be finite.");
         var width = Math.Max(1, Scale(request.SizeInDips.Width, scale));
         var height = Math.Max(1, Scale(request.SizeInDips.Height, scale));
         var margin = Scale(request.MarginInDips, scale);
@@ -56,6 +58,8 @@ public sealed class OverlayPlacementCalculator : IOverlayPlacementCalculator
 
         var maximumX = Math.Max(left, right - width);
         var maximumY = Math.Max(top, bottom - height);
+        x += Scale(Math.Clamp(request.HorizontalOffsetInDips,
+            -request.WorkArea.Width / scale, request.WorkArea.Width / scale), scale);
 
         return new OverlayPlacement(
             Math.Clamp(x, left, maximumX),

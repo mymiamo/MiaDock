@@ -137,6 +137,8 @@ public sealed partial class IslandViewModel : ObservableObject, IDisposable
 
     public void SelectDefault() => _orchestrator.SelectDefault();
 
+    public void RefreshNavigation() => AvailableModules = _orchestrator.AvailableModules;
+
     public void EndManualSelection() => _orchestrator.EndManualSelection();
 
     public bool NotifyModuleInteraction()

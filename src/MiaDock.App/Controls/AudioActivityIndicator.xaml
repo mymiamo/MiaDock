@@ -17,7 +17,28 @@
                Fill="{Binding Foreground, ElementName=Root}"
                RenderTransformOrigin="0.5,0.5"
                VerticalAlignment="Center" />
+    <Rectangle x:Name="LeadingInnerBar"
+               Width="{Binding BarWidth, ElementName=Root}"
+               Height="{Binding BarHeight, ElementName=Root}"
+               RadiusX="999" RadiusY="999"
+               Fill="{Binding Foreground, ElementName=Root}"
+               RenderTransformOrigin="0.5,0.5"
+               VerticalAlignment="Center" />
+    <Rectangle x:Name="CenterLeadingBar"
+               Width="{Binding BarWidth, ElementName=Root}"
+               Height="{Binding BarHeight, ElementName=Root}"
+               RadiusX="999" RadiusY="999"
+               Fill="{Binding Foreground, ElementName=Root}"
+               RenderTransformOrigin="0.5,0.5"
+               VerticalAlignment="Center" />
     <Rectangle x:Name="CenterBar"
+               Width="{Binding BarWidth, ElementName=Root}"
+               Height="{Binding BarHeight, ElementName=Root}"
+               RadiusX="999" RadiusY="999"
+               Fill="{Binding Foreground, ElementName=Root}"
+               RenderTransformOrigin="0.5,0.5"
+               VerticalAlignment="Center" />
+    <Rectangle x:Name="TrailingInnerBar"
                Width="{Binding BarWidth, ElementName=Root}"
                Height="{Binding BarHeight, ElementName=Root}"
                RadiusX="999" RadiusY="999"

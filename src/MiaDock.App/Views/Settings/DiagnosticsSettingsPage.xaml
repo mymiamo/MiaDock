@@ -21,6 +21,15 @@
              Message="Loglar yalnızca bu cihazda tutulur. Şarkı, sanatçı, kullanıcı adı, kişisel yol ve medya geçmişi kaydedilmez." />
 
     <StackPanel Grid.Row="2" Spacing="4">
+      <TextBlock Text="Performans özeti" Style="{StaticResource SettingsCardTitleTextBlockStyle}" />
+      <TextBlock Text="{Binding PerformanceSummaryText}" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                 AutomationProperties.Name="Performans özeti" />
+      <StackPanel Orientation="Horizontal" Spacing="8">
+        <Button x:Name="MeasureAnimationButton" Content="60 saniye akıcılık ölç" IsEnabled="{Binding CanStartAnimationMeasurement}" Click="OnMeasureAnimationClick" />
+        <Button x:Name="StopAnimationButton" Content="Ölçümü durdur" Click="OnStopAnimationClick" />
+      </StackPanel>
+      <TextBlock Text="{Binding AnimationSummaryText}" TextWrapping="Wrap" IsTextSelectionEnabled="True"
+                 AutomationProperties.Name="UI akıcılık ölçümü" AutomationProperties.LiveSetting="Polite" />
       <TextBlock Text="{Binding RuntimeSummaryText}" TextWrapping="Wrap" />
       <TextBlock Text="{Binding SessionSummaryText}" TextWrapping="Wrap" Opacity="0.72" />
       <StackPanel Orientation="Horizontal" Spacing="20">
@@ -31,16 +40,20 @@
                  AutomationProperties.LiveSetting="Polite" />
     </StackPanel>
 
-    <StackPanel Grid.Row="3" Orientation="Horizontal" Spacing="8">
+    <Grid Grid.Row="3" ColumnSpacing="8" RowSpacing="8">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="*" /></Grid.ColumnDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
       <Button Content="Yenile" Click="OnRefreshClick" Margin="0,0,8,8" />
-      <Button Content="Log klasörünü aç" Click="OnOpenFolderClick" Margin="0,0,8,8" />
-      <Button Content="ZIP olarak dışa aktar" Click="OnExportClick" Margin="0,0,8,8" />
-      <Button Content="Logları temizle" Click="OnClearClick" Margin="0,0,8,8" />
+      <Button Grid.Column="1" Content="Performansı dışa aktar" Click="OnPerformanceExportClick" Margin="0,0,8,8" />
+      <Button Grid.Row="1" Content="Log klasörünü aç" Click="OnOpenFolderClick" Margin="0,0,8,8" />
+      <Button Grid.Row="1" Grid.Column="1" Content="ZIP olarak dışa aktar" Click="OnExportClick" Margin="0,0,8,8" />
+      <Button Grid.Row="2" Content="Logları temizle" Click="OnClearClick" Margin="0,0,8,8" />
       <Button Content="Hata bildir"
+              Grid.Row="2" Grid.Column="1"
               Click="OnReportBugClick"
               AutomationProperties.Name="MiaDock hata bildirim sayfasını aç"
               Margin="0,0,0,8" />
-    </StackPanel>
+    </Grid>
 
     <ListView Grid.Row="4" ItemsSource="{Binding RecentEntries}"
               AutomationProperties.Name="Son teknik log kayıtları">

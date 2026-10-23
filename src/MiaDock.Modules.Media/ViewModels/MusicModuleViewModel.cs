@@ -85,6 +85,8 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
             100);
 
     public double VolumePercent => Current.Volume * 100;
+    public string VolumeGlyph => Current.Volume <= 0 ? "\uE74F" : Current.Volume < 0.5 ? "\uE993" : "\uE995";
+    public bool IsVolumeSilent => Current.Volume <= 0;
 
     public double TrebleAudioLevel { get; private set; } = 0.18;
 
@@ -244,6 +246,8 @@ public sealed partial class MusicModuleViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(IsPlaying));
         OnPropertyChanged(nameof(IsMediaAvailable));
         OnPropertyChanged(nameof(VolumePercent));
+        OnPropertyChanged(nameof(VolumeGlyph));
+        OnPropertyChanged(nameof(IsVolumeSilent));
         OnPropertyChanged(nameof(HasAudioActivity));
         if (restartTimeline)
         {

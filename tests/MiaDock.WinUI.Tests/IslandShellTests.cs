@@ -125,9 +125,15 @@ public sealed class IslandShellTests
             "OverlayWindowController.cs"));
 
         StringAssert.Contains(source, "Surface.BorderThickness = new Thickness(0);");
+        // Normal themes keep the silhouette borderless. High contrast deliberately
+        // uses the user's WindowText boundary to distinguish it from the desktop.
+        var highContrastStart = source.IndexOf("if (_accessibility.HighContrast)", StringComparison.Ordinal);
+        var highContrastEnd = source.IndexOf("_appliedTheme = appearance.Theme", highContrastStart, StringComparison.Ordinal);
+        Assert.IsTrue(highContrastStart >= 0 && highContrastEnd > highContrastStart);
+        StringAssert.Contains(source[highContrastStart..highContrastEnd], "Surface.BorderThickness = new Thickness(1)");
         Assert.DoesNotContain(
             "Surface.BorderThickness = new Thickness(1)",
-            source,
+            source.Remove(highContrastStart, highContrastEnd - highContrastStart),
             StringComparison.Ordinal);
         Assert.AreEqual("0", borderThickness.Attribute("Value")?.Value);
         Assert.DoesNotContain("ToLayeredSurfaceArgb", overlaySource, StringComparison.Ordinal);
@@ -189,6 +195,8 @@ public sealed class IslandShellTests
         var panel = document.Descendants().Single(element =>
             element.Name.LocalName == "StackPanel");
         Assert.AreEqual("Center", panel.Attribute("HorizontalAlignment")?.Value);
+        Assert.AreEqual("Center", panel.Attribute("VerticalAlignment")?.Value);
+        Assert.AreEqual(6, panel.Elements().Count(element => element.Name.LocalName == "Rectangle"));
         Assert.IsTrue(document.Descendants()
             .Where(element => element.Name.LocalName == "Rectangle")
             .All(element =>
@@ -240,8 +248,8 @@ public sealed class IslandShellTests
         StringAssert.Contains(source, "TimeSpan.FromMilliseconds(650)");
         StringAssert.Contains(source, "TrackIdentity.From(_viewModel.Current)");
         StringAssert.Contains(source, "MusicActivity.IsSuppressed = _isTrackTransition");
-        StringAssert.Contains(source, "MusicActivity.Visibility = showStaticTrailingState");
-        StringAssert.Contains(source, "TrailingMoreGlyph.Visibility = showStaticTrailingState");
+        StringAssert.Contains(source, "MusicActivity.Visibility = Visibility.Visible");
+        Assert.DoesNotContain("TrailingMoreGlyph", source, StringComparison.Ordinal);
         StringAssert.Contains(source, "PausedGlyph.Visibility");
         StringAssert.Contains(source, "TrackChangeGlyph.Visibility");
     }
@@ -264,7 +272,7 @@ public sealed class IslandShellTests
         var statusItems = statusTray.Elements().ToArray();
         var network = statusItems.First();
         var musicActivity = statusItems.Last();
-        Assert.AreEqual("FontIcon", network.Name.LocalName);
+        Assert.AreEqual("DockIcon", network.Name.LocalName);
         Assert.AreEqual("{Binding NetworkStatusBrush}", network.Attribute("Foreground")?.Value);
         Assert.AreEqual("CallActivityIcon",
             statusItems.Single(element => element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "CallActivityIcon")
@@ -322,7 +330,7 @@ public sealed class IslandShellTests
             AppContext.BaseDirectory,
             "Windows",
             "OverlayWindow.xaml.cs"));
-        StringAssert.Contains(source, "activationAware.SetPresentationActive(hidden && horizontal)");
+        StringAssert.Contains(source, "activationAware.SetPresentationActive(_presentationVisible && hidden && horizontal)");
         StringAssert.Contains(source, "EdgeRevealStatusHost.VerticalAlignment");
         StringAssert.Contains(source, "SyncEdgeRevealSurfaceAppearance");
         StringAssert.Contains(source, "public void RefreshThemeResources()");
@@ -682,7 +690,13 @@ public sealed class IslandShellTests
         var expanded = LoadControl("IdleExpandedView.xaml").ToString();
 
         StringAssert.Contains(compact, "DockTitleTextStyle");
-        StringAssert.Contains(compact, "DockStatusBadgeStyle");
+        var batteryHost = LoadControl("IdleCompactView.xaml").Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "DockBatteryIndicator");
+        Assert.AreEqual("Grid", batteryHost.Name.LocalName);
+        Assert.AreEqual("Transparent", batteryHost.Attribute("Background")?.Value);
+        Assert.IsNull(batteryHost.Attribute("Style"));
+        var battery = batteryHost.Elements().Single();
+        Assert.AreEqual("True", battery.Attribute("ShowPercentage")?.Value);
         StringAssert.Contains(hover, "DockIconButtonStyle");
         StringAssert.Contains(hover, "Width=\"44\"");
         StringAssert.Contains(hover, "Height=\"44\"");

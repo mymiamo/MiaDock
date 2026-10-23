@@ -8,6 +8,22 @@ namespace MiaDock.Core.Tests;
 public sealed class ModuleOrchestratorTests
 {
     [TestMethod]
+    public async Task FavoriteOrder_ChangesNavigationWithoutChangingPersistentPriority()
+    {
+        var media = new FakeModule("media", 100);
+        var timer = new FakeModule("timer", 300);
+        var volume = new FakeModule("volume", 200);
+        await using var registry = new IslandModuleRegistry([media, timer, volume]);
+        using var orchestrator = new ModuleOrchestrator(registry, navigationOrder: () => new[] { "media", "volume" });
+        await registry.InitializeAsync();
+        CollectionAssert.AreEqual(new[] { "media", "volume", "timer" }, orchestrator.AvailableModules.Select(item => item.Descriptor.Id).ToArray());
+        Assert.AreEqual("timer", orchestrator.CurrentDisplay?.Descriptor.Id);
+        orchestrator.SelectModule("media");
+        orchestrator.MoveSelection(1);
+        Assert.AreEqual("volume", orchestrator.CurrentDisplay?.Descriptor.Id);
+    }
+
+    [TestMethod]
     public async Task PersistentDisplay_UsesHighestPersistentPriority()
     {
         var lower = new FakeModule("media", 100);

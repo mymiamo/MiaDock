@@ -2,6 +2,7 @@
     x:Class="MiaDock.App.SettingsWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:controls="using:MiaDock.App.Controls"
     Title="MiaDock Ayarları">
 
   <Grid x:Name="Root"
@@ -109,6 +110,9 @@
           <NavigationViewItem.Icon><FontIcon Glyph="&#xE897;" Foreground="{ThemeResource SettingsCategorySupportBrush}" /></NavigationViewItem.Icon>
         </NavigationViewItem>
       </NavigationView.MenuItems>
+      <NavigationView.PaneFooter>
+        <controls:MiamoAdsSlider x:Name="SponsoredAds" />
+      </NavigationView.PaneFooter>
       <NavigationView.FooterMenuItems>
         <NavigationViewItem Content="Yenilikler" Tag="whats-new" ToolTipService.ToolTip="Yenilikler">
           <NavigationViewItem.Icon><FontIcon Glyph="&#xE8BD;" Foreground="{ThemeResource SettingsCategoryWhatsNewBrush}" /></NavigationViewItem.Icon>

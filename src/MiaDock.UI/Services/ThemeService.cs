@@ -11,16 +11,33 @@ namespace MiaDock.UI.Services;
 public sealed class ThemeService : IThemeService, IDisposable
 {
     private readonly UISettings _uiSettings = new();
+    private readonly AccessibilitySettings _accessibility = new();
     private readonly DispatcherQueue? _dispatcher = DispatcherQueue.GetForCurrentThread();
     private ResourceDictionary? _styleDictionary;
     private ResourceDictionary? _customDictionary;
     private AppearanceSettings? _lastAppearance;
     private int _environmentRefreshPending;
     private bool _disposed;
+    private bool _highContrastSubscribed;
+    private bool _wasHighContrast;
 
-    public ThemeService() => _uiSettings.ColorValuesChanged += OnColorValuesChanged;
+    public ThemeService()
+    {
+        _uiSettings.ColorValuesChanged += OnColorValuesChanged;
+        try
+        {
+            _accessibility.HighContrastChanged += OnHighContrastChanged;
+            _highContrastSubscribed = true;
+        }
+        catch (System.Runtime.InteropServices.COMException)
+        {
+            // Unpackaged Windows sessions can reject this subscription with
+            // ERROR_NOT_FOUND. UISettings color notifications remain available.
+        }
+    }
 
     public ThemeStyle CurrentStyle { get; private set; } = ThemeStyle.AppleLike;
+    public bool IsHighContrast => _accessibility.HighContrast;
 
     public ThemeDescriptor CurrentDescriptor => ThemeCatalog.Get(CurrentStyle);
 
@@ -74,7 +91,28 @@ public sealed class ThemeService : IThemeService, IDisposable
     {
         ArgumentNullException.ThrowIfNull(appearance);
         _lastAppearance = appearance;
+        MiaDock.UI.Icons.DockIconPalette.Update(_accessibility.HighContrast,
+            _uiSettings.UIElementColor(UIElementType.WindowText),
+            _uiSettings.UIElementColor(UIElementType.HighlightText),
+            _uiSettings.UIElementColor(UIElementType.Highlight));
         Apply(appearance.Theme);
+
+        if (_wasHighContrast != _accessibility.HighContrast)
+        {
+            // Discard the override palette when leaving high contrast, including
+            // keys that glass themes do not otherwise override.
+            var dictionaries = Application.Current.Resources.MergedDictionaries;
+            dictionaries.Remove(_customDictionary!);
+            _customDictionary = new ResourceDictionary();
+            dictionaries.Add(_customDictionary);
+            _wasHighContrast = _accessibility.HighContrast;
+        }
+
+        if (_accessibility.HighContrast)
+        {
+            ApplyHighContrastPalette();
+            return;
+        }
 
         if (appearance.Theme == ThemeStyle.AdaptiveFluent)
         {
@@ -106,6 +144,22 @@ public sealed class ThemeService : IThemeService, IDisposable
             accentColor.G,
             accentColor.B));
         _customDictionary["IslandStyleAccentBrush"] = new SolidColorBrush(accentColor);
+    }
+
+    private void ApplyHighContrastPalette()
+    {
+        var background = _uiSettings.UIElementColor(UIElementType.Window);
+        var foreground = _uiSettings.UIElementColor(UIElementType.WindowText);
+        var highlight = _uiSettings.UIElementColor(UIElementType.Highlight);
+        var highlightText = _uiSettings.UIElementColor(UIElementType.HighlightText);
+        foreach (var key in new[] { "IslandSurfaceBrush", "IslandStyleSurfaceBrush", "IslandSurfaceSecondaryBrush", "IslandControlFillBrush", "IslandStyleControlBrush", "IslandIconButtonRestBrush" })
+            _customDictionary![key] = new SolidColorBrush(background);
+        foreach (var key in new[] { "IslandTextPrimaryBrush", "IslandTextSecondaryBrush", "IslandStrokeBrush", "IslandIconButtonForegroundBrush" })
+            _customDictionary![key] = new SolidColorBrush(foreground);
+        foreach (var key in new[] { "IslandAccentBrush", "IslandStyleAccentBrush", "IslandIconButtonPointerOverBrush", "IslandIconButtonPressedBrush" })
+            _customDictionary![key] = new SolidColorBrush(highlight);
+        _customDictionary!["IslandAccentForegroundBrush"] = new SolidColorBrush(highlightText);
+        _customDictionary["IslandIconButtonPointerOverForegroundBrush"] = new SolidColorBrush(highlightText);
     }
 
     private void ApplyAdaptiveFluentPalette()
@@ -151,6 +205,7 @@ public sealed class ThemeService : IThemeService, IDisposable
             foreground.G,
             foreground.B));
         resources["IslandIconButtonForegroundBrush"] = new SolidColorBrush(foreground);
+        resources["IslandIconButtonPointerOverForegroundBrush"] = new SolidColorBrush(foreground);
     }
 
     private static double RelativeLuminance(Color color) =>
@@ -247,6 +302,7 @@ public sealed class ThemeService : IThemeService, IDisposable
             palette.Primary.G,
             palette.Primary.B));
         target["IslandIconButtonForegroundBrush"] = new SolidColorBrush(palette.Primary);
+        target["IslandIconButtonPointerOverForegroundBrush"] = new SolidColorBrush(palette.Primary);
     }
 
     private static Color ParseColor(string value)
@@ -261,7 +317,14 @@ public sealed class ThemeService : IThemeService, IDisposable
 
     private void OnColorValuesChanged(UISettings sender, object args)
     {
-        if (_disposed || CurrentStyle != ThemeStyle.AdaptiveFluent)
+        RefreshEnvironment(force: true);
+    }
+
+    private void OnHighContrastChanged(AccessibilitySettings sender, object args) => RefreshEnvironment(force: true);
+
+    private void RefreshEnvironment(bool force = false)
+    {
+        if (_disposed || (!force && !_accessibility.HighContrast && CurrentStyle != ThemeStyle.AdaptiveFluent))
         {
             return;
         }
@@ -275,7 +338,7 @@ public sealed class ThemeService : IThemeService, IDisposable
         {
             try
             {
-                if (_disposed || _lastAppearance is null || CurrentStyle != ThemeStyle.AdaptiveFluent)
+                if (_disposed || _lastAppearance is null)
                 {
                     return;
                 }
@@ -311,5 +374,6 @@ public sealed class ThemeService : IThemeService, IDisposable
 
         _disposed = true;
         _uiSettings.ColorValuesChanged -= OnColorValuesChanged;
+        if (_highContrastSubscribed) _accessibility.HighContrastChanged -= OnHighContrastChanged;
     }
 }

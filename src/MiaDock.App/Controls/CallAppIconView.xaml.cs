@@ -75,7 +75,7 @@ public sealed partial class CallAppIconView : UserControl
         catch (Exception exception) when (
             exception is not OutOfMemoryException and not StackOverflowException and not AccessViolationException)
         {
-            // Protected/package-backed executables keep the semantic Fluent fallback.
+            // Protected/package-backed executables keep the semantic Ionicons fallback.
         }
     }
 

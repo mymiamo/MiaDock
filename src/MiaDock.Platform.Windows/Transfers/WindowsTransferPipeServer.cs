@@ -14,6 +14,7 @@ public sealed class WindowsTransferPipeServer : ITransferProgressProvider
     private readonly ProviderRateLimiter _rateLimiter;
     private readonly object _gate = new();
     private readonly ConcurrentDictionary<int, Task> _clients = new();
+    private readonly SemaphoreSlim _connectionSlots = new(MaximumServerInstances);
     private CancellationTokenSource? _cancellation;
     private Task? _acceptTask;
     private int _clientId;
@@ -43,7 +44,6 @@ public sealed class WindowsTransferPipeServer : ITransferProgressProvider
             {
                 _cancellation = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
                 _acceptTask = AcceptLoopAsync(_cancellation.Token);
-                SetState(TransferProviderState.Listening);
             }
             catch (Exception exception) when (
                 exception is PlatformNotSupportedException or UnauthorizedAccessException or IOException)
@@ -94,14 +94,20 @@ public sealed class WindowsTransferPipeServer : ITransferProgressProvider
         {
             while (!cancellationToken.IsCancellationRequested)
             {
-                var server = CreateServer();
+                // A connected client still owns its native pipe instance. Wait
+                // for a free slot before allocating the next listening instance.
+                await _connectionSlots.WaitAsync(cancellationToken).ConfigureAwait(false);
+                NamedPipeServerStream? server = null;
                 try
                 {
+                    server = CreateServer();
+                    SetState(TransferProviderState.Listening);
                     await server.WaitForConnectionAsync(cancellationToken).ConfigureAwait(false);
                 }
                 catch
                 {
-                    await server.DisposeAsync().ConfigureAwait(false);
+                    if (server is not null) await server.DisposeAsync().ConfigureAwait(false);
+                    _connectionSlots.Release();
                     throw;
                 }
 
@@ -129,8 +135,9 @@ public sealed class WindowsTransferPipeServer : ITransferProgressProvider
         NamedPipeServerStream server,
         CancellationToken cancellationToken)
     {
-        await using (server.ConfigureAwait(false))
+        try
         {
+            await using var ownedServer = server.ConfigureAwait(false);
             try
             {
                 while (server.IsConnected && !cancellationToken.IsCancellationRequested)
@@ -151,6 +158,12 @@ public sealed class WindowsTransferPipeServer : ITransferProgressProvider
             {
                 // Invalid clients are disconnected without logging message content or identifiers.
             }
+        }
+        finally
+        {
+            // Disposal must precede release: another accept may immediately
+            // allocate the native instance that was just freed.
+            _connectionSlots.Release();
         }
     }
 

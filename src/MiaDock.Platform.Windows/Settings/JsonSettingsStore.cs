@@ -141,7 +141,10 @@ public sealed class JsonSettingsStore : ISettingsStore
             Privacy = ReadValue(root, nameof(MiaDockSettings.Privacy), defaults.Privacy),
             StoreUpdates = ReadValue(root, nameof(MiaDockSettings.StoreUpdates), defaults.StoreUpdates),
             Focus = ReadValue(root, nameof(MiaDockSettings.Focus), defaults.Focus),
-            Modules = RecoverModules(root, defaults.Modules)
+            Modules = RecoverModules(root, defaults.Modules),
+            Navigation = ReadValue(root, nameof(MiaDockSettings.Navigation), defaults.Navigation),
+            DisplayProfiles = ReadValue(root, nameof(MiaDockSettings.DisplayProfiles), defaults.DisplayProfiles),
+            AudibleNotifications = ReadValue(root, nameof(MiaDockSettings.AudibleNotifications), defaults.AudibleNotifications)
         };
         return SettingsValidator.Normalize(recovered);
     }

@@ -7,6 +7,8 @@ param(
 
     [string]$ResultsDirectory,
 
+    [string]$AutomatedTestResultsDirectory,
+
     [switch]$SkipRestore,
 
     [switch]$AllowUnverifiedCandidate,
@@ -17,7 +19,7 @@ param(
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$expectedVersion = "1.6.3.0"
+$expectedVersion = "1.7.3.0"
 $repositoryRoot = [System.IO.Path]::GetFullPath(
     (Join-Path $PSScriptRoot "..\.."))
 $applicationProject = Join-Path $repositoryRoot "src\MiaDock.App\MiaDock.App.csproj"
@@ -25,9 +27,8 @@ $validationScript = Join-Path $repositoryRoot (
     "scripts\validation\Invoke-MiaDockReleaseValidation.ps1")
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $timestamp = [DateTimeOffset]::UtcNow.ToString("yyyyMMdd-HHmmss")
     $ResultsDirectory = Join-Path $repositoryRoot (
-        "artifacts\release\1.6.3.0\candidate-$timestamp")
+        "artifacts\release\1.7.3.0")
 }
 
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
@@ -241,6 +242,10 @@ function Assert-AndExtractStoreUpload {
             "Assets/Square44x44Logo.png",
             "Assets/Square150x150Logo.png",
             "MiaDock.App.exe",
+            "MiaDock.App.dll",
+            "MiaDock.Core.dll",
+            "resources.pri",
+            "Assets/Ionicons/LICENSE",
             "WinUIEx.dll",
             "WinUIEx.pri",
             "Assets/FluentIcons/window_24_regular.svg",
@@ -258,6 +263,45 @@ function Assert-AndExtractStoreUpload {
         if ($missing.Count -gt 0) {
             throw "Store package entries are missing: $($missing -join ', ')."
         }
+
+        # Check the delivered assemblies, rather than the source tree or build log.
+        # A stale package must not be delivered as the sponsored release.
+        foreach ($check in @(
+            @{ File = 'MiaDock.App.dll'; Required = 'MiamoAdsSlider' },
+            @{ File = 'MiaDock.Core.dll'; Required = 'MiamoAdsClient' })) {
+            $entry = $packageArchive.GetEntry($check.File)
+            $stream = $entry.Open()
+            $buffer = [IO.MemoryStream]::new()
+            try {
+                $stream.CopyTo($buffer)
+                $metadata = [Text.Encoding]::UTF8.GetString($buffer.ToArray())
+                if (-not $metadata.Contains($check.Required)) {
+                    throw "Sponsored release implementation is missing from $($check.File)."
+                }
+            } finally {
+                $buffer.Dispose()
+                $stream.Dispose()
+            }
+        }
+        # XBF files are embedded in resources.pri, not separate ZIP entries.
+        # Assembly metadata alone did not catch the previous stale PRI payload.
+        $makePri = Join-Path ${env:ProgramFiles(x86)} 'Windows Kits/10/bin/10.0.26100.0/x64/makepri.exe'
+        if (-not (Test-Path -LiteralPath $makePri)) { throw 'Windows SDK makepri.exe is required for packaged XAML verification.' }
+        $resourceDirectory = Join-Path $ResultsDirectory 'build/resource-verification'
+        New-Item -ItemType Directory -Path $resourceDirectory -Force | Out-Null
+        $priPath = Join-Path $resourceDirectory 'resources.pri'
+        $dumpPath = Join-Path $resourceDirectory 'resources.xml'
+        $priInput = $packageArchive.GetEntry('resources.pri').Open()
+        $priOutput = [IO.File]::Create($priPath)
+        try { $priInput.CopyTo($priOutput) } finally { $priInput.Dispose(); $priOutput.Dispose() }
+        & $makePri dump /if $priPath /of $dumpPath /o *> (Join-Path $resourceDirectory 'makepri.log')
+        if ($LASTEXITCODE -ne 0) { throw 'Packaged XAML resource map could not be inspected.' }
+        [xml]$resources = Get-Content -LiteralPath $dumpPath -Raw
+        foreach ($name in @('MiamoAdsSlider.xbf', 'SettingsWindow.xbf')) {
+            if ($null -eq $resources.SelectSingleNode("//NamedResource[@name='$name']")) {
+                throw "Sponsored release XAML resource is missing from the packaged PRI: $name"
+            }
+        }
     } finally {
         $packageArchive.Dispose()
     }
@@ -270,6 +314,8 @@ function Assert-AndExtractStoreUpload {
         IdentityName = $identity.Name
         Publisher = $identity.Publisher
         Version = $identity.Version
+        PackagedAdsImplementationVerified = $true
+        PackagedAdsXamlVerified = $true
     }
 }
 
@@ -290,16 +336,29 @@ try {
         Invoke-DotNet -Arguments @("restore", "MiaDock.sln", "-p:Platform=x64")
     }
 
-    & powershell -NoProfile -ExecutionPolicy Bypass -File $validationScript `
-        -SkipRestore -LaunchSmokeTest -StopRunningApp
-    if ($LASTEXITCODE -ne 0) {
-        throw "Release validation failed before Store packaging."
+    if ($AutomatedTestResultsDirectory) {
+        if (-not $AllowUnverifiedCandidate) { throw 'External automated tests require -AllowUnverifiedCandidate; device gates remain pending.' }
+        foreach ($name in @('measurement.trx', 'windows.trx', 'winui.trx')) {
+            $testPath = Join-Path $AutomatedTestResultsDirectory $name
+            [xml]$tests = Get-Content -LiteralPath $testPath -Raw
+            $counters = $tests.TestRun.ResultSummary.Counters
+            if ([int]$counters.failed -ne 0 -or [int]$counters.passed -le 0) { throw "Automated tests did not pass: $testPath" }
+        }
+    } else {
+        & powershell -NoProfile -ExecutionPolicy Bypass -File $validationScript -SkipRestore -LaunchSmokeTest
+        if ($LASTEXITCODE -ne 0) { throw "Release validation failed before Store packaging." }
     }
 
-    Invoke-DotNet -Arguments @(
-        "build",
+    $buildOutput = (Join-Path $ResultsDirectory 'build/bin').Replace('\', '/') + '/'
+    $isolatedBuildRoot = (Join-Path $ResultsDirectory ('build/session-' + [Guid]::NewGuid().ToString('N'))).Replace('\', '/') + '/'
+    New-Item -ItemType Directory -Path (Join-Path $ResultsDirectory 'build') -Force | Out-Null
+    $msbuild = Join-Path ${env:ProgramFiles} 'Microsoft Visual Studio/18/Community/MSBuild/Current/Bin/MSBuild.exe'
+    if (-not (Test-Path -LiteralPath $msbuild)) { throw 'Visual Studio MSBuild is required for WinUI packaging.' }
+    $buildArguments = @(
         $applicationProject,
-        "-c", "Release",
+        "/p:Configuration=Release", "/p:SelfContained=true", "/p:NuGetAudit=false",
+        "/p:OutputPath=$buildOutput",
+        "/p:MiaDockBuildRoot=$isolatedBuildRoot",
         "-p:Platform=x64",
         "-p:RuntimeIdentifier=win-x64",
         "-p:BuildMsix=true",
@@ -309,8 +368,12 @@ try {
         "-p:PdbCmfx64ExeFullPath=$symbolToolForMsBuild",
         "-p:MsPdbCmfExeFullpath=$symbolToolForMsBuild",
         "-p:AppxPackageDir=$packageDirectoryForMsBuild",
-        "--no-restore",
-        "-v:minimal")
+        "/v:minimal", "/nologo")
+    # Fresh intermediates require their own assets even with -SkipRestore.
+    $buildArguments += '/restore'
+    $buildArguments | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ResultsDirectory 'build/msbuild-arguments.json') -Encoding utf8
+    & $msbuild @buildArguments *> (Join-Path $ResultsDirectory 'build/store-build.log')
+    if ($LASTEXITCODE -ne 0) { throw "Store build failed; inspect $ResultsDirectory/build/store-build.log" }
 } finally {
     Pop-Location
 }
@@ -323,6 +386,9 @@ if ($null -eq $upload) {
 }
 
 $packageSummary = Assert-AndExtractStoreUpload -UploadPath $upload.FullName
+$deliveryPath = Join-Path $ResultsDirectory "MiaDock-$expectedVersion-x64.msixupload"
+Copy-Item -LiteralPath $upload.FullName -Destination $deliveryPath -Force
+$packageSummary.UploadPath = $deliveryPath
 $gitCommit = (& git -C $repositoryRoot rev-parse HEAD).Trim()
 $summary = [ordered]@{
     SchemaVersion = 1
@@ -332,6 +398,8 @@ $summary = [ordered]@{
     GitCommit = $gitCommit
     ReleaseEvidence = $releaseEvidenceStatus
     WorkingTreeDirty = $workingTreeDirty
+    AutomatedTestResultsDirectory = $AutomatedTestResultsDirectory
+    DeviceAcceptance = 'Pending: full-app baseline comparison, real 30-minute heavy use, real 8-hour idle, physical device checks, WACK'
     Package = $packageSummary
 }
 $summaryPath = Join-Path $ResultsDirectory "store-package-summary.json"

@@ -3,6 +3,32 @@
 En yeni sürüm her zaman bu sayfanın en üstünde yer alır.
 The latest release is always shown at the top of this page.
 
+## MiaDock 1.7.3
+
+### Türkçe
+* Ayarlar menüsünde Yenilikler düğmesinin üstüne Sponsorlu etiketli Miamo reklam alanı eklendi.
+* Reklam görselleri kırpılmadan gösterilir; daraltılmış menüde ve etkin olmayan pencerede gösterim süresi durur. Reklam hizmeti kullanılamadığında navigasyon çalışmaya devam eder.
+
+### English
+* Added a labeled Miamo sponsored carousel above What's New in the Settings navigation pane.
+* Creative images retain their aspect ratio. Exposure pauses when the pane is collapsed or the window is inactive; navigation remains available if the ad service is unavailable.
+
+## MiaDock 1.7.0
+
+### Türkçe
+* Ayarlar menüsünde Sponsorlu etiketli Miamo reklam alanı eklendi. Menü daraltıldığında veya pencere etkin olmadığında gösterim süresi durur; reklam hizmeti kullanılamadığında navigasyon çalışmaya devam eder.
+* Tanılama ekranında isteğe bağlı 60 saniyelik UI akıcılık ölçümü: p95/p99 kare aralıkları, gecikmeler ve geçiş süreleri. Sonuçlar performans JSON dosyasına eklenir.
+* Hızlı yön değiştirmede animasyon iptalleri birbirinden ayrıldı; eski tamamlanma işlemlerinin yeni görünümü sıfırlaması düzeltildi.
+* Aynı fiziksel pencere sınırlarına yapılan tekrar çağrılar azaltıldı. Gizlenen dock görünümleri ses ölçümü ve dekoratif hareketlerini durdurur.
+* Ionicons, dock görünümü, hareket süreleri ve ayar şeması 34 korunur.
+
+### English
+* Settings now includes a Miamo sponsored carousel. Exposure pauses when the pane is collapsed or the window is inactive; navigation remains available if the advertising service is unavailable.
+* Diagnostics offers an opt-in 60-second UI smoothness measurement with frame interval p95/p99, delays and transition timings, included in the performance JSON export.
+* Cancelled animations cannot reset a newer transition; interrupted bounds continue from their current geometry.
+* Redundant native window placement is skipped. Hidden dock views suspend audio metering and decorative motion.
+* Ionicons, appearance, motion durations and settings schema 34 are preserved.
+
 ## MiaDock 1.6.3
 
 ### Türkçe

@@ -12,6 +12,15 @@ param(
     [ValidateRange(1, 1024)]
     [int]$MaximumWorkingSetGrowthMb = 20,
 
+    [ValidateRange(1, 1024)]
+    [int]$MaximumPrivateMemoryGrowthMb = 20,
+
+    [ValidateRange(2, 600)]
+    [int]$WarmupSeconds = 60,
+
+    [ValidateSet('Idle', 'Heavy', 'Media', 'Spectrum')]
+    [string]$Scenario = 'Idle',
+
     [ValidateRange(0, 4096)]
     [int]$MaximumHandleGrowth = 64,
 
@@ -41,7 +50,7 @@ if (-not (Test-Path -LiteralPath $ExecutablePath -PathType Leaf)) {
 }
 
 if ([string]::IsNullOrWhiteSpace($ResultsDirectory)) {
-    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.6.3.0\phase5-runtime"
+    $ResultsDirectory = Join-Path $repositoryRoot "artifacts\validation\1.7.3.0\phase5-runtime"
 }
 $ResultsDirectory = [System.IO.Path]::GetFullPath($ResultsDirectory)
 New-Item -ItemType Directory -Path $ResultsDirectory -Force | Out-Null
@@ -63,10 +72,9 @@ if ($existing.Count -gt 0) {
 
 $samples = [System.Collections.Generic.List[object]]::new()
 $logicalProcessorCount = [Environment]::ProcessorCount
-$warmupSeconds = [Math]::Min(5, [Math]::Max(2, [int]($DurationSeconds / 5)))
 
 try {
-    Start-Sleep -Seconds $warmupSeconds
+    Start-Sleep -Seconds $WarmupSeconds
     $process.Refresh()
     if ($process.HasExited) {
         throw "MiaDock exited during the warm-up period with code $($process.ExitCode)."
@@ -78,9 +86,10 @@ try {
     $initialThreadCount = $process.Threads.Count
     $previousCpu = $process.TotalProcessorTime
     $previousSampleAt = [DateTimeOffset]::UtcNow
-    $deadline = $previousSampleAt.AddSeconds($DurationSeconds)
+    $durationClock = [Diagnostics.Stopwatch]::StartNew()
+    $previousElapsedSeconds = 0
 
-    while ([DateTimeOffset]::UtcNow -lt $deadline) {
+    while ($durationClock.Elapsed.TotalSeconds -lt $DurationSeconds) {
         Start-Sleep -Seconds $SampleIntervalSeconds
         $process.Refresh()
         if ($process.HasExited) {
@@ -88,7 +97,8 @@ try {
         }
 
         $sampledAt = [DateTimeOffset]::UtcNow
-        $elapsed = ($sampledAt - $previousSampleAt).TotalSeconds
+        $elapsedSeconds = $durationClock.Elapsed.TotalSeconds
+        $elapsed = $elapsedSeconds - $previousElapsedSeconds
         $cpuDelta = ($process.TotalProcessorTime - $previousCpu).TotalSeconds
         $cpuPercent = if ($elapsed -gt 0) {
             100 * $cpuDelta / ($elapsed * $logicalProcessorCount)
@@ -107,6 +117,7 @@ try {
         })
         $previousCpu = $process.TotalProcessorTime
         $previousSampleAt = $sampledAt
+        $previousElapsedSeconds = $elapsedSeconds
     }
 
     $process.Refresh()
@@ -121,7 +132,7 @@ try {
     $threadGrowth = $process.Threads.Count - $initialThreadCount
     $notRespondingSamples = @($samples | Where-Object { -not $_.responding }).Count
     $passed = $averageCpu -le $MaximumAverageCpuPercent -and
-        $workingSetGrowth -le ($MaximumWorkingSetGrowthMb * 1MB) -and
+        $privateMemoryGrowth -le ($MaximumPrivateMemoryGrowthMb * 1MB) -and
         $handleGrowth -le $MaximumHandleGrowth -and
         $threadGrowth -le $MaximumThreadGrowth -and
         $notRespondingSamples -eq 0
@@ -130,6 +141,12 @@ try {
         passed = $passed
         startedAtUtc = $samples[0].sampledAtUtc
         durationSeconds = $DurationSeconds
+        actualElapsedSeconds = $durationClock.Elapsed.TotalSeconds
+        warmupSeconds = $WarmupSeconds
+        scenario = $Scenario
+        processId = $process.Id
+        executablePath = $process.Path
+        wholeAppAcceptance = if ($Scenario -eq 'Idle' -and $DurationSeconds -ge 28800) { 'IdleDurationMet; requires observed idle conditions' } elseif ($Scenario -eq 'Heavy' -and $DurationSeconds -ge 1800) { 'HeavyDurationMet; requires observed interactions' } else { 'DurationNotMet' }
         averageCpuPercent = [Math]::Round($averageCpu, 3)
         maximumCpuPercent = [Math]::Round(
             ($samples | Measure-Object -Property cpuPercent -Maximum).Maximum,
@@ -150,6 +167,7 @@ try {
         thresholds = [ordered]@{
             maximumAverageCpuPercent = $MaximumAverageCpuPercent
             maximumWorkingSetGrowthMb = $MaximumWorkingSetGrowthMb
+            maximumPrivateMemoryGrowthMb = $MaximumPrivateMemoryGrowthMb
             maximumHandleGrowth = $MaximumHandleGrowth
             maximumThreadGrowth = $MaximumThreadGrowth
         }

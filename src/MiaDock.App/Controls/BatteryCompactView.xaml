@@ -1,10 +1,13 @@
 <UserControl x:Class="MiaDock.App.Controls.BatteryCompactView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:MiaDock.App.Controls">
   <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
         AutomationProperties.Name="{Binding StatusText}">
     <Grid.ColumnDefinitions><ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
-    <FontIcon Glyph="{Binding BatteryGlyph}" Style="{StaticResource DockModuleIconStyle}" />
+    <local:BatteryStatusIcon ChargePercent="{Binding Snapshot.ChargePercent}" IsCharging="{Binding Snapshot.IsCharging}"
+                             HasReading="{Binding Snapshot.HasReading}" IsBatteryPresent="{Binding Snapshot.IsBatteryPresent}"
+                             AutomationProperties.Name="{Binding StatusText}" />
     <TextBlock Grid.Column="1" Text="{Binding StatusText}" VerticalAlignment="Center" MaxLines="1" TextTrimming="CharacterEllipsis"
                Style="{StaticResource DockBodyTextStyle}"
                ToolTipService.ToolTip="{Binding StatusText}" />

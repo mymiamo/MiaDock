@@ -44,7 +44,7 @@ public sealed class MotionSemanticsTests
         StringAssert.Contains(coordinator, "motion.EnableIconAnimations");
         StringAssert.Contains(coordinator, "CancellationTokenSource");
         StringAssert.Contains(coordinator, "ToolkitAnimationFactory.Reset");
-        StringAssert.Contains(coordinator, "target.Visibility != Visibility.Visible");
+        StringAssert.Contains(coordinator, "!MicroMotion.IsPresented(target)");
         StringAssert.Contains(bridge, "PointerPressed");
         StringAssert.Contains(bridge, "OnUnloaded");
     }

@@ -108,7 +108,8 @@ public static class SettingsValidator
             AnimationSpeed = ClampFinite(appearance.AnimationSpeed, 0.5, 2, AppearanceSettings.Default.AnimationSpeed),
             AnimationKind = EnumValue(appearance.AnimationKind, AppearanceSettings.Default.AnimationKind),
             Motion = motion,
-            Personalization = personalization
+            Personalization = personalization,
+            HorizontalOffset = ClampFinite(appearance.HorizontalOffset, -8192, 8192, 0)
         };
 
         var media = settings.Media ?? MediaSettings.Default;
@@ -161,7 +162,9 @@ public static class SettingsValidator
             StoreUpdates = NormalizeStoreUpdates(settings.StoreUpdates),
             Focus = NormalizeFocus(settings.Focus),
             AudibleNotifications = audibleNotifications,
-            Modules = NormalizeModules(settings.Modules)
+            Modules = NormalizeModules(settings.Modules),
+            Navigation = DockNavigationSettings.Normalize(settings.Navigation),
+            DisplayProfiles = MonitorAppearanceProfile.Normalize(settings.DisplayProfiles)
         };
     }
 

@@ -2171,4 +2171,56 @@
   <data name="XamlText.1.6.Automation.Density" xml:space="preserve"><value>Dock yatay yoğunluğu</value></data>
   <data name="XamlText.1.6.Automation.IconSize" xml:space="preserve"><value>Dock içerik simge boyutu</value></data>
   <data name="XamlText.1.6.Automation.CornerStyle" xml:space="preserve"><value>Dock köşe stili</value></data>
+  <data name="XamlText.Experience.01" xml:space="preserve"><value>Dock konumunu düzenle</value><comment>Dock konumunu düzenle</comment></data>
+  <data name="XamlText.Experience.02" xml:space="preserve"><value>Dock konumunu sağa veya sola taşı</value><comment>Dock konumunu sağa veya sola taşı</comment></data>
+  <data name="XamlText.Experience.03" xml:space="preserve"><value>Favori modüller</value><comment>Favori modüller</comment></data>
+  <data name="XamlText.Experience.04" xml:space="preserve"><value>Konumu kaydet</value><comment>Konumu kaydet</comment></data>
+  <data name="XamlText.Experience.05" xml:space="preserve"><value>Sağa veya sola sürükleyin; ok tuşlarıyla taşıyın</value><comment>Sağa veya sola sürükleyin; ok tuşlarıyla taşıyın</comment></data>
+  <data name="XamlText.Experience.06" xml:space="preserve"><value>Varsayılan konuma dön</value><comment>Varsayılan konuma dön</comment></data>
+  <data name="XamlText.Experience.07" xml:space="preserve"><value>Taşınabilir kişiselleştirme</value><comment>Taşınabilir kişiselleştirme</comment></data>
+  <data name="XamlText.Experience.08" xml:space="preserve"><value>Tema, dock düzeni, favoriler ve Odak profillerini başka bilgisayara taşıyın. Uygulama tetikleyicileri ve monitör eşleştirmeleri taşınmaz.</value><comment>Tema, dock düzeni, favoriler ve Odak profillerini başka bilgisayara taşıyın. Uygulama tetikleyicileri ve monitör eşleştirmeleri taşınmaz.</comment></data>
+  <data name="XamlText.Experience.09" xml:space="preserve"><value>Dışa aktar</value><comment>Dışa aktar</comment></data>
+  <data name="XamlText.Experience.10" xml:space="preserve"><value>İçe aktar</value><comment>İçe aktar</comment></data>
+  <data name="XamlText.Experience.11" xml:space="preserve"><value>Ekrana özel görünüm</value><comment>Ekrana özel görünüm</comment></data>
+  <data name="XamlText.Experience.12" xml:space="preserve"><value>Genel görünümü bir profil olarak kaydedin ve bu bilgisayardaki bir ekranla eşleştirin. Eşleştirilmemiş ekranlar genel görünümü kullanır.</value><comment>Genel görünümü bir profil olarak kaydedin ve bu bilgisayardaki bir ekranla eşleştirin. Eşleştirilmemiş ekranlar genel görünümü kullanır.</comment></data>
+  <data name="XamlText.Experience.13" xml:space="preserve"><value>Profilin kullanılacağı ekran</value><comment>Profilin kullanılacağı ekran</comment></data>
+  <data name="XamlText.Experience.14" xml:space="preserve"><value>Genel görünümü kaydet</value><comment>Genel görünümü kaydet</comment></data>
+  <data name="XamlText.Experience.15" xml:space="preserve"><value>Kayıtlı görünüm profili</value><comment>Kayıtlı görünüm profili</comment></data>
+  <data name="XamlText.Experience.16" xml:space="preserve"><value>Ekranla eşleştir</value><comment>Ekranla eşleştir</comment></data>
+  <data name="XamlText.Experience.17" xml:space="preserve"><value>Genel görünüme dön</value><comment>Genel görünüme dön</comment></data>
+  <data name="XamlText.Experience.18" xml:space="preserve"><value>Profili kaldır</value><comment>Profili kaldır</comment></data>
+  <data name="XamlText.Experience.19" xml:space="preserve"><value>Performans özeti</value><comment>Performans özeti</comment></data>
+  <data name="XamlText.Experience.20" xml:space="preserve"><value>Performansı dışa aktar</value><comment>Performansı dışa aktar</comment></data>
+  <data name="XamlText.Experience.21" xml:space="preserve"><value>Favorilerden kaldır</value><comment>Favorilerden kaldır</comment></data>
+  <data name="XamlText.Experience.22" xml:space="preserve"><value>Favorilere sabitle</value><comment>Favorilere sabitle</comment></data>
+  <data name="XamlText.Experience.23" xml:space="preserve"><value>Öne taşı</value><comment>Öne taşı</comment></data>
+  <data name="XamlText.Experience.24" xml:space="preserve"><value>Arkaya taşı</value><comment>Arkaya taşı</comment></data>
+  <data name="XamlText.Experience.25" xml:space="preserve"><value>Sabitlemek veya sıralamak için sağ tıklayın ya da Shift+F10 kullanın.</value><comment>Sabitlemek veya sıralamak için sağ tıklayın ya da Shift+F10 kullanın.</comment></data>
+  <data name="XamlText.Experience.26" xml:space="preserve"><value>Bir profil adı yazın.</value><comment>Bir profil adı yazın.</comment></data>
+  <data name="XamlText.Experience.27" xml:space="preserve"><value>En fazla 16 profil kaydedilebilir.</value><comment>En fazla 16 profil kaydedilebilir.</comment></data>
+  <data name="XamlText.Experience.28" xml:space="preserve"><value>Görünüm profili kaydedildi.</value><comment>Görünüm profili kaydedildi.</comment></data>
+  <data name="XamlText.Experience.29" xml:space="preserve"><value>Profil bu ekranla eşleştirildi.</value><comment>Profil bu ekranla eşleştirildi.</comment></data>
+  <data name="XamlText.Experience.30" xml:space="preserve"><value>Bu ekran genel görünümü kullanıyor.</value><comment>Bu ekran genel görünümü kullanıyor.</comment></data>
+  <data name="XamlText.Experience.31" xml:space="preserve"><value>Görünüm profili kaldırıldı.</value><comment>Görünüm profili kaldırıldı.</comment></data>
+  <data name="XamlText.Experience.32" xml:space="preserve"><value>Kişiselleştirme dışa aktarıldı.</value><comment>Kişiselleştirme dışa aktarıldı.</comment></data>
+  <data name="XamlText.Experience.33" xml:space="preserve"><value>Kişiselleştirme içe aktarılsın mı?</value><comment>Kişiselleştirme içe aktarılsın mı?</comment></data>
+  <data name="XamlText.Experience.34" xml:space="preserve"><value>Tema, düzen, favoriler ve Odak profilleri değiştirilir. Diğer cihaz ayarları korunur. Geri dönüş kopyası yerel ayar klasörüne kaydedilir.</value><comment>Tema, düzen, favoriler ve Odak profilleri değiştirilir. Diğer cihaz ayarları korunur. Geri dönüş kopyası yerel ayar klasörüne kaydedilir.</comment></data>
+  <data name="XamlText.Experience.35" xml:space="preserve"><value>Kişiselleştirme içe aktarıldı. Monitör profillerini bu bilgisayarın ekranlarıyla eşleştirebilirsiniz.</value><comment>Kişiselleştirme içe aktarıldı. Monitör profillerini bu bilgisayarın ekranlarıyla eşleştirebilirsiniz.</comment></data>
+  <data name="XamlText.Experience.36" xml:space="preserve"><value>Dosya okunamadı veya kişiselleştirme biçimi desteklenmiyor.</value><comment>Dosya okunamadı veya kişiselleştirme biçimi desteklenmiyor.</comment></data>
+  <data name="XamlText.Experience.37" xml:space="preserve"><value>Başlangıç (dock hazır)</value><comment>Başlangıç (dock hazır)</comment></data>
+  <data name="XamlText.Experience.38" xml:space="preserve"><value>Başlangıç: dock henüz gösterilmedi.</value><comment>Başlangıç: dock henüz gösterilmedi.</comment></data>
+  <data name="XamlText.Experience.39" xml:space="preserve"><value>Boşta</value><comment>Boşta</comment></data>
+  <data name="XamlText.Experience.40" xml:space="preserve"><value>ölçüm bekleniyor</value><comment>ölçüm bekleniyor</comment></data>
+  <data name="XamlText.Experience.41" xml:space="preserve"><value>tepe</value><comment>tepe</comment></data>
+  <data name="XamlText.Experience.42" xml:space="preserve"><value>özel bellek</value><comment>özel bellek</comment></data>
+  <data name="XamlText.Experience.43" xml:space="preserve"><value>örnek</value><comment>örnek</comment></data>
+  <data name="XamlText.Experience.44" xml:space="preserve"><value>5 saniyede bir ölçülür. CPU yüzdesi tüm işlemciye göredir; son 15 dakikaya kadar örnekler tutulur.</value><comment>5 saniyede bir ölçülür. CPU yüzdesi tüm işlemciye göredir; son 15 dakikaya kadar örnekler tutulur.</comment></data>
+  <data name="XamlText.Smoothness.Start" xml:space="preserve"><value>60 saniye akıcılık ölç</value><comment>60 saniye akıcılık ölç</comment></data>
+  <data name="XamlText.Smoothness.Stop" xml:space="preserve"><value>Ölçümü durdur</value><comment>Ölçümü durdur</comment></data>
+  <data name="XamlText.Smoothness.Summary" xml:space="preserve"><value>UI akıcılık ölçümü</value><comment>UI akıcılık ölçümü</comment></data>
+  <data name="XamlText.MiamoAds.Sponsored" xml:space="preserve"><value>Sponsorlu</value><comment>Sponsorlu</comment></data>
+  <data name="XamlText.MiamoAds.Open" xml:space="preserve"><value>Reklamı aç</value><comment>Reklamı aç</comment></data>
+  <data name="XamlText.MiamoAds.Previous" xml:space="preserve"><value>Önceki reklam</value><comment>Önceki reklam</comment></data>
+  <data name="XamlText.MiamoAds.Next" xml:space="preserve"><value>Sonraki reklam</value><comment>Sonraki reklam</comment></data>
+  <data name="XamlText.MiamoAds.Position" xml:space="preserve"><value>Reklam sırası</value><comment>Reklam sırası</comment></data>
 </root>

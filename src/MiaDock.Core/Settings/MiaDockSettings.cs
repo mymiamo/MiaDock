@@ -15,9 +15,13 @@ public sealed record MiaDockSettings(
     StoreUpdateSettings StoreUpdates,
     FocusSettings Focus,
     AudibleNotificationSettings AudibleNotifications,
-    IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules)
+    IReadOnlyDictionary<string, ModuleSettingsEnvelope> Modules,
+    DockNavigationSettings? Navigation = null,
+    IReadOnlyList<MonitorAppearanceProfile>? DisplayProfiles = null)
 {
-    public const int CurrentSchemaVersion = 33;
+    public const int CurrentSchemaVersion = 34;
+
+    public DockNavigationSettings EffectiveNavigation => Navigation ?? DockNavigationSettings.Default;
 
     public static MiaDockSettings Default { get; } = new(
         CurrentSchemaVersion,
@@ -49,5 +53,7 @@ public sealed record MiaDockSettings(
             ["hourly-notification"] = ModuleSettingsEnvelope.HourlyNotificationDefault,
             ["notifications"] = ModuleSettingsEnvelope.NotificationsDefault,
             ["transfers"] = ModuleSettingsEnvelope.TransfersDefault
-        });
+        },
+        DockNavigationSettings.Default,
+        Array.Empty<MonitorAppearanceProfile>());
 }

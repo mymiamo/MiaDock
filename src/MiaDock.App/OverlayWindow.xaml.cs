@@ -60,6 +60,7 @@ public sealed partial class OverlayWindow : Window
     private readonly IAppLocalizationService _localization;
     private readonly OverlayWindowHandleProvider _windowHandleProvider;
     private readonly IAudibleNotificationPlayer _audibleNotificationPlayer;
+    private readonly DockPositionEditSession _positionEditor;
     private ICompositionSupportsSystemBackdrop? _windowBackdropTarget;
     private Windows.UI.Composition.Compositor? _transparentBackdropCompositor;
     private Windows.UI.Composition.CompositionColorBrush? _transparentWindowBackdrop;
@@ -97,7 +98,8 @@ public sealed partial class OverlayWindow : Window
         IFocusPolicyService focusPolicy,
         IAppLocalizationService localization,
         OverlayWindowHandleProvider windowHandleProvider,
-        IAudibleNotificationPlayer audibleNotificationPlayer)
+        IAudibleNotificationPlayer audibleNotificationPlayer,
+        DockPositionEditSession positionEditor)
     {
         InitializeComponent();
         WindowBranding.ApplyIcon(this);
@@ -118,6 +120,7 @@ public sealed partial class OverlayWindow : Window
         _localization = localization;
         _windowHandleProvider = windowHandleProvider;
         _audibleNotificationPlayer = audibleNotificationPlayer;
+        _positionEditor = positionEditor;
         Root.DataContext = viewModel;
         ApplyTransparentWindowBackdrop();
         Island.ConfigureModuleViews(moduleViews);
@@ -134,6 +137,10 @@ public sealed partial class OverlayWindow : Window
                 initialAppearance.EffectivePersonalization.TopOffset,
                 initialAppearance.EffectiveCornerRadii));
         _windowHandleProvider.SetWindowHandle(_windowController.WindowHandle);
+        _positionEditor.EditRequested += OnPositionEditRequested;
+        _positionEditor.OffsetChanged += OnPositionOffsetChanged;
+        _positionEditor.Completed += OnPositionEditCompleted;
+        _positionEditor.EditingChanged += OnPositionEditingChanged;
         _windowController.OutsidePointerPressed += OnOutsidePointerPressed;
         var motionOptions = SettingsMapper.ToMotionOptions(settings.Current);
         _autoCollapse = new IslandAutoCollapseController(DispatcherQueue, motionOptions);
@@ -191,7 +198,9 @@ public sealed partial class OverlayWindow : Window
 
     public void HideDock()
     {
+        _positionEditor.Cancel();
         _manuallyHidden = true;
+        Island.SetPresentationVisible(false);
         _windowController.Hide();
     }
 
@@ -356,7 +365,7 @@ public sealed partial class OverlayWindow : Window
     {
         for (var current = source; current is not null && !ReferenceEquals(current, Island);)
         {
-            if (current is ButtonBase or RangeBase or ToggleSwitch or
+            if (current is ButtonBase or Thumb or RangeBase or ToggleSwitch or
                 ComboBox or TextBox or RichEditBox or ListViewBase or ScrollViewer)
             {
                 return true;
@@ -588,6 +597,12 @@ public sealed partial class OverlayWindow : Window
         try
         {
             _autoCollapse.Elapsed -= OnAutoCollapseElapsed;
+            _positionEditor.EditRequested -= OnPositionEditRequested;
+            _positionEditor.OffsetChanged -= OnPositionOffsetChanged;
+            _positionEditor.Completed -= OnPositionEditCompleted;
+            _positionEditor.EditingChanged -= OnPositionEditingChanged;
+            _positionEditor.Cancel();
+            DockInteractionSession.End(_positionEditor);
             _autoCollapse.Dispose();
             _moduleReturnTimer.Stop();
             _moduleReturnTimer.Tick -= OnModuleReturnTimerTick;
@@ -658,6 +673,9 @@ public sealed partial class OverlayWindow : Window
 
     private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args)
     {
+        if (args.Previous.General.Position != args.Current.General.Position || args.Previous.Monitor != args.Current.Monitor)
+            _positionEditor.Cancel();
+        if (args.Previous.Navigation != args.Current.Navigation) _viewModel.Island.RefreshNavigation();
         if (args.Previous.AudibleNotifications != args.Current.AudibleNotifications &&
             (_viewModel.Island.LastModuleEvent is not { } activeEvent ||
              !args.Current.AudibleNotifications.Allows(activeEvent.AudibleCue)))
@@ -674,6 +692,7 @@ public sealed partial class OverlayWindow : Window
         }
 
         if (args.Previous.Appearance != args.Current.Appearance ||
+            args.Previous.DisplayProfiles != args.Current.DisplayProfiles ||
             args.Previous.Fullscreen.NotificationSeconds != args.Current.Fullscreen.NotificationSeconds)
         {
             ApplyAppearance(args.Current);
@@ -686,7 +705,8 @@ public sealed partial class OverlayWindow : Window
             args.Previous.Monitor != args.Current.Monitor ||
             args.Previous.Fullscreen != args.Current.Fullscreen ||
             args.Previous.Privacy != args.Current.Privacy ||
-            args.Previous.Modules != args.Current.Modules)
+            args.Previous.Modules != args.Current.Modules ||
+            args.Previous.DisplayProfiles != args.Current.DisplayProfiles)
         {
             ApplyEnvironment();
         }
@@ -702,6 +722,7 @@ public sealed partial class OverlayWindow : Window
 
     private void ApplyAppearance(MiaDockSettings settings)
     {
+        settings = MonitorAppearanceProfile.Resolve(settings, ResolveDockDisplay(settings).Id);
         var appearance = settings.Appearance;
         var motionOptions = SettingsMapper.ToMotionOptions(settings);
         var layoutOptions = SettingsMapper.ToLayoutOptions(appearance);
@@ -738,7 +759,8 @@ public sealed partial class OverlayWindow : Window
         {
             Island.RefreshThemeResources();
         }
-        _windowController.UpdateOpacity(appearance.Opacity);
+        _windowController.UpdateOpacity(_themeService.IsHighContrast ? 1 : appearance.Opacity);
+        if (!_positionEditor.IsEditing) _windowController.UpdateHorizontalOffset(appearance.HorizontalOffset);
 
         if (motionChanged)
         {
@@ -880,13 +902,10 @@ public sealed partial class OverlayWindow : Window
     {
         void Refresh()
         {
-            if (_settings.Current.Appearance.Theme != ThemeStyle.AdaptiveFluent)
-            {
-                return;
-            }
-
-            RefreshRootThemeResources(ThemeStyle.AdaptiveFluent);
-            Island.ApplyAppearance(_settings.Current.Appearance);
+            var appearance = MonitorAppearanceProfile.Resolve(_settings.Current, ResolveDockDisplay(_settings.Current).Id).Appearance;
+            RefreshRootThemeResources(appearance.Theme);
+            Island.ApplyAppearance(appearance);
+            _windowController.UpdateOpacity(_themeService.IsHighContrast ? 1 : appearance.Opacity);
             Island.RefreshThemeResources();
         }
 
@@ -997,7 +1016,32 @@ public sealed partial class OverlayWindow : Window
         _edgeRevealHideTimer.Start();
     }
 
-    private void OnDisplaysChanged(object? sender, IReadOnlyList<DisplayDescriptor> displays) => ApplyEnvironment();
+    private void OnDisplaysChanged(object? sender, IReadOnlyList<DisplayDescriptor> displays)
+    {
+        _positionEditor.Cancel();
+        ApplyEnvironment();
+    }
+
+    public bool TryGetPointerScreenX(out double screenX, out double scale) =>
+        _windowController.TryGetPointerScreenX(out screenX, out scale);
+
+    private void OnPositionEditRequested(object? sender, EventArgs args) => _positionEditor.Begin(_windowController.HorizontalOffsetInDips);
+    private void OnPositionOffsetChanged(object? sender, double offset) => _windowController.UpdateHorizontalOffset(offset);
+    private void OnPositionEditingChanged(object? sender, EventArgs args)
+    {
+        if (_positionEditor.IsEditing) DockInteractionSession.Begin(_positionEditor);
+        else { DockInteractionSession.End(_positionEditor); ApplyEnvironment(); }
+    }
+    private void OnPositionEditCompleted(object? sender, bool save)
+    {
+        if (!save) return;
+        var offset = _windowController.HorizontalOffsetInDips;
+        var displayId = ResolveDockDisplay(_settings.Current).Id;
+        _settings.Update(current => current.DisplayProfiles?.Any(profile => profile.DisplayId == displayId) == true
+            ? current with { DisplayProfiles = current.DisplayProfiles.Select(profile => profile.DisplayId == displayId
+                ? profile with { Appearance = profile.Appearance with { HorizontalOffset = offset } } : profile).ToArray() }
+            : current with { Appearance = current.Appearance with { HorizontalOffset = offset } });
+    }
 
     private void OnSessionLockStateChanged(object? sender, bool isLocked)
     {
@@ -1080,6 +1124,8 @@ public sealed partial class OverlayWindow : Window
         var settings = _settings.Current;
         var focus = _focusPolicy.Current;
         var display = ResolveDockDisplay(settings);
+        settings = MonitorAppearanceProfile.Resolve(settings, display.Id);
+        if (_appliedAppearance != settings.Appearance) ApplyAppearance(settings);
         _fullscreenAffectsDockDisplay = DoesFullscreenAffectDisplay(display);
         if (IsExclusiveFullscreenEdgeReveal())
         {
@@ -1091,6 +1137,8 @@ public sealed partial class OverlayWindow : Window
             SettingsMapper.ToOverlayPosition(settings.General.Position),
             display.Id,
             settings.Appearance.EffectivePersonalization.TopOffset);
+        _windowController.UpdateHorizontalOffset(_positionEditor.IsEditing
+            ? _positionEditor.PreviewOffset : settings.Appearance.HorizontalOffset);
 
         var normalVisibilityAllowsDock = focus.AllowsNormalDock(
             settings.General.VisibilityMode != IslandVisibilityMode.EventsOnly);
@@ -1132,6 +1180,7 @@ public sealed partial class OverlayWindow : Window
             settings,
             _fullscreenAffectsDockDisplay,
             _sessionLockState.IsLocked);
+        Island.SetPresentationVisible(shouldShow);
         UpdateEdgeRevealMonitoring(decision);
         if (shouldShow)
         {
@@ -1217,6 +1266,7 @@ public sealed partial class OverlayWindow : Window
 
     private void SuspendEdgeRevealForExclusiveFullscreen()
     {
+        Island.SetPresentationVisible(false);
         _edgeRevealPollTimer.Stop();
         _edgeRevealHideTimer.Stop();
         _edgeRevealHoverVisible = false;

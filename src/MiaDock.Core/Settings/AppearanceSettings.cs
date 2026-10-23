@@ -24,7 +24,8 @@ public sealed record AppearanceSettings(
     double EdgeMargin = 12,
     DockCornerRadii? CornerRadii = null,
     bool LinkCornerRadii = true,
-    DockPersonalizationSettings? Personalization = null)
+    DockPersonalizationSettings? Personalization = null,
+    double HorizontalOffset = 0)
 {
     public static AppearanceSettings Default { get; } = new(
         ThemeStyle.AppleLike,

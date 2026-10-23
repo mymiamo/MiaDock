@@ -152,6 +152,8 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     private void UpdatePresentationActivity()
     {
         var shouldRun = _isLoaded && _isPresentationActive;
+        MusicActivity.IsSuppressed = !shouldRun;
+        if (shouldRun) ScheduleNextMinute(); else StopTimer();
         _music?.SetAudioMeterActive(this, shouldRun);
     }
 
@@ -324,6 +326,7 @@ public sealed partial class IdleCompactView : UserControl, IModuleViewActivation
     private void ScheduleNextMinute()
     {
         StopTimer();
+        if (!_isLoaded || !_isPresentationActive) return;
 
         var now = DateTimeOffset.Now;
         _clockTimer = DispatcherQueue.CreateTimer();

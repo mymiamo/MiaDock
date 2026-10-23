@@ -2,6 +2,7 @@
     x:Class="MiaDock.App.Controls.FocusStatusBadge"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded">
 
@@ -19,9 +20,8 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
 
-      <FontIcon x:Name="ProfileIcon"
+      <icons:DockIcon x:Name="ProfileIcon" IsFilled="True"
                 VerticalAlignment="Center"
-                FontFamily="Segoe Fluent Icons"
                 FontSize="12" />
 
       <StackPanel x:Name="DetailsPanel"
@@ -51,7 +51,7 @@
               Style="{StaticResource IslandCompactIconButtonStyle}"
               Command="{Binding DeactivateCommand}"
               Visibility="Collapsed">
-        <FontIcon Glyph="&#xE711;" FontSize="9" />
+        <icons:DockIcon Glyph="&#xE711;" FontSize="9" />
       </Button>
     </Grid>
   </Border>

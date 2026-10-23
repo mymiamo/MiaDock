@@ -8,6 +8,26 @@ namespace MiaDock.Core.Tests;
 public sealed class NetworkModuleViewModelTests
 {
     [TestMethod]
+    public void ConnectivityChanges_NotifyFilledIconState()
+    {
+        var service = new FakeNetworkStatusService(NetworkStatusSnapshot.Default);
+        using var viewModel = new NetworkModuleViewModel(service);
+        var changes = new List<string?>();
+        viewModel.PropertyChanged += (_, args) => changes.Add(args.PropertyName);
+        Assert.IsFalse(viewModel.IsConnected);
+
+        foreach (var connectivity in new[] { NetworkConnectivityKind.Internet,
+            NetworkConnectivityKind.LocalAccess, NetworkConnectivityKind.ConstrainedInternet,
+            NetworkConnectivityKind.Offline })
+        {
+            changes.Clear();
+            service.Publish(Create(NetworkThroughputState.Inactive) with { Connectivity = connectivity });
+            Assert.AreEqual(connectivity != NetworkConnectivityKind.Offline, viewModel.IsConnected);
+            CollectionAssert.Contains(changes, nameof(viewModel.IsConnected));
+        }
+    }
+
+    [TestMethod]
     public void ThroughputStates_DistinguishSamplingZeroAndUnavailable()
     {
         var service = new FakeNetworkStatusService(Create(NetworkThroughputState.Sampling));

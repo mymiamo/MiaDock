@@ -47,6 +47,7 @@ public sealed partial class EdgeRevealStatusView : UserControl, IModuleViewActiv
     public void SetPresentationActive(bool isActive)
     {
         _isPresentationActive = isActive;
+        MusicActivity.IsSuppressed = !isActive;
         UpdatePresentationActivity();
         UpdateMusicActivity();
     }

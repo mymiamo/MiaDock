@@ -1,6 +1,7 @@
 <UserControl x:Class="MiaDock.App.Controls.VolumeCompactView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons">
   <Grid Style="{StaticResource DockCompactModuleLayoutStyle}"
         AutomationProperties.Name="{Binding TitleText}">
     <Grid.ColumnDefinitions>
@@ -8,7 +9,7 @@
       <ColumnDefinition Width="*" />
       <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
-    <FontIcon Glyph="{Binding VolumeGlyph}"
+    <icons:DockIcon IsFilled="{Binding Snapshot.IsMasterMuted}" Glyph="{Binding VolumeGlyph}"
               Style="{StaticResource DockModuleIconStyle}" />
     <TextBlock Grid.Column="1"
                Text="{Binding TitleText}"

@@ -1,3 +1,4 @@
+using MiaDock.UI.Icons;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
@@ -316,7 +317,7 @@ public sealed partial class ExpandedModuleHost : UserControl
                 Spacing = 8,
                 Children =
                 {
-                    new FontIcon { Glyph = "\uE783", FontSize = 22 },
+                    new DockIcon { Glyph = "\uE783", FontSize = 22 },
                     new TextBlock
                     {
                         Text = title,

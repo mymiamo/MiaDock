@@ -5,6 +5,7 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Hosting;
+using Microsoft.UI.Xaml.Shapes;
 using MiaDock.App.Services;
 using MiaDock.Core.Presentation;
 using MiaDock.Core.Settings;
@@ -24,6 +25,8 @@ public sealed partial class AudioActivityIndicator : UserControl
     private const long DecorativeFallbackGraceMilliseconds = 550;
     private static readonly TimeSpan AttackDuration = TimeSpan.FromMilliseconds(48);
     private static readonly TimeSpan ReleaseDuration = TimeSpan.FromMilliseconds(128);
+    private static readonly TimeSpan SecondaryAttackDuration = TimeSpan.FromMilliseconds(95);
+    private static readonly TimeSpan SecondaryReleaseDuration = TimeSpan.FromMilliseconds(240);
     private static readonly TimeSpan DecorativeFrameInterval = TimeSpan.FromMilliseconds(90);
 
     public static readonly DependencyProperty TrebleLevelProperty = DependencyProperty.Register(
@@ -63,17 +66,14 @@ public sealed partial class AudioActivityIndicator : UserControl
     private readonly long _visibilityRegistration;
     private ISettingsService? _settings;
     private IAnimationPreferenceService? _animationPreferences;
-    private Visual? _trebleVisual;
-    private Visual? _bassVisual;
-    private Visual? _vocalVisual;
+    private readonly Rectangle[] _bars;
+    private readonly Visual?[] _barVisuals = new Visual?[6];
+    private readonly double[] _barTargets = new double[6];
     private DispatcherQueueTimer? _decorativeTimer;
     private bool _isLoaded;
     private bool _isDecorativeAnimating;
     private long _flatSignalStartedAt;
     private double _decorativePhase;
-    private double _trebleTarget = MinimumScale;
-    private double _bassTarget = MinimumScale;
-    private double _vocalTarget = MinimumScale;
     private double _amplitudeLeading = MinimumScale;
     private double _amplitudeCenter = MinimumScale;
     private double _amplitudeTrailing = MinimumScale;
@@ -81,6 +81,8 @@ public sealed partial class AudioActivityIndicator : UserControl
     public AudioActivityIndicator()
     {
         InitializeComponent();
+        _bars = [LeadingBar, LeadingInnerBar, CenterLeadingBar, CenterBar, TrailingInnerBar, TrailingBar];
+        Array.Fill(_barTargets, MinimumScale);
         _visibilityRegistration = RegisterPropertyChangedCallback(
             VisibilityProperty,
             (_, _) => UpdateVisuals());
@@ -101,6 +103,7 @@ public sealed partial class AudioActivityIndicator : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs args)
     {
+        if (_isLoaded) return;
         _isLoaded = true;
         _settings = App.Services?.GetService<ISettingsService>();
         _animationPreferences = App.Services?.GetService<IAnimationPreferenceService>();
@@ -148,9 +151,14 @@ public sealed partial class AudioActivityIndicator : UserControl
         }
     }
 
-    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args) => UpdateVisuals();
+    private void OnSettingsChanged(object? sender, SettingsChangedEventArgs args) => RefreshOnUiThread();
 
-    private void OnAnimationsEnabledChanged(object? sender, EventArgs args) => UpdateVisuals();
+    private void OnAnimationsEnabledChanged(object? sender, EventArgs args) => RefreshOnUiThread();
+    private void RefreshOnUiThread()
+    {
+        if (DispatcherQueue.HasThreadAccess) UpdateVisuals();
+        else DispatcherQueue.TryEnqueue(() => { if (_isLoaded) UpdateVisuals(); });
+    }
 
     private void UpdateVisuals()
     {
@@ -165,14 +173,14 @@ public sealed partial class AudioActivityIndicator : UserControl
         if (IsSuppressed)
         {
             StopDecorativeMotion(resetPhase: true);
-            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            ApplyRestingLevels();
             return;
         }
 
         if (!IsPlaying)
         {
             StopDecorativeMotion(resetPhase: true);
-            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            ApplyRestingLevels();
             return;
         }
 
@@ -240,7 +248,8 @@ public sealed partial class AudioActivityIndicator : UserControl
             !CanAnimate)
         {
             StopDecorativeMotion(resetPhase: true);
-            ApplyLevels(MinimumScale, MinimumScale, MinimumScale, animate: false);
+            if (_isLoaded && Visibility == Visibility.Visible) ApplyRestingLevels();
+            else ResetVisuals();
             return;
         }
 
@@ -316,12 +325,11 @@ public sealed partial class AudioActivityIndicator : UserControl
 
     private void EnsureVisuals()
     {
-        _trebleVisual ??= ElementCompositionPreview.GetElementVisual(LeadingBar);
-        _bassVisual ??= ElementCompositionPreview.GetElementVisual(CenterBar);
-        _vocalVisual ??= ElementCompositionPreview.GetElementVisual(TrailingBar);
-        ConfigureVisual(_trebleVisual, LeadingBar);
-        ConfigureVisual(_bassVisual, CenterBar);
-        ConfigureVisual(_vocalVisual, TrailingBar);
+        for (var index = 0; index < _bars.Length; index++)
+        {
+            var visual = _barVisuals[index] ??= ElementCompositionPreview.GetElementVisual(_bars[index]);
+            ConfigureVisual(visual, _bars[index]);
+        }
     }
 
     private static void ConfigureVisual(Visual visual, FrameworkElement bar)
@@ -340,9 +348,31 @@ public sealed partial class AudioActivityIndicator : UserControl
 
     private void ApplyLevels(double treble, double bass, double vocal, bool animate)
     {
-        ApplyLevel(_trebleVisual, LeadingBar, ref _trebleTarget, treble, animate);
-        ApplyLevel(_bassVisual, CenterBar, ref _bassTarget, bass, animate);
-        ApplyLevel(_vocalVisual, TrailingBar, ref _vocalTarget, vocal, animate);
+        // Two bars per existing band: treble, bass, vocal. The second bar's
+        // slower envelope follows that same band, rather than mixing bands.
+        treble = SafeLevel(treble); bass = SafeLevel(bass); vocal = SafeLevel(vocal);
+        ReadOnlySpan<double> levels = [treble, treble, bass, bass, vocal, vocal];
+        for (var index = 0; index < levels.Length; index++)
+            ApplyLevel(_barVisuals[index], _bars[index], ref _barTargets[index], levels[index], animate, secondary: index % 2 != 0);
+    }
+
+    private static double SafeLevel(double value) => double.IsFinite(value) ? Math.Clamp(value, MinimumScale, 1) : MinimumScale;
+
+    private void ApplyRestingLevels()
+    {
+        for (var index = 0; index < _bars.Length; index++)
+        {
+            if (_barVisuals[index] is not { } visual) continue;
+            var bar = _bars[index];
+            ConfigureVisual(visual, bar);
+            var width = bar.ActualWidth > 0 ? bar.ActualWidth : BarWidth;
+            var height = bar.ActualHeight > 0 ? bar.ActualHeight : BarHeight;
+            var dotScale = double.IsFinite(width) && double.IsFinite(height) && height > 0
+                ? Math.Clamp(width / height, 0, 1) : 0;
+            visual.StopAnimation("Scale.Y");
+            visual.Scale = new Vector3(1, (float)dotScale, 1);
+            _barTargets[index] = dotScale;
+        }
     }
 
     private static void ApplyLevel(
@@ -350,7 +380,8 @@ public sealed partial class AudioActivityIndicator : UserControl
         FrameworkElement bar,
         ref double previousTarget,
         double target,
-        bool animate)
+        bool animate,
+        bool secondary = false)
     {
         if (visual is null)
         {
@@ -368,7 +399,9 @@ public sealed partial class AudioActivityIndicator : UserControl
         }
 
         var animation = visual.Compositor.CreateScalarKeyFrameAnimation();
-        animation.Duration = safeTarget >= previousTarget ? AttackDuration : ReleaseDuration;
+        animation.Duration = safeTarget >= previousTarget
+            ? secondary ? SecondaryAttackDuration : AttackDuration
+            : secondary ? SecondaryReleaseDuration : ReleaseDuration;
         animation.InsertKeyFrame(
             1,
             (float)safeTarget,
@@ -399,10 +432,8 @@ public sealed partial class AudioActivityIndicator : UserControl
 
     private void ResetVisuals()
     {
-        ResetVisual(_trebleVisual);
-        ResetVisual(_bassVisual);
-        ResetVisual(_vocalVisual);
-        _trebleTarget = _bassTarget = _vocalTarget = MinimumScale;
+        foreach (var visual in _barVisuals) ResetVisual(visual);
+        Array.Fill(_barTargets, MinimumScale);
         _amplitudeLeading = _amplitudeCenter = _amplitudeTrailing = MinimumScale;
     }
 

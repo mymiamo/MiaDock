@@ -101,6 +101,7 @@ public partial class App : Application
         }
 
         _singleInstance.ActivationRedirected += OnActivationRedirected;
+        var performance = _services.GetRequiredService<ApplicationPerformanceMonitor>();
         _lifetime = _services.GetRequiredService<IApplicationLifetimeService>();
         _lifetime.ExitRequested += OnExitRequested;
         _uiDispatcher = _services.GetRequiredService<IUiDispatcher>();
@@ -144,6 +145,7 @@ public partial class App : Application
         if (settings.Current.Onboarding.IsCompleted && launchMode == StartupLaunchMode.Island)
         {
             _overlayWindow.ShowNoActivate();
+            performance.MarkDockReady();
             _log.Write(
                 TechnicalLogLevel.Information,
                 TechnicalEventIds.ApplicationStarting,
@@ -196,6 +198,7 @@ public partial class App : Application
                 break;
         }
 
+        if (_overlayWindow.IsDockVisible) performance.MarkDockReady();
         _log.Write(
             TechnicalLogLevel.Information,
             TechnicalEventIds.ApplicationReady,
@@ -264,6 +267,7 @@ public partial class App : Application
             // Stop native media/audio producers before window teardown so COM
             // callbacks cannot race with HWND destruction.
             await StopNativeSessionProducersAsync();
+            await _services.GetRequiredService<MiaDock.App.Animations.AnimationPerformanceMonitor>().DisposeAsync();
 
             _onboardingWindow?.CloseForShutdown();
             _settingsWindow?.CloseForShutdown();

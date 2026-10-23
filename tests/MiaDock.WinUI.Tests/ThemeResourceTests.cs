@@ -389,7 +389,7 @@ public sealed class ThemeResourceTests
             "Controls",
             "NotificationModuleNotificationView.xaml"));
         var icon = document.Descendants()
-            .Single(element => element.Name.LocalName == "FontIcon");
+            .Single(element => element.Name.LocalName == "DockIcon");
         var iconContainer = document.Descendants()
             .Single(element => element.Name.LocalName == "Border");
 

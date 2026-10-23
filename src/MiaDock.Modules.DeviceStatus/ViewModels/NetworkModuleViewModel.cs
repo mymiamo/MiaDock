@@ -29,6 +29,7 @@ public sealed partial class NetworkModuleViewModel : ObservableObject, IDisposab
     [NotifyPropertyChangedFor(nameof(DownloadText))]
     [NotifyPropertyChangedFor(nameof(UploadText))]
     [NotifyPropertyChangedFor(nameof(NetworkGlyph))]
+    [NotifyPropertyChangedFor(nameof(IsConnected))]
     [NotifyPropertyChangedFor(nameof(ThroughputStatusText))]
     private NetworkStatusSnapshot _snapshot;
 
@@ -73,6 +74,8 @@ public sealed partial class NetworkModuleViewModel : ObservableObject, IDisposab
     };
 
     public void SetExpandedActive(bool active) => _service.SetThroughputSamplingEnabled(active);
+    public bool IsConnected => Snapshot.Connectivity is NetworkConnectivityKind.Internet
+        or NetworkConnectivityKind.LocalAccess or NetworkConnectivityKind.ConstrainedInternet;
 
     private void OnSnapshotChanged(object? sender, NetworkStatusSnapshot snapshot) => Snapshot = snapshot;
 

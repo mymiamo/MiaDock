@@ -1,5 +1,8 @@
 <Project>
   <PropertyGroup>
+    <!-- Store builds must not reuse another output's WinUI/PRI intermediates. -->
+    <BaseIntermediateOutputPath Condition="'$(MiaDockBuildRoot)' != ''">$(MiaDockBuildRoot)obj/$(MSBuildProjectName)/</BaseIntermediateOutputPath>
+    <DefaultItemExcludes Condition="'$(MiaDockBuildRoot)' != ''">$(DefaultItemExcludes);obj/**;bin/**</DefaultItemExcludes>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>

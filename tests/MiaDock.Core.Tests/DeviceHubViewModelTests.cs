@@ -8,6 +8,31 @@ namespace MiaDock.Core.Tests;
 public sealed class DeviceHubViewModelTests
 {
     [TestMethod]
+    public void ConnectionChanges_RefreshFilledIconWithoutReplacingDeviceRow()
+    {
+        var hub = new FakeHub();
+        using var viewModel = new DeviceHubViewModel(hub, new FakeStorage(), new FakeLauncher());
+        var device = new DeviceHubDevice("headset", "Headset", DeviceHubDeviceCategory.Bluetooth,
+            DeviceHubConnectionState.Disconnected, false, null, DeviceHubDeviceCapabilities.Connect,
+            DeviceType: DeviceHubDeviceType.Headset);
+        hub.PublishState(DeviceHubState.Default with { BluetoothDevices = [device] });
+        var row = viewModel.BluetoothRows.Single();
+        Assert.IsFalse(row.IsConnected);
+        var changes = new List<string?>();
+        row.PropertyChanged += (_, args) => changes.Add(args.PropertyName);
+
+        foreach (var connection in new[] { DeviceHubConnectionState.Connected, DeviceHubConnectionState.Disconnected })
+        {
+            changes.Clear();
+            hub.PublishState(DeviceHubState.Default with { BluetoothDevices = [device with { ConnectionState = connection }] });
+            Assert.AreSame(row, viewModel.BluetoothRows.Single());
+            Assert.AreEqual(connection == DeviceHubConnectionState.Connected, row.IsConnected);
+            Assert.AreEqual("\uE7F6", row.Glyph);
+            CollectionAssert.Contains(changes, nameof(row.IsConnected));
+        }
+    }
+
+    [TestMethod]
     public async Task ConnectBluetooth_SendsNativeDeviceIdAndShowsFailure()
     {
         var connection = new FakeBluetoothConnection { Result = BluetoothConnectionResult.Failed };

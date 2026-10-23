@@ -30,6 +30,7 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
 
     private void OnLoaded(object sender, RoutedEventArgs args)
     {
+        if (_visibilityCallbackToken != 0) return;
         _visibilityCallbackToken = RegisterPropertyChangedCallback(VisibilityProperty, OnVisibilityChanged);
         AttachViewModel(DataContext as MusicModuleViewModel);
         UpdateMeterActivity();
@@ -84,10 +85,15 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
         UpdateMeterActivity();
     }
 
-    private void UpdateMeterActivity() =>
+    private void UpdateMeterActivity()
+    {
+        var active = IsLoaded && _isPresentationActive && Visibility == Visibility.Visible;
+        MusicActivity.IsSuppressed = !active || _isTrackTransition;
+        if (!active) { _trackTransitionTimer.Stop(); _isTrackTransition = false; }
         _viewModel?.SetAudioMeterActive(
             this,
-            IsLoaded && _isPresentationActive && Visibility == Visibility.Visible);
+            active);
+    }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
@@ -108,6 +114,7 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
 
     private void StartTrackTransition()
     {
+        if (!_isPresentationActive || !IsLoaded) return;
         _isTrackTransition = true;
         _trackTransitionTimer.Stop();
         _trackTransitionTimer.Start();
@@ -134,14 +141,8 @@ public sealed partial class MusicCompactView : UserControl, IModuleViewActivatio
         TrackChangeGlyph.Visibility = _isTrackTransition
             ? Visibility.Visible
             : Visibility.Collapsed;
-        var showStaticTrailingState = _isTrackTransition || isPaused;
-        MusicActivity.Visibility = showStaticTrailingState
-            ? Visibility.Collapsed
-            : Visibility.Visible;
-        TrailingMoreGlyph.Visibility = showStaticTrailingState
-            ? Visibility.Visible
-            : Visibility.Collapsed;
-        MusicActivity.IsSuppressed = _isTrackTransition;
+        MusicActivity.Visibility = Visibility.Visible;
+        MusicActivity.IsSuppressed = _isTrackTransition || !_isPresentationActive || !IsLoaded || Visibility != Visibility.Visible;
     }
 
 }

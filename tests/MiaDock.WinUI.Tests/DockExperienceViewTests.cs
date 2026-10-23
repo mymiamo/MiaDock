@@ -66,7 +66,6 @@ public sealed class DockExperienceViewTests
         var compactArtwork = FindNamedElement(document, "CompactArtwork");
         var pause = FindNamedElement(document, "PausedGlyph");
         var trackChange = FindNamedElement(document, "TrackChangeGlyph");
-        var trailingMore = FindNamedElement(document, "TrailingMoreGlyph");
         var trailingHost = FindNamedElement(document, "TrailingStateHost");
         var title = FindNamedElement(document, "TrackTitleText");
         var columns = root.Elements()
@@ -95,8 +94,8 @@ public sealed class DockExperienceViewTests
             element.Attribute("Background")?.Value == "{ThemeResource MediaArtworkScrimBrush}"));
         Assert.AreEqual("Collapsed", pause.Attribute("Visibility")?.Value);
         Assert.AreEqual("Collapsed", trackChange.Attribute("Visibility")?.Value);
-        Assert.AreEqual("Collapsed", trailingMore.Attribute("Visibility")?.Value);
-        Assert.AreEqual("10", mediaMeter.Attribute("Width")?.Value);
+        Assert.IsFalse(document.Descendants().Any(element => AttributeValue(element, "Name") == "TrailingMoreGlyph"));
+        Assert.AreEqual("20", mediaMeter.Attribute("Width")?.Value);
         Assert.AreEqual("14", mediaMeter.Attribute("Height")?.Value);
         Assert.AreEqual("{ThemeResource IslandStyleAccentBrush}", mediaMeter.Attribute("Foreground")?.Value);
         Assert.IsNull(mediaMeter.Attribute("BarWidth"));

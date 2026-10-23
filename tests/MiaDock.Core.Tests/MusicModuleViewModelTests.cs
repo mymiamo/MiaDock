@@ -9,6 +9,25 @@ namespace MiaDock.Core.Tests;
 public sealed class MusicModuleViewModelTests
 {
     [TestMethod]
+    public void VolumeChanges_NotifySilentAndVolumeLevelIcons()
+    {
+        var service = new SequencedMediaService(SequencedMediaService.CreateSnapshot("Track", 1));
+        using var viewModel = new MusicModuleViewModel(service);
+        var changes = new HashSet<string?>();
+        viewModel.PropertyChanged += (_, args) => changes.Add(args.PropertyName);
+        var sequence = 1L;
+        foreach (var (volume, glyph) in new[] { (0d, "\uE74F"), (0.25, "\uE993"), (0.8, "\uE995"), (0d, "\uE74F") })
+        {
+            changes.Clear();
+            service.Publish(SequencedMediaService.CreateSnapshot("Track", ++sequence) with { Volume = volume });
+            Assert.AreEqual(glyph, viewModel.VolumeGlyph);
+            Assert.AreEqual(volume == 0, viewModel.IsVolumeSilent);
+            Assert.IsTrue(changes.Contains(nameof(viewModel.VolumeGlyph)));
+            Assert.IsTrue(changes.Contains(nameof(viewModel.IsVolumeSilent)));
+        }
+    }
+
+    [TestMethod]
     public void LimitedScenario_DisablesUnsupportedCommands()
     {
         var service = new FakeMediaService();

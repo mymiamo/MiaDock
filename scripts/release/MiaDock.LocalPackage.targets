@@ -1,0 +1,11 @@
+<Project>
+  <!-- Override only the app's packaging input, leaving the Store manifest untouched. -->
+  <Target Name="UseMiaDockLocalManifest"
+          BeforeTargets="_ValidatePresenceOfAppxManifestItems"
+          Condition="'$(MSBuildProjectName)' == 'MiaDock.App' and '$(MiaDockLocalManifest)' != ''">
+    <ItemGroup>
+      <AppxManifest Remove="@(AppxManifest)" />
+      <AppxManifest Include="$(MiaDockLocalManifest)" />
+    </ItemGroup>
+  </Target>
+</Project>

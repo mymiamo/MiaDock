@@ -1,4 +1,5 @@
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using CommunityToolkit.WinUI.Animations;
 using Microsoft.UI.Composition;
 using Microsoft.UI.Xaml;
@@ -14,6 +15,13 @@ namespace MiaDock.App.Animations;
 /// </summary>
 public sealed class ToolkitAnimationFactory
 {
+    private static readonly ConditionalWeakTable<Visual, object> MovingVisuals = new();
+    private static bool Resume(Visual visual)
+    {
+        var moving = MovingVisuals.TryGetValue(visual, out _);
+        MovingVisuals.GetValue(visual, static _ => new object());
+        return moving;
+    }
     public Task AnimateTransitionAsync(
         FrameworkElement incoming,
         FrameworkElement? outgoing,
@@ -34,6 +42,7 @@ public sealed class ToolkitAnimationFactory
         }
 
         var incomingVisual = ElementCompositionPreview.GetElementVisual(incoming);
+        var resumeIncoming = Resume(incomingVisual);
         var outgoingVisual = outgoing is null ? null : ElementCompositionPreview.GetElementVisual(outgoing);
         Stop(incomingVisual);
         if (outgoingVisual is not null && outgoingVisual != incomingVisual)
@@ -60,13 +69,13 @@ public sealed class ToolkitAnimationFactory
         var easing = ResolveEasing(preset, animationKind);
 
         var incomingBuilder = AnimationBuilder.Create()
-            .Opacity(1, from: 0, duration: duration, easingType: easing.Type, easingMode: easing.Mode);
+            .Opacity(1, from: resumeIncoming ? null : 0, duration: duration, easingType: easing.Type, easingMode: easing.Mode);
 
         if (recipe.UseScale)
         {
             incomingBuilder = incomingBuilder.Scale(
                 1,
-                from: recipe.IncomingScaleFrom,
+                from: resumeIncoming ? null : recipe.IncomingScaleFrom,
                 duration: duration,
                 easingType: easing.Type,
                 easingMode: easing.Mode);
@@ -77,7 +86,7 @@ public sealed class ToolkitAnimationFactory
             incomingBuilder = incomingBuilder.Translation(
                 Axis.Y,
                 0,
-                from: recipe.IncomingOffsetY,
+                from: resumeIncoming ? null : recipe.IncomingOffsetY,
                 duration: duration,
                 easingType: easing.Type,
                 easingMode: easing.Mode);
@@ -96,7 +105,6 @@ public sealed class ToolkitAnimationFactory
                 outgoingBuilder = outgoingBuilder.Translation(
                     Axis.Y,
                     -recipe.OutgoingOffsetY,
-                    from: 0,
                     duration: duration,
                     easingType: easing.Type,
                     easingMode: easing.Mode);
@@ -106,7 +114,6 @@ public sealed class ToolkitAnimationFactory
             {
                 outgoingBuilder = outgoingBuilder.Scale(
                     recipe.OutgoingScaleTo,
-                    from: 1,
                     duration: duration,
                     easingType: easing.Type,
                     easingMode: easing.Mode);
@@ -132,6 +139,7 @@ public sealed class ToolkitAnimationFactory
         cancellationToken.ThrowIfCancellationRequested();
 
         var visual = ElementCompositionPreview.GetElementVisual(shell);
+        var resume = Resume(visual);
         Stop(visual);
 
         if (duration <= TimeSpan.Zero ||
@@ -153,7 +161,7 @@ public sealed class ToolkitAnimationFactory
                 IslandAnimationKind.Spring => (0.045 + 0.04 * safeSpringiness) * safeIntensity,
                 _ => (0.04 + 0.03 * safeSpringiness) * Math.Max(safeIntensity, 0.35)
             };
-            var from = expanding ? 1 - scaleDelta : 1 + (scaleDelta * 0.55);
+            double? from = resume ? null : expanding ? 1 - scaleDelta : 1 + (scaleDelta * 0.55);
             var easing = ResolveEasing(preset, animationKind);
             visual.CenterPoint = CenterOf(shell);
 
@@ -165,13 +173,11 @@ public sealed class ToolkitAnimationFactory
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                Reset(visual);
                 throw;
             }
 
             if (cancellationToken.IsCancellationRequested)
             {
-                Reset(visual);
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
@@ -194,6 +200,7 @@ public sealed class ToolkitAnimationFactory
         cancellationToken.ThrowIfCancellationRequested();
         ElementCompositionPreview.SetIsTranslationEnabled(element, true);
         var visual = ElementCompositionPreview.GetElementVisual(element);
+        var resume = Resume(visual);
         Stop(visual);
 
         if (duration <= TimeSpan.Zero || preset == MotionPreset.Off)
@@ -227,13 +234,13 @@ public sealed class ToolkitAnimationFactory
             try
             {
                 var builder = AnimationBuilder.Create()
-                    .Opacity(1, from: opacityFrom, duration: duration, easingType: easing.Type, easingMode: easing.Mode);
+                    .Opacity(1, from: resume ? null : opacityFrom, duration: duration, easingType: easing.Type, easingMode: easing.Mode);
 
                 if (recipe.UseScale || animationKind == IslandAnimationKind.ScaleFade)
                 {
                     builder = builder.Scale(
                         1,
-                        from: recipe.ContentScaleFrom,
+                        from: resume ? null : recipe.ContentScaleFrom,
                         duration: duration,
                         easingType: easing.Type,
                         easingMode: easing.Mode);
@@ -244,7 +251,7 @@ public sealed class ToolkitAnimationFactory
                     builder = builder.Translation(
                         Axis.X,
                         0,
-                        from: distance,
+                        from: resume ? null : distance,
                         duration: duration,
                         easingType: easing.Type,
                         easingMode: easing.Mode);
@@ -254,13 +261,11 @@ public sealed class ToolkitAnimationFactory
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                Reset(visual);
                 throw;
             }
 
             if (cancellationToken.IsCancellationRequested)
             {
-                Reset(visual);
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
@@ -276,7 +281,9 @@ public sealed class ToolkitAnimationFactory
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(element);
+        cancellationToken.ThrowIfCancellationRequested();
         var visual = ElementCompositionPreview.GetElementVisual(element);
+        var resume = Resume(visual);
         Stop(visual);
 
         if (duration <= TimeSpan.Zero)
@@ -296,14 +303,14 @@ public sealed class ToolkitAnimationFactory
             try
             {
                 var builder = AnimationBuilder.Create()
-                    .Opacity(1, from: 0.55, duration: duration, easingType: EasingType.Cubic, easingMode: EasingMode.EaseOut);
+                    .Opacity(1, from: resume ? null : 0.55, duration: duration, easingType: EasingType.Cubic, easingMode: EasingMode.EaseOut);
 
                 if (useScale && scaleFrom < 1)
                 {
                     visual.CenterPoint = CenterOf(element);
                     builder = builder.Scale(
                         1,
-                        from: scaleFrom,
+                        from: resume ? null : scaleFrom,
                         duration: duration,
                         easingType: EasingType.Cubic,
                         easingMode: EasingMode.EaseOut);
@@ -313,13 +320,11 @@ public sealed class ToolkitAnimationFactory
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                Reset(visual);
                 throw;
             }
 
             if (cancellationToken.IsCancellationRequested)
             {
-                Reset(visual);
                 cancellationToken.ThrowIfCancellationRequested();
             }
 
@@ -337,6 +342,7 @@ public sealed class ToolkitAnimationFactory
 
     public static void Reset(Visual visual)
     {
+        MovingVisuals.Remove(visual);
         Stop(visual);
         visual.Opacity = 1;
         visual.Scale = Vector3.One;
@@ -359,23 +365,11 @@ public sealed class ToolkitAnimationFactory
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            Reset(incomingVisual);
-            if (outgoingVisual is not null && outgoingVisual != incomingVisual)
-            {
-                Reset(outgoingVisual);
-            }
-
             throw;
         }
 
         if (cancellationToken.IsCancellationRequested)
         {
-            Reset(incomingVisual);
-            if (outgoingVisual is not null && outgoingVisual != incomingVisual)
-            {
-                Reset(outgoingVisual);
-            }
-
             cancellationToken.ThrowIfCancellationRequested();
         }
 

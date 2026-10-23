@@ -3,6 +3,10 @@ using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Services;
 using MiaDock.App.ViewModels;
 using MiaDock.Core.Applications;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Dispatching;
+using Windows.Storage.Pickers;
+using System.Text.Json;
 
 namespace MiaDock.App.Views.Settings;
 
@@ -15,6 +19,7 @@ public sealed partial class DiagnosticsSettingsPage : UserControl
     private readonly Window _owner;
     private readonly IAppLocalizationService? _localization;
     private readonly IExternalUriLauncher? _uriLauncher;
+    private DispatcherQueueTimer? _performanceTimer;
 
     public DiagnosticsSettingsPage(
         DiagnosticsViewModel viewModel,
@@ -30,12 +35,42 @@ public sealed partial class DiagnosticsSettingsPage : UserControl
         _localization = localization;
         _uriLauncher = uriLauncher;
         DataContext = viewModel;
+        MeasureAnimationButton.Content = localization?.Text("60 saniye akıcılık ölç", "Measure smoothness for 60 seconds") ?? "60 saniye akıcılık ölç";
+        StopAnimationButton.Content = localization?.Text("Ölçümü durdur", "Stop measurement") ?? "Ölçümü durdur";
         Loaded += OnLoaded;
+        Unloaded += (_, _) => { _performanceTimer?.Stop(); _performanceTimer = null; };
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs args) => await _viewModel.RefreshAsync();
+    private async void OnLoaded(object sender, RoutedEventArgs args)
+    {
+        _performanceTimer?.Stop();
+        _performanceTimer = DispatcherQueue.CreateTimer();
+        _performanceTimer.Interval = TimeSpan.FromSeconds(1);
+        _performanceTimer.Tick += (_, _) => _viewModel.RefreshPerformance();
+        _performanceTimer.Start();
+        await _viewModel.RefreshAsync();
+    }
+
+    private async void OnPerformanceExportClick(object sender, RoutedEventArgs args)
+    {
+        try
+        {
+            var picker = new FileSavePicker { SuggestedFileName = $"MiaDock-performance-{DateTime.Now:yyyyMMdd-HHmmss}" };
+            picker.FileTypeChoices.Add("JSON", [".json"]);
+            WinRT.Interop.InitializeWithWindow.Initialize(picker, WinRT.Interop.WindowNative.GetWindowHandle(_owner));
+            var file = await picker.PickSaveFileAsync();
+            if (file is null) return;
+            var snapshot = App.Services?.GetService<ApplicationPerformanceMonitor>()?.Snapshot();
+            if (snapshot is not null) await File.WriteAllTextAsync(file.Path,
+                JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true }));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or InvalidOperationException or System.Runtime.InteropServices.COMException)
+        { _viewModel.ReportFileOperationFailure(); }
+    }
 
     private async void OnRefreshClick(object sender, RoutedEventArgs args) => await _viewModel.RefreshAsync();
+    private void OnMeasureAnimationClick(object sender, RoutedEventArgs args) => _viewModel.StartAnimationMeasurement();
+    private void OnStopAnimationClick(object sender, RoutedEventArgs args) => _viewModel.StopAnimationMeasurement();
 
     private async void OnOpenFolderClick(object sender, RoutedEventArgs args)
     {

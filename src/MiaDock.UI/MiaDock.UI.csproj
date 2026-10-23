@@ -14,4 +14,9 @@
     <ProjectReference Include="..\MiaDock.Core\MiaDock.Core.csproj" />
     <ProjectReference Include="..\MiaDock.Modules.Media\MiaDock.Modules.Media.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Assets\Ionicons\*.svg" LogicalName="MiaDock.UI.Ionicons.%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Assets\Ionicons\manifest.json" LogicalName="MiaDock.UI.Ionicons.manifest.json" />
+    <Content Include="Assets\Ionicons\LICENSE" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

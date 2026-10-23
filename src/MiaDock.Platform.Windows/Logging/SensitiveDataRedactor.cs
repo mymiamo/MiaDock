@@ -17,8 +17,14 @@ public sealed partial class SensitiveDataRedactor
         "fallbackReason", "sourceMode", "previousSourceMode"
     };
 
-    private readonly string _userName = Environment.UserName;
-    private readonly string _userProfile = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    private readonly string _userName;
+    private readonly string _userProfile;
+
+    public SensitiveDataRedactor(string? userName = null, string? userProfile = null)
+    {
+        _userName = userName ?? Environment.UserName;
+        _userProfile = userProfile ?? Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+    }
 
     public string Redact(string? value)
     {
@@ -27,20 +33,20 @@ public sealed partial class SensitiveDataRedactor
             return string.Empty;
         }
 
-        var redacted = value;
-        if (!string.IsNullOrWhiteSpace(_userProfile))
-        {
-            redacted = redacted.Replace(_userProfile, "<user-path>", StringComparison.OrdinalIgnoreCase);
-        }
-
+        // Mask complete paths before usernames. "User" must not change the
+        // literal C:\Users prefix or leave a filename after a profile marker.
+        var redacted = WindowsUserPathRegex().Replace(value, "<user-path>");
+        redacted = WindowsAbsolutePathRegex().Replace(redacted, match =>
+            !string.IsNullOrWhiteSpace(_userProfile) &&
+            match.Value.StartsWith(_userProfile, StringComparison.OrdinalIgnoreCase)
+                ? "<user-path>" : "<path>");
+        redacted = UnixUserPathRegex().Replace(redacted, "<user-path>");
         if (!string.IsNullOrWhiteSpace(_userName))
         {
-            redacted = redacted.Replace(_userName, "<user>", StringComparison.OrdinalIgnoreCase);
+            var parts = RedactionTokenRegex().Split(redacted);
+            redacted = string.Concat(parts.Select(part => part is "<user-path>" or "<path>" or "<user>"
+                ? part : part.Replace(_userName, "<user>", StringComparison.OrdinalIgnoreCase)));
         }
-
-        redacted = WindowsUserPathRegex().Replace(redacted, "<user-path>");
-        redacted = WindowsAbsolutePathRegex().Replace(redacted, "<path>");
-        redacted = UnixUserPathRegex().Replace(redacted, "<user-path>");
         return redacted.Length <= 4096 ? redacted : redacted[..4096];
     }
 
@@ -80,4 +86,7 @@ public sealed partial class SensitiveDataRedactor
 
     [GeneratedRegex(@"(?i)/(?:Users|home)/[^/\s]+(?:/[^\r\n\t\""']*)?")]
     private static partial Regex UnixUserPathRegex();
+
+    [GeneratedRegex(@"(<(?:user-path|path|user)>)")]
+    private static partial Regex RedactionTokenRegex();
 }

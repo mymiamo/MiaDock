@@ -1,3 +1,4 @@
+using MiaDock.UI.Icons;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
@@ -7,6 +8,8 @@ using MiaDock.App.Animations;
 using MiaDock.App.Services;
 using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
+using MiaDock.Core.Settings;
+using MiaDock.UI.Presentation;
 using Windows.System;
 
 namespace MiaDock.App.Controls;
@@ -21,6 +24,7 @@ public sealed partial class ModuleSwitcher : UserControl
     private ModuleButtonVisual? _defaultVisual;
     private ModuleButtonVisual? _selectedVisual;
     private bool _isLoaded;
+    private readonly ISettingsService? _settings;
     public static readonly DependencyProperty ModulesProperty = DependencyProperty.Register(
         nameof(Modules), typeof(IReadOnlyList<ModuleDisplayState>), typeof(ModuleSwitcher),
         new PropertyMetadata(null, OnModulesChanged));
@@ -33,6 +37,7 @@ public sealed partial class ModuleSwitcher : UserControl
         InitializeComponent();
         _microInteractions = App.Services?.GetService<IMicroInteractionCoordinator>();
         _animationPreferences = App.Services?.GetService<IAnimationPreferenceService>();
+        _settings = App.Services?.GetService<ISettingsService>();
         _defaultVisual = new ModuleButtonVisual(DefaultButton, DefaultIcon);
         RebuildModuleButtons();
     }
@@ -90,12 +95,51 @@ public sealed partial class ModuleSwitcher : UserControl
             ToolTipService.SetToolTip(button, displayName);
             Microsoft.UI.Xaml.Automation.AutomationProperties.SetName(button, displayName);
             button.Click += OnModuleClick;
+            ConfigureFavoriteMenu(button, module.Descriptor.Id);
             ModuleButtons.Children.Add(button);
             _moduleButtons[module.Descriptor.Id] = new ModuleButtonVisual(button, icon);
         }
 
         UpdateAutomationSetMetadata();
         UpdateSelectionVisuals();
+    }
+
+    private void ConfigureFavoriteMenu(Button button, string id)
+    {
+        if (_settings is null) return;
+        var pins = _settings.Current.EffectiveNavigation.PinnedModuleIds;
+        var pinned = pins.Contains(id, StringComparer.Ordinal);
+        var index = pins.ToList().IndexOf(id);
+        var flyout = new MenuFlyout();
+        var pin = new MenuFlyoutItem { Text = FavoriteText(pinned ? "Favorilerden kaldır" : "Favorilere sabitle", pinned ? "Unpin favorite" : "Pin favorite") };
+        pin.Click += (_, _) => UpdateFavorites(current => current.Toggle(id));
+        flyout.Items.Add(pin);
+        if (pinned)
+        {
+            var previous = new MenuFlyoutItem { Text = FavoriteText("Öne taşı", "Move earlier"), IsEnabled = index > 0 };
+            previous.Click += (_, _) => UpdateFavorites(current => current.Move(id, -1));
+            var next = new MenuFlyoutItem { Text = FavoriteText("Arkaya taşı", "Move later"), IsEnabled = index < pins.Count - 1 };
+            next.Click += (_, _) => UpdateFavorites(current => current.Move(id, 1));
+            flyout.Items.Add(previous); flyout.Items.Add(next);
+        }
+        button.ContextFlyout = flyout;
+        Microsoft.UI.Xaml.Automation.AutomationProperties.SetHelpText(button,
+            FavoriteText("Sabitlemek veya sıralamak için sağ tıklayın ya da Shift+F10 kullanın.", "Right-click or press Shift+F10 to pin or reorder."));
+    }
+
+    private string FavoriteText(string turkish, string english) => (_localization as IAppLocalizationService)?.Text(turkish, english) ?? turkish;
+
+    private void UpdateFavorites(Func<DockNavigationSettings, DockNavigationSettings> update)
+    {
+        _settings?.Update(current => current with { Navigation = update(current.EffectiveNavigation) });
+        App.Services?.GetService<IslandViewModel>()?.RefreshNavigation();
+    }
+
+    private void OnFavoriteSettingsChanged(object? sender, SettingsChangedEventArgs args)
+    {
+        if (args.Previous.Navigation == args.Current.Navigation) return;
+        if (DispatcherQueue.HasThreadAccess) RebuildModuleButtons();
+        else DispatcherQueue.TryEnqueue(RebuildModuleButtons);
     }
 
     private void UpdateSelectionVisuals()
@@ -146,9 +190,9 @@ public sealed partial class ModuleSwitcher : UserControl
         UpdateSelectionVisuals();
     }
 
-    private static FontIcon CreateButtonIcon(string glyph)
+    private static DockIcon CreateButtonIcon(string glyph)
     {
-        return new FontIcon
+        return new DockIcon
         {
             Glyph = glyph,
             FontSize = 17,
@@ -160,6 +204,7 @@ public sealed partial class ModuleSwitcher : UserControl
 
     private void ApplySelectionState(ModuleButtonVisual visual, bool selected)
     {
+        visual.Icon.IsFilled = selected;
         visual.Icon.Foreground = ResourceBrush(
             selected ? "IslandTextPrimaryBrush" : "IslandTextSecondaryBrush");
         Microsoft.UI.Xaml.Automation.AutomationProperties.SetItemStatus(
@@ -207,12 +252,17 @@ public sealed partial class ModuleSwitcher : UserControl
 
     private void OnLoaded(object sender, RoutedEventArgs args)
     {
+        if (_isLoaded) return;
         _isLoaded = true;
+        if (_settings is not null) _settings.SettingsChanged += OnFavoriteSettingsChanged;
+        RebuildModuleButtons();
     }
 
     private void OnUnloaded(object sender, RoutedEventArgs args)
     {
+        if (!_isLoaded) return;
         _isLoaded = false;
+        if (_settings is not null) _settings.SettingsChanged -= OnFavoriteSettingsChanged;
     }
 
     private void OnPreviousClick(object sender, RoutedEventArgs args) => RaisePrevious();
@@ -296,7 +346,7 @@ public sealed partial class ModuleSwitcher : UserControl
         return value is not null && value != key ? value : fallback;
     }
 
-    private sealed record ModuleButtonVisual(Button Button, FontIcon Icon);
+    private sealed record ModuleButtonVisual(Button Button, DockIcon Icon);
 }
 
 public sealed class ModuleSelectedEventArgs(string moduleId) : EventArgs

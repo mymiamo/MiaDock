@@ -24,6 +24,7 @@ public sealed partial class BluetoothModuleViewModel : ObservableObject, IDispos
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ConnectedDevices))]
+    [NotifyPropertyChangedFor(nameof(HasConnectedDevices))]
     [NotifyPropertyChangedFor(nameof(StatusText))]
     private BluetoothStatusSnapshot _snapshot;
 
@@ -31,6 +32,7 @@ public sealed partial class BluetoothModuleViewModel : ObservableObject, IDispos
         .Where(device => device.IsConnected)
         .OrderBy(device => device.DisplayName, StringComparer.CurrentCultureIgnoreCase)
         .ToArray();
+    public bool HasConnectedDevices => Snapshot.Devices.Any(device => device.IsConnected);
 
     public string StatusText => Snapshot.State switch
     {

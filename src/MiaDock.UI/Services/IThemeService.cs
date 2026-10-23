@@ -6,6 +6,7 @@ namespace MiaDock.UI.Services;
 public interface IThemeService
 {
     ThemeStyle CurrentStyle { get; }
+    bool IsHighContrast => false;
 
     ThemeDescriptor CurrentDescriptor { get; }
 

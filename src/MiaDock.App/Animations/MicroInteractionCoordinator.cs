@@ -43,7 +43,8 @@ public sealed class MicroInteractionCoordinator : IMicroInteractionCoordinator
     public void Cancel(FrameworkElement target)
     {
         ArgumentNullException.ThrowIfNull(target);
-        CancelCore(target);
+        if (target.DispatcherQueue.HasThreadAccess) CancelCore(target);
+        else target.DispatcherQueue.TryEnqueue(() => CancelCore(target));
     }
 
     public void Dispose()
@@ -62,7 +63,12 @@ public sealed class MicroInteractionCoordinator : IMicroInteractionCoordinator
     private void Start(FrameworkElement target, MicroInteractionKind kind)
     {
         ArgumentNullException.ThrowIfNull(target);
-        if (_disposed || !CanAnimate || !target.IsLoaded || target.Visibility != Visibility.Visible)
+        if (!target.DispatcherQueue.HasThreadAccess)
+        {
+            target.DispatcherQueue.TryEnqueue(() => Start(target, kind));
+            return;
+        }
+        if (_disposed || !CanAnimate || !MicroMotion.IsPresented(target))
         {
             CancelCore(target);
             return;
@@ -187,30 +193,32 @@ public sealed class MicroInteractionCoordinator : IMicroInteractionCoordinator
 
     private void CancelAll()
     {
-        FrameworkElement[] targets;
+        KeyValuePair<FrameworkElement, Session>[] targets;
         lock (_gate)
         {
-            targets = _sessions.Keys.ToArray();
+            targets = _sessions.ToArray();
         }
 
-        foreach (var target in targets)
+        foreach (var (target, session) in targets)
         {
             if (target.DispatcherQueue.HasThreadAccess)
             {
-                CancelCore(target);
+                CancelCore(target, session.Sequence);
             }
             else
             {
-                target.DispatcherQueue.TryEnqueue(() => CancelCore(target));
+                target.DispatcherQueue.TryEnqueue(() => CancelCore(target, session.Sequence));
             }
         }
     }
 
-    private void CancelCore(FrameworkElement target)
+    private void CancelCore(FrameworkElement target, long? expectedSequence = null)
     {
         Session? session = null;
         lock (_gate)
         {
+            if (expectedSequence is { } expected &&
+                (!_sessions.TryGetValue(target, out var current) || current.Sequence != expected)) return;
             if (_sessions.Remove(target, out var active))
             {
                 session = active;

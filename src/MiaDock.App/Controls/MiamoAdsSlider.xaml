@@ -1,0 +1,35 @@
+<UserControl x:Class="MiaDock.App.Controls.MiamoAdsSlider"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:icons="using:MiaDock.UI.Icons"
+             Visibility="Collapsed" IsTabStop="False">
+  <StackPanel x:Name="LayoutRoot" Margin="12,8,12,8" Spacing="4" HorizontalAlignment="Center">
+    <TextBlock x:Name="SponsoredLabel" Text="Sponsorlu" FontSize="10"
+               Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+    <Button x:Name="CreativeButton" Padding="0" MinWidth="0" MinHeight="0"
+            CornerRadius="{StaticResource SettingsCardCornerRadius}"
+            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+            HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"
+            AutomationProperties.Name="Reklamı aç" Click="OnCreativeClick">
+      <Image x:Name="CreativeImage" Stretch="Uniform" IsHitTestVisible="False"
+             AutomationProperties.AccessibilityView="Raw" ImageFailed="OnImageFailed" />
+    </Button>
+    <Grid x:Name="SequenceControls" Height="24" Visibility="Collapsed">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto" /><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <Button x:Name="PreviousButton" Width="28" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+              Background="Transparent" BorderThickness="0" AutomationProperties.Name="Önceki reklam" Click="OnPreviousClick">
+        <icons:DockIcon Glyph="&#xE76B;" FontSize="10" />
+      </Button>
+      <TextBlock x:Name="SequenceLabel" Grid.Column="1" FontSize="10" HorizontalAlignment="Center"
+                 VerticalAlignment="Center" Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                 AutomationProperties.Name="Reklam sırası" AutomationProperties.LiveSetting="Polite" />
+      <Button x:Name="NextButton" Grid.Column="2" Width="28" Height="24" MinWidth="0" MinHeight="0" Padding="0"
+              Background="Transparent" BorderThickness="0" AutomationProperties.Name="Sonraki reklam" Click="OnNextClick">
+        <icons:DockIcon Glyph="&#xE76C;" FontSize="10" />
+      </Button>
+    </Grid>
+  </StackPanel>
+</UserControl>

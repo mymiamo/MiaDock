@@ -14,12 +14,16 @@ using MiaDock.Core.Modules;
 using MiaDock.Core.Localization;
 using System.Numerics;
 using MiaDock.UI.Services;
+using Windows.UI.ViewManagement;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MiaDock.App.Controls;
 
 public sealed partial class IslandShell : UserControl
 {
     private const long ParallaxThrottleMilliseconds = 16;
+    private readonly AccessibilitySettings _accessibility = new();
+    private readonly UISettings _uiSettings = new();
     private readonly CompactModuleHost _collapsedView;
     private readonly CompactModuleHost _hoverView;
     private readonly ExpandedModuleHost _expandedView;
@@ -38,6 +42,7 @@ public sealed partial class IslandShell : UserControl
     private ThemeStyle _appliedTheme = ThemeStyle.AppleLike;
     private ThemeBackdropKind _appliedBackdropKind = ThemeBackdropKind.None;
     private bool _edgeRevealHidden;
+    private bool _presentationVisible = true;
     private long _lastParallaxTimestamp;
     private Vector3 _lastParallaxTranslation;
     public static readonly DependencyProperty StateProperty = DependencyProperty.Register(
@@ -145,7 +150,8 @@ public sealed partial class IslandShell : UserControl
                 ApplyMetrics,
                 animationPreferences,
                 options,
-                _layoutOptions);
+                _layoutOptions,
+                App.Services?.GetService<AnimationPerformanceMonitor>());
             _animationCoordinator.ApplyInitialState(initialState);
         }
         else
@@ -207,6 +213,11 @@ public sealed partial class IslandShell : UserControl
     {
         _activeState = transition.CurrentState;
         UpdateHostActivation(transition.CurrentState);
+        if (!_presentationVisible || _edgeRevealHidden)
+        {
+            _animationCoordinator?.ApplyInitialState(transition.CurrentState);
+            return;
+        }
         if (!transition.Changed && transition.Trigger == IslandTrigger.ModuleEventReceived)
         {
             _animationCoordinator?.RequestContentRefresh(_views[transition.CurrentState]);
@@ -219,13 +230,27 @@ public sealed partial class IslandShell : UserControl
         AnimateBackdropEmphasis();
     }
 
-    public void RefreshActiveContent() =>
-        _animationCoordinator?.RequestContentRefresh(_expandedView);
+    public void RefreshActiveContent()
+    {
+        if (_presentationVisible && !_edgeRevealHidden) _animationCoordinator?.RequestContentRefresh(_expandedView);
+    }
 
     public void DisposeAnimations()
     {
         _animationCoordinator?.Dispose();
         _animationCoordinator = null;
+    }
+
+    public void SetPresentationVisible(bool visible)
+    {
+        if (_presentationVisible == visible) return;
+        _presentationVisible = visible;
+        Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        if (!visible) MicroMotion.CancelSubtree(this);
+        if (!visible) _animationCoordinator?.ApplyInitialState(_activeState);
+        UpdateHostActivation(_activeState);
+        if (_edgeRevealStatusView is IModuleViewActivationAware edge)
+            edge.SetPresentationActive(visible && _edgeRevealHidden);
     }
 
     public void ApplyAppearance(AppearanceSettings appearance)
@@ -284,6 +309,19 @@ public sealed partial class IslandShell : UserControl
             : new Vector3(0, 0, (float)(8 + appearance.ShadowIntensity * 24));
         SyncEdgeRevealSurfaceAppearance(appearance, background, accent);
 
+        if (_accessibility.HighContrast)
+        {
+            RequestedTheme = ElementTheme.Default;
+            Surface.Background = new SolidColorBrush(_uiSettings.UIElementColor(UIElementType.Window));
+            Surface.BorderBrush = new SolidColorBrush(_uiSettings.UIElementColor(UIElementType.WindowText));
+            Surface.BorderThickness = new Thickness(1);
+            Surface.Shadow = null;
+            Surface.Translation = Vector3.Zero;
+            EdgeRevealSurface.Background = new SolidColorBrush(_uiSettings.UIElementColor(UIElementType.Window));
+            EdgeRevealSurface.BorderBrush = new SolidColorBrush(_uiSettings.UIElementColor(UIElementType.WindowText));
+            EdgeRevealSurface.BorderThickness = new Thickness(1);
+        }
+
         _appliedTheme = appearance.Theme;
         SyncBackdropVisibility();
         ApplyCornerRadii(appearance.EffectiveCornerRadii);
@@ -301,12 +339,13 @@ public sealed partial class IslandShell : UserControl
         var horizontal = position is OverlayPosition.TopCenter or OverlayPosition.TopLeft or OverlayPosition.TopRight or
             OverlayPosition.BottomCenter or OverlayPosition.BottomLeft or OverlayPosition.BottomRight;
         _edgeRevealHidden = hidden;
+        UpdateHostActivation(_activeState);
         Surface.Visibility = hidden ? Visibility.Collapsed : Visibility.Visible;
         EdgeRevealSurface.Visibility = hidden ? Visibility.Visible : Visibility.Collapsed;
         SyncBackdropVisibility();
         if (_edgeRevealStatusView is IModuleViewActivationAware activationAware)
         {
-            activationAware.SetPresentationActive(hidden && horizontal);
+            activationAware.SetPresentationActive(_presentationVisible && hidden && horizontal);
         }
         if (!hidden)
         {
@@ -420,7 +459,7 @@ public sealed partial class IslandShell : UserControl
 
     private void SyncBackdropVisibility()
     {
-        BackdropSurface.Visibility = !_edgeRevealHidden && _appliedTheme.UsesSystemBackdrop()
+        BackdropSurface.Visibility = !_accessibility.HighContrast && !_edgeRevealHidden && _appliedTheme.UsesSystemBackdrop()
             ? Visibility.Visible
             : Visibility.Collapsed;
     }
@@ -574,9 +613,10 @@ public sealed partial class IslandShell : UserControl
 
     private void UpdateHostActivation(IslandVisualState state)
     {
-        _collapsedView.SetHostActive(state == IslandVisualState.Collapsed);
-        _hoverView.SetHostActive(state == IslandVisualState.Hover);
-        _expandedView.SetHostActive(state == IslandVisualState.ExpandedModule);
+        var active = _presentationVisible && !_edgeRevealHidden;
+        _collapsedView.SetHostActive(active && state == IslandVisualState.Collapsed);
+        _hoverView.SetHostActive(active && state == IslandVisualState.Hover);
+        _expandedView.SetHostActive(active && state == IslandVisualState.ExpandedModule);
     }
 
     private static void OnModuleDisplayChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs args)
@@ -743,6 +783,11 @@ public sealed partial class IslandShell : UserControl
         var layoutChanged = effective != _layoutOptions;
         _layoutOptions = effective;
         ApplyContentScale(effective.ContentScale);
+        if (!_presentationVisible || _edgeRevealHidden)
+        {
+            if (layoutChanged) _animationCoordinator?.UpdateOptions(_motionOptions, effective);
+            return;
+        }
         if (contentMotion is not null && _activeState == IslandVisualState.ExpandedModule)
         {
             if (layoutChanged)

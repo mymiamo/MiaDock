@@ -6,6 +6,23 @@ namespace MiaDock.WinUI.Tests;
 public sealed class OverlayWindowTests
 {
     [TestMethod]
+    public void DockMoveHandle_UsesThumbDragLifecycle_WithKeyboardAndAccessibleFocus()
+    {
+        var document = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Controls", "IdleExpandedView.xaml"));
+        var handle = document.Descendants().Single(element =>
+            element.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "PlacementMoveHandle");
+        Assert.AreEqual("Thumb", handle.Name.LocalName);
+        foreach (var lifecycle in new[] { "DragStarted", "DragDelta", "DragCompleted", "PointerCaptureLost", "KeyDown" })
+            Assert.IsNotNull(handle.Attribute(lifecycle), lifecycle);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(handle.Attribute("AutomationProperties.Name")?.Value));
+        var styles = XDocument.Load(Path.Combine(AppContext.BaseDirectory, "Themes", "DockControlStyles.xaml"));
+        var style = styles.Descendants().Single(element =>
+            element.Attribute(XName.Get("Key", "http://schemas.microsoft.com/winfx/2006/xaml"))?.Value == "DockPlacementThumbStyle");
+        foreach (var property in new[] { "IsTabStop", "UseSystemFocusVisuals" })
+            Assert.AreEqual("True", style.Elements().Single(element => element.Attribute("Property")?.Value == property).Attribute("Value")?.Value);
+    }
+
+    [TestMethod]
     public void OverlayWindow_UsesTransparentClippedRootAndIslandPointerEvents()
     {
         var document = XDocument.Load(Path.Combine(
@@ -124,8 +141,9 @@ public sealed class OverlayWindowTests
         var nextHandler = source.IndexOf("private void OnFullscreenStateChanged", handler, StringComparison.Ordinal);
         var body = source[handler..nextHandler];
 
-        StringAssert.Contains(body, "RefreshRootThemeResources(ThemeStyle.AdaptiveFluent)");
-        StringAssert.Contains(body, "Island.ApplyAppearance(_settings.Current.Appearance)");
+        StringAssert.Contains(body, "MonitorAppearanceProfile.Resolve");
+        StringAssert.Contains(body, "RefreshRootThemeResources(appearance.Theme)");
+        StringAssert.Contains(body, "Island.ApplyAppearance(appearance)");
         StringAssert.Contains(body, "Island.RefreshThemeResources()");
     }
 

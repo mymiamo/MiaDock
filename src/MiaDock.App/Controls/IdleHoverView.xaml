@@ -2,6 +2,7 @@
     x:Class="MiaDock.App.Controls.IdleHoverView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons"
     xmlns:local="using:MiaDock.App.Controls"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded">
@@ -41,8 +42,7 @@
                               ShowDetails="True"
                               ShowDeactivateButton="True"
                               VerticalAlignment="Center" />
-      <FontIcon Grid.Column="5" Glyph="{Binding NetworkGlyph}"
-                FontFamily="Segoe Fluent Icons"
+      <icons:DockIcon IsFilled="{Binding NetworkIsConnected}" Grid.Column="5" Glyph="{Binding NetworkGlyph}"
                 FontSize="13"
                 Foreground="{Binding NetworkStatusBrush}"
                 ToolTipService.ToolTip="{Binding NetworkStatus}"
@@ -58,7 +58,7 @@
         <ColumnDefinition Width="Auto" />
       </Grid.ColumnDefinitions>
 
-      <FontIcon Glyph="&#xE8D6;"
+      <icons:DockIcon Glyph="&#xE8D6;"
                 VerticalAlignment="Center"
                 FontSize="18"
                 Foreground="{ThemeResource IslandStyleAccentBrush}"
@@ -89,7 +89,7 @@
                 ToolTipService.ToolTip="Önceki parça"
                 AutomationProperties.Name="Önceki parça"
                 AutomationProperties.HelpText="Önceki parçaya geçer">
-          <FontIcon Glyph="&#xE892;" FontSize="14" />
+          <icons:DockIcon Glyph="&#xE892;" FontSize="14" />
         </Button>
         <Button Width="44"
                 Height="44"
@@ -99,7 +99,7 @@
                 ToolTipService.ToolTip="Oynat veya duraklat"
                 AutomationProperties.Name="Oynat veya duraklat"
                 AutomationProperties.HelpText="Geçerli parçayı oynatır veya duraklatır">
-          <FontIcon Glyph="{Binding PlaybackGlyph}" FontSize="14" />
+          <icons:DockIcon IsFilled="{Binding IsPlaying}" Glyph="{Binding PlaybackGlyph}" FontSize="14" />
         </Button>
         <Button Width="44"
                 Height="44"
@@ -109,7 +109,7 @@
                 ToolTipService.ToolTip="Sonraki parça"
                 AutomationProperties.Name="Sonraki parça"
                 AutomationProperties.HelpText="Sonraki parçaya geçer">
-          <FontIcon Glyph="&#xE893;" FontSize="14" />
+          <icons:DockIcon Glyph="&#xE893;" FontSize="14" />
         </Button>
       </StackPanel>
     </Grid>
@@ -119,7 +119,7 @@
         <ColumnDefinition Width="Auto" />
         <ColumnDefinition Width="*" />
       </Grid.ColumnDefinitions>
-      <FontIcon Glyph="&#xE80F;"
+      <icons:DockIcon Glyph="&#xE80F;"
                 VerticalAlignment="Center"
                 FontSize="18"
                 Foreground="{ThemeResource IslandStyleAccentBrush}"

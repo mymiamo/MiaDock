@@ -56,6 +56,28 @@ public sealed class JsonSettingsStoreTests
     }
 
     [TestMethod]
+    public async Task SavedDockOffsets_SurviveNewStoreInstance_AndProfileResolution()
+    {
+        var store = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+        var settings = MiaDockSettings.Default with
+        {
+            Appearance = AppearanceSettings.Default with { HorizontalOffset = -80 },
+            DisplayProfiles = [new MonitorAppearanceProfile("monitor-profile", "Test monitor", "display-2",
+                IslandPositionSetting.BottomCenter, AppearanceSettings.Default with { HorizontalOffset = 125.5 })]
+        };
+        await store.SaveAsync(settings);
+        var restartedStore = new JsonSettingsStore(new FixedPathProvider(_settingsPath));
+        var loaded = await restartedStore.LoadAsync();
+        Assert.AreEqual(-80, MonitorAppearanceProfile.Resolve(loaded, "display-1").Appearance.HorizontalOffset);
+        Assert.AreEqual(125.5, MonitorAppearanceProfile.Resolve(loaded, "display-2").Appearance.HorizontalOffset);
+        var reset = loaded with { Appearance = loaded.Appearance with { HorizontalOffset = 0 } };
+        await restartedStore.SaveAsync(reset);
+        var resetLoad = await new JsonSettingsStore(new FixedPathProvider(_settingsPath)).LoadAsync();
+        Assert.AreEqual(0, resetLoad.Appearance.HorizontalOffset);
+        Assert.AreEqual(125.5, MonitorAppearanceProfile.Resolve(resetLoad, "display-2").Appearance.HorizontalOffset);
+    }
+
+    [TestMethod]
     public async Task Load_CorruptJson_ReturnsDefaultsAndQuarantinesFile()
     {
         Directory.CreateDirectory(_directory);

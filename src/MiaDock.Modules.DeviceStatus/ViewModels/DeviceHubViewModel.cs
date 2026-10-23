@@ -403,6 +403,7 @@ public sealed class DeviceHubDeviceRow : ObservableObject
         .Where(value => !string.IsNullOrWhiteSpace(value)));
     public string VisualStateKey => $"{Id}|{_device.ConnectionState}|{_device.IsDefault}|{_device.BatteryPercentage}|{_device.FreeSpace}";
     public bool CanConnect => _device.CanConnect;
+    public bool IsConnected => _device.ConnectionState == DeviceHubConnectionState.Connected;
     public bool CanDisconnect => _device.CanDisconnect;
     public bool CanOpen => _device.Capabilities.HasFlag(DeviceHubDeviceCapabilities.Open);
     public bool CanEject => _device.CanEject || _device.Capabilities.HasFlag(DeviceHubDeviceCapabilities.Eject);
@@ -443,6 +444,7 @@ public sealed class DeviceHubDeviceRow : ObservableObject
         OnPropertyChanged(nameof(AccessibilityText));
         OnPropertyChanged(nameof(VisualStateKey));
         OnPropertyChanged(nameof(CanConnect));
+        OnPropertyChanged(nameof(IsConnected));
         OnPropertyChanged(nameof(CanDisconnect));
         OnPropertyChanged(nameof(CanOpen));
         OnPropertyChanged(nameof(CanEject));

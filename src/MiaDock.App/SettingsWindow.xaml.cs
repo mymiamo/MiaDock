@@ -18,6 +18,7 @@ using MiaDock.App.Services;
 using MiaDock.App.ViewModels;
 using MiaDock.App.Views.Settings;
 using MiaDock.Core.Applications;
+using MiaDock.Core.Advertising;
 using MiaDock.Core.Settings;
 using MiaDock.Platform.Windows.Windowing;
 using Windows.Graphics;
@@ -59,7 +60,8 @@ public sealed partial class SettingsWindow : Window
         IDiagnosticsFileService diagnosticsFileService,
         IAppLocalizationService localization,
         FocusSettingsViewModel focusSettingsViewModel,
-        IExternalUriLauncher externalUriLauncher)
+        IExternalUriLauncher externalUriLauncher,
+        IMiamoAdsClient adsClient)
     {
         InitializeComponent();
         WindowBranding.ApplyIcon(this);
@@ -77,7 +79,7 @@ public sealed partial class SettingsWindow : Window
         {
             ["home"] = _homePage,
             ["general"] = CreatePage(new GeneralSettingsPage()),
-            ["appearance"] = CreatePage(new AppearanceSettingsPage()),
+            ["appearance"] = CreatePage(new AppearanceSettingsPage(this)),
             ["audible-notifications"] = CreatePage(new AudibleNotificationsSettingsPage()),
             ["monitor"] = CreatePage(new MonitorSettingsPage()),
             ["fullscreen"] = CreatePage(new FullscreenSettingsPage()),
@@ -124,6 +126,7 @@ public sealed partial class SettingsWindow : Window
 
         ApplyLocalization();
         AppWindow.Closing += OnAppWindowClosing;
+        SponsoredAds.Configure(this, Navigation, adsClient, externalUriLauncher, localization);
     }
 
     internal IReadOnlyList<SettingsSubpageDefinition> CurrentSubpages { get; private set; } = [];

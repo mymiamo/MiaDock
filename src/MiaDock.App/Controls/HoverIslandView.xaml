@@ -2,6 +2,7 @@
     x:Class="MiaDock.App.Controls.HoverIslandView"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons"
     xmlns:controls="using:MiaDock.App.Controls">
 
   <Grid Padding="12" ColumnSpacing="12">
@@ -15,7 +16,7 @@
       <TextBlock MaxLines="1" Style="{StaticResource IslandTitleTextStyle}" Text="{Binding Current.Track.Title}" />
       <TextBlock MaxLines="1" Style="{StaticResource IslandBodyTextStyle}" Text="{Binding Current.Track.Artist}" />
     </StackPanel>
-    <FontIcon Grid.Column="2"
+    <icons:DockIcon IsFilled="{Binding IsPlaying}" Grid.Column="2"
               Glyph="{Binding PlaybackGlyph}"
               FontSize="17"
               Foreground="{ThemeResource IslandTextPrimaryBrush}"

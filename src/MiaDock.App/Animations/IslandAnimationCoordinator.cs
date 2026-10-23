@@ -22,6 +22,9 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
     private IslandVisualState _activeState = IslandVisualState.Collapsed;
     private long _transitionSequence;
     private bool _disposed;
+    private readonly AnimationPerformanceMonitor? _performance;
+    private (long Session, TimeSpan Started) _measurementToken;
+    private string _measurementKind = "transition";
 
     public IslandAnimationCoordinator(
         FrameworkElement layoutRoot,
@@ -30,7 +33,8 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         Action<IslandVisualMetrics> applyMetrics,
         IAnimationPreferenceService animationPreferences,
         IslandMotionOptions options,
-        IslandLayoutOptions layoutOptions)
+        IslandLayoutOptions layoutOptions,
+        AnimationPerformanceMonitor? performance = null)
     {
         _layoutRoot = layoutRoot ?? throw new ArgumentNullException(nameof(layoutRoot));
         _surface = surface ?? throw new ArgumentNullException(nameof(surface));
@@ -40,6 +44,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _layoutOptions = layoutOptions ?? throw new ArgumentNullException(nameof(layoutOptions));
         _options.Validate();
+        _performance = performance;
         _animationPreferences.AnimationsEnabledChanged += OnAnimationsEnabledChanged;
     }
 
@@ -63,6 +68,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
         var sequence = InvalidateActiveTransition();
         _activeState = transition.CurrentState;
+        _measurementKind = transition.CurrentState.ToString();
         if (!ShouldAnimate)
         {
             ApplyFinalState(transition.CurrentState);
@@ -91,7 +97,8 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         ArgumentNullException.ThrowIfNull(layoutOptions);
         _layoutOptions = layoutOptions;
         var sequence = InvalidateActiveTransition();
-        NormalizeViews(_activeState);
+        _measurementKind = "layout";
+        NormalizeViews(_activeState, resetActive: false);
 
         if (_activeState != IslandVisualState.ExpandedModule || !ShouldAnimate)
         {
@@ -116,7 +123,8 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         ArgumentNullException.ThrowIfNull(layoutOptions);
         _layoutOptions = layoutOptions;
         var sequence = InvalidateActiveTransition();
-        NormalizeViews(_activeState);
+        _measurementKind = "module";
+        NormalizeViews(_activeState, resetActive: false);
 
         if (_activeState != IslandVisualState.ExpandedModule || !ShouldAnimate)
         {
@@ -135,6 +143,11 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
     public void Dispose()
     {
+        if (!_layoutRoot.DispatcherQueue.HasThreadAccess)
+        {
+            _layoutRoot.DispatcherQueue.TryEnqueue(Dispose);
+            return;
+        }
         if (_disposed)
         {
             return;
@@ -143,6 +156,8 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         _disposed = true;
         _animationPreferences.AnimationsEnabledChanged -= OnAnimationsEnabledChanged;
         InvalidateActiveTransition();
+        foreach (var view in _views.Values) ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(view));
+        ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(_surface));
         _boundsAnimator.Dispose();
     }
 
@@ -155,7 +170,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         CancellationToken cancellationToken)
     {
         var duration = IslandAnimationProfile.DurationFor(transition, _options);
-            var isEventMorph = MotionSemantics.UsesEventMorph(transition, _options);
+        var isEventMorph = MotionSemantics.UsesEventMorph(transition, _options);
         var boundsEasing = IslandAnimationProfile.BoundsEasingFor(transition, _options);
 
         try
@@ -168,8 +183,9 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
                 outgoing = previousView;
             }
 
+            var wasVisible = incoming.Visibility == Visibility.Visible;
             PrepareViews(incoming, outgoing);
-            if (isEventMorph)
+            if (isEventMorph && !wasVisible)
             {
                 // Keep event content hidden until the shell morph has started,
                 // then fade/slide it in after ContentDelay.
@@ -296,7 +312,6 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
     {
         try
         {
-            ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(element));
             var from = CurrentMetrics();
             var to = IslandAnimationProfile.ForState(_activeState, _layoutOptions);
             var expanding = to.Width * to.Height >= from.Width * from.Height;
@@ -366,7 +381,9 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         ThrowIfDisposed();
         ArgumentNullException.ThrowIfNull(element);
         var sequence = InvalidateActiveTransition();
-        ApplyFinalState(_activeState);
+        _measurementKind = refresh ? "refresh" : "content";
+        // Keep the last rendered geometry when a refresh interrupts a morph.
+        NormalizeViews(_activeState, resetActive: false);
         element.Visibility = Visibility.Visible;
         element.Opacity = 1;
         element.IsHitTestVisible = true;
@@ -380,7 +397,9 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
         _animatedContentTarget = element;
         var cancellationToken = StartTransitionSession();
-        _ = RunContentTransitionAsync(element, direction, refresh, sequence, cancellationToken);
+        var boundsTask = _boundsAnimator.AnimateAsync(CurrentMetrics(), IslandAnimationProfile.ForState(_activeState, _layoutOptions),
+            _options.ContentRefreshDuration, _applyMetrics, cancellationToken);
+        _ = RunContentTransitionAsync(element, direction, refresh, sequence, cancellationToken, boundsTask);
     }
 
     private async Task RunContentTransitionAsync(
@@ -388,13 +407,15 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         MotionDirection direction,
         bool refresh,
         long sequence,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Task boundsTask)
     {
         try
         {
+            Task contentTask;
             if (refresh)
             {
-                await _toolkitAnimations.RefreshAsync(
+                contentTask = _toolkitAnimations.RefreshAsync(
                     element,
                     _options.ContentRefreshDuration,
                     _options.AnimationKind,
@@ -403,7 +424,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
             }
             else
             {
-                await _toolkitAnimations.AnimateContentAsync(
+                contentTask = _toolkitAnimations.AnimateContentAsync(
                     element,
                     _options.ContentRefreshDuration,
                     _options.Preset,
@@ -415,6 +436,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
                     cancellationToken);
             }
 
+            await Task.WhenAll(boundsTask, contentTask);
             if (IsCurrent(sequence, cancellationToken))
             {
                 ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(element));
@@ -449,18 +471,20 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
     {
         foreach (var view in _views.Values)
         {
-            ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(view));
+            if (view.Visibility != Visibility.Visible || (view != incoming && view != outgoing))
+                ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(view));
             view.Visibility = view == incoming || view == outgoing
                 ? Visibility.Visible
                 : Visibility.Collapsed;
         }
     }
 
-    private void NormalizeViews(IslandVisualState state)
+    private void NormalizeViews(IslandVisualState state, bool resetActive = true)
     {
         foreach (var pair in _views)
         {
-            ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(pair.Value));
+            if (resetActive || pair.Key != state)
+                ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(pair.Value));
             pair.Value.Visibility = pair.Key == state ? Visibility.Visible : Visibility.Collapsed;
         }
     }
@@ -488,6 +512,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
     private long InvalidateActiveTransition()
     {
         var sequence = ++_transitionSequence;
+        if (_transitionCancellation is not null) _performance?.EndTransition(_measurementToken, _measurementKind, cancelled: true);
         _transitionCancellation?.Cancel();
         _transitionCancellation?.Dispose();
         _transitionCancellation = null;
@@ -495,14 +520,14 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
         foreach (var view in _views.Values)
         {
-            ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(view));
+            ToolkitAnimationFactory.Stop(ElementCompositionPreview.GetElementVisual(view));
         }
 
-        ToolkitAnimationFactory.Reset(ElementCompositionPreview.GetElementVisual(_surface));
+        ToolkitAnimationFactory.Stop(ElementCompositionPreview.GetElementVisual(_surface));
 
         if (_animatedContentTarget is not null)
         {
-            ToolkitAnimationFactory.Reset(
+            ToolkitAnimationFactory.Stop(
                 ElementCompositionPreview.GetElementVisual(_animatedContentTarget));
             _animatedContentTarget = null;
         }
@@ -512,6 +537,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
 
     private CancellationToken StartTransitionSession()
     {
+        _measurementToken = _performance?.BeginTransition() ?? default;
         _transitionCancellation = new CancellationTokenSource();
         return _transitionCancellation.Token;
     }
@@ -523,6 +549,7 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
             return;
         }
 
+        _performance?.EndTransition(_measurementToken, _measurementKind, cancelled: false);
         _transitionCancellation?.Dispose();
         _transitionCancellation = null;
         _animatedContentTarget = null;
@@ -542,5 +569,10 @@ public sealed class IslandAnimationCoordinator : IIslandAnimationCoordinator
         });
     }
 
-    private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(_disposed, this);
+    private void ThrowIfDisposed()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_layoutRoot.DispatcherQueue.HasThreadAccess)
+            throw new InvalidOperationException("Dock transitions require the UI thread.");
+    }
 }

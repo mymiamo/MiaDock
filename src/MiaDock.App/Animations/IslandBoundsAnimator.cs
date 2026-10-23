@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml.Media;
 
 namespace MiaDock.App.Animations;
@@ -6,11 +7,16 @@ namespace MiaDock.App.Animations;
 public sealed class IslandBoundsAnimator : IDisposable
 {
     private const double MinimumFrameDelta = 0.5;
-    private EventHandler<object>? _renderingHandler;
-    private TaskCompletionSource? _completion;
-    private CancellationTokenRegistration _cancellationRegistration;
+    private readonly DispatcherQueue _dispatcher = DispatcherQueue.GetForCurrentThread();
+    private Session? _session;
+    private sealed class Session
+    {
+        public EventHandler<object>? Handler;
+        public readonly TaskCompletionSource Completion = new(TaskCreationOptions.RunContinuationsAsynchronously);
+        public CancellationTokenRegistration Registration;
+    }
 
-    public bool IsRunning => _renderingHandler is not null;
+    public bool IsRunning => _session is not null;
 
     public Task AnimateAsync(
         IslandVisualMetrics from,
@@ -29,6 +35,7 @@ public sealed class IslandBoundsAnimator : IDisposable
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(apply);
+        if (!_dispatcher.HasThreadAccess) throw new InvalidOperationException("Bounds animations require the UI thread.");
         Cancel();
         cancellationToken.ThrowIfCancellationRequested();
 
@@ -40,53 +47,49 @@ public sealed class IslandBoundsAnimator : IDisposable
 
         var stopwatch = Stopwatch.StartNew();
         var lastApplied = from;
-        _completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        _renderingHandler = (_, _) =>
+        var session = new Session();
+        _session = session;
+        session.Handler = (_, _) =>
         {
-            var progress = Math.Clamp(stopwatch.Elapsed.TotalMilliseconds / duration.TotalMilliseconds, 0, 1);
-            if (progress >= 1)
+            if (_session != session) return;
+            try
             {
-                apply(to);
-                Complete();
-                return;
-            }
+                var progress = Math.Clamp(stopwatch.Elapsed.TotalMilliseconds / duration.TotalMilliseconds, 0, 1);
+                if (progress >= 1)
+                {
+                    apply(to);
+                    Finish(session, cancelled: false);
+                    return;
+                }
 
-            var easedProgress = Ease(progress, easing);
-            var current = Interpolate(from, to, easedProgress);
-            if (HasMeaningfulDifference(lastApplied, current))
+                var easedProgress = Ease(progress, easing);
+                var current = Interpolate(from, to, easedProgress);
+                if (HasMeaningfulDifference(lastApplied, current))
+                {
+                    apply(current);
+                    lastApplied = current;
+                }
+            }
+            catch (Exception exception)
             {
-                apply(current);
-                lastApplied = current;
+                Finish(session, cancelled: false, exception);
             }
         };
 
-        CompositionTarget.Rendering += _renderingHandler;
-        _cancellationRegistration = cancellationToken.Register(
-            static state => ((IslandBoundsAnimator)state!).CancelFromToken(),
-            this);
-        return _completion.Task;
+        CompositionTarget.Rendering += session.Handler;
+        // Always queue: an already-cancelled token can invoke Register inline,
+        // before Registration has been assigned. The callback never touches XAML.
+        session.Registration = cancellationToken.Register(() =>
+            _dispatcher.TryEnqueue(() => Finish(session, cancelled: true)));
+        return session.Completion.Task;
     }
 
-    public void Cancel() => CancelCore(disposeRegistration: true);
-
-    private void CancelFromToken() => CancelCore(disposeRegistration: false);
-
-    private void CancelCore(bool disposeRegistration)
+    public void Cancel()
     {
-        if (_renderingHandler is not null)
-        {
-            CompositionTarget.Rendering -= _renderingHandler;
-            _renderingHandler = null;
-        }
-
-        if (disposeRegistration)
-        {
-            _cancellationRegistration.Dispose();
-            _cancellationRegistration = default;
-        }
-
-        _completion?.TrySetCanceled();
-        _completion = null;
+        var session = _session;
+        if (session is null) return;
+        if (_dispatcher.HasThreadAccess) Finish(session, cancelled: true);
+        else _dispatcher.TryEnqueue(() => Finish(session, cancelled: true));
     }
 
     public void Dispose() => Cancel();
@@ -143,18 +146,15 @@ public sealed class IslandBoundsAnimator : IDisposable
         return 1 + (c3 * t * t * t) + (c1 * t * t);
     }
 
-    private void Complete()
+    private void Finish(Session session, bool cancelled, Exception? failure = null)
     {
-        if (_renderingHandler is not null)
-        {
-            CompositionTarget.Rendering -= _renderingHandler;
-            _renderingHandler = null;
-        }
-
-        var registration = _cancellationRegistration;
-        _cancellationRegistration = default;
-        registration.Dispose();
-        _completion?.TrySetResult();
-        _completion = null;
+        // An apply callback may retarget reentrantly. Finish only this session.
+        if (session.Handler is not null) CompositionTarget.Rendering -= session.Handler;
+        session.Handler = null;
+        session.Registration.Dispose();
+        if (_session == session) _session = null;
+        if (failure is not null) session.Completion.TrySetException(failure);
+        else if (cancelled) session.Completion.TrySetCanceled();
+        else session.Completion.TrySetResult();
     }
 }

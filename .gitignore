@@ -41,6 +41,8 @@ coverage.*
 .env.*
 !.env.example
 secrets.json
+miamo-db.php
+miamo-ads.local.*
 
 # Runtime diagnostics and local state
 Logs/

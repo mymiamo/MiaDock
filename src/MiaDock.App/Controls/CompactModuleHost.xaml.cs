@@ -1,3 +1,4 @@
+using MiaDock.UI.Icons;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using MiaDock.App.Services;
@@ -116,7 +117,7 @@ public sealed partial class CompactModuleHost : UserControl
                 Padding = new Thickness(12, 0, 12, 0),
                 Children =
                 {
-                    new FontIcon
+                    new DockIcon
                     {
                         Glyph = "\uE783",
                         FontSize = 14,

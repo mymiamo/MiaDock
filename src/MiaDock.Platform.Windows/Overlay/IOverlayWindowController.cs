@@ -12,6 +12,10 @@ public interface IOverlayWindowController : IDisposable
     Exception? LastFailure { get; }
 
     bool IsVisible { get; }
+    double HorizontalOffsetInDips { get; }
+    void UpdateHorizontalOffset(double offsetInDips);
+
+    bool TryGetPointerScreenX(out double screenX, out double scale);
 
     void ShowNoActivate();
 

@@ -4,17 +4,67 @@ using MiaDock.Core.Logging;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.Json;
+using MiaDock.Core.Diagnostics;
+using MiaDock.App.Services;
 
 namespace MiaDock.App.ViewModels;
 
 public sealed class DiagnosticsViewModel(
     ILogService logService,
-    ILogReader logReader) : ObservableObject
+    ILogReader logReader,
+    ApplicationPerformanceMonitor? performance = null,
+    IAppLocalizationService? localization = null) : ObservableObject
 {
     private int _fileCount;
     private long _totalBytes;
     private string _statusMessage = "Log bilgileri yükleniyor.";
     private bool _isBusy;
+    private string _performanceSummaryText = string.Empty;
+    private string _animationSummaryText = string.Empty;
+    private bool _canStartAnimationMeasurement = true;
+    public string AnimationSummaryText { get => _animationSummaryText; private set => SetProperty(ref _animationSummaryText, value); }
+    public bool CanStartAnimationMeasurement { get => _canStartAnimationMeasurement; private set => SetProperty(ref _canStartAnimationMeasurement, value); }
+    public void StartAnimationMeasurement() { performance?.StartAnimationMeasurement(); RefreshPerformance(); }
+    public void StopAnimationMeasurement() { performance?.StopAnimationMeasurement(); RefreshPerformance(); }
+
+    public string PerformanceSummaryText { get => _performanceSummaryText; private set => SetProperty(ref _performanceSummaryText, value); }
+
+    public void RefreshPerformance()
+    {
+        if (performance is null) return;
+        string L(string tr, string en) => localization?.Text(tr, en) ?? tr;
+        var snapshot = performance.Snapshot();
+        var completedDurations = snapshot.Animation?.Transitions.Where(t => !t.Cancelled).Select(t => t.Milliseconds).ToArray() ?? [];
+        var completedTiming = completedDurations.Length == 0 ? L("ölçüm yok", "no measurements") : $"{completedDurations.Average():F1} ms";
+        CanStartAnimationMeasurement = snapshot.Animation?.IsRunning != true;
+        AnimationSummaryText = snapshot.Animation is { } animation
+            ? $"{L("UI akıcılık ölçümü", "UI smoothness measurement")}: {animation.ElapsedSeconds:F0}/60 s · " +
+              (animation.IsRunning ? L("ölçülüyor", "recording") : L("durdu", "stopped")) + Environment.NewLine +
+              $"p95 {animation.P95FrameIntervalMilliseconds:F1} ms · p99 {animation.P99FrameIntervalMilliseconds:F1} ms · " +
+              $"{animation.DelayedFrames} {L("geciken aralık (>25 ms)", "delayed intervals (>25 ms)")} · " +
+              $"{animation.FrameIntervals} {L("örnek", "samples")} · {animation.DroppedFrameSamples} {L("eski örnek çıkarıldı", "older samples evicted")}" + Environment.NewLine +
+              $"{L("Geçiş", "Transitions")}: {animation.CompletedTransitions} {L("tamamlandı", "completed")}, {animation.CancelledTransitions} {L("iptal", "cancelled")} · " +
+              $"{L("tamamlanan ortalama", "completed mean")} {completedTiming}. " +
+              L("UI kare aralığıdır; GPU sunum FPS'i değildir. Geçiş ayrıntıları JSON dışa aktarımındadır.", "UI callback intervals, not GPU presentation FPS. Transition details are included in the JSON export.")
+            : L("60 saniyelik UI ölçümünü başlatıp dock ile etkileşime geçin. Otomatik durur; ayarlardan ayrılınca devam eder. UI kare aralığı GPU sunum FPS'i değildir.",
+                "Start a 60-second UI measurement and interact with the dock. It stops automatically and continues after leaving settings. UI callback intervals are not GPU presentation FPS.");
+        var lines = new List<string>
+        {
+            snapshot.DockReadyMilliseconds is { } milliseconds
+                ? $"{L("Başlangıç (dock hazır)", "Startup (dock ready)")}: {milliseconds:F0} ms"
+                : L("Başlangıç: dock henüz gösterilmedi.", "Startup: dock has not been shown yet.")
+        };
+        foreach (var scenario in snapshot.Scenarios)
+        {
+            var name = scenario.Scenario switch { PerformanceScenario.Media => L("Medya", "Media"),
+                PerformanceScenario.Spectrum => "Spectrum", _ => L("Boşta", "Idle") };
+            lines.Add(scenario.SampleCount == 0 ? $"{name}: {L("ölçüm bekleniyor", "awaiting measurements")}" :
+                $"{name}: CPU {scenario.MeanCpuPercent:F2}% · {L("tepe", "peak")} {scenario.PeakCpuPercent:F2}% · RAM {scenario.LatestWorkingSetBytes / 1048576d:F1} MB · {L("özel bellek", "private memory")} {scenario.LatestPrivateBytes / 1048576d:F1} MB · {scenario.SampleCount} {L("örnek", "samples")}");
+        }
+        lines.Add(L("5 saniyede bir ölçülür. CPU yüzdesi tüm işlemciye göredir; son 15 dakikaya kadar örnekler tutulur.",
+            "Sampled every 5 seconds. CPU is relative to the whole processor; up to 15 minutes of samples are retained."));
+        PerformanceSummaryText = string.Join(Environment.NewLine, lines);
+    }
 
     public ObservableCollection<TechnicalLogEntry> RecentEntries { get; } = [];
 
@@ -74,6 +124,7 @@ public sealed class DiagnosticsViewModel(
 
     public async Task RefreshAsync(CancellationToken cancellationToken = default)
     {
+        RefreshPerformance();
         if (IsBusy)
         {
             return;

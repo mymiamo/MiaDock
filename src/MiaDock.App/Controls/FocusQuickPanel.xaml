@@ -2,6 +2,7 @@
     x:Class="MiaDock.App.Controls.FocusQuickPanel"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:icons="using:MiaDock.UI.Icons"
     xmlns:local="using:MiaDock.App.Controls"
     Loaded="OnLoaded"
     Unloaded="OnUnloaded">
@@ -48,8 +49,7 @@
                     CornerRadius="24"
                     Opacity="{Binding ActiveOpacity}">
               <Grid>
-                <FontIcon Glyph="{Binding IconGlyph}"
-                          FontFamily="Segoe Fluent Icons"
+                <icons:DockIcon Glyph="{Binding IconGlyph}" IsFilled="{Binding IsActive}"
                           FontSize="17"
                           Foreground="{Binding Color, Converter={StaticResource FocusColorBrushConverter}}" />
                 <Ellipse Width="6"
@@ -90,7 +90,7 @@
               ToolTipService.ToolTip="{Binding DurationLabel}"
               AutomationProperties.Name="{Binding DurationLabel}"
               Visibility="Collapsed">
-        <FontIcon Glyph="&#xE823;" FontSize="13" />
+        <icons:DockIcon Glyph="&#xE823;" FontSize="13" />
         <Button.Flyout>
           <MenuFlyout Opening="OnDurationFlyoutOpening"
                       Closed="OnDurationFlyoutClosed">
@@ -113,7 +113,7 @@
               ToolTipService.ToolTip="{Binding TurnOffLabel}"
               AutomationProperties.Name="{Binding TurnOffLabel}"
               Visibility="Collapsed">
-        <FontIcon Glyph="&#xE711;"
+        <icons:DockIcon Glyph="&#xE711;"
                   FontSize="14"
                   Foreground="{ThemeResource DockStatusCriticalForegroundBrush}" />
       </Button>

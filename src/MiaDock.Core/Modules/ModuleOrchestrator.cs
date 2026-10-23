@@ -1,4 +1,5 @@
 using MiaDock.Core.Focus;
+using MiaDock.Core.Settings;
 
 namespace MiaDock.Core.Modules;
 
@@ -12,6 +13,7 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
     private readonly IIslandModuleRegistry _registry;
     private readonly TimeProvider _timeProvider;
     private readonly IFocusPolicyService? _focusPolicy;
+    private readonly Func<IReadOnlyList<string>>? _navigationOrder;
     private readonly object _gate = new();
     private readonly List<ModuleEvent> _pendingEvents = [];
     private ModuleEvent? _activeEvent;
@@ -30,12 +32,14 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
         IIslandModuleRegistry registry,
         TimeProvider? timeProvider = null,
         TimeSpan? temporarySelectionDuration = null,
-        IFocusPolicyService? focusPolicy = null)
+        IFocusPolicyService? focusPolicy = null,
+        Func<IReadOnlyList<string>>? navigationOrder = null)
     {
         ArgumentNullException.ThrowIfNull(registry);
         _registry = registry;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _focusPolicy = focusPolicy;
+        _navigationOrder = navigationOrder;
         _temporarySelectionDuration = temporarySelectionDuration ?? DefaultTemporarySelectionDuration;
         ValidateTemporarySelectionDuration(_temporarySelectionDuration);
         _registry.ActivePresentationChanged += OnActivePresentationChanged;
@@ -613,14 +617,13 @@ public sealed class ModuleOrchestrator : IModuleOrchestrator
         .ThenBy(item => item.Descriptor.Id, StringComparer.Ordinal)
         .FirstOrDefault();
 
-    private List<ModuleDisplayState> GetAvailableModules() => _registry.Modules
+    private List<ModuleDisplayState> GetAvailableModules() => DockNavigationSettings.Order(_registry.Modules
         .Where(module => module.IsEnabled &&
                          module.LifecycleState == ModuleLifecycleState.Active &&
                          module.CurrentPresentation is not null &&
                          AllowsModule(module.Descriptor.Id))
         .Select(module => new ModuleDisplayState(module.Descriptor, module.CurrentPresentation!))
-        .OrderByDescending(item => item.Descriptor.PersistentPriority)
-        .ThenBy(item => item.Descriptor.Id, StringComparer.Ordinal)
+        , _navigationOrder?.Invoke() ?? Array.Empty<string>())
         .ToList();
 
     private IIslandModule? FindModule(string moduleId) => _registry.Modules.FirstOrDefault(

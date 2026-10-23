@@ -146,7 +146,10 @@ public static class ServiceRegistration
         services.AddSingleton<IIslandModule>(provider =>
             provider.GetRequiredService<StoreUpdateModule>());
         services.AddSingleton<IIslandModuleRegistry, IslandModuleRegistry>();
-        services.AddSingleton<IModuleOrchestrator, ModuleOrchestrator>();
+        services.AddSingleton<IModuleOrchestrator>(provider => new ModuleOrchestrator(
+            provider.GetRequiredService<IIslandModuleRegistry>(),
+            focusPolicy: provider.GetRequiredService<IFocusPolicyService>(),
+            navigationOrder: () => provider.GetRequiredService<ISettingsService>().Current.EffectiveNavigation.PinnedModuleIds));
         services.AddSingleton<IModuleViewRegistry>(provider =>
         {
             var music = provider.GetRequiredService<MusicModuleViewModel>();
@@ -299,10 +302,14 @@ public static class ServiceRegistration
         services.AddSingleton<SettingsViewModel>();
         services.AddSingleton<OnboardingViewModel>();
         services.AddSingleton<DiagnosticsViewModel>();
+        services.AddSingleton<MiaDock.App.Animations.AnimationPerformanceMonitor>();
+        services.AddSingleton<ApplicationPerformanceMonitor>();
+        services.AddSingleton<MiaDock.Core.Overlay.DockPositionEditSession>();
         services.AddSingleton<IDiagnosticsFileService, DiagnosticsFileService>();
         services.AddSingleton<AppExceptionCoordinator>();
         services.AddSingleton<CrashRecoveryCoordinator>();
         services.AddSingleton<ISettingsWindowService, SettingsWindowService>();
+        services.AddSingleton<MiaDock.Core.Advertising.IMiamoAdsClient>(_ => MiaDock.Core.Advertising.MiamoAdsClient.Create());
         services.AddSingleton<IOnboardingWindowService, OnboardingWindowService>();
         services.AddSingleton<IApplicationLifetimeService, ApplicationLifetimeService>();
         services.AddSingleton<OverlayWindow>();
